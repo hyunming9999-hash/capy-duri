@@ -14,8 +14,8 @@ export function mount(el, ctx) {
 
   const send = async m => { try { await ctx.store.push('chat', { by: ctx.uid, ts: ctx.store.now(), ...m }); } catch {} };
   const sendText = () => { const t = inp.value.trim(); if (!t) return; inp.value = ''; inp.style.height = ''; send({ t }); inp.focus(); };
-  const sendPhoto = async () => {
-    const f = await pickImage(); if (!f) return;
+  const sendPhoto = async camera => {
+    const f = await pickImage(camera); if (!f) return;
     try { toast('사진 보내는 중…'); const c = await fileToCanvas(f, 1000); const img = await putBlob(ctx.store, jpeg(c, 0.7)); await send({ img }); }
     catch (e) { toast(e.message || '사진을 보내지 못했어요'); }
   };
@@ -52,7 +52,8 @@ export function mount(el, ctx) {
   document.addEventListener('visibilitychange', markRead);
 
   el.append(list, tray, h('div', { class: 'composer' },
-    h('button', { class: 'ic', 'aria-label': '사진', onClick: sendPhoto }, '📷'),
+    h('button', { class: 'ic', 'aria-label': '카메라로 찍기', onClick: () => sendPhoto(true) }, '📷'),
+    h('button', { class: 'ic', 'aria-label': '사진첩에서 고르기', onClick: () => sendPhoto(false) }, '🖼️'),
     h('button', { class: 'ic', 'aria-label': '스티커', onClick: () => toggleTray() }, '🧡'),
     inp, h('button', { class: 'btn primary', onClick: sendText }, '보내기')));
 

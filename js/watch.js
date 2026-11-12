@@ -1,6 +1,7 @@
 // 오늘 뭐 보실? — 유튜브를 스크린에 틀고 카피바라 둘이 객석에서 같이 보기
 import { h, toast, holdBtn } from './ui.js';
 import { capy } from './capy.js';
+import * as chat from './chat.js';
 
 let ytReady = null;
 function loadYT() {
@@ -77,7 +78,7 @@ export function mount(el, ctx) {
   ROWS.forEach(y => COLS.forEach(x => hall.append(h('i', { class: 'seat', style: { left: x + '%', top: y + '%', zIndex: Math.round(y * 10) + 5 } }))));
   const avs = {};
   function avatar(uid) {
-    if (!avs[uid]) { const a = { el: h('div', { class: 'av' + (uid === ctx.uid ? ' me' : '') }, h('span', { class: 'av-body' }), h('b', null, ctx.nameOf(uid)), h('span', { class: 'em' })), view: '', et: 0 }; avs[uid] = a; hall.append(a.el); }
+    if (!avs[uid]) { const a = { el: h('div', { class: 'av' + (uid === ctx.uid ? ' me' : '') }, h('span', { class: 'av-body' }), h('b', null, ctx.nameOf(uid)), h('span', { class: 'say' }), h('span', { class: 'em' })), view: '', et: 0 }; avs[uid] = a; hall.append(a.el); }
     return avs[uid];
   }
   function place(uid, p) {
@@ -123,10 +124,20 @@ export function mount(el, ctx) {
   const pad = h('div', { class: 'dpad' }, [['U', '▲'], ['L', '◀'], ['D', '▼'], ['R', '▶']].map(([k, t]) => { const b = h('button', { class: 'dp dp-' + k, 'aria-label': k }, t); holdBtn(b, () => press(k, true), () => press(k, false)); return b; }));
   const emo = h('div', { class: 'emos' }, ['❤️', '😆', '👏', '🍿'].map(x => h('button', { class: 'emo', onClick: () => { me.em = x; me.et = ctx.store.now(); sync(true); } }, x)));
 
+  // 같이 보면서 톡: 아래 톡 창은 '오늘 얘기나 하지?'와 같은 대화이고, 새 말은 카피바라 머리 위에도 잠깐 뜬다
+  const chatBox = h('div', { class: 'watch-chat' }), since = ctx.store.now(); let lastSaid = '';
+  offs.push(chat.mount(chatBox, ctx));
+  offs.push(ctx.store.on('chat', v => {
+    const id = Object.keys(v || {}).sort().pop(), m = id && v[id];
+    if (!m || id === lastSaid || m.ts < since - 2000 || !avs[m.by]) return; lastSaid = id;
+    const el = avs[m.by].el.querySelector('.say'); el.textContent = m.t ? (m.t.length > 22 ? m.t.slice(0, 21) + '…' : m.t) : m.img ? '📷 사진' : '💬';
+    el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+  }, { limit: 1 }));
+
   offs.push(ctx.store.on('rt/seat', v => { for (const [u, p] of Object.entries(v || {})) if (u !== ctx.uid && ctx.members[u] && p) place(u, p); }));
   sync(true);
 
-  el.append(h('div', { class: 'theater' }, h('div', { class: 'curtain' }, screen), hall),
+  el.append(h('div', { class: 'theater' }, h('div', { class: 'curtain' }, screen), hall), chatBox,
     h('div', { class: 'row watch-url' }, url, h('button', { class: 'btn primary', onClick: playUrl }, '틀기')),
     h('div', { class: 'watch-ctl' }, pad, h('div', { class: 'grow' }, emo,
       h('p', { class: 'dim' }, '방향키나 ▲◀▼▶ 로 걸어 다니고, 자리 근처에서 멈추면 앉아요. 재생·멈춤·건너뛰기는 둘이 같이 맞춰져요.'))));

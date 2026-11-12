@@ -3,12 +3,14 @@
 import { h, holdBtn, loadImg, josa } from './ui.js';
 import { capyUrl, yuzuUrl } from './capy.js';
 
-const W = 800, H = 450, GROUND = 400, NETX = 400, NETW = 12, NETTOP = 268, PR = 40, FOOT = 71, BR = 26, WIN = 7;
-const GB = 0.42, GP = 0.9, SPEED = 6.4, JUMP = -15.5;
+const W = 800, H = 450, GROUND = 400, NETX = 400, NETW = 12, NETTOP = 268, PR = 40, FOOT = 71, BR = 28, WIN = 7;
+// HIT: 공이 맞는 범위(그림보다 넉넉하게), GB: 공 중력(작을수록 천천히 떨어짐), FALL: 공이 떨어지는 최고 속도
+const HIT = 50, GB = 0.24, FALL = 8, GP = 0.9, SPEED = 6.8, CPU_SPEED = 4.2, JUMP = -15.5;
 const standY = GROUND - FOOT;
+export const VOLLEY = { W, GROUND, NETX, BR, standY, SPEED, CPU_SPEED };
 
-function stepBall(b, ps) {
-  b.vy += GB; b.x += b.vx; b.y += b.vy; b.rot += b.vx * 0.03;
+export function stepBall(b, ps) {
+  b.vy = Math.min(FALL, b.vy + GB); b.x += b.vx; b.y += b.vy; b.rot += b.vx * 0.03;
   if (b.x < BR) { b.x = BR; b.vx = Math.abs(b.vx) * 0.9; }
   if (b.x > W - BR) { b.x = W - BR; b.vx = -Math.abs(b.vx) * 0.9; }
   if (b.y < BR) { b.y = BR; b.vy = Math.abs(b.vy) * 0.9; }
@@ -18,19 +20,20 @@ function stepBall(b, ps) {
     if (b.y < NETTOP) { if (!d) { dx = 0; dy = -1; d = 1; } b.x = nx + dx / d * BR; b.y = ny + dy / d * BR; b.vy = -Math.abs(b.vy) * 0.75; b.vx += dx / d * 1.5; }
     else { const s = b.x < NETX ? -1 : 1; b.x = NETX + s * (NETW / 2 + BR); b.vx = s * Math.abs(b.vx) * 0.75; }
   }
-  for (const p of ps) for (const [cy, r] of [[0, PR], [46, 27]]) {
+  for (const p of ps) for (const [cy, r] of [[0, HIT], [46, 36]]) {
     dx = b.x - p.x; dy = b.y - (p.y + cy); d = Math.hypot(dx, dy);
     if (d < BR + r && d > 0) {
-      const ux = dx / d, uy = dy / d, sp = Math.max(9.5, Math.hypot(b.vx, b.vy) * 0.85);
+      const ux = dx / d, uy = dy / d, sp = Math.max(8.5, Math.hypot(b.vx, b.vy) * 0.8);
       b.x = p.x + ux * (BR + r); b.y = p.y + cy + uy * (BR + r);
-      b.vx = ux * sp + p.vx * 0.35; b.vy = uy * sp + p.vy * 0.35 - 1.2;
-      const v = Math.hypot(b.vx, b.vy); if (v > 15.5) { b.vx *= 15.5 / v; b.vy *= 15.5 / v; }
+      b.vx = ux * sp * 0.85 + p.vx * 0.45; b.vy = uy * sp + p.vy * 0.3 - 2.5;
+      if (dy < 12 && b.vy > -7) b.vy = -7; // 머리 위쪽에 맞으면 항상 넉넉히 떠오른다
+      const v = Math.hypot(b.vx, b.vy); if (v > 13) { b.vx *= 13 / v; b.vy *= 13 / v; }
     }
   }
   return b.y >= GROUND - BR;
 }
-function stepPlayer(p, i, inp) {
-  if (inp) { p.vx = (inp.r ? SPEED : 0) - (inp.l ? SPEED : 0); if (inp.j && p.y >= standY) p.vy = JUMP; }
+export function stepPlayer(p, i, inp, speed = SPEED) {
+  if (inp) { p.vx = (inp.r ? speed : 0) - (inp.l ? speed : 0); if (inp.j && p.y >= standY) p.vy = JUMP; }
   p.vy += GP; p.x += p.vx; p.y += p.vy;
   if (p.y > standY) { p.y = standY; p.vy = 0; }
   const lo = i ? NETX + NETW / 2 + PR : PR, hi = i ? W - PR : NETX - NETW / 2 - PR;
@@ -96,16 +99,16 @@ export function mount(el, ctx) {
     if (live() && (ball.x < NETX ? 0 : 1) === ctx.idx) ctx.store.set('rt/volley/ball', { x: r(ball.x), y: r(ball.y), vx: r(ball.vx), vy: r(ball.vy), side: ctx.idx, n: game.n, t: ctx.store.now() }).catch(() => {});
   }
   function ai(p) {
-    if (Date.now() > aiT) { aiT = Date.now() + 700; aiErr = (Math.random() - 0.5) * 70; }
+    if (Date.now() > aiT) { aiT = Date.now() + 900; aiErr = (Math.random() - 0.5) * 130; }
     const tx = ball.x > NETX - 20 ? ball.x + 20 + aiErr : 610, o = { l: p.x > tx + 8, r: p.x < tx - 8, j: false };
-    o.j = ball.x > NETX && Math.abs(ball.x - p.x) < 70 && ball.y < p.y - 70 && ball.y > 170 && ball.vy > 0 && Math.random() < 0.5;
+    o.j = ball.x > NETX && Math.abs(ball.x - p.x) < 70 && ball.y < p.y - 70 && ball.y > 170 && ball.vy > 0 && Math.random() < 0.15;
     return o;
   }
   function tick() {
     const me = my();
     stepPlayer(ps[me], me, inp);
     if (mode === 'online' && Date.now() - oppSeen > 300) ps[1 - me].vx = 0;
-    stepPlayer(ps[1 - me], 1 - me, mode === 'cpu' ? ai(ps[1]) : null);
+    stepPlayer(ps[1 - me], 1 - me, mode === 'cpu' ? ai(ps[1]) : null, CPU_SPEED);
     if (!live()) return;
     if (stepBall(ball, ps)) {
       ball.y = GROUND - BR; ball.vy = 0; ball.vx *= 0.5;

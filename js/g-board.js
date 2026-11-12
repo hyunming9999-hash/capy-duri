@@ -36,14 +36,35 @@ function frame(el, ctx, path, fresh, drawBoard, legend) {
 }
 const myTurn = (ctx, s, solo) => s.win < 0 && (solo || s.turn === ctx.idx);
 const legend2 = ctx => ctx.order.length < 2 ? '상대가 들어오면 둘이 둘 수 있어요' : `나는 ${ctx.idx === 0 ? '카피 돌' : '유자 돌'}`;
+const legendOmok = ctx => legend2(ctx) + ' · 쌍삼 금지';
 
 /* ----- 오목 ----- */
+// 쌍삼: 한 수로 '열린 삼'이 두 줄 이상 생기는 자리. 다섯이 되는 수는 예외로 둘 수 있다.
+const ON = 15;
+const at = (b, x, y) => (x < 0 || y < 0 || x >= ON || y >= ON) ? '#' : b[y * ON + x];
+function runEnds(b, x, y, dx, dy, p) { let a = 1, c = 1; while (at(b, x + dx * a, y + dy * a) === p) a++; while (at(b, x - dx * c, y - dy * c) === p) c++; return [a + c - 1, at(b, x + dx * a, y + dy * a), at(b, x - dx * c, y - dy * c)]; }
+function openThree(b, x, y, dx, dy, p) {
+  if (runEnds(b, x, y, dx, dy, p)[0] >= 4) return false;
+  for (let k = -4; k <= 4; k++) {
+    const ex = x + dx * k, ey = y + dy * k; if (!k || at(b, ex, ey) !== '.') continue;
+    const j = ey * ON + ex, b2 = b.slice(0, j) + p + b.slice(j + 1), [n, e1, e2] = runEnds(b2, x, y, dx, dy, p);
+    if (n === 4 && e1 === '.' && e2 === '.') return true; // 한 수 더 두면 양쪽이 열린 넷이 된다
+  }
+  return false;
+}
+export function doubleThree(b, i, who) {
+  if (b[i] !== '.') return false;
+  const p = String(who), x = i % ON, y = (i - x) / ON, b2 = b.slice(0, i) + p + b.slice(i + 1);
+  if (lineWin(b2, ON, ON, i, who, 5)) return false;
+  return [[1, 0], [0, 1], [1, 1], [1, -1]].filter(([dx, dy]) => openThree(b2, x, y, dx, dy, p)).length >= 2;
+}
+
 export const omok = { mount(el, ctx) {
   const N = 15, path = 'games/omok', P = 10, C = 20, S = P * 2 + C * (N - 1);
   let ghost = -1, cur = null;
   const fresh = first => ({ b: '.'.repeat(N * N), turn: first, first, last: -1, win: -1, n: 0 });
   const put = i => ctx.store.tx(path, s => {
-    s = s || fresh(0); if (s.win >= 0 || s.b[i] !== '.' || (ctx.order.length > 1 && s.turn !== ctx.idx)) return;
+    s = s || fresh(0); if (s.win >= 0 || s.b[i] !== '.' || (ctx.order.length > 1 && s.turn !== ctx.idx) || doubleThree(s.b, i, s.turn)) return;
     const b = s.b.slice(0, i) + s.turn + s.b.slice(i + 1);
     return { ...s, b, last: i, n: s.n + 1, win: lineWin(b, N, N, i, s.turn, 5) ? s.turn : b.includes('.') ? -1 : 2, turn: 1 - s.turn };
   });
@@ -65,12 +86,13 @@ export const omok = { mount(el, ctx) {
       if (!myTurn(ctx, s, solo)) return toast(s.win >= 0 ? '끝난 판이에요. 새 게임을 눌러 주세요' : '상대 차례예요');
       const r = svg.firstChild.getBoundingClientRect(), x = Math.round(((e.clientX - r.left) / r.width * S - P) / C), y = Math.round(((e.clientY - r.top) / r.height * S - P) / C);
       if (x < 0 || y < 0 || x >= N || y >= N) return; const i = y * N + x; if (s.b[i] !== '.') return;
+      if (doubleThree(s.b, i, s.turn)) return toast('쌍삼 자리라 둘 수 없어요');
       if (ghost === i) { ghost = -1; return put(i); }
       ghost = i; draw();
     });
     board.replaceChildren(svg, h('div', { class: 'center' }, h('button', { class: 'btn primary', disabled: ghost < 0, onClick: () => { const i = ghost; ghost = -1; put(i); } }, ghost < 0 ? '놓을 자리를 눌러 주세요' : '여기에 놓기')));
   }
-  return frame(el, ctx, path, fresh, (board, s, solo) => { cur = { board, s, solo }; draw(); }, legend2);
+  return frame(el, ctx, path, fresh, (board, s, solo) => { cur = { board, s, solo }; draw(); }, legendOmok);
 } };
 
 /* ----- 유자 사목 ----- */

@@ -53,9 +53,11 @@ const WD = ['일', '월', '화', '수', '목', '금', '토'];
 export const niceDate = s => { const d = parseYmd(s); return `${d.getMonth() + 1}월 ${d.getDate()}일 (${WD[d.getDay()]})`; };
 export const hm = ts => { const d = new Date(ts); return `${d.getHours() < 12 ? '오전' : '오후'} ${d.getHours() % 12 || 12}:${pad(d.getMinutes())}`; };
 
-export function pickImage() {
+// camera: true 면 휴대폰에서 사진첩 대신 카메라가 바로 열린다 (PC는 파일 선택)
+export function pickImage(camera) {
   return new Promise(res => {
     const inp = h('input', { type: 'file', accept: 'image/*', style: { display: 'none' } });
+    if (camera) inp.setAttribute('capture', 'environment');
     inp.onchange = () => { res(inp.files[0] || null); inp.remove(); };
     document.body.append(inp); inp.click();
   });
