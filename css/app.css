@@ -172,8 +172,9 @@ canvas.yuzu-game{max-width:380px;margin:0 auto 12px}
 @media (min-width:780px){.page-watch,.page-game{margin:0 -90px}}
 @media (hover:hover) and (pointer:fine){.dpad{opacity:.75}}
 
-/* AI 입혀보기 */
+/* AI 코디 요청 */
 .ai-row{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin:0 0 12px;padding:10px 12px;border:2px dashed #C9B6F2;border-radius:var(--r);background:#F6F1FF}
 .btn.ai{background:#8B6FE8;border-color:#6A4FC9;color:#fff;box-shadow:0 3px 0 #6A4FC9}.btn.ai:active{box-shadow:none;transform:translateY(3px)}
-.ai-row small{flex-basis:100%}.ai-wait .capy{width:110px}.ai-wait b{display:block;font-size:20px;margin-top:6px}
-.kind.k-ai{background:#E4DAFF;color:#5B3FC0;margin-left:6px}.modal a{color:#5B3FC0}
+.ai-row small{flex-basis:100%}.kind.k-ai{background:#E4DAFF;color:#5B3FC0;margin-left:6px}
+.req{display:flex;align-items:center;gap:10px;padding:10px;margin-bottom:12px;border:2px dashed #C9B6F2;border-radius:var(--r);background:#F6F1FF}.req.fail{border-color:#F3B8BA;background:#FFF1F1}
+.req p{margin:2px 0 0}.req-thumbs{display:flex;gap:4px;margin:6px 0}.req-thumbs .thumb{width:52px;height:52px}.req .req-thumbs{margin:0}

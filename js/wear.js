@@ -1,8 +1,7 @@
 // 오늘 뭐 입지? — 전신 사진을 고정해 두고 옷 사진을 올려 맞춰 본 뒤 서로 평가
 import { h, toast, modal, ask, pickImage, fileToCanvas, loadImg, jpeg, hm, josa } from './ui.js';
 import { putBlob, getBlob, delBlob } from './store.js';
-import { yuzuSvg, capyEl } from './capy.js';
-import { MODELS, KEY_PAGE, listImageModels, tryOn } from './ai.js';
+import { yuzuSvg } from './capy.js';
 
 // 가장자리와 비슷한 색을 바깥에서부터 지워 나간다 (단색 배경용)
 export function removeBg(src, tol) {
@@ -33,7 +32,7 @@ export function removeBg(src, tol) {
 
 export function mount(el, ctx) {
   const offs = [];
-  let tab = 'fit', bases = {}, items = {}, looks = {}, model = ctx.uid, layers = [], selId = null, seq = 0, ai = null, busy = false;
+  let tab = 'fit', bases = {}, items = {}, looks = {}, model = ctx.uid, layers = [], selId = null, seq = 0, reqs = {};
   const tabs = h('div', { class: 'tabs' }), view = h('div', { class: 'wear-view' });
   el.append(tabs, view);
 
@@ -41,48 +40,16 @@ export function mount(el, ctx) {
   const lazyImg = (id, cls) => { const i = h('img', { class: cls || '', alt: '' }); getBlob(ctx.store, id).then(u => { if (u) i.src = u; }); return i; };
   function draw() { drawTabs(); ({ fit: drawFit, closet: drawCloset, looks: drawLooks })[tab](); }
 
-  /* ----- AI로 입혀보기 (Gemini) ----- */
-  function aiSetup() {
-    let pick = (ai && ai.model) || MODELS[0][0];
-    const key = h('input', { class: 'inp', placeholder: 'AIza… 로 시작하는 키 붙여넣기', value: (ai && ai.key) || '', autocomplete: 'off', spellcheck: false });
-    const chips = h('div', { class: 'chips' }), msg = h('p', { class: 'dim' });
-    const drawChips = list => chips.replaceChildren(...list.map(([id, name, price]) => { const b = h('button', { class: 'chip' + (pick === id ? ' on' : ''), onClick: () => { pick = id; drawChips(list); } }, name, price && h('small', null, ' ' + price)); return b; }));
-    drawChips(MODELS);
-    modal({ title: 'AI 입혀보기 설정', body: h('div', null,
-      h('p', null, '구글 Gemini 이미지 모델을 씁니다. 사진 한 장을 만들 때마다 구글에 요금이 나가요.'),
-      h('p', null, h('a', { href: KEY_PAGE, target: '_blank', rel: 'noopener' }, '구글 AI Studio에서 API 키 받기'), ' → 받은 키를 아래에 붙여넣기'),
-      key, h('label', { class: 'lbl' }, '모델'), chips, msg,
-      h('p', { class: 'dim' }, '키는 둘의 방에만 저장되고 공개 코드에는 들어가지 않아요. 초대 링크를 아는 사람은 이 키로 사진을 만들 수 있으니, 구글 쪽에서 월 한도를 걸어 두세요.')),
-      actions: [ai && ai.key ? { label: '키 지우기', danger: true, onClick: c => { ctx.store.remove('meta/gemini'); toast('키를 지웠어요'); c(); } } : { label: '취소' },
-        { label: '확인하고 저장', primary: true, onClick: async c => {
-          const k = key.value.trim(); if (!k) return toast('키를 붙여넣어 주세요');
-          msg.textContent = '키를 확인하는 중…';
-          try {
-            const list = await listImageModels(k);
-            if (!list.length) { msg.textContent = '이 키로 쓸 수 있는 이미지 모델이 없어요.'; return; }
-            if (!list.includes(pick)) { pick = list.find(m => /flash-image/.test(m)) || list[0]; }
-            await ctx.store.set('meta/gemini', { key: k, model: pick }); toast('저장했어요 (' + pick + ')'); c();
-          } catch (e) { msg.textContent = e.message; }
-        } }] });
-  }
-  async function aiTryOn() {
-    if (busy) return;
-    if (!ai || !ai.key) return aiSetup();
+  /* ----- AI 코디 요청: 여기서 요청을 남기면, Claude에게 "코디 요청 처리해줘"라고 할 때 만들어져 룩북에 올라온다 ----- */
+  function aiRequest() {
     if (!layers.length) return toast('아래 옷장에서 입힐 옷을 먼저 눌러 주세요');
-    busy = true;
-    const close = modal({ body: h('div', { class: 'center ai-wait' }, capyEl(ctx.capyOf(ctx.uid, { face: 'wink' }), 'bob'), h('b', null, '옷 입히는 중…'), h('p', { class: 'dim' }, '보통 10~30초 걸려요. 창을 닫지 말고 기다려 주세요.')), actions: [] });
-    try {
-      const base = await getBlob(ctx.store, bases[model]);
-      const out = await tryOn({ key: ai.key, model: ai.model || MODELS[0][0], base, garments: layers.map(l => l.url) });
-      const im = await loadImg(out), sc = Math.min(1, 900 / Math.max(im.naturalWidth, im.naturalHeight)), c = h('canvas', { width: Math.round(im.naturalWidth * sc), height: Math.round(im.naturalHeight * sc) });
-      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
-      const url = jpeg(c, 0.82), note = h('input', { class: 'inp', placeholder: '한마디 (예: 내일 이거 어때?)', maxLength: 40 });
-      close();
-      modal({ title: 'AI가 입혀 본 모습', body: h('div', null, h('img', { class: 'photo-full', src: url, alt: 'AI가 만든 코디 사진' }), h('p', { class: 'dim' }, 'AI가 다시 그린 사진이라 얼굴이나 체형이 실제와 조금 다를 수 있어요.'), note),
-        actions: [{ label: '닫기' }, { label: '다시 만들기', onClick: c2 => { c2(); aiTryOn(); } },
-          { label: '룩북에 올리기', primary: true, onClick: async c2 => { c2(); try { const img = await putBlob(ctx.store, url); await ctx.store.push('wear/looks', { by: ctx.uid, model, img, note: note.value.trim(), ts: ctx.store.now(), ai: true }); toast('룩북에 올렸어요'); tab = 'looks'; layers = []; selId = null; draw(); } catch {} } }] });
-    } catch (e) { close(); modal({ title: 'AI 입혀보기 실패', body: h('p', null, e.message || String(e)), actions: [{ label: '닫기' }, { label: 'AI 설정', onClick: c2 => { c2(); aiSetup(); } }] }); }
-    finally { busy = false; }
+    const note = h('input', { class: 'inp', placeholder: '부탁할 말 (예: 바지는 그대로, 상의만 바꿔줘)', maxLength: 60 });
+    modal({ title: 'AI 코디 요청', body: h('div', null,
+      h('p', null, `${model === ctx.uid ? '내' : ctx.nameOf(model)} 전신 사진에 고른 옷 ${Math.min(3, layers.length)}벌을 입힌 사진을 요청해요.`),
+      h('div', { class: 'req-thumbs' }, layers.slice(0, 3).map(l => h('span', { class: 'thumb checker' }, h('img', { src: l.url, alt: '' })))), note,
+      h('p', { class: 'dim' }, '바로 만들어지지는 않아요. Claude 채팅에서 "코디 요청 처리해줘"라고 하면 그때 만들어서 룩북에 올려 줘요.')),
+      actions: [{ label: '취소' }, { label: '요청하기', primary: true, onClick: async c => { c();
+        try { await ctx.store.push('wear/requests', { by: ctx.uid, model, items: layers.slice(0, 3).map(l => l.img).join(','), note: note.value.trim(), ts: ctx.store.now(), status: 'wait' }); toast('요청을 남겼어요'); tab = 'looks'; layers = []; selId = null; draw(); } catch {} } }] });
   }
 
   /* ----- 입혀보기 ----- */
@@ -117,7 +84,7 @@ export function mount(el, ctx) {
     };
     const addLayer = async itemId => {
       const url = await getBlob(ctx.store, items[itemId].img); if (!url) return;
-      const l = { id: ++seq, url, x: 0.5, y: 0.42, s: 0.45, r: 0, el: h('img', { class: 'layer', src: url, draggable: false, alt: '' }) };
+      const l = { id: ++seq, url, img: items[itemId].img, x: 0.5, y: 0.42, s: 0.45, r: 0, el: h('img', { class: 'layer', src: url, draggable: false, alt: '' }) };
       l.el.dataset.id = l.id; layers.push(l); lay.append(l.el); selId = l.id; drawCtl();
     };
     // 끌기 / 두 손가락 조절
@@ -158,8 +125,8 @@ export function mount(el, ctx) {
     };
     const ids = Object.keys(items).sort().reverse();
     strip.replaceChildren(...ids.map(id => h('button', { class: 'thumb', onClick: () => addLayer(id) }, lazyImg(items[id].img))), h('button', { class: 'thumb plus', onClick: addItem }, '+'));
-    const aiRow = h('div', { class: 'ai-row' }, h('button', { class: 'btn ai', onClick: aiTryOn }, '✨ AI로 입혀보기'), h('button', { class: 'link', onClick: aiSetup }, ai && ai.key ? 'AI 설정' : 'AI 연결하기'),
-      h('small', { class: 'dim' }, '고른 옷을 AI가 사진에 입혀 줘요 (유료)'));
+    const aiRow = h('div', { class: 'ai-row' }, h('button', { class: 'btn ai', onClick: aiRequest }, '✨ AI 코디 요청'),
+      h('small', { class: 'dim' }, '고른 옷을 실제로 입은 것처럼 만든 사진을 Claude에게 부탁해요'));
     view.replaceChildren(...[who, stage, ctl, h('div', { class: 'strip-wrap' }, strip), aiRow,
       h('div', { class: 'row' }, note, h('button', { class: 'btn primary', onClick: save }, '보여주기')),
       model === ctx.uid && h('button', { class: 'link', onClick: setBase }, '전신 사진 바꾸기')].filter(Boolean));
@@ -191,10 +158,14 @@ export function mount(el, ctx) {
   const yz = (n, on) => h('span', { class: 'yz' + (on ? ' on' : ''), html: yuzuSvg, 'data-n': n });
   function drawLooks() {
     const ids = Object.keys(looks).sort().reverse();
-    if (!ids.length) return view.replaceChildren(h('div', { class: 'empty-box' }, h('p', null, '아직 올린 코디가 없어요. 입혀보기에서 코디를 만들어 보여주세요.')));
+    const waiting = Object.entries(reqs).filter(([, r]) => r.status !== 'done').sort((a, b) => b[0].localeCompare(a[0])).map(([id, r]) => h('div', { class: 'req' + (r.status === 'fail' ? ' fail' : '') },
+      h('div', { class: 'req-thumbs' }, (r.items || '').split(',').filter(Boolean).map(b => h('span', { class: 'thumb checker' }, lazyImg(b)))),
+      h('div', { class: 'grow' }, h('b', null, r.status === 'fail' ? 'AI 코디 실패' : 'AI 코디 요청 중'), h('small', { class: 'dim' }, ` ${ctx.nameOf(r.by)} → ${ctx.nameOf(r.model)} 사진`), h('p', { class: 'dim' }, r.status === 'fail' ? (r.why || '만들지 못했어요') : (r.note ? '“' + r.note + '” · ' : '') + 'Claude에게 "코디 요청 처리해줘"라고 하면 만들어져요')),
+      h('button', { class: 'x', 'aria-label': '요청 취소', onClick: () => ctx.store.remove('wear/requests/' + id) }, '×')));
+    if (!ids.length) return view.replaceChildren(...waiting, h('div', { class: 'empty-box' }, h('p', null, '아직 올린 코디가 없어요. 입혀보기에서 코디를 만들어 보여주세요.')));
     const avg = u => { const s = ids.map(i => looks[i]).filter(l => l.by === u).flatMap(l => Object.values(l.rate || {}).map(r => r.s)); return s.length ? (s.reduce((a, b) => a + b, 0) / s.length).toFixed(1) : '-'; };
     view.replaceChildren(h('div', { class: 'score-bar' }, ctx.order.map(u => h('span', null, ctx.nameOf(u), ' 평균 ', h('b', null, avg(u)), ' 유자'))),
-      ...ids.map(id => {
+      ...waiting, ...ids.map(id => {
         const l = looks[id], rate = l.rate || {}, mine = rate[ctx.uid];
         let s = mine ? mine.s : 0;
         const stars = h('div', { class: 'stars' }, [1, 2, 3, 4, 5].map(n => h('button', { class: 'star', 'aria-label': n + '점', onClick: () => { s = n; stars.querySelectorAll('.yz').forEach(z => z.classList.toggle('on', Number(z.dataset.n) <= s)); } }, yz(n, n <= s))));
@@ -208,7 +179,7 @@ export function mount(el, ctx) {
       }));
   }
 
-  offs.push(ctx.store.on('meta/gemini', v => { const had = !!(ai && ai.key); ai = v; if (tab === 'fit' && had !== !!(v && v.key)) drawFit(); }));
+  offs.push(ctx.store.on('wear/requests', v => { reqs = v || {}; if (tab === 'looks') drawLooks(); }));
   offs.push(ctx.store.on('wear/base', v => { bases = v || {}; if (tab === 'fit') drawFit(); }));
   offs.push(ctx.store.on('wear/items', v => { items = v || {}; if (tab !== 'looks') draw(); }));
   offs.push(ctx.store.on('wear/looks', v => { looks = v || {}; if (tab === 'looks') drawLooks(); }, { limit: 20 }));
