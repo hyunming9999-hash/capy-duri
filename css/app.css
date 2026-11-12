@@ -171,3 +171,9 @@ canvas.yuzu-game{max-width:380px;margin:0 auto 12px}
 .rec b{color:var(--brown-d)}
 @media (min-width:780px){.page-watch,.page-game{margin:0 -90px}}
 @media (hover:hover) and (pointer:fine){.dpad{opacity:.75}}
+
+/* AI 입혀보기 */
+.ai-row{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin:0 0 12px;padding:10px 12px;border:2px dashed #C9B6F2;border-radius:var(--r);background:#F6F1FF}
+.btn.ai{background:#8B6FE8;border-color:#6A4FC9;color:#fff;box-shadow:0 3px 0 #6A4FC9}.btn.ai:active{box-shadow:none;transform:translateY(3px)}
+.ai-row small{flex-basis:100%}.ai-wait .capy{width:110px}.ai-wait b{display:block;font-size:20px;margin-top:6px}
+.kind.k-ai{background:#E4DAFF;color:#5B3FC0;margin-left:6px}.modal a{color:#5B3FC0}

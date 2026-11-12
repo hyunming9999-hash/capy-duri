@@ -35,7 +35,7 @@ export function modal({ title, body, actions = [], onClose }) {
     h('div', { class: 'modal' },
       title && h('h3', null, title),
       h('div', { class: 'modal-body' }, body),
-      h('div', { class: 'modal-actions' }, actions.map(a =>
+      actions.length > 0 && h('div', { class: 'modal-actions' }, actions.map(a =>
         h('button', { class: 'btn' + (a.primary ? ' primary' : '') + (a.danger ? ' danger' : ''), onClick: () => a.onClick ? a.onClick(close) : close() }, a.label)))));
   document.body.append(wrap);
   return close;

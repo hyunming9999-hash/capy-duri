@@ -1,7 +1,8 @@
 // 오늘 뭐 입지? — 전신 사진을 고정해 두고 옷 사진을 올려 맞춰 본 뒤 서로 평가
 import { h, toast, modal, ask, pickImage, fileToCanvas, loadImg, jpeg, hm, josa } from './ui.js';
 import { putBlob, getBlob, delBlob } from './store.js';
-import { yuzuSvg } from './capy.js';
+import { yuzuSvg, capyEl } from './capy.js';
+import { MODELS, KEY_PAGE, listImageModels, tryOn } from './ai.js';
 
 // 가장자리와 비슷한 색을 바깥에서부터 지워 나간다 (단색 배경용)
 export function removeBg(src, tol) {
@@ -32,13 +33,57 @@ export function removeBg(src, tol) {
 
 export function mount(el, ctx) {
   const offs = [];
-  let tab = 'fit', bases = {}, items = {}, looks = {}, model = ctx.uid, layers = [], selId = null, seq = 0;
+  let tab = 'fit', bases = {}, items = {}, looks = {}, model = ctx.uid, layers = [], selId = null, seq = 0, ai = null, busy = false;
   const tabs = h('div', { class: 'tabs' }), view = h('div', { class: 'wear-view' });
   el.append(tabs, view);
 
   const drawTabs = () => tabs.replaceChildren(...[['fit', '입혀보기'], ['closet', '옷장'], ['looks', '룩북']].map(([k, t]) => h('button', { class: 'tab' + (tab === k ? ' on' : ''), onClick: () => { tab = k; draw(); } }, t)));
   const lazyImg = (id, cls) => { const i = h('img', { class: cls || '', alt: '' }); getBlob(ctx.store, id).then(u => { if (u) i.src = u; }); return i; };
   function draw() { drawTabs(); ({ fit: drawFit, closet: drawCloset, looks: drawLooks })[tab](); }
+
+  /* ----- AI로 입혀보기 (Gemini) ----- */
+  function aiSetup() {
+    let pick = (ai && ai.model) || MODELS[0][0];
+    const key = h('input', { class: 'inp', placeholder: 'AIza… 로 시작하는 키 붙여넣기', value: (ai && ai.key) || '', autocomplete: 'off', spellcheck: false });
+    const chips = h('div', { class: 'chips' }), msg = h('p', { class: 'dim' });
+    const drawChips = list => chips.replaceChildren(...list.map(([id, name, price]) => { const b = h('button', { class: 'chip' + (pick === id ? ' on' : ''), onClick: () => { pick = id; drawChips(list); } }, name, price && h('small', null, ' ' + price)); return b; }));
+    drawChips(MODELS);
+    modal({ title: 'AI 입혀보기 설정', body: h('div', null,
+      h('p', null, '구글 Gemini 이미지 모델을 씁니다. 사진 한 장을 만들 때마다 구글에 요금이 나가요.'),
+      h('p', null, h('a', { href: KEY_PAGE, target: '_blank', rel: 'noopener' }, '구글 AI Studio에서 API 키 받기'), ' → 받은 키를 아래에 붙여넣기'),
+      key, h('label', { class: 'lbl' }, '모델'), chips, msg,
+      h('p', { class: 'dim' }, '키는 둘의 방에만 저장되고 공개 코드에는 들어가지 않아요. 초대 링크를 아는 사람은 이 키로 사진을 만들 수 있으니, 구글 쪽에서 월 한도를 걸어 두세요.')),
+      actions: [ai && ai.key ? { label: '키 지우기', danger: true, onClick: c => { ctx.store.remove('meta/gemini'); toast('키를 지웠어요'); c(); } } : { label: '취소' },
+        { label: '확인하고 저장', primary: true, onClick: async c => {
+          const k = key.value.trim(); if (!k) return toast('키를 붙여넣어 주세요');
+          msg.textContent = '키를 확인하는 중…';
+          try {
+            const list = await listImageModels(k);
+            if (!list.length) { msg.textContent = '이 키로 쓸 수 있는 이미지 모델이 없어요.'; return; }
+            if (!list.includes(pick)) { pick = list.find(m => /flash-image/.test(m)) || list[0]; }
+            await ctx.store.set('meta/gemini', { key: k, model: pick }); toast('저장했어요 (' + pick + ')'); c();
+          } catch (e) { msg.textContent = e.message; }
+        } }] });
+  }
+  async function aiTryOn() {
+    if (busy) return;
+    if (!ai || !ai.key) return aiSetup();
+    if (!layers.length) return toast('아래 옷장에서 입힐 옷을 먼저 눌러 주세요');
+    busy = true;
+    const close = modal({ body: h('div', { class: 'center ai-wait' }, capyEl(ctx.capyOf(ctx.uid, { face: 'wink' }), 'bob'), h('b', null, '옷 입히는 중…'), h('p', { class: 'dim' }, '보통 10~30초 걸려요. 창을 닫지 말고 기다려 주세요.')), actions: [] });
+    try {
+      const base = await getBlob(ctx.store, bases[model]);
+      const out = await tryOn({ key: ai.key, model: ai.model || MODELS[0][0], base, garments: layers.map(l => l.url) });
+      const im = await loadImg(out), sc = Math.min(1, 900 / Math.max(im.naturalWidth, im.naturalHeight)), c = h('canvas', { width: Math.round(im.naturalWidth * sc), height: Math.round(im.naturalHeight * sc) });
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      const url = jpeg(c, 0.82), note = h('input', { class: 'inp', placeholder: '한마디 (예: 내일 이거 어때?)', maxLength: 40 });
+      close();
+      modal({ title: 'AI가 입혀 본 모습', body: h('div', null, h('img', { class: 'photo-full', src: url, alt: 'AI가 만든 코디 사진' }), h('p', { class: 'dim' }, 'AI가 다시 그린 사진이라 얼굴이나 체형이 실제와 조금 다를 수 있어요.'), note),
+        actions: [{ label: '닫기' }, { label: '다시 만들기', onClick: c2 => { c2(); aiTryOn(); } },
+          { label: '룩북에 올리기', primary: true, onClick: async c2 => { c2(); try { const img = await putBlob(ctx.store, url); await ctx.store.push('wear/looks', { by: ctx.uid, model, img, note: note.value.trim(), ts: ctx.store.now(), ai: true }); toast('룩북에 올렸어요'); tab = 'looks'; layers = []; selId = null; draw(); } catch {} } }] });
+    } catch (e) { close(); modal({ title: 'AI 입혀보기 실패', body: h('p', null, e.message || String(e)), actions: [{ label: '닫기' }, { label: 'AI 설정', onClick: c2 => { c2(); aiSetup(); } }] }); }
+    finally { busy = false; }
+  }
 
   /* ----- 입혀보기 ----- */
   async function setBase() {
@@ -113,7 +158,9 @@ export function mount(el, ctx) {
     };
     const ids = Object.keys(items).sort().reverse();
     strip.replaceChildren(...ids.map(id => h('button', { class: 'thumb', onClick: () => addLayer(id) }, lazyImg(items[id].img))), h('button', { class: 'thumb plus', onClick: addItem }, '+'));
-    view.replaceChildren(...[who, stage, ctl, h('div', { class: 'strip-wrap' }, strip),
+    const aiRow = h('div', { class: 'ai-row' }, h('button', { class: 'btn ai', onClick: aiTryOn }, '✨ AI로 입혀보기'), h('button', { class: 'link', onClick: aiSetup }, ai && ai.key ? 'AI 설정' : 'AI 연결하기'),
+      h('small', { class: 'dim' }, '고른 옷을 AI가 사진에 입혀 줘요 (유료)'));
+    view.replaceChildren(...[who, stage, ctl, h('div', { class: 'strip-wrap' }, strip), aiRow,
       h('div', { class: 'row' }, note, h('button', { class: 'btn primary', onClick: save }, '보여주기')),
       model === ctx.uid && h('button', { class: 'link', onClick: setBase }, '전신 사진 바꾸기')].filter(Boolean));
     layers.forEach(l => lay.append(l.el)); drawCtl();
@@ -153,7 +200,7 @@ export function mount(el, ctx) {
         const stars = h('div', { class: 'stars' }, [1, 2, 3, 4, 5].map(n => h('button', { class: 'star', 'aria-label': n + '점', onClick: () => { s = n; stars.querySelectorAll('.yz').forEach(z => z.classList.toggle('on', Number(z.dataset.n) <= s)); } }, yz(n, n <= s))));
         const cm = h('input', { class: 'inp', placeholder: '한줄평', maxLength: 40, value: mine ? mine.c || '' : '' });
         return h('article', { class: 'look' }, lazyImg(l.img, 'look-img'),
-          h('div', { class: 'look-meta' }, h('b', null, `${ctx.nameOf(l.by)}의 코디`), l.model !== l.by && h('small', null, ` (모델: ${ctx.nameOf(l.model)})`), h('small', { class: 'dim' }, ' ' + hm(l.ts)),
+          h('div', { class: 'look-meta' }, h('b', null, `${ctx.nameOf(l.by)}의 코디`), l.ai && h('em', { class: 'kind k-ai' }, 'AI'), l.model !== l.by && h('small', null, ` (모델: ${ctx.nameOf(l.model)})`), h('small', { class: 'dim' }, ' ' + hm(l.ts)),
             l.by === ctx.uid && h('button', { class: 'x', 'aria-label': '삭제', onClick: () => ask('이 코디를 지울까요?', '지우기').then(y => { if (y) { ctx.store.remove('wear/looks/' + id); delBlob(ctx.store, l.img); } }) }, '×')),
           l.note && h('p', { class: 'note' }, '“' + l.note + '”'),
           Object.entries(rate).map(([u, r]) => h('p', { class: 'rated' }, h('b', null, ctx.nameOf(u)), ' ', [1, 2, 3, 4, 5].map(n => yz(n, n <= r.s)), r.c && ' ' + r.c)),
@@ -161,6 +208,7 @@ export function mount(el, ctx) {
       }));
   }
 
+  offs.push(ctx.store.on('meta/gemini', v => { const had = !!(ai && ai.key); ai = v; if (tab === 'fit' && had !== !!(v && v.key)) drawFit(); }));
   offs.push(ctx.store.on('wear/base', v => { bases = v || {}; if (tab === 'fit') drawFit(); }));
   offs.push(ctx.store.on('wear/items', v => { items = v || {}; if (tab !== 'looks') draw(); }));
   offs.push(ctx.store.on('wear/looks', v => { looks = v || {}; if (tab === 'looks') drawLooks(); }, { limit: 20 }));
