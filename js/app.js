@@ -34,7 +34,7 @@ const MENU = [
 ];
 
 const root = $('#app');
-const ctx = { uid: null, room: null, store: null, members: {}, presence: {}, order: [], idx: 0, dress: {}, partnerWhere: null };
+const ctx = { uid: null, room: null, store: null, members: {}, presence: {}, order: [], idx: 0, dress: {}, partnerWhere: null, battery: {} };
 Object.defineProperties(ctx, {
   me: { get() { return ctx.members[ctx.uid] || {}; } },
   partnerId: { get() { return ctx.order.find(u => u !== ctx.uid) || null; } },
@@ -45,6 +45,26 @@ ctx.nameOf = uid => (ctx.members[uid] || {}).name || '카피';
 ctx.capyOf = (uid, extra = {}) => { const m = ctx.members[uid] || {}, d = ctx.dress[uid] || {}; return { color: m.color, acc: m.acc, top: d.top, bottom: d.bottom, ...extra }; };
 const fullRoute = () => location.hash.slice(1) || 'home';
 const titleOf = r => { const [n, sub] = (r || '').split('-'); const g = n === 'game' && GAMES.find(x => x.id === sub); return g ? g.title : (MENU.find(x => x.id === n) || {}).title || '홈'; };
+
+/* ---------- 배터리 ---------- */
+// 각자 휴대폰의 배터리를 방에 올려 두고 홈 화면 캐릭터 옆에 보여 준다. 브라우저가 배터리 정보를 주지 않으면(아이폰 등) lv: -1 로 표시만 남긴다.
+function shareBattery() {
+  const put = v => ctx.store.set('battery/' + ctx.uid, { ...v, at: ctx.store.now() }).catch(() => {});
+  if (!navigator.getBattery) return put({ lv: -1 });
+  navigator.getBattery().then(b => {
+    const up = () => put({ lv: Math.round(b.level * 100), ch: !!b.charging });
+    up(); b.addEventListener('levelchange', up); b.addEventListener('chargingchange', up);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) up(); });
+  }).catch(() => put({ lv: -1 }));
+}
+function drawBatt(el) {
+  const uid = el.dataset.batt, b = ctx.battery[uid], known = b && b.lv >= 0, name = uid === ctx.uid ? '내 휴대폰' : ctx.nameOf(uid) + ' 휴대폰';
+  el.className = 'batt' + (!known ? ' none' : b.lv <= 20 && !b.ch ? ' low' : '') + (known && b.ch ? ' ch' : '') + (uid !== ctx.uid && !ctx.presence[uid] ? ' stale' : '');
+  el.title = !b ? name + ' 배터리: 아직 모름' : !known ? name + ': 이 기기는 배터리 정보를 알려 주지 않아요' : `${name} 배터리 ${b.lv}%${b.ch ? ' (충전 중)' : ''}`;
+  el.setAttribute('aria-label', el.title);
+  el.replaceChildren(h('span', { class: 'batt-body' }, h('i', { style: { height: (known ? Math.max(6, b.lv) : 0) + '%' } }), known && b.ch && h('em', null, '⚡')), h('b', null, known ? b.lv + '%' : '–'));
+}
+const battEl = uid => { const el = h('span', { 'data-batt': uid, role: 'img' }); drawBatt(el); return el; };
 
 /* ---------- 알림 ---------- */
 // 앱이 열려 있으면 화면 위 알림 띠로, 열어 둔 채 다른 앱을 보고 있으면(허용한 경우) 기기 알림으로도 알려 준다. 앱을 완전히 닫으면 오지 않는다.
@@ -151,10 +171,12 @@ function leave() { LS.del('room'); location.hash = ''; location.reload(); }
 
 function enter() {
   entered = true;
-  ctx.store.presence(ctx.uid);
+  ctx.store.presence(ctx.uid); shareBattery();
+  ctx.store.on('battery', v => { ctx.battery = v || {}; document.querySelectorAll('[data-batt]').forEach(drawBatt); });
   const enterAt = Date.now() - 3000; let seenWhere, firstDress = true;
   ctx.store.on('presence', p => {
     ctx.presence = p || {}; document.querySelectorAll('[data-online]').forEach(el => el.classList.toggle('on', !!ctx.presence[el.dataset.online]));
+    document.querySelectorAll('[data-batt]').forEach(drawBatt);
     const pid = ctx.partnerId, w = (pid && ctx.presence[pid] && ctx.presence[pid].where) || null;
     if (w === seenWhere) return;
     if (seenWhere !== undefined && w && w !== 'home' && w !== 'profile' && w !== fullRoute()) notify(`${josa(ctx.nameOf(pid), '가', '이')} 지금 '${titleOf(w)}'에 접속해 있어요`, '같이 가기', () => ctx.go(w));
@@ -250,12 +272,12 @@ function home() {
   const pid = ctx.partnerId;
   root.replaceChildren(h('div', { class: 'home' },
     h('section', { class: 'hero' },
-      h('div', { class: 'duo' },
+      h('div', { class: 'duo' }, battEl(ctx.uid),
         h('button', { class: 'me', onClick: () => ctx.go('profile') }, capyEl(ctx.capyOf(ctx.uid, { face: 'happy' }), 'bob'), h('b', null, ctx.me.name)),
         h('span', { class: 'heart beat' }, '♥'),
         pid ? h('div', { class: 'me' }, capyEl(ctx.capyOf(pid, { face: 'happy' }), 'bob late'), h('b', null, ctx.nameOf(pid), h('i', { class: 'online' + (ctx.presence[pid] ? ' on' : ''), 'data-online': pid })),
             h('small', { class: 'at' }, !ctx.presence[pid] ? '지금은 접속 안 함' : ctx.partnerWhere && ctx.partnerWhere !== 'home' && ctx.partnerWhere !== 'profile' ? `지금 '${titleOf(ctx.partnerWhere)}'` : '지금 홈 화면'))
-          : h('button', { class: 'me empty', onClick: invite }, h('span', { class: 'ghost-capy' }, '?'), h('b', null, '초대하기'))),
+          : h('button', { class: 'me empty', onClick: invite }, h('span', { class: 'ghost-capy' }, '?'), h('b', null, '초대하기')), pid && battEl(pid)),
       dday),
     today,
     h('nav', { class: 'menu' }, MENU.map((m, i) => h('button', { class: 'card' + (m.wide ? ' wide' : ''), style: { '--tint': m.tint, animationDelay: i * 50 + 'ms' }, onClick: () => ctx.go(m.id) },

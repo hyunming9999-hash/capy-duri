@@ -260,3 +260,13 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .dpad.big{gap:6px}.dpad.big .dp{width:64px;height:54px;border-radius:16px;font-size:20px}
 .park-tag .mic{display:inline;font-style:normal;margin-right:2px}.park-tag .mic:empty{display:none}
 @media (max-height:640px){.walk-hint{display:none}}
+
+/* 홈: 캐릭터 옆 휴대폰 배터리 */
+.duo{gap:8px}.batt{align-self:center;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:34px}
+.batt-body{position:relative;width:24px;height:44px;border:3px solid var(--brown-d);border-radius:7px;background:#fff;display:flex;align-items:flex-end;overflow:visible}
+.batt-body::before{content:'';position:absolute;left:50%;top:-8px;transform:translateX(-50%);width:10px;height:5px;border-radius:3px 3px 0 0;background:var(--brown-d)}
+.batt-body i{display:block;width:100%;background:#58C36A;border-radius:3px;transition:height .4s}
+.batt-body em{position:absolute;inset:0;display:grid;place-items:center;font-style:normal;font-size:15px;text-shadow:0 0 3px #fff}
+.batt b{font:13px var(--head);color:var(--brown-d)}
+.batt.low .batt-body{border-color:var(--red)}.batt.low .batt-body::before{background:var(--red)}.batt.low .batt-body i{background:var(--red)}.batt.low b{color:var(--red)}
+.batt.ch .batt-body i{background:#F0B429}.batt.none{opacity:.45}.batt.none .batt-body{border-style:dashed}.batt.stale{opacity:.5}
