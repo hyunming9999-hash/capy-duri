@@ -226,7 +226,7 @@ canvas.yuzu-game{max-width:380px;margin:0 auto 12px}
 /* 산책 */
 .card.wide{grid-column:1/-1;flex-direction:row;justify-content:center;gap:4px 12px;flex-wrap:wrap}.card.wide .capy{width:64px}.card.wide b{margin-top:0}.card.wide small{flex-basis:100%}
 .park-wrap{position:relative;border-radius:var(--r);border:3px solid #6FAF55;overflow:hidden;background:#9BD46F;line-height:0}
-canvas.park{display:block;width:100%;height:auto;image-rendering:pixelated;image-rendering:crisp-edges}
+canvas.park{display:block;width:100%;height:auto}
 .park-tags{position:absolute;inset:0;pointer-events:none;line-height:1.2}
 .park-tag{position:absolute;transform:translate(-50%,-100%);font:11px var(--head);color:#fff;background:rgba(0,0,0,.5);padding:0 7px;border-radius:8px;white-space:nowrap}.park-tag.me{background:var(--brown)}
 .park-tag .mic{display:none;font-style:normal;margin-right:2px}.park-tag.talk{background:#2E8B3D}.park-tag.talk .mic{display:inline}
@@ -235,9 +235,9 @@ canvas.park{display:block;width:100%;height:auto;image-rendering:pixelated;image
 
 /* 영화관: 스크롤 없는 한 장 화면 (영상 → 객석 → 입력칸), 키보드가 올라오면 보이는 높이에 맞춰 줄어든다 */
 html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-behavior:none}
-.page-watch{position:fixed;left:50%;top:var(--vvt,0px);transform:translateX(-50%);width:min(100vw,760px);height:var(--vvh,100dvh);margin:0!important;padding:env(safe-area-inset-top) 10px calc(env(safe-area-inset-bottom) + 8px);display:flex;flex-direction:column;background:var(--bg)}
-.page-watch .bar{position:static;flex:none;padding:6px 0;background:none}.page-watch .back{width:40px;height:40px}.page-watch .bar h2{font-size:19px}
-.page-watch .page-body{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
+.page-watch,.page-walk{position:fixed;left:50%;top:var(--vvt,0px);transform:translateX(-50%);width:min(100vw,760px);height:var(--vvh,100dvh);margin:0!important;padding:env(safe-area-inset-top) 10px calc(env(safe-area-inset-bottom) + 8px);display:flex;flex-direction:column;background:var(--bg)}
+.page-watch .bar,.page-walk .bar{position:static;flex:none;padding:6px 0;background:none}.page-watch .back,.page-walk .back{width:40px;height:40px}.page-watch .bar h2,.page-walk .bar h2{font-size:19px}
+.page-watch .page-body,.page-walk .page-body{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
 .page-watch .theater{flex:1;min-height:0;display:flex;flex-direction:column}
 .page-watch .curtain{flex:none;padding:8px 8px 6px}
 .page-watch .screen{width:min(100%,calc(var(--vvh,100vh) * .46 * 16 / 9));margin:0 auto}
@@ -250,3 +250,13 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .hall .dpad{position:absolute;left:8px;bottom:8px;z-index:2000;gap:4px;opacity:.9}.hall .dp{width:42px;height:42px;border-radius:12px;background:rgba(255,253,247,.92);font-size:15px}
 .hall .emos{position:absolute;right:8px;bottom:8px;z-index:2000;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:4px}.hall .emo{width:40px;height:40px;font-size:18px;background:rgba(255,253,247,.92)}
 @media (hover:hover) and (pointer:fine){.hall .dpad{opacity:.55}.hall .dpad:hover{opacity:.95}}
+
+/* 산책: 한 장 화면, 방향키는 맨 아래 가운데 */
+.page-walk .park-wrap{flex:none;width:min(100%,calc((var(--vvh,100vh) - 330px) * 4 / 3));margin:0 auto}
+.page-walk .voice-bar{flex:none;margin:0;padding:8px 10px}.walk-hint{flex:1;min-height:0;overflow:hidden;margin:0;font-size:12px}
+.seg{display:flex;gap:4px;margin-top:6px;background:#F6E6C8;padding:4px;border-radius:999px}
+.seg-b{flex:1;min-height:40px;border:0;border-radius:999px;background:none;font:15px var(--head);color:var(--ink2);white-space:nowrap}.seg-b.on{background:var(--yuzu);color:var(--ink);box-shadow:0 2px 0 var(--yuzu-d)}.seg-b[disabled]{opacity:.5}
+.pad-dock{flex:none;display:flex;justify-content:center;padding:2px 0 4px}
+.dpad.big{gap:6px}.dpad.big .dp{width:64px;height:54px;border-radius:16px;font-size:20px}
+.park-tag .mic{display:inline;font-style:normal;margin-right:2px}.park-tag .mic:empty{display:none}
+@media (max-height:640px){.walk-hint{display:none}}
