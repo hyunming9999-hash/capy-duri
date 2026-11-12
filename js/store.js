@@ -50,6 +50,8 @@ class FireStore {
     });
   }
   setWhere(w) { this.pwhere = w; if (this.puid && this.connected) fb.set(this.r('presence/' + this.puid + '/where'), w).catch(() => {}); }
+  // 연결이 끊기면 서버가 알아서 지워 주는 값 (산책 위치, 음성 대기 표시 등)
+  ephemeral(p, v) { const r = this.r(p); fb.onDisconnect(r).remove().catch(() => {}); return fb.set(r, v).catch(e => { onErr(e); throw e; }); }
 }
 
 // 연습용: 같은 브라우저의 탭끼리만 공유
@@ -88,6 +90,7 @@ class MockStore {
   onConn(f) { f(true); return () => {}; }
   presence(uid) { this.puid = uid; this._apply('presence/' + uid, { at: Date.now(), where: this.pwhere || 'home' }); }
   setWhere(w) { this.pwhere = w; if (this.puid) this._apply('presence/' + this.puid + '/where', w); }
+  ephemeral(p, v) { this._apply(p, v); return Promise.resolve(); }
 }
 
 export function openStore(room) { return isMock ? new MockStore(room) : new FireStore(room); }

@@ -1,6 +1,6 @@
 // 차례대로 두는 게임 3종: 오목, 유자 사목, 짝 맞추기
 import { h, toast, ask } from './ui.js';
-import { capy, yuzuSvg } from './capy.js';
+import { capy, capyEl, yuzuSvg } from './capy.js';
 
 const stone = who => who === 0 ? capy({ color: 'brown', face: 'smile', head: true }) : yuzuSvg;
 const who = (ctx, i) => ctx.order[i] ? ctx.nameOf(ctx.order[i]) : '상대';
@@ -20,14 +20,17 @@ function lineWin(b, w, hgt, i, p, need) {
   return false;
 }
 function frame(el, ctx, path, fresh, drawBoard, legend) {
-  const status = h('div', { class: 'g-status' }), board = h('div', { class: 'g-board' });
+  const status = h('div', { class: 'g-status' }), board = h('div', { class: 'g-board' }), players = h('div', { class: 'g-players' });
   const solo = () => ctx.order.length < 2;
   let s = null;
   const reset = () => ctx.store.set(path, fresh(s ? 1 - (s.first || 0) : 0));
-  el.append(status, board, h('div', { class: 'g-foot' }, h('span', { class: 'dim' }, legend(ctx)),
+  el.append(players, status, board, h('div', { class: 'g-foot' }, h('span', { class: 'dim' }, legend(ctx)),
     h('button', { class: 'btn', onClick: () => (s && s.win < 0 && s.n > 0 ? ask('지금 판을 버리고 새로 할까요?', '새 게임') : Promise.resolve(true)).then(y => y && reset()) }, '새 게임')));
   const off = ctx.store.on(path, v => {
     if (!v) { s = s && !s.n && s.win < 0 ? s : fresh(0); ctx.store.tx(path, c => c || s); } else s = v;
+    // 옷 입은 카피바라로 누가 두는 차례인지 보여 준다
+    players.replaceChildren(...ctx.order.slice(0, 2).map((u, i) => h('div', { class: 'gp' + (s.win < 0 && s.turn === i ? ' on' : '') + (s.win === i ? ' win' : '') },
+      capyEl(ctx.capyOf(u, { face: s.win === i ? 'love' : s.win === 1 - i ? 'sad' : s.turn === i ? 'happy' : 'smile' })), h('b', null, ctx.nameOf(u)))));
     status.textContent = statusLine(ctx, s, solo());
     status.className = 'g-status' + (s.win >= 0 ? ' end' : (solo() || s.turn === ctx.idx) ? ' my' : '');
     drawBoard(board, s, solo());

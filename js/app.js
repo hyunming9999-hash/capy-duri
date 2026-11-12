@@ -9,6 +9,7 @@ import * as chat from './chat.js';
 import * as watch from './watch.js';
 import * as where from './where.js';
 import * as dress from './dress.js';
+import * as walk from './walk.js';
 import { GAMES } from './game.js';
 
 // 연습 모드(?mock=이름)에서는 한 브라우저에서 두 사람 흉내를 낼 수 있게 저장 칸을 나눈다
@@ -29,6 +30,7 @@ const MENU = [
   { id: 'game', mod: game, title: '오늘 무슨 게임하지?', sub: '카피바라 게임 5종', face: 'happy', acc: 'none', tint: '#C9E4F7' },
   { id: 'chat', mod: chat, title: '오늘 얘기나 하지?', sub: '톡 · 사진 · 스티커', face: 'love', acc: 'flower', tint: '#F6D3EE' },
   { id: 'watch', mod: watch, title: '오늘 뭐 보실?', sub: '카피바라 영화관', face: 'sleepy', acc: 'towel', tint: '#D9D2F5' },
+  { id: 'walk', mod: walk, title: '카피바라 산책시키실?', sub: '도트 공원 산책 · 실시간 음성 대화', face: 'happy', acc: 'leaf', tint: '#C8EBA8', wide: true },
 ];
 
 const root = $('#app');
@@ -256,7 +258,7 @@ function home() {
           : h('button', { class: 'me empty', onClick: invite }, h('span', { class: 'ghost-capy' }, '?'), h('b', null, '초대하기'))),
       dday),
     today,
-    h('nav', { class: 'menu' }, MENU.map((m, i) => h('button', { class: 'card', style: { '--tint': m.tint, animationDelay: i * 50 + 'ms' }, onClick: () => ctx.go(m.id) },
+    h('nav', { class: 'menu' }, MENU.map((m, i) => h('button', { class: 'card' + (m.wide ? ' wide' : ''), style: { '--tint': m.tint, animationDelay: i * 50 + 'ms' }, onClick: () => ctx.go(m.id) },
       capyEl({ color: i % 2 ? ctx.capyOf(pid || ctx.uid).color : ctx.me.color, acc: m.acc, face: m.face, head: true }), h('b', null, m.title), h('small', null, m.sub), m.id === 'chat' && badge,
       pid && ctx.presence[pid] && (ctx.partnerWhere || '').split('-')[0] === m.id && h('span', { class: 'here-mark', title: ctx.nameOf(pid) + ' 접속 중' }, capyEl(ctx.capyOf(pid, { head: true }), 'mini'), '여기 있어요')))),
     h('footer', { class: 'foot' },

@@ -219,3 +219,16 @@ canvas.yuzu-game{max-width:380px;margin:0 auto 12px}
 .dress-item.on{border-color:var(--brown);background:#FFE9B8;box-shadow:0 3px 0 var(--brown)}
 .game-card.ext{text-decoration:none;color:inherit;border-style:dashed}.ext-ic{flex:none;width:64px;height:56px;display:grid;place-items:center;font-size:34px}
 @media (min-width:520px){.dress-grid{grid-template-columns:repeat(5,1fr)}}
+
+/* 게임 속 옷 입은 카피바라 */
+.g-players{display:flex;justify-content:center;gap:26px;margin-bottom:6px}.gp{display:flex;flex-direction:column;align-items:center;padding:2px 12px 4px;border:2px solid transparent;border-radius:18px;opacity:.6}
+.gp .capy{width:58px}.gp b{font-size:14px}.gp.on{opacity:1;border-color:var(--yuzu-d);background:#FFF0B8}.gp.win{opacity:1;border-color:#F3A4B4;background:#FFE3EA}
+/* 산책 */
+.card.wide{grid-column:1/-1;flex-direction:row;justify-content:center;gap:4px 12px;flex-wrap:wrap}.card.wide .capy{width:64px}.card.wide b{margin-top:0}.card.wide small{flex-basis:100%}
+.park-wrap{position:relative;border-radius:var(--r);border:3px solid #6FAF55;overflow:hidden;background:#9BD46F;line-height:0}
+canvas.park{display:block;width:100%;height:auto;image-rendering:pixelated;image-rendering:crisp-edges}
+.park-tags{position:absolute;inset:0;pointer-events:none;line-height:1.2}
+.park-tag{position:absolute;transform:translate(-50%,-100%);font:11px var(--head);color:#fff;background:rgba(0,0,0,.5);padding:0 7px;border-radius:8px;white-space:nowrap}.park-tag.me{background:var(--brown)}
+.park-tag .mic{display:none;font-style:normal;margin-right:2px}.park-tag.talk{background:#2E8B3D}.park-tag.talk .mic{display:inline}
+.voice-bar{margin:10px 0;padding:10px 12px;border:2px solid var(--line);border-radius:var(--r);background:var(--card)}.voice-bar .row{margin-top:8px}.voice-bar .btn{flex:1}
+.v-status{display:block;font:16px var(--head)}.v-status.connected{color:#2E8B3D}.v-status.failed{color:var(--red)}.v-status.connecting,.v-status.waiting{color:var(--yuzu-d)}
