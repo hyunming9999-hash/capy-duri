@@ -192,3 +192,30 @@ canvas.yuzu-game{max-width:380px;margin:0 auto 12px}
 .place-list .grow small{display:block}.eat-form{display:flex;flex-direction:column;gap:6px}
 @media (min-height:900px){.watch-chat{height:300px}}
 .hall{height:236px}
+
+/* 알림 띠 · 부르기 · 접속 위치 */
+.banner{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 10px);transform:translateX(-50%);z-index:95;display:flex;align-items:center;gap:8px;width:min(94vw,520px);padding:10px 10px 10px 16px;border-radius:20px;background:var(--ink);color:#fff;font-size:15px;box-shadow:0 8px 24px rgba(74,50,34,.35);animation:drop-in .25s}
+.banner .x{background:rgba(255,255,255,.18);color:#fff}@keyframes drop-in{from{opacity:0;transform:translate(-50%,-20px)}}
+.call{flex:none;min-height:38px;padding:4px 12px;border:2px solid var(--line);border-radius:999px;background:var(--card);font:14px var(--head)}
+.who.here .capy{outline:3px solid #4CC35B;outline-offset:1px;border-radius:14px}
+.me .at{font-size:12px;color:var(--brown-d)}
+.here-mark{position:absolute;left:8px;top:8px;display:flex;align-items:center;gap:3px;padding:2px 8px 2px 3px;border-radius:999px;background:#fff;font:11px var(--head);color:#2E8B3D;box-shadow:0 2px 0 rgba(0,0,0,.1)}.here-mark .capy.mini{width:22px}
+/* 오늘 어디야? */
+.map{position:relative;z-index:0;height:46dvh;min-height:280px;border-radius:var(--r);border:2px solid var(--line);overflow:hidden;background:#E8E2D4}.map-wait{position:absolute;inset:0;display:grid;place-items:center;margin:0;color:var(--ink2)}
+.pin{background:none;border:0}.pin-in{display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 3px 3px rgba(0,0,0,.35))}
+.pin-face{display:block;width:44px;padding:3px;background:#fff;border:3px solid #E8567A;border-radius:50% 50% 50% 6px;transform:rotate(-45deg)}.pin-in.me .pin-face{border-color:var(--yuzu-d)}.pin-face svg{display:block;width:100%;transform:rotate(45deg)}
+.pin-in b{margin-top:5px;font:11px var(--head);background:var(--ink);color:#fff;padding:0 7px;border-radius:8px;white-space:nowrap}
+.loc-info{margin:10px 0}.between{font-family:var(--head);font-size:18px;text-align:center;margin:0 0 6px}.between b{color:#C93B5A;font-size:22px}
+.loc-row{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}.loc-row .grow{min-width:120px}
+.loc-acts{margin:0 0 4px}.loc-acts .btn{flex:1}
+.ping-list{list-style:none;margin:0;padding:0}.ping-list li{padding:8px 4px;border-bottom:1px dashed var(--line);cursor:pointer}
+/* 옷입히기 */
+.dress-stage{text-align:center;background:linear-gradient(#FFE9D2,#FFF6E8);border:2px solid #F3CFA4;border-radius:26px;padding:10px 10px 8px}.dress-stage .chips{justify-content:center;margin-top:0}
+.dress-capy{width:min(62vw,250px);margin:0 auto}.dress-capy svg{display:block;width:100%}.dress-name{margin:2px 0}
+.dress-ctl{display:flex;gap:6px;margin:10px 0}.dress-ctl .btn{flex:1;padding:8px 6px}
+.dress-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px}
+.dress-item{border:2px solid var(--line);border-radius:16px;background:var(--card);padding:4px 2px 5px;display:flex;flex-direction:column;align-items:center;min-width:0}
+.dress-item span{display:block;width:100%}.dress-item svg{display:block;width:100%}.dress-item small{font-size:11px;line-height:1.2;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.dress-item.on{border-color:var(--brown);background:#FFE9B8;box-shadow:0 3px 0 var(--brown)}
+.game-card.ext{text-decoration:none;color:inherit;border-style:dashed}.ext-ic{flex:none;width:64px;height:56px;display:grid;place-items:center;font-size:34px}
+@media (min-width:520px){.dress-grid{grid-template-columns:repeat(5,1fr)}}

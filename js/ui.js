@@ -20,6 +20,16 @@ export function h(tag, attrs, ...kids) {
   return el;
 }
 
+// 화면 위쪽에 잠깐 뜨는 알림 띠 (버튼을 누르면 해당 화면으로 이동)
+export function banner(text, label, onGo) {
+  document.querySelectorAll('.banner').forEach(b => b.remove());
+  const el = h('div', { class: 'banner', role: 'status' }, h('span', { class: 'grow' }, text),
+    label && h('button', { class: 'btn sm primary', onClick: () => { el.remove(); onGo && onGo(); } }, label),
+    h('button', { class: 'x', 'aria-label': '닫기', onClick: () => el.remove() }, '×'));
+  document.body.append(el); setTimeout(() => el.remove(), 10000);
+  return el;
+}
+
 let toastT;
 export function toast(msg, ms = 2200) {
   let t = $('#toast');

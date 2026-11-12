@@ -40,13 +40,16 @@ class FireStore {
   tx(p, fn) { return fb.runTransaction(this.r(p), fn).catch(e => { onErr(e); throw e; }); }
   now() { return Date.now() + this.offset; }
   onConn(f) { this.connCbs.add(f); f(this.connected); return () => this.connCbs.delete(f); }
+  // 접속 표시: 연결돼 있는 동안 {at, where(지금 보고 있는 화면)}을 올려 두고, 끊기면 서버가 지운다
   presence(uid) {
+    this.puid = uid;
     fb.onValue(fb.ref(this.db, '.info/connected'), s => {
       if (!s.val()) return;
       const r = this.r('presence/' + uid);
-      fb.onDisconnect(r).remove(); fb.set(r, fb.serverTimestamp()).catch(() => {});
+      fb.onDisconnect(r).remove(); fb.set(r, { at: fb.serverTimestamp(), where: this.pwhere || 'home' }).catch(() => {});
     });
   }
+  setWhere(w) { this.pwhere = w; if (this.puid && this.connected) fb.set(this.r('presence/' + this.puid + '/where'), w).catch(() => {}); }
 }
 
 // 연습용: 같은 브라우저의 탭끼리만 공유
@@ -83,7 +86,8 @@ class MockStore {
   async tx(p, fn) { const cur = await this.get(p); const nv = fn(cur); if (nv !== undefined) this._apply(p, nv); }
   now() { return Date.now(); }
   onConn(f) { f(true); return () => {}; }
-  presence(uid) { this._apply('presence/' + uid, Date.now()); }
+  presence(uid) { this.puid = uid; this._apply('presence/' + uid, { at: Date.now(), where: this.pwhere || 'home' }); }
+  setWhere(w) { this.pwhere = w; if (this.puid) this._apply('presence/' + this.puid + '/where', w); }
 }
 
 export function openStore(room) { return isMock ? new MockStore(room) : new FireStore(room); }

@@ -1,4 +1,5 @@
 // 2등신 카피바라 캐릭터 (직접 그린 SVG)
+import { wearSvg } from './clothes.js';
 export const COLORS = {
   brown: { name: '밤색', body: '#BC8C60', dark: '#85593A', light: '#E6C7A1' },
   cream: { name: '크림', body: '#E3C79C', dark: '#AC8656', light: '#F7EBD3' },
@@ -45,17 +46,18 @@ function face(f, c) {
     <ellipse cx="18.5" cy="54" rx="6" ry="4" fill="#FF8F8F" opacity=".55"/><ellipse cx="101.5" cy="54" rx="6" ry="4" fill="#FF8F8F" opacity=".55"/>${extra}`;
 }
 
-// opts: {color, acc, face, view:'front'|'back', head:true(머리만)}
+// opts: {color, acc, face, view:'front'|'back', head:true(머리만), top/bottom: 옷 id}
 export function capy(o = {}) {
   const c = COLORS[o.color] || COLORS.brown;
   const back = o.view === 'back';
   const ears = `<ellipse cx="22" cy="21" rx="8" ry="7.5" fill="${c.dark}"/><ellipse cx="98" cy="21" rx="8" ry="7.5" fill="${c.dark}"/>${back ? '' : `<ellipse cx="22.5" cy="22" rx="3.8" ry="3.4" fill="${c.light}"/><ellipse cx="97.5" cy="22" rx="3.8" ry="3.4" fill="${c.light}"/>`}`;
   const head = `${ears}<rect x="9" y="15" width="102" height="69" rx="25" fill="${c.body}"/>${back ? `<path d="M40 30 q20 -7 40 0" fill="none" stroke="${c.dark}" stroke-width="2" opacity=".35" stroke-linecap="round"/>` : face(o.face, c)}${acc(o.acc)}`;
   if (o.head) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 112">${head}</svg>`;
+  const cl = o.top || o.bottom ? wearSvg(o.top, o.bottom) : { under: '', top: '', over: '' };
   const body = `<ellipse cx="45" cy="128" rx="12" ry="6.5" fill="${c.dark}"/><ellipse cx="75" cy="128" rx="12" ry="6.5" fill="${c.dark}"/>
     <rect x="31" y="76" width="58" height="50" rx="24" fill="${c.body}"/>
-    <ellipse cx="29" cy="99" rx="8" ry="12" fill="${c.body}" transform="rotate(14 29 99)"/><ellipse cx="91" cy="99" rx="8" ry="12" fill="${c.body}" transform="rotate(-14 91 99)"/>
-    ${back ? `<ellipse cx="60" cy="118" rx="6" ry="5" fill="${c.dark}"/>` : `<ellipse cx="60" cy="105" rx="17" ry="15" fill="${c.light}"/>`}`;
+    ${back ? `<ellipse cx="60" cy="118" rx="6" ry="5" fill="${c.dark}"/>` : `<ellipse cx="60" cy="105" rx="17" ry="15" fill="${c.light}"/>`}${cl.under}
+    <ellipse cx="29" cy="99" rx="8" ry="12" fill="${c.body}" transform="rotate(14 29 99)"/><ellipse cx="91" cy="99" rx="8" ry="12" fill="${c.body}" transform="rotate(-14 91 99)"/>${cl.top}${cl.over}`;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158">${body}${head}</svg>`;
 }
 

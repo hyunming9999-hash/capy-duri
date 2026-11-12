@@ -1,4 +1,4 @@
-import { $, h, toast, modal, ask, ymd, dayDiff, niceDate } from './ui.js';
+import { $, h, toast, modal, ask, ymd, dayDiff, niceDate, banner, josa } from './ui.js';
 import { openStore, isMock, setErrorHandler } from './store.js';
 import { capyEl, COLORS, ACCS } from './capy.js';
 import * as day from './day.js';
@@ -7,6 +7,9 @@ import * as eat from './eat.js';
 import * as game from './game.js';
 import * as chat from './chat.js';
 import * as watch from './watch.js';
+import * as where from './where.js';
+import * as dress from './dress.js';
+import { GAMES } from './game.js';
 
 // 연습 모드(?mock=이름)에서는 한 브라우저에서 두 사람 흉내를 낼 수 있게 저장 칸을 나눈다
 const NS = 'capy.' + (isMock ? (new URLSearchParams(location.search).get('mock') || '') + '.' : '');
@@ -18,6 +21,8 @@ const LS = {
 const rnd = n => { const a = new Uint8Array(n); crypto.getRandomValues(a); return [...a].map(x => 'abcdefghjkmnpqrstuvwxyz23456789'[x % 31]).join(''); };
 
 const MENU = [
+  { id: 'where', mod: where, title: '오늘 어디야?', sub: '위치 핑 찍기', face: 'wow', acc: 'leaf', tint: '#BFE8E0' },
+  { id: 'dress', mod: dress, title: '옷입히기 놀이하실?', sub: '상의 50 · 하의 50', face: 'happy', acc: 'ribbon', tint: '#FFDDB8' },
   { id: 'day', mod: day, title: '오늘 무슨 날이지?', sub: '일정 · 예약 · 일기', face: 'smile', acc: 'leaf', tint: '#FFE3A6' },
   { id: 'wear', mod: wear, title: '오늘 뭐 입지?', sub: '서로 옷 봐주기', face: 'wink', acc: 'ribbon', tint: '#FFD0D6' },
   { id: 'eat', mod: eat, title: '오늘 뭐 먹지?', sub: '맛집 찾기 · 룰렛', face: 'wow', acc: 'yuzu', tint: '#CDEBB5' },
@@ -27,7 +32,7 @@ const MENU = [
 ];
 
 const root = $('#app');
-const ctx = { uid: null, room: null, store: null, members: {}, presence: {}, order: [], idx: 0 };
+const ctx = { uid: null, room: null, store: null, members: {}, presence: {}, order: [], idx: 0, dress: {}, partnerWhere: null };
 Object.defineProperties(ctx, {
   me: { get() { return ctx.members[ctx.uid] || {}; } },
   partnerId: { get() { return ctx.order.find(u => u !== ctx.uid) || null; } },
@@ -35,7 +40,24 @@ Object.defineProperties(ctx, {
 });
 ctx.go = r => { location.hash = r; };
 ctx.nameOf = uid => (ctx.members[uid] || {}).name || '카피';
-ctx.capyOf = (uid, extra = {}) => { const m = ctx.members[uid] || {}; return { color: m.color, acc: m.acc, ...extra }; };
+ctx.capyOf = (uid, extra = {}) => { const m = ctx.members[uid] || {}, d = ctx.dress[uid] || {}; return { color: m.color, acc: m.acc, top: d.top, bottom: d.bottom, ...extra }; };
+const fullRoute = () => location.hash.slice(1) || 'home';
+const titleOf = r => { const [n, sub] = (r || '').split('-'); const g = n === 'game' && GAMES.find(x => x.id === sub); return g ? g.title : (MENU.find(x => x.id === n) || {}).title || '홈'; };
+
+/* ---------- 알림 ---------- */
+// 앱이 열려 있으면 화면 위 알림 띠로, 열어 둔 채 다른 앱을 보고 있으면(허용한 경우) 기기 알림으로도 알려 준다. 앱을 완전히 닫으면 오지 않는다.
+function askNotify() { try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {}); } catch {} }
+function notify(text, label, go) {
+  banner(text, label, go);
+  try { if (document.hidden && 'Notification' in window && Notification.permission === 'granted' && navigator.serviceWorker) navigator.serviceWorker.ready.then(r => r.showNotification('카피두리', { body: text, icon: 'icons/icon-192.png', tag: 'capy', renotify: true })).catch(() => {}); } catch {}
+}
+// 상대를 지금 화면(또는 where)으로 부른다. 10분 안에 상대가 앱을 열면 알림이 뜬다.
+ctx.call = (where, msg) => {
+  const pid = ctx.partnerId; if (!pid) return toast('아직 상대가 들어오지 않았어요');
+  askNotify();
+  ctx.store.set('invite', { from: ctx.uid, to: pid, where: where || fullRoute(), msg: msg || '', ts: ctx.store.now() }).catch(() => {});
+  toast(ctx.presence[pid] ? `${josa(ctx.nameOf(pid), '를', '을')} 불렀어요` : `${josa(ctx.nameOf(pid), '는', '은')} 지금 접속해 있지 않아요. 10분 안에 들어오면 알림이 떠요`, 3200);
+};
 
 let cleanup = null, entered = false, rulesShown = false;
 
@@ -128,7 +150,31 @@ function leave() { LS.del('room'); location.hash = ''; location.reload(); }
 function enter() {
   entered = true;
   ctx.store.presence(ctx.uid);
-  ctx.store.on('presence', p => { ctx.presence = p || {}; document.querySelectorAll('[data-online]').forEach(el => el.classList.toggle('on', !!ctx.presence[el.dataset.online])); });
+  const enterAt = Date.now() - 3000; let seenWhere, firstDress = true;
+  ctx.store.on('presence', p => {
+    ctx.presence = p || {}; document.querySelectorAll('[data-online]').forEach(el => el.classList.toggle('on', !!ctx.presence[el.dataset.online]));
+    const pid = ctx.partnerId, w = (pid && ctx.presence[pid] && ctx.presence[pid].where) || null;
+    if (w === seenWhere) return;
+    if (seenWhere !== undefined && w && w !== 'home' && w !== 'profile' && w !== fullRoute()) notify(`${josa(ctx.nameOf(pid), '가', '이')} 지금 '${titleOf(w)}'에 접속해 있어요`, '같이 가기', () => ctx.go(w));
+    seenWhere = w; ctx.partnerWhere = w;
+    if (curRoute() === 'home') render(); else document.querySelectorAll('.who').forEach(el => el.classList.toggle('here', !!w && w === fullRoute()));
+  });
+  ctx.store.on('invite', v => {
+    if (!v || v.to !== ctx.uid) return;
+    if (v.ts <= Number(LS.get('inv') || 0) || ctx.store.now() - v.ts > 600000) return;
+    LS.set('inv', v.ts);
+    notify(v.msg || `${josa(ctx.nameOf(v.from), '가', '이')} '${titleOf(v.where)}'에서 불러요!`, v.where === fullRoute() ? null : '가기', () => ctx.go(v.where));
+  });
+  ctx.store.on('loc/pings', v => {
+    const id = Object.keys(v || {}).sort().pop(), p = id && v[id];
+    if (!p || p.by === ctx.uid || p.ts < enterAt || id === LS.get('ping')) return; LS.set('ping', id);
+    if (curRoute() !== 'where') notify(`${josa(ctx.nameOf(p.by), '가', '이')} 위치 핑을 찍었어요${p.msg ? ': “' + p.msg + '”' : ''}`, '보기', () => ctx.go('where'));
+  }, { limit: 1 });
+  ctx.store.on('dress', v => {
+    const before = ctx.dress[ctx.uid] || {}, now = (v || {})[ctx.uid] || {}; ctx.dress = v || {};
+    if (!firstDress && now.by && now.by !== ctx.uid && now.ts !== before.ts && curRoute() !== 'dress') notify(`${josa(ctx.nameOf(now.by), '가', '이')} 내 카피바라에게 옷을 입혀 줬어요`, '보기', () => ctx.go('dress'));
+    firstDress = false; if (curRoute() === 'home') render();
+  });
   window.addEventListener('hashchange', render);
   if (!location.hash || location.hash.startsWith('#join')) location.hash = 'home'; else render();
 }
@@ -139,14 +185,15 @@ function render() {
   if (!entered) return;
   if (cleanup) { try { cleanup(); } catch (e) { console.error(e); } cleanup = null; }
   const [name, sub] = (location.hash.slice(1) || 'home').split('-');
-  window.scrollTo(0, 0);
+  window.scrollTo(0, 0); ctx.store.setWhere(fullRoute());
   if (name === 'profile') return profile(false);
   const item = MENU.find(x => x.id === name);
   if (!item) return home();
   const body = h('div', { class: 'page-body' });
   const title = h('h2', null, item.title);
   root.replaceChildren(h('div', { class: 'page page-' + name },
-    h('header', { class: 'bar' }, h('button', { class: 'back', 'aria-label': '뒤로', onClick: () => ctx.go(sub ? name : 'home') }, '‹'), title, partnerBadge()), body));
+    h('header', { class: 'bar' }, h('button', { class: 'back', 'aria-label': '뒤로', onClick: () => ctx.go(sub ? name : 'home') }, '‹'), title,
+      ctx.partnerId && h('button', { class: 'call', title: '상대를 이 화면으로 부르기', onClick: () => ctx.call() }, '📣 부르기'), partnerBadge()), body));
   ctx.setTitle = t => { title.textContent = t; };
   cleanup = item.mod.mount(body, ctx, sub) || null;
 }
@@ -154,7 +201,7 @@ function render() {
 function partnerBadge() {
   const p = ctx.partnerId;
   if (!p) return h('span', { class: 'who' });
-  return h('span', { class: 'who', title: ctx.nameOf(p) }, capyEl(ctx.capyOf(p, { head: true }), 'mini'), h('i', { class: 'online' + (ctx.presence[p] ? ' on' : ''), 'data-online': p }));
+  return h('span', { class: 'who' + (ctx.partnerWhere && ctx.partnerWhere === fullRoute() ? ' here' : ''), title: ctx.nameOf(p) }, capyEl(ctx.capyOf(p, { head: true }), 'mini'), h('i', { class: 'online' + (ctx.presence[p] ? ' on' : ''), 'data-online': p }));
 }
 
 /* ---------- 홈 ---------- */
@@ -204,14 +251,17 @@ function home() {
       h('div', { class: 'duo' },
         h('button', { class: 'me', onClick: () => ctx.go('profile') }, capyEl(ctx.capyOf(ctx.uid, { face: 'happy' }), 'bob'), h('b', null, ctx.me.name)),
         h('span', { class: 'heart beat' }, '♥'),
-        pid ? h('div', { class: 'me' }, capyEl(ctx.capyOf(pid, { face: 'happy' }), 'bob late'), h('b', null, ctx.nameOf(pid), h('i', { class: 'online' + (ctx.presence[pid] ? ' on' : ''), 'data-online': pid })))
+        pid ? h('div', { class: 'me' }, capyEl(ctx.capyOf(pid, { face: 'happy' }), 'bob late'), h('b', null, ctx.nameOf(pid), h('i', { class: 'online' + (ctx.presence[pid] ? ' on' : ''), 'data-online': pid })),
+            h('small', { class: 'at' }, !ctx.presence[pid] ? '지금은 접속 안 함' : ctx.partnerWhere && ctx.partnerWhere !== 'home' && ctx.partnerWhere !== 'profile' ? `지금 '${titleOf(ctx.partnerWhere)}'` : '지금 홈 화면'))
           : h('button', { class: 'me empty', onClick: invite }, h('span', { class: 'ghost-capy' }, '?'), h('b', null, '초대하기'))),
       dday),
     today,
     h('nav', { class: 'menu' }, MENU.map((m, i) => h('button', { class: 'card', style: { '--tint': m.tint, animationDelay: i * 50 + 'ms' }, onClick: () => ctx.go(m.id) },
-      capyEl({ color: i % 2 ? ctx.capyOf(pid || ctx.uid).color : ctx.me.color, acc: m.acc, face: m.face, head: true }), h('b', null, m.title), h('small', null, m.sub), m.id === 'chat' && badge))),
+      capyEl({ color: i % 2 ? ctx.capyOf(pid || ctx.uid).color : ctx.me.color, acc: m.acc, face: m.face, head: true }), h('b', null, m.title), h('small', null, m.sub), m.id === 'chat' && badge,
+      pid && ctx.presence[pid] && (ctx.partnerWhere || '').split('-')[0] === m.id && h('span', { class: 'here-mark', title: ctx.nameOf(pid) + ' 접속 중' }, capyEl(ctx.capyOf(pid, { head: true }), 'mini'), '여기 있어요')))),
     h('footer', { class: 'foot' },
       h('button', { class: 'link', onClick: invite }, '초대 링크'), h('button', { class: 'link', onClick: installHelp }, '앱으로 추가'),
+      'Notification' in window && Notification.permission === 'default' && h('button', { class: 'link', onClick: e => { askNotify(); e.target.remove(); } }, '알림 켜기'),
       h('button', { class: 'link', onClick: () => ask('이 기기에서 방을 나갈까요? (데이터는 남아 있고, 초대 링크로 다시 들어올 수 있어요)', '나가기').then(y => y && leave()) }, '방 나가기'),
       isMock && h('span', { class: 'dim' }, ' · 연습 모드'))));
   cleanup = () => offs.forEach(f => f());
