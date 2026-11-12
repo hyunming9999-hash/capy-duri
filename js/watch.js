@@ -1,7 +1,6 @@
 // 오늘 뭐 보실? — 유튜브를 스크린에 틀고 카피바라 둘이 객석에서 같이 보기
-import { h, toast, holdBtn } from './ui.js';
+import { h, toast, holdBtn, modal } from './ui.js';
 import { capy } from './capy.js';
-import * as chat from './chat.js';
 
 let ytReady = null;
 function loadYT() {
@@ -25,12 +24,16 @@ export function mount(el, ctx) {
   /* ----- 스크린 ----- */
   const slot = h('div', { class: 'yt-slot' });
   const hint = h('button', { class: 'play-hint', hidden: true, onClick: () => { hint.hidden = true; try { player.playVideo(); } catch {} } }, '▶ 눌러서 같이 보기');
-  const blank = h('div', { class: 'screen-blank' }, h('p', null, '아래에 유튜브 주소를 넣으면', h('br'), '둘의 스크린에 같이 틀어져요'));
+  const blank = h('div', { class: 'screen-blank' }, h('div', null, h('p', null, '유튜브 영상을 고르면', h('br'), '둘의 스크린에 같이 틀어져요'), h('button', { class: 'btn primary', onClick: () => pickVideo() }, '🎬 영상 고르기')));
   const screen = h('div', { class: 'screen' }, slot, blank, hint);
   const url = h('input', { class: 'inp', placeholder: '유튜브 주소 붙여넣기', inputMode: 'url' });
   const put = s => ctx.store.set('watch/state', { ...s, at: ctx.store.now(), by: ctx.uid }).catch(() => {});
-  const playUrl = () => { const v = parseVid(url.value); if (!v) return toast('유튜브 주소를 확인해 주세요'); url.value = ''; url.blur(); put({ vid: v, playing: true, pos: 0 }); };
-  url.addEventListener('keydown', e => { if (e.key === 'Enter') playUrl(); });
+  const playUrl = () => { const v = parseVid(url.value); if (!v) { toast('유튜브 주소를 확인해 주세요'); return false; } url.value = ''; url.blur(); put({ vid: v, playing: true, pos: 0 }); return true; };
+  function pickVideo() {
+    const close = modal({ title: '영상 고르기', body: h('div', null, h('p', { class: 'dim' }, '유튜브 앱이나 사이트에서 공유 → 링크 복사한 주소를 붙여넣어 주세요.'), url), actions: [{ label: '취소' }, { label: '틀기', primary: true, onClick: c => { if (playUrl()) c(); } }] });
+    url.onkeydown = e => { if (e.key === 'Enter' && playUrl()) close(); };
+    setTimeout(() => url.focus(), 50);
+  }
 
   function onState(e) {
     if (!st || Date.now() < quiet) return;
@@ -124,26 +127,39 @@ export function mount(el, ctx) {
   const pad = h('div', { class: 'dpad' }, [['U', '▲'], ['L', '◀'], ['D', '▼'], ['R', '▶']].map(([k, t]) => { const b = h('button', { class: 'dp dp-' + k, 'aria-label': k }, t); holdBtn(b, () => press(k, true), () => press(k, false)); return b; }));
   const emo = h('div', { class: 'emos' }, ['❤️', '😆', '👏', '🍿'].map(x => h('button', { class: 'emo', onClick: () => { me.em = x; me.et = ctx.store.now(); sync(true); } }, x)));
 
-  // 같이 보면서 톡: 아래 톡 창은 '오늘 얘기나 하지?'와 같은 대화이고, 새 말은 카피바라 머리 위에도 잠깐 뜬다
-  const chatBox = h('div', { class: 'watch-chat' }), since = ctx.store.now(); let lastSaid = '';
-  offs.push(chat.mount(chatBox, ctx));
+  // 같이 보면서 톡: '오늘 얘기나 하지?'와 같은 대화. 최근 몇 줄은 객석 위에 겹쳐 보이고, 새 말은 카피바라 머리 위에도 잠깐 뜬다
+  const log = h('div', { class: 'w-log', 'aria-live': 'polite' }), since = ctx.store.now(); let lastSaid = '', readAt = 0;
+  const msgInp = h('input', { class: 'inp', placeholder: '메시지 보내기', maxLength: 300, enterKeyHint: 'send', autocomplete: 'off' });
+  const sendMsg = () => { const t = msgInp.value.trim(); if (!t) return; msgInp.value = ''; ctx.store.push('chat', { by: ctx.uid, ts: ctx.store.now(), t }).catch(() => {}); };
+  msgInp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); sendMsg(); } });
   offs.push(ctx.store.on('chat', v => {
-    const id = Object.keys(v || {}).sort().pop(), m = id && v[id];
+    v = v || {}; const ids = Object.keys(v).sort();
+    log.replaceChildren(...ids.slice(-4).map(id => { const m = v[id]; return h('p', { class: m.by === ctx.uid ? 'mine' : '' }, h('b', null, ctx.nameOf(m.by)), ' ', m.t || (m.img ? '📷 사진' : m.st ? '🧡 스티커' : '')); }));
+    const theirs = Math.max(0, ...ids.map(i => v[i]).filter(m => m.by !== ctx.uid).map(m => m.ts));
+    if (theirs > readAt && !document.hidden) { readAt = theirs; ctx.store.set('read/' + ctx.uid, theirs).catch(() => {}); }
+    const id = ids[ids.length - 1], m = id && v[id];
     if (!m || id === lastSaid || m.ts < since - 2000 || !avs[m.by]) return; lastSaid = id;
     const el = avs[m.by].el.querySelector('.say'); el.textContent = m.t ? (m.t.length > 22 ? m.t.slice(0, 21) + '…' : m.t) : m.img ? '📷 사진' : '💬';
     el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
-  }, { limit: 1 }));
+  }, { limit: 12 }));
+
+  // 화면을 한 장에 고정: 영상·객석·입력칸이 항상 보이고, 키보드가 올라오면 그만큼 줄어든다
+  const vv = window.visualViewport, root = document.documentElement;
+  const fit = () => { root.style.setProperty('--vvh', (vv ? vv.height : window.innerHeight) + 'px'); root.style.setProperty('--vvt', (vv ? vv.offsetTop : 0) + 'px'); };
+  fit(); root.classList.add('fixed-page');
+  if (vv) { vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit); } window.addEventListener('resize', fit);
 
   offs.push(ctx.store.on('rt/seat', v => { for (const [u, p] of Object.entries(v || {})) if (u !== ctx.uid && ctx.members[u] && p) place(u, p); }));
   sync(true);
 
-  el.append(h('div', { class: 'theater' }, h('div', { class: 'curtain' }, screen), hall), chatBox,
-    h('div', { class: 'row watch-url' }, url, h('button', { class: 'btn primary', onClick: playUrl }, '틀기')),
-    h('div', { class: 'watch-ctl' }, pad, h('div', { class: 'grow' }, emo,
-      h('p', { class: 'dim' }, '방향키나 ▲◀▼▶ 로 걸어 다니고, 자리 근처에서 멈추면 앉아요. 재생·멈춤·건너뛰기는 둘이 같이 맞춰져요.'))));
+  hall.append(log, pad, emo); // 방향키·이모티콘·최근 톡은 객석 위에 겹쳐 둔다
+  el.append(h('div', { class: 'theater' }, h('div', { class: 'curtain' }, screen), hall),
+    h('div', { class: 'w-composer' }, h('button', { class: 'ic', 'aria-label': '영상 고르기', title: '영상 고르기', onClick: pickVideo }, '🎬'), msgInp, h('button', { class: 'btn primary', onClick: sendMsg }, '보내기')));
 
   return () => {
     alive = false; offs.forEach(f => f()); clearTimeout(hintT); clearTimeout(idleT); clearInterval(driftT);
+    root.classList.remove('fixed-page'); root.style.removeProperty('--vvh'); root.style.removeProperty('--vvt');
+    if (vv) { vv.removeEventListener('resize', fit); vv.removeEventListener('scroll', fit); } window.removeEventListener('resize', fit);
     window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku);
     try { player && player.destroy(); } catch {}
     ctx.store.remove('rt/seat/' + ctx.uid).catch(() => {});
