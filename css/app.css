@@ -270,3 +270,6 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .batt b{font:13px var(--head);color:var(--brown-d)}
 .batt.low .batt-body{border-color:var(--red)}.batt.low .batt-body::before{background:var(--red)}.batt.low .batt-body i{background:var(--red)}.batt.low b{color:var(--red)}
 .batt.ch .batt-body i{background:#F0B429}.batt.none{opacity:.45}.batt.none .batt-body{border-style:dashed}.batt.stale{opacity:.5}
+
+/* 홈: 오늘 카드 가운데 정렬 */
+.today-card{text-align:center}.today-card ul{display:inline-block;text-align:left}.today-card p{margin:4px 0 0}

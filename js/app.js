@@ -11,6 +11,7 @@ import * as where from './where.js';
 import * as dress from './dress.js';
 import * as walk from './walk.js';
 import { GAMES } from './game.js';
+import { capySound, soundOn, setSound } from './sound.js';
 
 // 연습 모드(?mock=이름)에서는 한 브라우저에서 두 사람 흉내를 낼 수 있게 저장 칸을 나눈다
 const NS = 'capy.' + (isMock ? (new URLSearchParams(location.search).get('mock') || '') + '.' : '');
@@ -22,13 +23,13 @@ const LS = {
 const rnd = n => { const a = new Uint8Array(n); crypto.getRandomValues(a); return [...a].map(x => 'abcdefghjkmnpqrstuvwxyz23456789'[x % 31]).join(''); };
 
 const MENU = [
-  { id: 'where', mod: where, title: '오늘 어디야?', sub: '위치 핑 찍기', face: 'wow', acc: 'leaf', tint: '#BFE8E0' },
+  { id: 'chat', mod: chat, title: '오늘 얘기나 하지?', sub: '톡 · 사진 · 스티커', face: 'love', acc: 'flower', tint: '#F6D3EE' },
   { id: 'dress', mod: dress, title: '옷입히기 놀이하실?', sub: '상의 50 · 하의 50', face: 'happy', acc: 'ribbon', tint: '#FFDDB8' },
   { id: 'day', mod: day, title: '오늘 무슨 날이지?', sub: '일정 · 예약 · 일기', face: 'smile', acc: 'leaf', tint: '#FFE3A6' },
   { id: 'wear', mod: wear, title: '오늘 뭐 입지?', sub: '서로 옷 봐주기', face: 'wink', acc: 'ribbon', tint: '#FFD0D6' },
   { id: 'eat', mod: eat, title: '오늘 뭐 먹지?', sub: '맛집 찾기 · 룰렛', face: 'wow', acc: 'yuzu', tint: '#CDEBB5' },
   { id: 'game', mod: game, title: '오늘 무슨 게임하지?', sub: '카피바라 게임 5종', face: 'happy', acc: 'none', tint: '#C9E4F7' },
-  { id: 'chat', mod: chat, title: '오늘 얘기나 하지?', sub: '톡 · 사진 · 스티커', face: 'love', acc: 'flower', tint: '#F6D3EE' },
+  { id: 'where', mod: where, title: '오늘 어디야?', sub: '위치 핑 찍기', face: 'wow', acc: 'leaf', tint: '#BFE8E0' },
   { id: 'watch', mod: watch, title: '오늘 뭐 보실?', sub: '카피바라 영화관', face: 'sleepy', acc: 'towel', tint: '#D9D2F5' },
   { id: 'walk', mod: walk, title: '카피바라 산책시키실?', sub: '도트 공원 산책 · 실시간 음성 대화', face: 'happy', acc: 'leaf', tint: '#C8EBA8', wide: true },
 ];
@@ -183,6 +184,14 @@ function enter() {
     seenWhere = w; ctx.partnerWhere = w;
     if (curRoute() === 'home') render(); else document.querySelectorAll('.who').forEach(el => el.classList.toggle('here', !!w && w === fullRoute()));
   });
+  // 톡이 오면 "카피~" 알림음. 톡 화면·영화관이 아니면 알림 띠도 띄운다
+  ctx.store.on('chat', v => {
+    const id = Object.keys(v || {}).sort().pop(), m = id && v[id];
+    if (!m || m.by === ctx.uid || m.ts < enterAt || id === LS.get('chatSnd')) return; LS.set('chatSnd', id);
+    capySound();
+    const r = curRoute(), text = m.t ? (m.t.length > 30 ? m.t.slice(0, 29) + '…' : m.t) : m.img ? '📷 사진' : '🧡 스티커';
+    if (r !== 'chat' && r !== 'watch') notify(`${ctx.nameOf(m.by)}: ${text}`, '보기', () => ctx.go('chat'));
+  }, { limit: 1 });
   ctx.store.on('invite', v => {
     if (!v || v.to !== ctx.uid) return;
     if (v.ts <= Number(LS.get('inv') || 0) || ctx.store.now() - v.ts > 600000) return;
@@ -285,6 +294,7 @@ function home() {
       pid && ctx.presence[pid] && (ctx.partnerWhere || '').split('-')[0] === m.id && h('span', { class: 'here-mark', title: ctx.nameOf(pid) + ' 접속 중' }, capyEl(ctx.capyOf(pid, { head: true }), 'mini'), '여기 있어요')))),
     h('footer', { class: 'foot' },
       h('button', { class: 'link', onClick: invite }, '초대 링크'), h('button', { class: 'link', onClick: installHelp }, '앱으로 추가'),
+      h('button', { class: 'link', onClick: e => { const on = !soundOn(); setSound(on); e.target.textContent = on ? '🔔 알림음 켜짐' : '🔕 알림음 꺼짐'; if (on) capySound(true); } }, soundOn() ? '🔔 알림음 켜짐' : '🔕 알림음 꺼짐'),
       'Notification' in window && Notification.permission === 'default' && h('button', { class: 'link', onClick: e => { askNotify(); e.target.remove(); } }, '알림 켜기'),
       h('button', { class: 'link', onClick: () => ask('이 기기에서 방을 나갈까요? (데이터는 남아 있고, 초대 링크로 다시 들어올 수 있어요)', '나가기').then(y => y && leave()) }, '방 나가기'),
       isMock && h('span', { class: 'dim' }, ' · 연습 모드'))));
