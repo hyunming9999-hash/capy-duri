@@ -13,7 +13,7 @@ import * as dress from './dress.js';
 import * as walk from './walk.js';
 import * as gallery from './gallery.js';
 import { GAMES } from './game.js';
-import { capySound, soundOn, setSound } from './sound.js';
+import { capySound, soundOn, setSound, bgm, fxOn, setFx } from './sound.js';
 
 // 연습 모드(?mock=이름)에서는 한 브라우저에서 두 사람 흉내를 낼 수 있게 저장 칸을 나눈다
 const NS = 'capy.' + (isMock ? (new URLSearchParams(location.search).get('mock') || '') + '.' : '');
@@ -250,6 +250,7 @@ const curRoute = () => (location.hash.slice(1) || 'home').split('-')[0];
 function render() {
   if (!entered) return;
   if (cleanup) { try { cleanup(); } catch (e) { console.error(e); } cleanup = null; }
+  bgm.stop(); bgm.duck(false);
   const [name, sub] = (location.hash.slice(1) || 'home').split('-');
   window.scrollTo(0, 0); ctx.store.setWhere(fullRoute());
   if (name === 'profile') return profile(false);
@@ -259,11 +260,16 @@ function render() {
   const title = h('h2', null, item.title);
   root.replaceChildren(h('div', { class: 'page page-' + name },
     h('header', { class: 'bar' }, h('button', { class: 'back', 'aria-label': '뒤로', onClick: () => ctx.go(sub ? name : 'home') }, '‹'), title,
+      SCENE[name] && sndBtn(),
       name === 'chat' && ctx.partnerId && h('button', { class: 'call tel', 'aria-label': '전화 걸기', title: '전화 걸기', onClick: () => ctx.phone() }, '📞'),
       ctx.partnerId && h('button', { class: 'call', title: '상대를 이 화면으로 부르기', onClick: () => ctx.call() }, '📣 부르기'), partnerBadge()), body));
   ctx.setTitle = t => { title.textContent = t; };
   cleanup = item.mod.mount(body, ctx, sub) || null;
+  if (SCENE[name] && (name !== 'game' || sub)) bgm.start(SCENE[name]); // 게임 목록에서는 조용히, 게임 안에서만
 }
+// 배경음이 나오는 곳과 소리 켜기/끄기 버튼
+const SCENE = { walk: 'bath', gallery: 'gallery', game: 'game' };
+function sndBtn() { const b = h('button', { class: 'call snd', 'aria-label': '효과음·배경음 켜기/끄기', title: '효과음·배경음', onClick: () => { setFx(!fxOn()); b.textContent = fxOn() ? '🔊' : '🔇'; toast(fxOn() ? '효과음·배경음을 켰어요' : '효과음·배경음을 껐어요', 1300); } }, fxOn() ? '🔊' : '🔇'); return b; }
 
 function partnerBadge() {
   const p = ctx.partnerId;

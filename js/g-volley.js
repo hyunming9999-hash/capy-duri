@@ -1,6 +1,7 @@
 // 카피바라 배구 — 유자 공으로 하는 1:1 배구. 둘이 온라인으로 하거나 컴퓨터와 연습.
 // 온라인 방식: 각자 자기 카피바라를 움직이고, 공은 "공이 있는 쪽" 사람이 계산해서 상대에게 알려 준다.
 import { h, holdBtn, loadImg, josa, gameFx } from './ui.js';
+import { sfx } from './sound.js';
 import { capyUrl, yuzuUrl } from './capy.js';
 
 const W = 800, H = 450, GROUND = 400, NETX = 400, NETW = 12, NETTOP = 268, PR = 40, FOOT = 71, BR = 28, WIN = 7;
@@ -72,6 +73,7 @@ export function mount(el, ctx) {
     game = v || { sc0: 0, sc1: 0, serve: 0, phase: 'idle', at: 0, n: 0 }; if (fresh) placeBall(); }
   function newGame() { const v = { sc0: 0, sc1: 0, serve: 0, phase: 'serve', at: now(), n: (game.n || 0) + 1 }; mode === 'online' ? ctx.store.set('games/volley', v) : setGame(v); ps[0].x = 200; ps[1].x = 600; }
   function point(loser) {
+    sfx('point');
     dead = true; deadMine = true;
     const upd = s => { if (!s || s.n !== game.n || s.phase !== 'serve') return; const w = 1 - loser, sc = [s.sc0, s.sc1]; sc[w]++; return { sc0: sc[0], sc1: sc[1], serve: w, phase: sc[w] >= WIN ? 'over' : 'serve', at: now(), n: s.n + 1 }; };
     if (mode === 'online') ctx.store.tx('games/volley', upd); else { const v = upd(game); v && setTimeout(() => alive && mode === 'cpu' && setGame(v), 350); }
@@ -113,8 +115,11 @@ export function mount(el, ctx) {
     stepPlayer(ps[me], me, inp);
     if (mode === 'online' && Date.now() - oppSeen > 300) ps[1 - me].vx = 0;
     stepPlayer(ps[1 - me], 1 - me, mode === 'cpu' ? ai(ps[1]) : null, CPU_SPEED);
+    if (inp.j && ps[me].y >= standY - 1 && ps[me].vy < 0 && !ps[me].jf) sfx('jump'); ps[me].jf = ps[me].vy < 0;
     if (!live()) return;
-    if (stepBall(ball, ps)) {
+    const bvx = ball.vx, bvy = ball.vy, landed = stepBall(ball, ps);
+    if (Math.abs(ball.vx - bvx) > 1.2 || ball.vy - bvy < -2) sfx('pop'); // 공이 튕길 때
+    if (landed) {
       ball.y = GROUND - BR; ball.vy = 0; ball.vx *= 0.5;
       const side = ball.x < NETX ? 0 : 1;
       if (mode === 'cpu' || side === ctx.idx) point(side); else dead = true;

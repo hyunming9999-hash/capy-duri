@@ -1,4 +1,5 @@
 // 공용 도구: DOM 만들기, 토스트, 모달, 이미지 줄이기
+import { sfx } from './sound.js';
 if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype.roundRect) CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h) { this.rect(x, y, w, h); };
 export const $ = (s, r = document) => r.querySelector(s);
 
@@ -128,6 +129,7 @@ export function gameFx(kind, sub = '') {
   document.querySelectorAll('.gfx').forEach(e => e.remove());
   const T = { win: ['승리!', ['🎉', '✨', '🍊', '⭐', '💛', '🎊']], lose: ['패배…', ['💧', '🌧️', '💦', '😢']], draw: ['무승부', ['🤝', '✨', '🍊']] }[kind] || ['', []];
   const bits = Array.from({ length: kind === 'win' ? 26 : 14 }, (_, i) => h('i', { style: { left: (4 + (i * 37) % 92) + '%', animationDelay: (i % 9) * 0.07 + 's', fontSize: (18 + (i * 7) % 16) + 'px', '--r': ((i * 53) % 90 - 45) + 'deg' } }, T[1][i % T[1].length]));
+  sfx(kind);
   const el = h('div', { class: 'gfx gfx-' + kind, 'aria-live': 'polite' }, bits, h('div', { class: 'gfx-box' }, h('b', null, T[0]), sub && h('small', null, sub)));
   document.body.append(el); setTimeout(() => el.remove(), 2600);
   if (navigator.vibrate) try { navigator.vibrate(kind === 'win' ? [40, 60, 40, 60, 120] : 180); } catch {}

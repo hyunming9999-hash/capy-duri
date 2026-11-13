@@ -1,6 +1,7 @@
 // 히노끼탕처럼 걸어 다니는 공간: 긴 전시실을 방향키로 걸으면 화면이 따라오고, 상대 카피바라도 실시간으로 보인다.
 // 오늘 전시회가실? — 흰 대리석 전시실. 벽에 액자(소·중·대, 가로·세로)를 걸고 제목을 붙인다. 액자를 누르면 크게 보고 제목·설명을 읽는다.
 import { h, toast, modal, ask, pickImage, fileToCanvas, jpeg, holdBtn } from './ui.js';
+import { sfx } from './sound.js';
 import { putBlob, getBlob, delBlob } from './store.js';
 import { capy } from './capy.js';
 
@@ -82,12 +83,12 @@ export function mount(el, ctx) {
     if (!v || v.id === seenHit || Math.abs(ctx.store.now() - v.ts) > 3000) return; seenHit = v.id;
     const d = v.d < 0 ? -1 : 1, who = v.from === ctx.uid ? me : pos[v.from], a = avs[v.from];
     if (a) { // 주먹을 휘두른다
-      a.el.style.setProperty('--d', d); a.el.classList.remove('swing'); void a.el.offsetWidth; a.el.classList.add('swing');
+      sfx(v.to ? 'swing' : 'miss'); a.el.style.setProperty('--d', d); a.el.classList.remove('swing'); void a.el.offsetWidth; a.el.classList.add('swing');
       const fist = h('span', { class: 'g-fist' }, '👊'); a.el.append(fist); setTimeout(() => { fist.remove(); a.el.classList.remove('swing'); }, 300);
     }
     if (!v.to) { if (who) setTimeout(() => alive && pop(who.x + d * 46, who.y, '휙', true), 90); return; }
     setTimeout(() => { if (!alive) return; // 주먹이 닿는 순간에 맞는다
-      const tgt = v.to === ctx.uid ? me : pos[v.to]; if (tgt) pop(tgt.x, tgt.y, '퍽!');
+      sfx('hit'); const tgt = v.to === ctx.uid ? me : pos[v.to]; if (tgt) pop(tgt.x, tgt.y, '퍽!');
       if (v.to === ctx.uid) { me.kx = (v.ux || 0) * 900; me.ky = (v.uy || 0) * 420; if (navigator.vibrate) try { navigator.vibrate(60); } catch {} }
     }, 110);
   });
@@ -113,7 +114,7 @@ export function mount(el, ctx) {
     let c; try { c = await fileToCanvas(f, 1000); } catch (e) { return toast(e.message); }
     form('액자 걸기', { ori: c.height > c.width ? 'v' : 'h' }, async v => {
       try { const img = await putBlob(ctx.store, jpeg(c, 0.8)); const x = Math.round(Math.min(WALL_W - 120, Math.max(120, me.x))); // 내 카피바라가 서 있는 자리 위에 건다
-        await ctx.store.push('gallery/frames', { ...v, img, x, y: 125, by: ctx.uid, ts: ctx.store.now() }); toast('액자를 걸었어요. "배치 바꾸기"로 옮길 수 있어요'); } catch (e) { toast('액자를 걸지 못했어요: ' + (e.code || e.message || '연결을 확인해 주세요')); }
+        await ctx.store.push('gallery/frames', { ...v, img, x, y: 125, by: ctx.uid, ts: ctx.store.now() }); sfx('hang'); toast('액자를 걸었어요. "배치 바꾸기"로 옮길 수 있어요'); } catch (e) { toast('액자를 걸지 못했어요: ' + (e.code || e.message || '연결을 확인해 주세요')); }
     });
   }
   const edit = (id, f) => form('액자 고치기', f, v => ctx.store.update('gallery/frames/' + id, v), [{ label: '떼기', danger: true, onClick: c => { c(); ask(`"${f.title || '이 액자'}"를 뗄까요?`, '떼기').then(y => { if (y) { ctx.store.remove('gallery/frames/' + id); delBlob(ctx.store, f.img); } }); } }]);

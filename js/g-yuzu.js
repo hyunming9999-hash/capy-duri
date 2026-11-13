@@ -1,5 +1,6 @@
 // 유자 받기 — 30초 동안 떨어지는 유자를 받는 점수 대결 (각자 하고 최고 기록을 겨룸)
 import { h, loadImg, ymd, gameFx } from './ui.js';
+import { sfx } from './sound.js';
 import { capyUrl, yuzuUrl } from './capy.js';
 
 const W = 360, H = 460, TIME = 30;
@@ -44,7 +45,7 @@ export function mount(el, ctx) {
       for (const it of items) {
         it.y += it.v * dt; it.rot += dt * 2;
         const rr = it.k === 'big' ? 26 : 18;
-        if (!it.hit && Math.abs(it.x - px) < 34 + rr * 0.6 && it.y > H - 118 - rr && it.y < H - 60) { it.hit = true; const d = it.k === 'rock' ? -2 : it.k === 'big' ? 3 : 1; score = Math.max(0, score + d); if (d < 0) hurt = 0.5; pops.push({ x: it.x, y: H - 130, t: 0.7, s: (d > 0 ? '+' : '') + d, c: d > 0 ? '#E08A00' : '#777' }); }
+        if (!it.hit && Math.abs(it.x - px) < 34 + rr * 0.6 && it.y > H - 118 - rr && it.y < H - 60) { it.hit = true; const d = it.k === 'rock' ? -2 : it.k === 'big' ? 3 : 1; score = Math.max(0, score + d); sfx(d < 0 ? 'bad' : 'coin'); if (d < 0) hurt = 0.5; pops.push({ x: it.x, y: H - 130, t: 0.7, s: (d > 0 ? '+' : '') + d, c: d > 0 ? '#E08A00' : '#777' }); }
       }
       items = items.filter(it => !it.hit && it.y < H + 40);
       if (left <= 0) { left = 0; end(); }

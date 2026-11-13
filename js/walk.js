@@ -1,6 +1,7 @@
 // 카피바라 목욕하실? — 도트 느낌의 히노끼탕을 옷 입은 카피바라로 돌아다니며 실시간 음성 대화(WebRTC)
 // 배경·소품은 도트 그림 그대로 크게 늘리고, 카피바라는 메인 화면처럼 또렷한 그림으로 그 위에 그린다. 탕 안에 들어가면 몸이 물에 잠긴다.
 import { h, toast, holdBtn, loadImg, josa } from './ui.js';
+import { sfx, bgm } from './sound.js';
 import { capy } from './capy.js';
 
 /* ---------- 히노끼탕 그림 (192×144 저해상도로 그려 크게 늘려 보여 준다) ---------- */
@@ -138,6 +139,7 @@ export function mount(el, ctx) {
   };
   const voice = makeVoice(ctx, { state: s => { vState = s; drawVoice(); }, peer: on => { if (on !== peerOn) { peerOn = on; drawVoice(); } }, level: (u, v) => { level[u] = v; } });
   async function setMode(k, quiet) {
+    bgm.duck(k !== 'off'); // 음성 대화 중에는 배경음을 아주 작게
     if (k !== 'off' && ctx.order.length < 2) { if (!quiet) toast('상대가 들어와야 음성 대화를 할 수 있어요'); k = 'off'; }
     if (k === 'off') { mode = 'off'; voice.leave(); }
     else {
@@ -188,6 +190,7 @@ export function mount(el, ctx) {
       if (!blocked(nx, me.y)) me.x = nx; if (!blocked(me.x, ny)) me.y = ny;
       const d = Math.exp(-6 * dt); me.kx *= d; me.ky *= d; if (Math.hypot(me.kx, me.ky) < 4) me.kx = me.ky = 0; dirty = true;
     }
+    { const w = inWater(me.x, me.y); if (w !== me.wet) { if (me.wet !== undefined) sfx('splash'); me.wet = w; } } // 탕에 들어가고 나올 때 첨벙
     send(t);
     // 그리기: 도트 배경 → y 순서대로 소품·유자·카피바라 → 김
     g.imageSmoothingEnabled = false; g.drawImage(bg, 0, 0, canvas.width, canvas.height);
@@ -234,10 +237,10 @@ export function mount(el, ctx) {
   offs.push(ctx.store.on('rt/parkhit', v => {
     if (!v || v.id === seenHit || Math.abs(ctx.store.now() - v.ts) > 3000) return; seenHit = v.id;
     const d = v.d < 0 ? -1 : 1, who = v.from === ctx.uid ? me : others[v.from];
-    swings[v.from] = { t0: performance.now(), d }; // 주먹을 휘두른다
+    swings[v.from] = { t0: performance.now(), d }; sfx(v.to ? 'swing' : 'miss'); // 주먹을 휘두른다
     if (!v.to) { if (who) fx.push({ x: who.x + d * 16, y: who.y - 20, t0: performance.now() + 90, s: '휙' }); return; }
     setTimeout(() => { if (!alive) return; // 주먹이 닿는 순간에 맞는다
-      const tgt = v.to === ctx.uid ? me : others[v.to]; if (tgt) fx.push({ x: tgt.x, y: tgt.y - 22, t0: performance.now(), s: '퍽!' });
+      sfx('hit'); const tgt = v.to === ctx.uid ? me : others[v.to]; if (tgt) fx.push({ x: tgt.x, y: tgt.y - 22, t0: performance.now(), s: '퍽!' });
       if (v.to === ctx.uid) { me.kx = (v.ux || 0) * 200; me.ky = (v.uy || 0) * 200; if (navigator.vibrate) try { navigator.vibrate(60); } catch {} }
     }, 110);
   }));
