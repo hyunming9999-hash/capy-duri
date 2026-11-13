@@ -1,39 +1,46 @@
-// 카피바라 산책시키실? — 도트 느낌의 공원을 옷 입은 카피바라로 돌아다니며 실시간 음성 대화(WebRTC)
-// 공원 배경·나무는 도트 그림 그대로 크게 늘리고, 카피바라는 메인 화면처럼 또렷한 그림으로 그 위에 그린다
+// 카피바라 목욕하실? — 도트 느낌의 히노끼탕을 옷 입은 카피바라로 돌아다니며 실시간 음성 대화(WebRTC)
+// 배경·소품은 도트 그림 그대로 크게 늘리고, 카피바라는 메인 화면처럼 또렷한 그림으로 그 위에 그린다. 탕 안에 들어가면 몸이 물에 잠긴다.
 import { h, toast, holdBtn, loadImg, josa } from './ui.js';
 import { capy } from './capy.js';
 
-/* ---------- 공원 그림 (192×144 저해상도로 그려 크게 늘려 보여 준다) ---------- */
+/* ---------- 히노끼탕 그림 (192×144 저해상도로 그려 크게 늘려 보여 준다) ---------- */
 const W = 192, H = 144, SW = 28, SH = 36.9;
-const POND = { x: 150, y: 40, rx: 30, ry: 17 };
-const TREES = [[18, 30], [52, 20], [96, 26], [14, 96], [178, 96], [120, 128], [64, 132], [176, 132]];
-const BENCH = [[86, 60], [44, 100]];
+const TUB = { x0: 34, y0: 46, x1: 158, y1: 108, rim: 5, face: 12 }; // 바깥 테두리, 테두리 두께, 앞면 높이
+const WATER = { x0: TUB.x0 + TUB.rim, y0: TUB.y0 + TUB.rim, x1: TUB.x1 - TUB.rim, y1: TUB.y1 - TUB.rim };
+const inWater = (x, y) => x > WATER.x0 + 3 && x < WATER.x1 - 3 && y > WATER.y0 + 8 && y < WATER.y1 + 1;
 const rnd = (() => { let s = 20261113; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; })();
-function drawPark() {
+const px = (g, c, x, y, w = 1, hh = 1) => { g.fillStyle = c; g.fillRect(x, y, w, hh); };
+function drawBath() {
   const c = h('canvas', { width: W, height: H }), g = c.getContext('2d');
-  g.fillStyle = '#9BD46F'; g.fillRect(0, 0, W, H);
-  for (let i = 0; i < 900; i++) { g.fillStyle = ['#8CC862', '#A8DE7C', '#93CE68'][i % 3]; g.fillRect(Math.floor(rnd() * W), Math.floor(rnd() * H), 2, 1); }
-  // 흙길: 공원을 한 바퀴 도는 고리
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const d = Math.hypot((x - 92) / 62, (y - 82) / 40); if (d > 0.82 && d < 1.06) { g.fillStyle = (x * 7 + y * 13) % 11 === 0 ? '#D9B88A' : '#E8CFA4'; g.fillRect(x, y, 1, 1); } }
-  // 연못
-  for (let y = POND.y - POND.ry - 2; y <= POND.y + POND.ry + 2; y++) for (let x = POND.x - POND.rx - 2; x <= POND.x + POND.rx + 2; x++) { const d = Math.hypot((x - POND.x) / POND.rx, (y - POND.y) / POND.ry); if (d < 1.08) { g.fillStyle = d > 1 ? '#C9B27C' : d > 0.86 ? '#8ED3E8' : '#6FC3E0'; g.fillRect(x, y, 1, 1); } }
-  g.fillStyle = '#C8EEF8'; [[140, 34, 8], [156, 44, 6], [146, 48, 5]].forEach(([x, y, w]) => g.fillRect(x, y, w, 1));
-  g.fillStyle = '#7CC45B'; g.fillRect(162, 36, 5, 3); g.fillStyle = '#FF9EB5'; g.fillRect(164, 35, 2, 2); // 연잎과 꽃
-  // 꽃밭
-  for (let i = 0; i < 46; i++) { const x = Math.floor(rnd() * W), y = Math.floor(rnd() * H), d = Math.hypot((x - 92) / 62, (y - 82) / 40); if ((d > 0.78 && d < 1.1) || Math.hypot((x - POND.x) / POND.rx, (y - POND.y) / POND.ry) < 1.2) continue; g.fillStyle = ['#FFF3B0', '#FF9EB5', '#FFFFFF', '#FFC93C', '#C9A7F5'][i % 5]; g.fillRect(x, y, 2, 2); g.fillStyle = '#5BA65B'; g.fillRect(x, y + 2, 1, 1); }
+  // 뒷벽: 대나무 울타리 + 처마
+  px(g, '#5E8C3A', 0, 0, W, 34);
+  for (let x = 0; x < W; x += 6) { px(g, '#7DB24F', x, 4, 5, 30); px(g, '#9BCB67', x + 1, 4, 1, 30); px(g, '#4E7A30', x + 4, 4, 1, 30); for (const y of [12, 23]) px(g, '#5E8C3A', x, y + (x % 12 ? 2 : 0), 5, 1); }
+  px(g, '#6B4A33', 0, 0, W, 4); px(g, '#8A6347', 0, 3, W, 1); px(g, '#3E2C20', 0, 30, W, 1); px(g, '#8A6347', 0, 31, W, 3);
+  // 바닥: 히노끼 나무판
+  for (let y = 34; y < H; y++) for (let x = 0; x < W; x++) { const row = Math.floor((y - 34) / 7), seam = (y - 34) % 7 === 6, joint = (x + row * 23) % 48 === 0; px(g, seam || joint ? '#C9A274' : (x * 3 + y * 7) % 37 === 0 ? '#E2C08F' : '#ECD3A6', x, y); }
+  // 탕: 그림자 → 앞면 → 테두리 → 물
+  px(g, 'rgba(0,0,0,.12)', TUB.x0 + 3, TUB.y1 + TUB.face, TUB.x1 - TUB.x0, 3);
+  for (let x = TUB.x0; x < TUB.x1; x++) for (let y = TUB.y1; y < TUB.y1 + TUB.face; y++) px(g, (x - TUB.x0) % 8 === 0 ? '#B98653' : y === TUB.y1 ? '#C9965F' : '#D8A86E', x, y);
+  px(g, '#8E5E31', TUB.x0, TUB.y1 + 3, TUB.x1 - TUB.x0, 2); px(g, '#8E5E31', TUB.x0, TUB.y1 + TUB.face - 4, TUB.x1 - TUB.x0, 2); // 테 두른 띠
+  px(g, '#A9763F', TUB.x0 - 1, TUB.y0 - 1, TUB.x1 - TUB.x0 + 2, TUB.y1 - TUB.y0 + 2);
+  px(g, '#E9C08A', TUB.x0, TUB.y0, TUB.x1 - TUB.x0, TUB.y1 - TUB.y0);
+  for (let x = TUB.x0; x < TUB.x1; x += 9) px(g, '#D3A56D', x, TUB.y0, 1, TUB.rim);
+  px(g, '#F6D8A8', TUB.x0, TUB.y0, TUB.x1 - TUB.x0, 1);
+  for (let y = WATER.y0; y < WATER.y1; y++) for (let x = WATER.x0; x < WATER.x1; x++) { const edge = y < WATER.y0 + 2; px(g, edge ? '#6FB9C9' : '#8FD3DF', x, y); }
+  for (let i = 0; i < 26; i++) { const x = WATER.x0 + 4 + Math.floor(rnd() * (WATER.x1 - WATER.x0 - 12)), y = WATER.y0 + 5 + Math.floor(rnd() * (WATER.y1 - WATER.y0 - 8)); px(g, '#C3EDF2', x, y, 4 + Math.floor(rnd() * 5), 1); }
+  // 발 매트
+  px(g, '#7FA9C9', 82, 124, 30, 12); for (let x = 83; x < 111; x += 3) px(g, '#A8C8E0', x, 125, 1, 10);
   return c;
 }
-function drawTree(g, x, y) { // (x, y) = 나무 밑동
-  g.fillStyle = 'rgba(0,0,0,.14)'; g.fillRect(x - 8, y - 1, 16, 3);
-  g.fillStyle = '#8A5E3B'; g.fillRect(x - 2, y - 9, 4, 9); g.fillStyle = '#6E4A2E'; g.fillRect(x - 2, y - 9, 1, 9);
-  g.fillStyle = '#4E9A4A'; g.fillRect(x - 9, y - 22, 18, 12); g.fillRect(x - 7, y - 26, 14, 18); g.fillRect(x - 11, y - 19, 22, 7);
-  g.fillStyle = '#6BBE5E'; g.fillRect(x - 6, y - 25, 9, 6); g.fillRect(x - 9, y - 20, 6, 4); g.fillStyle = '#3F8440'; g.fillRect(x + 2, y - 13, 7, 3);
-}
-function drawBench(g, x, y) {
-  g.fillStyle = 'rgba(0,0,0,.14)'; g.fillRect(x - 9, y, 18, 2);
-  g.fillStyle = '#B9855A'; g.fillRect(x - 9, y - 9, 18, 3); g.fillRect(x - 9, y - 5, 18, 3); g.fillStyle = '#8A5E3B'; g.fillRect(x - 8, y - 2, 2, 3); g.fillRect(x + 6, y - 2, 2, 3);
-}
-const blocked = (x, y) => Math.hypot((x - POND.x) / (POND.rx + 3), (y - 3 - POND.y) / (POND.ry + 2)) < 1 || TREES.some(([tx, ty]) => Math.abs(x - tx) < 6 && Math.abs(y - ty) < 4) || BENCH.some(([bx, by]) => Math.abs(x - bx) < 11 && Math.abs(y - by) < 4);
+// 소품: [그림 함수, x, 바닥 y, 폭(절반), 깊이(절반)]
+const PROPS = [
+  [(g) => { px(g, 'rgba(0,0,0,.15)', 1, 15, 16, 2); px(g, '#C98F55', 2, 4, 14, 12); for (let x = 2; x < 16; x += 3) px(g, '#B07A45', x, 4, 1, 12); px(g, '#6E6E78', 2, 6, 14, 1); px(g, '#6E6E78', 2, 13, 14, 1); px(g, '#8FD3DF', 3, 4, 12, 2); px(g, '#E3B57A', 2, 3, 14, 1); }, 18, 128, 7, 3, 18, 18], // 나무 바가지통
+  [(g) => { px(g, 'rgba(0,0,0,.15)', 0, 11, 18, 2); px(g, '#D8A86E', 1, 3, 16, 3); px(g, '#B98653', 2, 6, 2, 6); px(g, '#B98653', 14, 6, 2, 6); px(g, '#F0CC93', 1, 3, 16, 1); px(g, '#FFFDF7', 4, 0, 9, 3); px(g, '#8FC1E8', 6, 0, 1, 3); px(g, '#8FC1E8', 9, 0, 1, 3); }, 36, 136, 8, 3, 18, 14], // 목욕 의자 + 수건
+  [(g) => { px(g, 'rgba(0,0,0,.15)', 1, 27, 14, 2); px(g, '#9C9AA0', 5, 18, 6, 9); px(g, '#B9B7BC', 2, 14, 12, 4); px(g, '#FFE9A8', 4, 9, 8, 5); px(g, '#FFC93C', 6, 10, 4, 3); px(g, '#9C9AA0', 3, 9, 1, 5); px(g, '#9C9AA0', 12, 9, 1, 5); px(g, '#B9B7BC', 1, 5, 14, 4); px(g, '#D6D4D8', 4, 2, 8, 3); px(g, '#B9B7BC', 7, 0, 2, 2); }, 176, 60, 6, 3, 16, 29], // 석등
+  [(g) => { px(g, 'rgba(0,0,0,.15)', 0, 23, 14, 2); px(g, '#A0603A', 2, 15, 10, 8); px(g, '#C27A4C', 2, 15, 10, 2); for (const [x, hh] of [[4, 14], [7, 15], [10, 12]]) { px(g, '#5BA65B', x, 15 - hh, 1, hh); px(g, '#7CC45B', x - 2, 15 - hh + 2, 2, 1); px(g, '#7CC45B', x + 1, 15 - hh + 5, 2, 1); } }, 14, 64, 6, 3, 14, 25], // 화분 대나무
+  [(g) => { px(g, 'rgba(0,0,0,.12)', 0, 6, 16, 2); px(g, '#FFB3C7', 0, 1, 16, 5); px(g, '#FFD0DC', 0, 1, 16, 1); px(g, '#F58FB0', 0, 3, 16, 1); }, 178, 130, 8, 2, 16, 8], // 개어 둔 수건
+].map(([draw, x, y, hw, hd, cw, ch]) => { const c = h('canvas', { width: cw, height: ch }); draw(c.getContext('2d')); return { c, x, y, hw, hd }; });
+const blocked = (x, y) => (x > TUB.x0 - 2 && x < TUB.x1 + 2 && y > TUB.y1 - 1 && y < TUB.y1 + TUB.face + 3) || PROPS.some(p => Math.abs(x - p.x) < p.hw + 4 && Math.abs(y - p.y) < p.hd + 2);
 
 /* ---------- 음성 대화 ---------- */
 // 둘 다 "음성 켜기"를 누르면 서로 직접 연결된다(WebRTC). 연결에 필요한 정보만 방 데이터(rt/voice)로 주고받고, 목소리는 저장되지 않는다.
@@ -97,10 +104,11 @@ function makeVoice(ctx, ui) {
 export function mount(el, ctx) {
   let alive = true, raf = 0, last = 0, sendT = 0, dirty = true, S = 2;
   const canvas = h('canvas', { class: 'park' }), g = canvas.getContext('2d');
-  const bg = drawPark(), tags = h('div', { class: 'park-tags' }), wrap = h('div', { class: 'park-wrap' }, canvas, tags);
-  const treeImg = h('canvas', { width: 24, height: 30 }), benchImg = h('canvas', { width: 20, height: 12 });
-  drawTree(treeImg.getContext('2d'), 12, 28); drawBench(benchImg.getContext('2d'), 10, 10);
-  const me = { x: ctx.idx ? 104 : 84, y: 118, v: 'front', f: false, m: false, mu: false };
+  const bg = drawBath(), tags = h('div', { class: 'park-tags' }), wrap = h('div', { class: 'park-wrap' }, canvas, tags);
+  // 탕에 떠 있는 유자들
+  const yuzus = Array.from({ length: 6 }, (_, i) => ({ x: WATER.x0 + 12 + i * 18 + (i % 2) * 5, y: WATER.y0 + 14 + (i * 13) % 34, ph: i * 1.7, vx: (i % 2 ? 1 : -1) * 2.2 }));
+  const steam = Array.from({ length: 14 }, () => ({ x: WATER.x0 + rnd() * (WATER.x1 - WATER.x0), y: WATER.y1 - rnd() * 50, r: 3 + rnd() * 4, v: 5 + rnd() * 5 }));
+  const me = { x: ctx.idx ? 172 : 20, y: 100, v: 'front', f: false, m: false, mu: false };
   const others = {}, sprites = {}, tagEls = {}, level = {};
   const keys = new Set();
 
@@ -163,24 +171,34 @@ export function mount(el, ctx) {
       me.v = dy < 0 ? 'back' : 'front'; if (dx) me.f = dx < 0; dirty = true;
     } else if (was) dirty = true;
     send(t);
-    // 그리기: 도트 배경 → y 순서대로 나무·벤치(도트)·카피바라(또렷하게)
+    // 그리기: 도트 배경 → y 순서대로 소품·유자·카피바라 → 김
     g.imageSmoothingEnabled = false; g.drawImage(bg, 0, 0, canvas.width, canvas.height);
-    const list = [...TREES.map(([x, y]) => ({ y, d: () => { g.imageSmoothingEnabled = false; g.drawImage(treeImg, Math.round((x - 12) * S), Math.round((y - 28) * S), Math.round(24 * S), Math.round(30 * S)); } })),
-      ...BENCH.map(([x, y]) => ({ y, d: () => { g.imageSmoothingEnabled = false; g.drawImage(benchImg, Math.round((x - 10) * S), Math.round((y - 10) * S), Math.round(20 * S), Math.round(12 * S)); } }))];
+    const list = PROPS.map(p => ({ y: p.y, d: () => { g.imageSmoothingEnabled = false; g.drawImage(p.c, Math.round((p.x - p.c.width / 2) * S), Math.round((p.y - p.c.height + 2) * S), Math.round(p.c.width * S), Math.round(p.c.height * S)); } }));
+    for (const z of yuzus) {
+      z.x += z.vx * dt; if (z.x < WATER.x0 + 6 || z.x > WATER.x1 - 6) z.vx *= -1;
+      const zy = z.y + Math.sin(t / 700 + z.ph) * 0.8;
+      list.push({ y: z.y, d: () => { g.fillStyle = 'rgba(255,255,255,.45)'; g.beginPath(); g.ellipse(z.x * S, (zy + 2.2) * S, 4.4 * S, 1.3 * S, 0, 0, 7); g.fill(); g.fillStyle = '#FFC93C'; g.beginPath(); g.arc(z.x * S, zy * S, 3 * S, 0, 7); g.fill(); g.fillStyle = '#E0A21C'; g.beginPath(); g.arc(z.x * S, (zy + 1) * S, 3 * S, 0, Math.PI); g.fill(); g.fillStyle = '#6FB24F'; g.fillRect((z.x - 0.5) * S, (zy - 4) * S, 2.2 * S, 1.2 * S); g.fillStyle = '#FFF3C4'; g.fillRect((z.x - 1.6) * S, (zy - 1.6) * S, 1.1 * S, 1.1 * S); } });
+    }
     const all = { [ctx.uid]: me, ...others };
     for (const [u, p] of Object.entries(all)) {
       if (!ctx.members[u]) continue;
       if (u !== ctx.uid) { p.x += (p.tx - p.x) * Math.min(1, dt * 12); p.y += (p.ty - p.y) * Math.min(1, dt * 12); }
       const bob = p.m ? Math.abs(Math.sin(t / 110)) * 1.6 : 0;
+      const wet = inWater(p.x, p.y), sink = wet ? 5 : 0, line = p.y - 6; // 탕 안이면 몸을 살짝 내리고 턱 아래부터 물에 잠기게
       list.push({ y: p.y, d: () => {
-        g.fillStyle = 'rgba(0,0,0,.18)'; g.beginPath(); g.ellipse(p.x * S, (p.y - 0.5) * S, 9 * S, 2.6 * S, 0, 0, 7); g.fill();
+        if (!wet) { g.fillStyle = 'rgba(0,0,0,.18)'; g.beginPath(); g.ellipse(p.x * S, (p.y - 0.5) * S, 9 * S, 2.6 * S, 0, 0, 7); g.fill(); }
         const im = sprite(u, p.v); if (!im) return;
-        g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.save(); g.translate(p.x * S, 0); if (p.f) g.scale(-1, 1); g.drawImage(im, -SW / 2 * S, (p.y - SH + 1.5 - bob) * S, SW * S, SH * S); g.restore();
+        g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.save();
+        if (wet) { g.beginPath(); g.rect(0, 0, canvas.width, line * S); g.clip(); }
+        g.translate(p.x * S, 0); if (p.f) g.scale(-1, 1); g.drawImage(im, -SW / 2 * S, (p.y - SH + 1.5 - bob + sink) * S, SW * S, SH * S); g.restore();
+        if (wet) { const r = 11 + Math.sin(t / 260) * 0.8; g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 0.9 * S; g.beginPath(); g.ellipse(p.x * S, line * S, r * S, 2.4 * S, 0, 0, 7); g.stroke(); g.strokeStyle = 'rgba(255,255,255,.35)'; g.beginPath(); g.ellipse(p.x * S, (line + 1.2) * S, (r + 4) * S, 3.2 * S, 0, 0, 7); g.stroke(); }
       } });
-      const el = tag(u), talking = (level[u] || 0) > 0.045 && !p.mu; el.style.left = (p.x / W * 100) + '%'; el.style.top = ((p.y - SH - 0.5) / H * 100) + '%';
+      const el = tag(u), talking = (level[u] || 0) > 0.045 && !p.mu; el.style.left = (p.x / W * 100) + '%'; el.style.top = ((p.y - SH - 0.5 + sink) / H * 100) + '%';
       el.classList.toggle('talk', talking); el.firstChild.textContent = talking ? '🔊' : p.mu && (u === ctx.uid ? voice.on : peerOn) ? '🔇' : '';
     }
     list.sort((a, b) => a.y - b.y).forEach(o => o.d());
+    // 김이 모락모락
+    for (const st of steam) { st.y -= st.v * dt; st.x += Math.sin(t / 900 + st.r) * 0.08; if (st.y < 8) { st.y = WATER.y1 - 4; st.x = WATER.x0 + rnd() * (WATER.x1 - WATER.x0); } const a = Math.max(0, Math.min(0.32, (st.y - 8) / 120)); g.fillStyle = `rgba(255,255,255,${a})`; g.beginPath(); g.arc(st.x * S, st.y * S, st.r * S * (1.6 - st.y / H), 0, 7); g.fill(); }
   }
 
   const offs = [];
@@ -192,7 +210,7 @@ export function mount(el, ctx) {
   me.mu = mode !== 'on';
   ctx.store.ephemeral('rt/park/' + ctx.uid, { x: me.x, y: me.y, v: me.v, f: false, m: false, mu: me.mu }).catch(() => {});
 
-  // 화면을 한 장에 고정: 공원 → 음성 → 방향키(맨 아래)
+  // 화면을 한 장에 고정: 탕 → 음성 → 방향키(맨 아래)
   const vv = window.visualViewport, root = document.documentElement;
   const fit = () => { root.style.setProperty('--vvh', (vv ? vv.height : window.innerHeight) + 'px'); root.style.setProperty('--vvt', (vv ? vv.offsetTop : 0) + 'px'); };
   fit(); root.classList.add('fixed-page');
@@ -200,7 +218,7 @@ export function mount(el, ctx) {
 
   el.append(wrap,
     h('div', { class: 'voice-bar' }, vStatus, seg),
-    h('p', { class: 'dim walk-hint' }, '고른 음성 모드는 기억해 두고, 다음에 산책에 들어오면 그대로 켜져요. 이어폰을 끼면 울림이 줄어요. 목소리는 저장되지 않고, 이 화면을 나가면 마이크가 꺼져요.'),
+    h('p', { class: 'dim walk-hint' }, '탕 안으로 걸어 들어가면 카피바라가 몸을 담가요. 고른 음성 모드는 기억해 두고 다음에 들어오면 그대로 켜져요. 목소리는 저장되지 않고, 이 화면을 나가면 마이크가 꺼져요.'),
     h('div', { class: 'pad-dock' }, pad));
   resize(); drawVoice(); raf = requestAnimationFrame(loop);
   if (mode !== 'off') setMode(mode, true); // 지난번에 켜 둔 모드 그대로

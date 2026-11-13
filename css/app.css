@@ -225,7 +225,7 @@ canvas.yuzu-game{max-width:380px;margin:0 auto 12px}
 .gp .capy{width:58px}.gp b{font-size:14px}.gp.on{opacity:1;border-color:var(--yuzu-d);background:#FFF0B8}.gp.win{opacity:1;border-color:#F3A4B4;background:#FFE3EA}
 /* 산책 */
 .card.wide{grid-column:1/-1;flex-direction:row;justify-content:center;gap:4px 12px;flex-wrap:wrap}.card.wide .capy{width:64px}.card.wide b{margin-top:0}.card.wide small{flex-basis:100%}
-.park-wrap{position:relative;border-radius:var(--r);border:3px solid #6FAF55;overflow:hidden;background:#9BD46F;line-height:0}
+.park-wrap{position:relative;border-radius:var(--r);border:3px solid #A9763F;overflow:hidden;background:#ECD3A6;line-height:0}
 canvas.park{display:block;width:100%;height:auto}
 .park-tags{position:absolute;inset:0;pointer-events:none;line-height:1.2}
 .park-tag{position:absolute;transform:translate(-50%,-100%);font:11px var(--head);color:#fff;background:rgba(0,0,0,.5);padding:0 7px;border-radius:8px;white-space:nowrap}.park-tag.me{background:var(--brown)}

@@ -31,7 +31,7 @@ const MENU = [
   { id: 'game', mod: game, title: '오늘 무슨 게임하지?', sub: '카피바라 게임 5종', face: 'happy', acc: 'none', tint: '#C9E4F7' },
   { id: 'where', mod: where, title: '오늘 어디야?', sub: '위치 핑 찍기', face: 'wow', acc: 'leaf', tint: '#BFE8E0' },
   { id: 'watch', mod: watch, title: '오늘 뭐 보실?', sub: '카피바라 영화관', face: 'sleepy', acc: 'towel', tint: '#D9D2F5' },
-  { id: 'walk', mod: walk, title: '카피바라 산책시키실?', sub: '도트 공원 산책 · 실시간 음성 대화', face: 'happy', acc: 'leaf', tint: '#C8EBA8', wide: true },
+  { id: 'walk', mod: walk, title: '카피바라 목욕하실?', sub: '히노끼탕 · 실시간 음성 대화', face: 'sleepy', acc: 'towel', tint: '#F3DDB8', wide: true },
 ];
 
 const root = $('#app');
