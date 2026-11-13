@@ -157,15 +157,16 @@ export function mount(el, ctx) {
   const pad = h('div', { class: 'dpad big hit' }, [['U', '▲'], ['L', '◀'], ['D', '▼'], ['R', '▶']].map(([k, t]) => { const b = h('button', { class: 'dp dp-' + k, 'aria-label': k }, t); holdBtn(b, () => keys.add(k), () => keys.delete(k)); return b; }),
     h('button', { class: 'dp dp-H', 'aria-label': '때리기', onClick: () => hit() }, '👊', h('small', null, '때리기')));
   /* 때리기: 가까이 있는 상대를 치면 상대가 뒤로 밀려난다. 맞은 쪽 화면이 자기 위치를 직접 밀어서 양쪽에 똑같이 보인다 */
-  const fx = []; let hitAt = 0, seenHit = '';
+  const fx = [], swings = {}; let hitAt = 0, seenHit = '';
   function hit() {
     const now = performance.now(); if (now - hitAt < 600) return; hitAt = now;
     const pid = ctx.partnerId, o = pid && others[pid];
     const dx = o ? o.x - me.x : 0, dy = o ? o.y - me.y : 0;
-    if (!o || Math.abs(dx) > 26 || Math.abs(dy) > 16) { fx.push({ x: me.x + (me.f ? -12 : 12), y: me.y - 18, t0: now, s: '휙' }); return; }
-    const n = Math.hypot(dx, dy) || 1, ux = n > 1 ? dx / n : (me.f ? -1 : 1), uy = n > 1 ? dy / n : 0;
-    if (dx) me.f = dx < 0; dirty = true;
-    ctx.store.set('rt/parkhit', { id: Math.random().toString(36).slice(2, 9), from: ctx.uid, to: pid, ux: Math.round(ux * 100) / 100, uy: Math.round(uy * 100) / 100, ts: ctx.store.now() }).catch(() => {});
+    const ok = !!o && Math.abs(dx) <= 26 && Math.abs(dy) <= 16;
+    const n = Math.hypot(dx, dy) || 1, ux = ok && n > 1 ? dx / n : (me.f ? -1 : 1), uy = ok && n > 1 ? dy / n : 0;
+    if (ok && dx) me.f = dx < 0; dirty = true;
+    // 빗나가도 휘두르는 모습은 상대 화면에 보이게 알린다(to가 없으면 헛스윙)
+    ctx.store.set('rt/parkhit', { id: Math.random().toString(36).slice(2, 9), from: ctx.uid, to: ok ? pid : null, d: (ok ? dx < 0 : me.f) ? -1 : 1, ux: Math.round(ux * 100) / 100, uy: Math.round(uy * 100) / 100, ts: ctx.store.now() }).catch(() => {});
   }
   function send(t, force) {
     if (!force && (!dirty || t - sendT < 100)) return; sendT = t; dirty = false;
@@ -207,7 +208,11 @@ export function mount(el, ctx) {
         const im = sprite(u, p.v); if (!im) return;
         g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.save();
         if (wet) { g.beginPath(); g.rect(0, 0, canvas.width, line * S); g.clip(); }
-        g.translate(p.x * S, 0); if (p.f) g.scale(-1, 1); g.drawImage(im, -SW / 2 * S, (p.y - SH + 1.5 - bob + sink) * S, SW * S, SH * S); g.restore();
+        const sw = swings[u], sk = sw ? (t - sw.t0) / 280 : 1, arc = sw && sk >= 0 && sk < 1 ? Math.sin(Math.PI * sk) : 0; if (sw && sk >= 1) delete swings[u];
+        g.translate((p.x + (sw ? sw.d * arc * 5 : 0)) * S, 0); if (p.f) g.scale(-1, 1); g.drawImage(im, -SW / 2 * S, (p.y - SH + 1.5 - bob + sink) * S, SW * S, SH * S); g.restore();
+        if (arc) { const fxp = p.x + sw.d * (8 + arc * 11), fyp = p.y - 13 - arc * 5 + sink; // 휘두르는 주먹과 궤적
+          g.save(); g.translate(p.x * S, (p.y - 14 + sink) * S); g.scale(sw.d, 1); g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 1.6 * S; g.lineCap = 'round'; g.beginPath(); g.arc(4 * S, 0, 14 * S, -1.5, -1.5 + sk * 1.7); g.stroke(); g.restore();
+          g.save(); g.translate(fxp * S, fyp * S); g.rotate(sw.d * (sk - 0.5) * 0.9); if (sw.d < 0) g.scale(-1, 1); g.font = `${Math.round(10 * S)}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('👊', 0, 0); g.restore(); }
         if (wet) { const r = 11 + Math.sin(t / 260) * 0.8; g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 0.9 * S; g.beginPath(); g.ellipse(p.x * S, line * S, r * S, 2.4 * S, 0, 0, 7); g.stroke(); g.strokeStyle = 'rgba(255,255,255,.35)'; g.beginPath(); g.ellipse(p.x * S, (line + 1.2) * S, (r + 4) * S, 3.2 * S, 0, 0, 7); g.stroke(); }
       } });
       const el = tag(u), talking = (level[u] || 0) > 0.045 && !p.mu; el.style.left = (p.x / W * 100) + '%'; el.style.top = ((p.y - SH - 0.5 + sink) / H * 100) + '%';
@@ -228,8 +233,13 @@ export function mount(el, ctx) {
   }));
   offs.push(ctx.store.on('rt/parkhit', v => {
     if (!v || v.id === seenHit || Math.abs(ctx.store.now() - v.ts) > 3000) return; seenHit = v.id;
-    const tgt = v.to === ctx.uid ? me : others[v.to]; if (tgt) fx.push({ x: tgt.x, y: tgt.y - 22, t0: performance.now(), s: '퍽!' });
-    if (v.to === ctx.uid) { me.kx = (v.ux || 0) * 200; me.ky = (v.uy || 0) * 200; if (navigator.vibrate) try { navigator.vibrate(60); } catch {} }
+    const d = v.d < 0 ? -1 : 1, who = v.from === ctx.uid ? me : others[v.from];
+    swings[v.from] = { t0: performance.now(), d }; // 주먹을 휘두른다
+    if (!v.to) { if (who) fx.push({ x: who.x + d * 16, y: who.y - 20, t0: performance.now() + 90, s: '휙' }); return; }
+    setTimeout(() => { if (!alive) return; // 주먹이 닿는 순간에 맞는다
+      const tgt = v.to === ctx.uid ? me : others[v.to]; if (tgt) fx.push({ x: tgt.x, y: tgt.y - 22, t0: performance.now(), s: '퍽!' });
+      if (v.to === ctx.uid) { me.kx = (v.ux || 0) * 200; me.ky = (v.uy || 0) * 200; if (navigator.vibrate) try { navigator.vibrate(60); } catch {} }
+    }, 110);
   }));
   offs.push(ctx.store.on('dress', () => { for (const k of Object.keys(sprites)) delete sprites[k]; })); // 옷을 갈아입으면 그림을 다시 만든다
   me.mu = mode !== 'on';

@@ -425,3 +425,9 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 /* 배구: 연습·새 게임은 맨 위로, 조작은 ◀ 점프 ▶ 크게 */
 .g-foot.v-top{margin:0 0 8px}.g-foot.v-top .btn{padding:7px 14px;font-size:15px;min-height:0}
 .vpad{gap:10px;margin-top:12px}.vp{height:78px;font-size:24px;border-radius:22px;box-shadow:0 4px 0 var(--line)}.vp.held{transform:translateY(3px);box-shadow:none}.vp-j{flex:1.25}
+
+/* 때리기: 휘두르는 모션(전시실) */
+.g-av.swing .g-av-body{animation:glunge .28s ease-out}
+@keyframes glunge{0%,100%{translate:0 0}45%{translate:calc(var(--d,1)*14px) -3px}}
+.g-fist{position:absolute;left:50%;top:46%;font-size:24px;line-height:1;pointer-events:none;z-index:3;animation:gfist .28s ease-out forwards;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
+@keyframes gfist{0%{transform:translate(calc(-50% + var(--d,1)*8px),-50%) rotate(calc(var(--d,1)*-50deg)) scale(.7);opacity:.2}55%{transform:translate(calc(-50% + var(--d,1)*52px),-70%) rotate(0deg) scale(1.25);opacity:1}100%{transform:translate(calc(-50% + var(--d,1)*38px),-40%) rotate(calc(var(--d,1)*30deg)) scale(.9);opacity:0}}

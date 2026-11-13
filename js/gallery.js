@@ -72,15 +72,24 @@ export function mount(el, ctx) {
   function hit() {
     const now = performance.now(); if (now - hitAt < 600 || moving) return; hitAt = now;
     const pid = ctx.partnerId, o = pid && pos[pid], dx = o ? o.x - me.x : 0, dy = o ? o.y - me.y : 0;
-    if (!o || Math.abs(dx) > 95 || Math.abs(dy) > 48) return pop(me.x + (me.f ? -34 : 34), me.y, '휙', true);
-    const n = Math.hypot(dx, dy) || 1, ux = n > 1 ? dx / n : (me.f ? -1 : 1), uy = n > 1 ? dy / n : 0;
-    me.v = dy < -10 ? 'back' : 'front'; if (dx) me.f = dx < 0; dirty = true; place(ctx.uid, me);
-    ctx.store.set('rt/galleryhit', { id: Math.random().toString(36).slice(2, 9), from: ctx.uid, to: pid, ux: Math.round(ux * 100) / 100, uy: Math.round(uy * 100) / 100, ts: ctx.store.now() }).catch(() => {});
+    const ok = !!o && Math.abs(dx) <= 95 && Math.abs(dy) <= 48;
+    const n = Math.hypot(dx, dy) || 1, ux = ok && n > 1 ? dx / n : (me.f ? -1 : 1), uy = ok && n > 1 ? dy / n : 0;
+    me.v = ok && dy < -10 ? 'back' : 'front'; if (ok && dx) me.f = dx < 0; dirty = true; place(ctx.uid, me);
+    // 빗나가도 휘두르는 모습은 상대 화면에 보이게 알린다(to가 없으면 헛스윙)
+    ctx.store.set('rt/galleryhit', { id: Math.random().toString(36).slice(2, 9), from: ctx.uid, to: ok ? pid : null, d: (ok ? dx < 0 : me.f) ? -1 : 1, ux: Math.round(ux * 100) / 100, uy: Math.round(uy * 100) / 100, ts: ctx.store.now() }).catch(() => {});
   }
   const offHit = ctx.store.on('rt/galleryhit', v => {
     if (!v || v.id === seenHit || Math.abs(ctx.store.now() - v.ts) > 3000) return; seenHit = v.id;
-    const tgt = v.to === ctx.uid ? me : pos[v.to]; if (tgt) pop(tgt.x, tgt.y, '퍽!');
-    if (v.to === ctx.uid) { me.kx = (v.ux || 0) * 900; me.ky = (v.uy || 0) * 420; if (navigator.vibrate) try { navigator.vibrate(60); } catch {} }
+    const d = v.d < 0 ? -1 : 1, who = v.from === ctx.uid ? me : pos[v.from], a = avs[v.from];
+    if (a) { // 주먹을 휘두른다
+      a.el.style.setProperty('--d', d); a.el.classList.remove('swing'); void a.el.offsetWidth; a.el.classList.add('swing');
+      const fist = h('span', { class: 'g-fist' }, '👊'); a.el.append(fist); setTimeout(() => { fist.remove(); a.el.classList.remove('swing'); }, 300);
+    }
+    if (!v.to) { if (who) setTimeout(() => alive && pop(who.x + d * 46, who.y, '휙', true), 90); return; }
+    setTimeout(() => { if (!alive) return; // 주먹이 닿는 순간에 맞는다
+      const tgt = v.to === ctx.uid ? me : pos[v.to]; if (tgt) pop(tgt.x, tgt.y, '퍽!');
+      if (v.to === ctx.uid) { me.kx = (v.ux || 0) * 900; me.ky = (v.uy || 0) * 420; if (navigator.vibrate) try { navigator.vibrate(60); } catch {} }
+    }, 110);
   });
   const offRt = ctx.store.on('rt/gallery', v => {
     for (const u of Object.keys(pos)) if (!(v || {})[u]) delete pos[u];
