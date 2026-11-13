@@ -415,3 +415,9 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .g-fx{position:absolute;z-index:900;transform:translate(-50%,-50%);font:900 30px/1 var(--head);color:#E8412F;-webkit-text-stroke:5px #fff;paint-order:stroke fill;pointer-events:none;animation:gfx .5s ease-out forwards}
 .g-fx.miss{color:#7A6A58;font-size:20px}
 @keyframes gfx{0%{opacity:0;transform:translate(-50%,-30%) scale(.5)}25%{opacity:1;transform:translate(-50%,-60%) scale(1.25)}100%{opacity:0;transform:translate(-50%,-130%) scale(1)}}
+
+/* 영화관: 최근 톡을 맨 아래(입력칸 바로 위)에 */
+.page-watch .w-log{position:static;flex:none;max-width:none;z-index:auto;gap:3px;padding:6px 8px;border-radius:14px;background:#2A2136}
+.page-watch .w-log:empty{display:none}
+.page-watch .w-log p{background:rgba(255,255,255,.1);max-width:100%}
+.page-watch .w-log p:nth-last-child(n+4){opacity:1}.page-watch .w-log p:nth-last-child(n+3){opacity:.6}

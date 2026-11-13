@@ -134,7 +134,7 @@ export function mount(el, ctx) {
   msgInp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); sendMsg(); } });
   offs.push(ctx.store.on('chat', v => {
     v = v || {}; const ids = Object.keys(v).sort();
-    log.replaceChildren(...ids.slice(-4).map(id => { const m = v[id]; return h('p', { class: m.by === ctx.uid ? 'mine' : '' }, h('b', null, ctx.nameOf(m.by)), ' ', m.t || (m.img ? '📷 사진' : m.st ? '🧡 스티커' : '')); }));
+    log.replaceChildren(...ids.slice(-3).map(id => { const m = v[id]; return h('p', { class: m.by === ctx.uid ? 'mine' : '' }, h('b', null, ctx.nameOf(m.by)), ' ', m.t || (m.img ? '📷 사진' : m.st ? '🧡 스티커' : '')); }));
     const theirs = Math.max(0, ...ids.map(i => v[i]).filter(m => m.by !== ctx.uid).map(m => m.ts));
     if (theirs > readAt && !document.hidden) { readAt = theirs; ctx.store.set('read/' + ctx.uid, theirs).catch(() => {}); }
     const id = ids[ids.length - 1], m = id && v[id];
@@ -152,8 +152,8 @@ export function mount(el, ctx) {
   offs.push(ctx.store.on('rt/seat', v => { for (const [u, p] of Object.entries(v || {})) if (u !== ctx.uid && ctx.members[u] && p) place(u, p); }));
   sync(true);
 
-  hall.append(log, pad, emo); // 방향키·이모티콘·최근 톡은 객석 위에 겹쳐 둔다
-  el.append(h('div', { class: 'theater' }, h('div', { class: 'curtain' }, screen), hall),
+  hall.append(pad, emo); // 방향키·이모티콘은 객석 위에 겹쳐 둔다
+  el.append(h('div', { class: 'theater' }, h('div', { class: 'curtain' }, screen), hall), log, // 최근 톡은 맨 아래, 입력칸 바로 위
     h('div', { class: 'w-composer' }, h('button', { class: 'ic', 'aria-label': '영상 고르기', title: '영상 고르기', onClick: pickVideo }, '🎬'), msgInp, h('button', { class: 'btn primary', onClick: sendMsg }, '보내기')));
 
   return () => {
