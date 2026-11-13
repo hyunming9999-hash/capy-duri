@@ -53,16 +53,38 @@ export function mount(el, ctx) {
     if (dx || dy) {
       me.x = Math.max(30, Math.min(WALL_W - 30, me.x + dx * 170 * dt)); me.y = Math.max(8, Math.min(FLOOR_H - 8, me.y + dy * 100 * dt));
       me.v = dy > 0 ? 'front' : 'back'; if (dx) me.f = dx < 0; dirty = true; place(ctx.uid, me); if (!moving) follow();
-    } else if (me.v !== 'back' && !keys.size && dirty && t - sendT > 600) { me.v = 'back'; me.f = false; place(ctx.uid, me); } // 멈추면 벽(작품)을 본다
+    } else if (me.v !== 'back' && !keys.size && dirty && t - sendT > 600 && !me.kx && !me.ky) { me.v = 'back'; me.f = false; place(ctx.uid, me); } // 멈추면 벽(작품)을 본다
+    if (me.kx || me.ky) { // 맞아서 밀려나는 중
+      me.x = Math.max(30, Math.min(WALL_W - 30, me.x + me.kx * dt)); me.y = Math.max(8, Math.min(FLOOR_H - 8, me.y + me.ky * dt));
+      const d = Math.exp(-6 * dt); me.kx *= d; me.ky *= d; if (Math.hypot(me.kx, me.ky) < 12) me.kx = me.ky = 0; dirty = true; place(ctx.uid, me); if (!moving) follow();
+    }
     if (dirty && t - sendT > 100) { sendT = t; dirty = dx || dy ? true : me.v !== 'back'; ctx.store.set('rt/gallery/' + ctx.uid, { x: Math.round(me.x), y: Math.round(me.y), v: me.v, f: me.f }).catch(() => {}); }
   }
   const KEY = { ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R', w: 'U', s: 'D', a: 'L', d: 'R' };
-  const kd = e => { const k = KEY[e.key]; if (!k || /INPUT|TEXTAREA/.test(document.activeElement?.tagName || '') || document.querySelector('.modal-wrap')) return; e.preventDefault(); keys.add(k); };
+  const kd = e => { const busy = /INPUT|TEXTAREA/.test(document.activeElement?.tagName || '') || document.querySelector('.modal-wrap'); if (e.key === ' ' && !busy && document.activeElement?.tagName !== 'BUTTON') { e.preventDefault(); if (!e.repeat) hit(); return; } const k = KEY[e.key]; if (!k || busy) return; e.preventDefault(); keys.add(k); };
   const ku = e => { const k = KEY[e.key]; if (k) keys.delete(k); };
   window.addEventListener('keydown', kd); window.addEventListener('keyup', ku);
-  const pad = h('div', { class: 'dpad big' }, [['U', '▲'], ['L', '◀'], ['D', '▼'], ['R', '▶']].map(([k, t]) => { const b = h('button', { class: 'dp dp-' + k, 'aria-label': k }, t); holdBtn(b, () => keys.add(k), () => keys.delete(k)); return b; }));
+  const pad = h('div', { class: 'dpad big hit' }, [['U', '▲'], ['L', '◀'], ['D', '▼'], ['R', '▶']].map(([k, t]) => { const b = h('button', { class: 'dp dp-' + k, 'aria-label': k }, t); holdBtn(b, () => keys.add(k), () => keys.delete(k)); return b; }),
+    h('button', { class: 'dp dp-H', 'aria-label': '때리기', onClick: () => hit() }, '👊', h('small', null, '때리기')));
+  /* 때리기: 가까이 있는 상대를 치면 상대가 뒤로 밀려난다. 맞은 쪽 화면이 자기 위치를 직접 민다 */
+  const pos = {}; let hitAt = 0, seenHit = '';
+  const pop = (x, y, text, miss) => { const e = h('span', { class: 'g-fx' + (miss ? ' miss' : ''), style: { left: x + 'px', top: (WALL_H + y - 46) + 'px' } }, text); inner.append(e); setTimeout(() => e.remove(), 520); };
+  function hit() {
+    const now = performance.now(); if (now - hitAt < 600 || moving) return; hitAt = now;
+    const pid = ctx.partnerId, o = pid && pos[pid], dx = o ? o.x - me.x : 0, dy = o ? o.y - me.y : 0;
+    if (!o || Math.abs(dx) > 95 || Math.abs(dy) > 48) return pop(me.x + (me.f ? -34 : 34), me.y, '휙', true);
+    const n = Math.hypot(dx, dy) || 1, ux = n > 1 ? dx / n : (me.f ? -1 : 1), uy = n > 1 ? dy / n : 0;
+    me.v = dy < -10 ? 'back' : 'front'; if (dx) me.f = dx < 0; dirty = true; place(ctx.uid, me);
+    ctx.store.set('rt/galleryhit', { id: Math.random().toString(36).slice(2, 9), from: ctx.uid, to: pid, ux: Math.round(ux * 100) / 100, uy: Math.round(uy * 100) / 100, ts: ctx.store.now() }).catch(() => {});
+  }
+  const offHit = ctx.store.on('rt/galleryhit', v => {
+    if (!v || v.id === seenHit || Math.abs(ctx.store.now() - v.ts) > 3000) return; seenHit = v.id;
+    const tgt = v.to === ctx.uid ? me : pos[v.to]; if (tgt) pop(tgt.x, tgt.y, '퍽!');
+    if (v.to === ctx.uid) { me.kx = (v.ux || 0) * 900; me.ky = (v.uy || 0) * 420; if (navigator.vibrate) try { navigator.vibrate(60); } catch {} }
+  });
   const offRt = ctx.store.on('rt/gallery', v => {
-    for (const [u, p] of Object.entries(v || {})) if (u !== ctx.uid && ctx.members[u] && p) place(u, p);
+    for (const u of Object.keys(pos)) if (!(v || {})[u]) delete pos[u];
+    for (const [u, p] of Object.entries(v || {})) if (u !== ctx.uid && ctx.members[u] && p) { pos[u] = p; place(u, p); }
     for (const u of Object.keys(avs)) if (u !== ctx.uid && !(v || {})[u]) { avs[u].el.remove(); delete avs[u]; }
   });
   const offDress = ctx.store.on('dress', () => { for (const a of Object.values(avs)) a.key = ''; place(ctx.uid, me); });
@@ -144,7 +166,7 @@ export function mount(el, ctx) {
   place(ctx.uid, me); ctx.store.ephemeral('rt/gallery/' + ctx.uid, { x: me.x, y: me.y, v: me.v, f: false }).catch(() => {}); raf = requestAnimationFrame(loop);
   const off = ctx.store.on('gallery/frames', v => { const drag = room.querySelector('.g-frame:active'); frames = v || {}; if (!(moving && drag)) draw(); });
   draw();
-  return () => { alive = false; cancelAnimationFrame(raf); off(); offRt(); offDress(); offChat(); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); ro && ro.disconnect();
+  return () => { alive = false; cancelAnimationFrame(raf); off(); offRt(); offHit(); offDress(); offChat(); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); ro && ro.disconnect();
     root.classList.remove('fixed-page'); root.style.removeProperty('--vvh'); root.style.removeProperty('--vvt');
     if (vv) { vv.removeEventListener('resize', fit); vv.removeEventListener('scroll', fit); } window.removeEventListener('resize', fit);
     ctx.store.remove('rt/gallery/' + ctx.uid).catch(() => {}); };

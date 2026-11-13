@@ -405,3 +405,13 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .photos.n2{grid-template-columns:repeat(2,1fr)}.photos.n3{grid-template-columns:repeat(3,1fr)}.photos.n4{grid-template-columns:repeat(4,1fr)}
 .photos .ph{display:block;width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in;background:#EFE3CC}
 .msg.mine{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.msg.mine[data-held]{opacity:.6}
+
+/* 때리기(히노끼탕·전시실): 방향키 오른쪽 위 빈칸에 버튼 */
+.dpad.hit{grid-template-areas:". U H" "L D R"}
+.dpad .dp-H{grid-area:H;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1;background:#FFE1DA;border-color:#F0A090;box-shadow:0 4px 0 #F0A090;font-size:26px}
+.dpad .dp-H small{font:700 11px/1.2 var(--head);color:#B4432F}
+.dpad .dp-H:active{transform:translateY(3px);box-shadow:none;background:#FFC7BA}
+.g-pad .dpad.big .dp-H{font-size:20px}.g-pad .dpad.big .dp-H small{font-size:10px}
+.g-fx{position:absolute;z-index:900;transform:translate(-50%,-50%);font:900 30px/1 var(--head);color:#E8412F;-webkit-text-stroke:5px #fff;paint-order:stroke fill;pointer-events:none;animation:gfx .5s ease-out forwards}
+.g-fx.miss{color:#7A6A58;font-size:20px}
+@keyframes gfx{0%{opacity:0;transform:translate(-50%,-30%) scale(.5)}25%{opacity:1;transform:translate(-50%,-60%) scale(1.25)}100%{opacity:0;transform:translate(-50%,-130%) scale(1)}}

@@ -150,11 +150,23 @@ export function mount(el, ctx) {
 
   /* 이동 */
   const KEY = { ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R', w: 'U', s: 'D', a: 'L', d: 'R' };
-  const kd = e => { const k = KEY[e.key]; if (!k || /INPUT|TEXTAREA/.test(document.activeElement?.tagName || '')) return; e.preventDefault(); keys.add(k); };
+  const kd = e => { if (e.key === ' ' && !/INPUT|TEXTAREA|BUTTON/.test(document.activeElement?.tagName || '')) { e.preventDefault(); if (!e.repeat) hit(); return; } const k = KEY[e.key]; if (!k || /INPUT|TEXTAREA/.test(document.activeElement?.tagName || '')) return; e.preventDefault(); keys.add(k); };
   const ku = e => { const k = KEY[e.key]; if (k) keys.delete(k); };
   window.addEventListener('keydown', kd); window.addEventListener('keyup', ku);
   const wake = () => voice.wake(); window.addEventListener('pointerdown', wake);
-  const pad = h('div', { class: 'dpad big' }, [['U', '▲'], ['L', '◀'], ['D', '▼'], ['R', '▶']].map(([k, t]) => { const b = h('button', { class: 'dp dp-' + k, 'aria-label': k }, t); holdBtn(b, () => keys.add(k), () => keys.delete(k)); return b; }));
+  const pad = h('div', { class: 'dpad big hit' }, [['U', '▲'], ['L', '◀'], ['D', '▼'], ['R', '▶']].map(([k, t]) => { const b = h('button', { class: 'dp dp-' + k, 'aria-label': k }, t); holdBtn(b, () => keys.add(k), () => keys.delete(k)); return b; }),
+    h('button', { class: 'dp dp-H', 'aria-label': '때리기', onClick: () => hit() }, '👊', h('small', null, '때리기')));
+  /* 때리기: 가까이 있는 상대를 치면 상대가 뒤로 밀려난다. 맞은 쪽 화면이 자기 위치를 직접 밀어서 양쪽에 똑같이 보인다 */
+  const fx = []; let hitAt = 0, seenHit = '';
+  function hit() {
+    const now = performance.now(); if (now - hitAt < 600) return; hitAt = now;
+    const pid = ctx.partnerId, o = pid && others[pid];
+    const dx = o ? o.x - me.x : 0, dy = o ? o.y - me.y : 0;
+    if (!o || Math.abs(dx) > 26 || Math.abs(dy) > 16) { fx.push({ x: me.x + (me.f ? -12 : 12), y: me.y - 18, t0: now, s: '휙' }); return; }
+    const n = Math.hypot(dx, dy) || 1, ux = n > 1 ? dx / n : (me.f ? -1 : 1), uy = n > 1 ? dy / n : 0;
+    if (dx) me.f = dx < 0; dirty = true;
+    ctx.store.set('rt/parkhit', { id: Math.random().toString(36).slice(2, 9), from: ctx.uid, to: pid, ux: Math.round(ux * 100) / 100, uy: Math.round(uy * 100) / 100, ts: ctx.store.now() }).catch(() => {});
+  }
   function send(t, force) {
     if (!force && (!dirty || t - sendT < 100)) return; sendT = t; dirty = false;
     ctx.store.set('rt/park/' + ctx.uid, { x: Math.round(me.x * 10) / 10, y: Math.round(me.y * 10) / 10, v: me.v, f: me.f, m: me.m, mu: me.mu }).catch(() => {});
@@ -170,6 +182,11 @@ export function mount(el, ctx) {
       if (!blocked(nx, me.y)) me.x = nx; if (!blocked(me.x, ny)) me.y = ny;
       me.v = dy < 0 ? 'back' : 'front'; if (dx) me.f = dx < 0; dirty = true;
     } else if (was) dirty = true;
+    if (me.kx || me.ky) { // 맞아서 밀려나는 중
+      const nx = Math.max(10, Math.min(W - 10, me.x + me.kx * dt)), ny = Math.max(26, Math.min(H - 3, me.y + me.ky * dt));
+      if (!blocked(nx, me.y)) me.x = nx; if (!blocked(me.x, ny)) me.y = ny;
+      const d = Math.exp(-6 * dt); me.kx *= d; me.ky *= d; if (Math.hypot(me.kx, me.ky) < 4) me.kx = me.ky = 0; dirty = true;
+    }
     send(t);
     // 그리기: 도트 배경 → y 순서대로 소품·유자·카피바라 → 김
     g.imageSmoothingEnabled = false; g.drawImage(bg, 0, 0, canvas.width, canvas.height);
@@ -197,6 +214,9 @@ export function mount(el, ctx) {
       el.classList.toggle('talk', talking); el.firstChild.textContent = talking ? '🔊' : p.mu && (u === ctx.uid ? voice.on : peerOn) ? '🔇' : '';
     }
     list.sort((a, b) => a.y - b.y).forEach(o => o.d());
+    for (let i = fx.length - 1; i >= 0; i--) { const e = fx[i], k = (t - e.t0) / 450; if (k >= 1 || k < 0) { if (k >= 1) fx.splice(i, 1); continue; }
+      g.save(); g.globalAlpha = 1 - k * k; g.font = `900 ${Math.round((e.s === '휙' ? 9 : 12 + k * 6) * S)}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.lineWidth = 2.2 * S; g.strokeStyle = '#fff'; g.fillStyle = e.s === '휙' ? '#7A6A58' : '#E8412F'; g.strokeText(e.s, e.x * S, (e.y - k * 8) * S); g.fillText(e.s, e.x * S, (e.y - k * 8) * S); g.restore(); }
     // 김이 모락모락
     for (const st of steam) { st.y -= st.v * dt; st.x += Math.sin(t / 900 + st.r) * 0.08; if (st.y < 8) { st.y = WATER.y1 - 4; st.x = WATER.x0 + rnd() * (WATER.x1 - WATER.x0); } const a = Math.max(0, Math.min(0.32, (st.y - 8) / 120)); g.fillStyle = `rgba(255,255,255,${a})`; g.beginPath(); g.arc(st.x * S, st.y * S, st.r * S * (1.6 - st.y / H), 0, 7); g.fill(); }
   }
@@ -205,6 +225,11 @@ export function mount(el, ctx) {
   offs.push(ctx.store.on('rt/park', v => {
     for (const [u, p] of Object.entries(v || {})) { if (u === ctx.uid || !p) continue; const o = others[u] || (others[u] = { x: p.x, y: p.y }); Object.assign(o, { tx: p.x, ty: p.y, v: p.v || 'front', f: !!p.f, m: !!p.m, mu: !!p.mu }); }
     for (const u of Object.keys(others)) if (!(v || {})[u]) { delete others[u]; tagEls[u] && tagEls[u].remove(); delete tagEls[u]; }
+  }));
+  offs.push(ctx.store.on('rt/parkhit', v => {
+    if (!v || v.id === seenHit || Math.abs(ctx.store.now() - v.ts) > 3000) return; seenHit = v.id;
+    const tgt = v.to === ctx.uid ? me : others[v.to]; if (tgt) fx.push({ x: tgt.x, y: tgt.y - 22, t0: performance.now(), s: '퍽!' });
+    if (v.to === ctx.uid) { me.kx = (v.ux || 0) * 200; me.ky = (v.uy || 0) * 200; if (navigator.vibrate) try { navigator.vibrate(60); } catch {} }
   }));
   offs.push(ctx.store.on('dress', () => { for (const k of Object.keys(sprites)) delete sprites[k]; })); // 옷을 갈아입으면 그림을 다시 만든다
   me.mu = mode !== 'on';
