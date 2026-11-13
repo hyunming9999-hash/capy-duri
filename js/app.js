@@ -60,11 +60,14 @@ function shareBattery() {
 }
 function drawBatt(el) {
   const uid = el.dataset.batt, b = ctx.battery[uid], known = b && b.lv >= 0, name = uid === ctx.uid ? '내 휴대폰' : ctx.nameOf(uid) + ' 휴대폰';
-  el.className = 'batt' + (!known ? ' none' : b.lv <= 20 && !b.ch ? ' low' : '') + (known && b.ch ? ' ch' : '') + (uid !== ctx.uid && !ctx.presence[uid] ? ' stale' : '');
-  el.title = !b ? name + ' 배터리: 아직 모름' : !known ? name + ': 이 기기는 배터리 정보를 알려 주지 않아요' : `${name} 배터리 ${b.lv}%${b.ch ? ' (충전 중)' : ''}`;
+  const away = uid !== ctx.uid && !ctx.presence[uid] && b && b.at; // 상대가 앱을 닫았으면 마지막 값을 그대로 두고, 언제 값인지 같이 보여 준다
+  el.className = 'batt' + (!known ? ' none' : b.lv <= 20 && !b.ch ? ' low' : '') + (known && b.ch ? ' ch' : '');
+  el.title = !b ? name + ' 배터리: 아직 모름' : !known ? name + ': 이 기기는 배터리 정보를 알려 주지 않아요' : `${name} 배터리 ${b.lv}%${b.ch ? ' (충전 중)' : ''}${away ? ` (${agoText(b.at)} 마지막 확인)` : ''}`;
   el.setAttribute('aria-label', el.title);
-  el.replaceChildren(h('span', { class: 'batt-body' }, h('i', { style: { height: (known ? Math.max(6, b.lv) : 0) + '%' } }), known && b.ch && h('em', null, '⚡')), h('b', null, known ? b.lv + '%' : '–'));
+  el.replaceChildren(...[h('span', { class: 'batt-body' }, h('i', { style: { height: (known ? Math.max(6, b.lv) : 0) + '%' } }), known && b.ch && h('em', null, '⚡')), h('b', null, known ? b.lv + '%' : '–'), away && known && h('small', { class: 'batt-ago' }, agoText(b.at))].filter(Boolean));
 }
+const agoText = ts => { const s = Math.max(0, (ctx.store.now() - ts) / 1000); return s < 90 ? '방금' : s < 3600 ? `${Math.round(s / 60)}분 전` : s < 86400 ? `${Math.floor(s / 3600)}시간 전` : `${Math.floor(s / 86400)}일 전`; };
+setInterval(() => document.querySelectorAll('[data-batt]').forEach(drawBatt), 60000);
 const battEl = uid => { const el = h('span', { 'data-batt': uid, role: 'img' }); drawBatt(el); return el; };
 
 /* ---------- 알림 ---------- */
@@ -286,7 +289,7 @@ function home() {
         h('span', { class: 'heart beat' }, '♥'),
         pid ? h('div', { class: 'me' }, capyEl(ctx.capyOf(pid, { face: 'happy' }), 'bob late'), h('b', null, ctx.nameOf(pid), h('i', { class: 'online' + (ctx.presence[pid] ? ' on' : ''), 'data-online': pid })),
             h('small', { class: 'at' }, !ctx.presence[pid] ? '지금은 접속 안 함' : ctx.partnerWhere && ctx.partnerWhere !== 'home' && ctx.partnerWhere !== 'profile' ? `지금 '${titleOf(ctx.partnerWhere)}'` : '지금 홈 화면'))
-          : h('button', { class: 'me empty', onClick: invite }, h('span', { class: 'ghost-capy' }, '?'), h('b', null, '초대하기')), pid && battEl(pid)),
+          : h('button', { class: 'me empty', onClick: invite }, h('span', { class: 'ghost-capy' }, '?'), h('b', null, '초대하기')), pid ? battEl(pid) : h('span', { class: 'batt ghost', 'aria-hidden': 'true' })),
       dday),
     today,
     h('nav', { class: 'menu' }, MENU.map((m, i) => h('button', { class: 'card' + (m.wide ? ' wide' : ''), style: { '--tint': m.tint, animationDelay: i * 50 + 'ms' }, onClick: () => ctx.go(m.id) },

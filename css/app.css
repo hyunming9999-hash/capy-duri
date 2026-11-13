@@ -269,7 +269,7 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .batt-body em{position:absolute;inset:0;display:grid;place-items:center;font-style:normal;font-size:15px;text-shadow:0 0 3px #fff}
 .batt b{font:13px var(--head);color:var(--brown-d)}
 .batt.low .batt-body{border-color:var(--red)}.batt.low .batt-body::before{background:var(--red)}.batt.low .batt-body i{background:var(--red)}.batt.low b{color:var(--red)}
-.batt.ch .batt-body i{background:#F0B429}.batt.none{opacity:.45}.batt.none .batt-body{border-style:dashed}.batt.stale{opacity:.5}
+.batt.ch .batt-body i{background:#F0B429}.batt.none{opacity:.45}.batt.none .batt-body{border-style:dashed}.batt-ago{font-size:11px;color:#8D715B;line-height:1}.batt.ghost{visibility:hidden;width:44px}
 
 /* 홈: 오늘 카드 가운데 정렬 */
 .today-card{text-align:center}.today-card ul{display:inline-block;text-align:left}.today-card p{margin:4px 0 0}
