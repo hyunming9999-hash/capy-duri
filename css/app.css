@@ -273,3 +273,12 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 
 /* 홈: 오늘 카드 가운데 정렬 */
 .today-card{text-align:center}.today-card ul{display:inline-block;text-align:left}.today-card p{margin:4px 0 0}
+
+/* 홈 맨 위: 두 카피바라 높이를 맞춘다 — 그림은 같은 높이 칸에 바닥 맞춤, 이름·상태 글은 그 아래에 */
+.duo{align-items:flex-start}
+.duo .me{width:118px}
+.duo .me .capy{width:96px;height:150px;display:flex;align-items:flex-end}.duo .me .capy svg{width:100%}
+.duo .me .ghost-capy{margin-top:30px}
+.duo .heart{margin-top:96px}
+.duo .batt{align-self:flex-start;margin-top:56px}
+.duo .me .at{display:block;max-width:118px;text-align:center;line-height:1.3;font-size:12px}
