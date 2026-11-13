@@ -399,3 +399,9 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .g-log{top:10px;left:10px;z-index:5}
 .g-av .say{bottom:calc(100% + 22px);font-size:13px;z-index:2}
 .page-gallery .g-composer{flex:none}.page-gallery .g-composer .inp{padding-top:8px;padding-bottom:8px}
+
+/* 톡: 사진 묶음(최대 20장) + 길게 눌러 삭제 */
+.photos{display:grid;gap:3px;width:min(68%,300px);border-radius:16px;overflow:hidden;border:2px solid var(--line);background:#EFE3CC}
+.photos.n2{grid-template-columns:repeat(2,1fr)}.photos.n3{grid-template-columns:repeat(3,1fr)}.photos.n4{grid-template-columns:repeat(4,1fr)}
+.photos .ph{display:block;width:100%;aspect-ratio:1;object-fit:cover;cursor:zoom-in;background:#EFE3CC}
+.msg.mine{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.msg.mine[data-held]{opacity:.6}

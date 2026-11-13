@@ -1,6 +1,8 @@
 // 오늘 얘기나 하지? — 둘만의 톡 (글, 사진, 카피바라 스티커)
-import { h, toast, modal, pickImage, fileToCanvas, jpeg, hm, niceDate, ymd } from './ui.js';
-import { putBlob, getBlob } from './store.js';
+import { h, toast, modal, ask, pickImage, pickImages, fileToCanvas, jpeg, hm, niceDate, ymd } from './ui.js';
+import { putBlob, getBlob, delBlob } from './store.js';
+
+const MAX_PHOTOS = 20;
 import { capyEl } from './capy.js';
 
 const STICKERS = [['love', '좋아해'], ['happy', '최고야'], ['wow', '헉'], ['sleepy', '졸려'], ['sad', '미안해'], ['wink', '오케이']];
@@ -16,17 +18,42 @@ export function mount(el, ctx) {
 
   const send = async m => { stick = Date.now() + 4000; toBottom(); try { await ctx.store.push('chat', { by: ctx.uid, ts: ctx.store.now(), ...m }); } catch {} };
   const sendText = () => { const t = inp.value.trim(); if (!t) return; inp.value = ''; inp.style.height = ''; send({ t }); inp.focus(); };
+  // 카메라는 한 장, 사진첩은 한꺼번에 최대 20장(한 묶음으로 간다)
   const sendPhoto = async camera => {
-    const f = await pickImage(camera); if (!f) return;
-    try { toast('사진 보내는 중…'); const c = await fileToCanvas(f, 1000); const img = await putBlob(ctx.store, jpeg(c, 0.7)); await send({ img }); }
-    catch (e) { toast(e.message || '사진을 보내지 못했어요'); }
+    const files = camera ? [await pickImage(true)].filter(Boolean) : await pickImages(MAX_PHOTOS); if (!files.length) return;
+    if (files.over) toast(`한 번에 ${MAX_PHOTOS}장까지만 보내요. 앞의 ${MAX_PHOTOS}장을 보낼게요`, 3000);
+    const keys = []; let failed = 0, why = '';
+    for (let i = 0; i < files.length; i++) {
+      toast(files.length > 1 ? `사진 보내는 중… ${i + 1}/${files.length}` : '사진 보내는 중…', 60000);
+      try { const c = await fileToCanvas(files[i], 1000); keys.push(await putBlob(ctx.store, jpeg(c, 0.7))); } catch (e) { failed++; why = e.message || ''; }
+    }
+    if (keys.length) await send(keys.length > 1 ? { img: keys[0], imgs: keys } : { img: keys[0] });
+    toast(failed ? (keys.length ? `${keys.length}장 보냈어요. ${failed}장은 못 보냈어요` : why || '사진을 보내지 못했어요') : keys.length > 1 ? `사진 ${keys.length}장을 보냈어요` : '사진을 보냈어요', failed ? 3500 : 1400);
   };
+  // 삭제: 내가 보낸 말만 지울 수 있다(상대 화면에서도 사라진다). 묶음 사진은 한 장씩도 지울 수 있다
+  const keysOf = m => m.imgs ? Object.values(m.imgs) : m.img ? [m.img] : [];
+  const delMsg = async id => { const m = msgs[id]; if (!m || m.by !== ctx.uid) return; if (!await ask('이 메시지를 지울까요? 상대 화면에서도 사라져요', '지우기', '취소')) return;
+    try { await ctx.store.remove('chat/' + id); keysOf(m).forEach(k => delBlob(ctx.store, k).catch(() => {})); toast('지웠어요'); } catch { toast('지우지 못했어요'); } };
+  const delPhoto = async (id, key) => { const m = msgs[id]; if (!m || m.by !== ctx.uid) return false; const rest = keysOf(m).filter(k => k !== key);
+    if (!rest.length) { await delMsg(id); return !msgs[id]; }
+    if (!await ask('이 사진만 지울까요?', '지우기', '취소')) return false;
+    try { await ctx.store.update('chat/' + id, { img: rest[0], imgs: rest.length > 1 ? rest : null }); delBlob(ctx.store, key).catch(() => {}); toast('지웠어요'); return true; } catch { toast('지우지 못했어요'); return false; } };
+  // 길게 누르면(또는 마우스 오른쪽 버튼) 삭제 메뉴
+  const holdToDelete = (row, id) => { let t = 0, sx = 0, sy = 0;
+    const fire = () => { t = 0; row.dataset.held = '1'; setTimeout(() => { delete row.dataset.held; }, 700); delMsg(id); };
+    row.addEventListener('pointerdown', e => { sx = e.clientX; sy = e.clientY; clearTimeout(t); t = setTimeout(fire, 550); });
+    row.addEventListener('pointermove', e => { if (t && Math.abs(e.clientX - sx) + Math.abs(e.clientY - sy) > 10) { clearTimeout(t); t = 0; } });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(n => row.addEventListener(n, () => { clearTimeout(t); t = 0; }));
+    row.addEventListener('contextmenu', e => { e.preventDefault(); if (!row.dataset.held) { clearTimeout(t); fire(); } });
+  };
+  const openPhoto = (id, key, src, row) => { if (row.dataset.held) return; const mine = msgs[id] && msgs[id].by === ctx.uid;
+    const m = modal({ body: h('img', { class: 'photo-full', src, alt: '사진' }), actions: [mine && { label: '삭제', danger: true, onClick: async close => { if (await delPhoto(id, key)) close(); } }, { label: '닫기' }].filter(Boolean) }); return m; };
   inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendText(); } });
   inp.addEventListener('input', () => { inp.style.height = ''; inp.style.height = Math.min(110, inp.scrollHeight) + 'px'; });
 
   function draw() {
     const ids = Object.keys(msgs).sort();
-    const sig = ids.join() + '|' + theirRead; if (sig === drawn) return; drawn = sig;
+    const sig = ids.map(i => i + ':' + keysOf(msgs[i]).length).join() + '|' + theirRead; if (sig === drawn) return; drawn = sig;
     const nearEnd = list.scrollHeight - list.scrollTop - list.clientHeight < 120;
     let lastDay = ''; const out = [];
     for (const id of ids) {
@@ -34,11 +61,16 @@ export function mount(el, ctx) {
       if (d !== lastDay) { out.push(h('div', { class: 'day-sep' }, niceDate(d))); lastDay = d; }
       let body;
       if (m.st) body = h('div', { class: 'st' }, capyEl(ctx.capyOf(m.by, { face: m.st })), h('small', null, (STICKERS.find(s => s[0] === m.st) || [])[1] || ''));
-      else if (m.img) { const im = h('img', { class: 'photo', alt: '사진', onClick: () => im.src && modal({ body: h('img', { class: 'photo-full', src: im.src, alt: '사진' }), actions: [{ label: '닫기' }] }) }); im.onload = () => { if (Date.now() < stick || list.scrollHeight - list.scrollTop - list.clientHeight < im.height + 200) list.scrollTop = list.scrollHeight; }; getBlob(ctx.store, m.img).then(u => { if (u) im.src = u; }); body = im; }
+      else if (m.img) {
+        const ks = keysOf(m), many = ks.length > 1, follow = im => { im.onload = () => { if (Date.now() < stick || list.scrollHeight - list.scrollTop - list.clientHeight < im.height + 200) list.scrollTop = list.scrollHeight; }; };
+        const pic = k => { const im = h('img', { class: many ? 'ph' : 'photo', alt: '사진', draggable: false, onClick: () => im.src && openPhoto(id, k, im.src, im.closest('.msg')) }); follow(im); getBlob(ctx.store, k).then(u => { if (u) im.src = u; }); return im; };
+        body = many ? h('div', { class: 'photos n' + (ks.length >= 10 ? 4 : Math.min(ks.length, 3)) }, ks.map(pic)) : pic(ks[0]);
+      }
       else body = h('div', { class: 'bubble' }, m.t);
       // 카톡처럼: 상대가 아직 안 읽은 내 말 옆에 노란 1, 읽으면 사라진다
       const unread = mine && ctx.partnerId && m.ts > theirRead;
       const row = h('div', { class: 'msg' + (mine ? ' mine' : '') }, !mine && capyEl(ctx.capyOf(m.by, { head: true }), 'mini'), body, h('span', { class: 'meta' }, unread && h('b', { class: 'unread', 'aria-label': '안 읽음' }, '1'), h('small', { class: 'time' }, hm(m.ts))));
+      if (mine) holdToDelete(row, id);
       out.push(row);
     }
     if (!ids.length) out.push(h('div', { class: 'empty-box' }, capyEl(ctx.capyOf(ctx.uid, { face: 'happy' }), 'bob'), h('p', null, '첫 마디를 건네 보세요')));

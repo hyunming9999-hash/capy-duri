@@ -72,6 +72,14 @@ export function pickImage(camera) {
     document.body.append(inp); inp.click();
   });
 }
+// 사진 여러 장 고르기(최대 max장)
+export function pickImages(max = 20) {
+  return new Promise(res => {
+    const inp = h('input', { type: 'file', accept: 'image/*', multiple: true, style: { display: 'none' } });
+    inp.onchange = () => { const all = [...inp.files], out = all.slice(0, max); out.over = all.length > max; res(out); inp.remove(); };
+    document.body.append(inp); inp.click();
+  });
+}
 export function loadImg(src) {
   return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('이미지를 열 수 없어요')); i.src = src; });
 }
