@@ -327,3 +327,23 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .rp{display:flex;align-items:center;gap:12px;min-height:48px;padding:6px 12px;border:2px solid var(--line);border-radius:16px;background:var(--card);text-align:left}
 .rp b{flex:none;width:32px;height:32px;border-radius:50%;background:var(--yuzu);font:18px/32px var(--head);text-align:center}.rp small{font-size:15px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rp.on{border-color:var(--brown);background:#FFE9B8}
+
+/* 전시실: 흰 벽 + 흰 대리석 바닥 */
+.g-room{overflow-x:auto;overflow-y:hidden;border-radius:var(--r);border:3px solid #D9D6CF;background:#F7F5F0;-webkit-overflow-scrolling:touch}
+.g-wall{position:relative;background:linear-gradient(#FBFAF7,#F1EEE8);border-bottom:6px solid #E3DFD6}
+.g-rail{position:absolute;left:0;right:0;top:14px;height:4px;background:#D8D2C6;box-shadow:0 1px 0 #fff}
+.g-floor{position:relative;height:120px;background:
+ linear-gradient(115deg,transparent 46%,rgba(150,155,170,.22) 47%,transparent 49%) 0 0/260px 120px,
+ linear-gradient(70deg,transparent 60%,rgba(170,170,185,.18) 61%,transparent 63%) 90px 0/340px 120px,
+ linear-gradient(90deg,rgba(0,0,0,.06) 1px,transparent 1px) 0 0/160px 100%,
+ linear-gradient(#FFFFFF,#ECEBEF)}
+.g-visitor{position:absolute;bottom:14px;width:64px;filter:drop-shadow(0 6px 4px rgba(0,0,0,.15))}.g-visitor .capy{width:100%}
+.g-frame{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;cursor:pointer;user-select:none;-webkit-user-select:none}
+.g-pic{box-sizing:content-box;border:7px solid #5B4636;outline:2px solid #3D2E23;background:#fff;padding:6px;box-shadow:0 8px 14px rgba(0,0,0,.22)}.g-pic img{display:block;width:100%;height:100%;object-fit:cover;background:#EEE;pointer-events:none}
+.g-plate{margin-top:8px;max-width:190px;padding:2px 10px;background:#fff;border:1px solid #CFC8BA;border-radius:3px;font:12px var(--head);color:#4A3F35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.g-light{position:absolute;left:50%;top:-30px;width:140%;height:60px;transform:translateX(-50%);background:radial-gradient(ellipse at top,rgba(255,246,214,.75),transparent 70%);pointer-events:none}
+.g-room.moving .g-frame{touch-action:none;cursor:grab}.g-room.moving .g-pic{outline:3px dashed #E0A21C}
+.g-empty{position:absolute;left:24px;top:130px;margin:0;color:#9A9388;font-family:var(--head)}
+.g-acts{margin:12px 0 6px}.g-acts .btn{flex:1}
+.g-view{text-align:center}.g-view-frame{display:inline-block;border:8px solid #5B4636;padding:6px;background:#fff;box-shadow:0 6px 16px rgba(0,0,0,.25);max-width:100%}.g-view-frame img{display:block;max-width:100%;max-height:56dvh}
+.g-view h3{margin:14px 0 4px;font-size:22px}.g-view p{white-space:pre-wrap;text-align:left;margin:6px 0 8px}

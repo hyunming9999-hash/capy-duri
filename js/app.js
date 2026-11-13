@@ -10,6 +10,7 @@ import * as watch from './watch.js';
 import * as where from './where.js';
 import * as dress from './dress.js';
 import * as walk from './walk.js';
+import * as gallery from './gallery.js';
 import { GAMES } from './game.js';
 import { capySound, soundOn, setSound } from './sound.js';
 
@@ -31,7 +32,8 @@ const MENU = [
   { id: 'game', mod: game, title: '오늘 무슨 게임하지?', sub: '카피바라 게임 5종', face: 'happy', acc: 'none', tint: '#C9E4F7' },
   { id: 'where', mod: where, title: '오늘 어디야?', sub: '위치 핑 찍기', face: 'wow', acc: 'leaf', tint: '#BFE8E0' },
   { id: 'watch', mod: watch, title: '오늘 뭐 보실?', sub: '카피바라 영화관', face: 'sleepy', acc: 'towel', tint: '#D9D2F5' },
-  { id: 'walk', mod: walk, title: '카피바라 목욕하실?', sub: '히노끼탕 · 실시간 음성 대화', face: 'sleepy', acc: 'towel', tint: '#F3DDB8', wide: true },
+  { id: 'walk', mod: walk, title: '카피바라 목욕하실?', sub: '히노끼탕 · 음성 대화', face: 'sleepy', acc: 'towel', tint: '#F3DDB8' },
+  { id: 'gallery', mod: gallery, title: '오늘 전시회가실?', sub: '둘만의 전시실', face: 'wow', acc: 'flower', tint: '#ECECF4' },
 ];
 
 const root = $('#app');
