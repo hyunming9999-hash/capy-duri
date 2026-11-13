@@ -86,11 +86,15 @@ export function mount(el, ctx) {
     info.replaceChildren(...[
       mine && theirs && h('p', { class: 'between' }, '둘 사이 ', h('b', null, nice(distM(mine, theirs))), h('small', { class: 'dim' }, ' (각자 마지막 핑 기준)')),
       ...ctx.order.map(u => { const p = last[u], nm = ctx.nameOf(u);
-        return h('div', { class: 'loc-row' }, h('span', { class: 'capy mini', html: capy(ctx.capyOf(u, { head: true })) }),
-          h('div', { class: 'grow' }, h('b', null, nm), p ? h('small', null, ` ${ago(p.ts, now)}${p.msg ? ' · “' + p.msg + '”' : ''}`) : h('small', { class: 'dim' }, ' 아직 핑이 없어요')),
-          p && h('button', { class: 'chip', onClick: () => map && map.view(p.lat, p.lng, 16) }, '보기'),
-          p && h('a', { class: 'chip', href: `https://map.kakao.com/link/map/${encodeURIComponent(nm + ' 위치')},${p.lat},${p.lng}`, target: '_blank', rel: 'noopener' }, '카카오맵'),
-          p && h('a', { class: 'chip', href: `nmap://place?lat=${p.lat}&lng=${p.lng}&name=${encodeURIComponent(nm + ' 위치')}&appname=hyunming9999-hash.github.io` }, '네이버앱')); })].filter(Boolean));
+        // 이름줄 아래에 [보기 · 네이버지도 · 카카오맵] 버튼을 한 줄로
+        const pin = (fill, dot) => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5c-4 0-7 3-7 6.9 0 5 7 12.1 7 12.1s7-7.1 7-12.1c0-3.9-3-6.9-7-6.9z" fill="${fill}"/><circle cx="12" cy="9.4" r="2.8" fill="${dot}"/></svg>`;
+        return h('div', { class: 'loc-row' },
+          h('div', { class: 'loc-who' }, h('span', { class: 'capy mini', html: capy(ctx.capyOf(u, { head: true })) }),
+            h('div', { class: 'grow' }, h('b', null, nm), p ? h('small', null, ` ${ago(p.ts, now)}${p.msg ? ' · “' + p.msg + '”' : ''}`) : h('small', { class: 'dim' }, ' 아직 핑이 없어요'))),
+          p && h('div', { class: 'loc-btns' },
+            h('button', { class: 'lb see', onClick: () => map && map.view(p.lat, p.lng, 16) }, h('i', { html: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="#6A4A32" stroke-width="2.6"/><path d="M15 15l5 5" stroke="#6A4A32" stroke-width="2.8" stroke-linecap="round"/></svg>' }), '보기'),
+            h('a', { class: 'lb naver', href: `nmap://place?lat=${p.lat}&lng=${p.lng}&name=${encodeURIComponent(nm + ' 위치')}&appname=hyunming9999-hash.github.io` }, h('i', { html: pin('#fff', '#03C75A') }), '네이버지도'),
+            h('a', { class: 'lb kakao', href: `https://map.kakao.com/link/map/${encodeURIComponent(nm + ' 위치')},${p.lat},${p.lng}`, target: '_blank', rel: 'noopener' }, h('i', { html: pin('#3A1D1D', '#FEE500') }), '카카오맵'))); })].filter(Boolean));
     hist.replaceChildren(...(ids.length ? ids.slice(0, 10).map(id => { const p = pings[id]; return h('li', { onClick: () => map && map.view(p.lat, p.lng, 16) }, h('b', null, ctx.nameOf(p.by)), h('small', null, ' ' + ago(p.ts, now)), p.msg && h('span', null, ' · ' + p.msg), h('small', { class: 'dim' }, p.acc ? ` (오차 약 ${p.acc}m)` : '')); })
       : [h('li', { class: 'dim' }, '아직 찍은 핑이 없어요')]));
     if (!map) return;

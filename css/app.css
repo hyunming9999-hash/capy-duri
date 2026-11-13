@@ -301,3 +301,10 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .dpad.big .dp.held{transform:translateY(3px);box-shadow:none}
 .page-walk .walk-hint{flex:none}
 @media (max-height:700px){.dpad.big .dp{width:min(24vw,96px);height:min(15vw,66px);font-size:26px}}
+
+/* 오늘 어디야?: 지도 버튼 한 줄 */
+.loc-row{display:block;padding:10px 0}.loc-who{display:flex;align-items:center;gap:6px}
+.loc-btns{display:grid;grid-template-columns:1fr 1.25fr 1.15fr;gap:6px;margin-top:8px}
+.lb{display:flex;align-items:center;justify-content:center;gap:5px;min-height:44px;padding:4px 6px;border-radius:14px;border:2px solid var(--line);background:var(--card);font:15px var(--head);color:var(--ink);text-decoration:none;white-space:nowrap}
+.lb i{display:block;width:20px;height:20px;flex:none}.lb svg{display:block;width:100%;height:100%}
+.lb.naver{background:#03C75A;border-color:#02A64B;color:#fff}.lb.kakao{background:#FEE500;border-color:#E0CA00;color:#3A1D1D}
