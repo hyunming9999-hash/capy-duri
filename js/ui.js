@@ -75,22 +75,27 @@ export function pickImage(camera) {
 export function loadImg(src) {
   return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('이미지를 열 수 없어요')); i.src = src; });
 }
+// HEIC(아이폰·갤럭시 고효율 사진)는 브라우저가 못 여는 경우가 많아, 필요할 때만 변환기를 불러와 JPG로 바꾼다
+let heicLib;
+function heicToBlob(file) {
+  heicLib = heicLib || new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = new URL('./vendor/heic2any.min.js', import.meta.url).href; sc.onload = () => res(window.heic2any); sc.onerror = () => { heicLib = null; rej(new Error('변환기를 불러오지 못했어요')); }; document.head.append(sc); });
+  return heicLib.then(fn => fn({ blob: file, toType: 'image/jpeg', quality: 0.85 })).then(b => Array.isArray(b) ? b[0] : b);
+}
+const viaImg = async blob => { const url = URL.createObjectURL(blob); try { const img = await loadImg(url); if (img.decode) await img.decode().catch(() => {}); return [img, img.naturalWidth, img.naturalHeight]; } finally { setTimeout(() => URL.revokeObjectURL(url), 3000); } };
+// 아주 큰 사진(1억 화소 등)은 줄여서 읽어 메모리 부족을 피한다
+const viaBitmap = async (blob, side) => { let b; try { b = await createImageBitmap(blob, { resizeWidth: side, resizeQuality: 'medium' }); } catch { b = await createImageBitmap(blob); } return [b, b.width, b.height]; };
 export async function fileToCanvas(file, maxSide) {
-  const url = URL.createObjectURL(file);
-  try {
-    let img, w, hh;
-    try { img = await loadImg(url); w = img.naturalWidth; hh = img.naturalHeight; }
-    catch { // <img>로 못 여는 사진은 다른 방식으로 한 번 더 시도
-      try { img = await createImageBitmap(file); w = img.width; hh = img.height; }
-      catch { const ext = ((file.name || '').split('.').pop() || '').toUpperCase(), kind = /hei[cf]/i.test(file.type + ext) ? 'HEIC' : (file.type || ext || '알 수 없는 형식');
-        throw new Error(`이 사진은 열 수 없어요 (${kind}). 스크린샷을 찍어서 올리거나 JPG로 저장해 주세요`); }
-    }
-    if (!w || !hh) throw new Error('사진이 비어 있어요. 다른 사진으로 해 주세요');
-    const s = Math.min(1, maxSide / Math.max(w, hh));
-    const c = h('canvas', { width: Math.round(w * s), height: Math.round(hh * s) });
-    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-    return c;
-  } finally { URL.revokeObjectURL(url); }
+  if (!file || !file.size) throw new Error('사진 파일이 비어 있어요. 사진첩에서 기기에 저장된 사진을 골라 주세요');
+  let head = ''; try { head = new TextDecoder('latin1').decode(await file.slice(0, 16).arrayBuffer()); } catch {}
+  const isHeic = /hei[cf]/i.test(file.type + ' ' + (file.name || '')) || /ftyp(hei|hev|mif1|msf1)/.test(head);
+  const tries = isHeic ? [() => heicToBlob(file).then(viaImg), () => viaImg(file), () => viaBitmap(file, maxSide)] : [() => viaImg(file), () => viaBitmap(file, maxSide), () => heicToBlob(file).then(viaImg)];
+  let got = null;
+  for (const t of tries) { try { const r = await t(); if (r[1] && r[2]) { got = r; break; } } catch {} }
+  if (!got) throw new Error(`이 사진은 열 수 없어요 (${isHeic ? 'HEIC' : file.type || '형식 모름'}, ${(file.size / 1048576).toFixed(1)}MB). 스크린샷으로 찍어서 올려 보세요`);
+  const [img, w, hh] = got, s = Math.min(1, maxSide / Math.max(w, hh));
+  const c = h('canvas', { width: Math.max(1, Math.round(w * s)), height: Math.max(1, Math.round(hh * s)) });
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  return c;
 }
 export const jpeg = (canvas, q = 0.72) => canvas.toDataURL('image/jpeg', q);
 
