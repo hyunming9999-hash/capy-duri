@@ -372,3 +372,10 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .menu .here-mark{position:absolute;top:-6px;left:-2px;padding:0;background:none;border:0;box-shadow:none;font-size:0;gap:0}
 .menu .here-mark .capy{width:24px;max-width:24px;padding:1px;border-radius:50%;background:#fff;border:2px solid #4CAF50;box-shadow:none}
 .hero{padding:12px 12px 10px}.today-card{margin:10px 0}.foot{margin-top:12px}
+
+/* 전시실: 액자 모양·크기 자유 조절 손잡이 */
+.g-pic{position:relative}
+.g-grip{display:none;position:absolute;right:-14px;bottom:-14px;width:30px;height:30px;border-radius:50%;background:#FFC83A;border:3px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,.3);touch-action:none;cursor:nwse-resize;z-index:3}
+.g-grip::after{content:'↘';position:absolute;inset:0;display:grid;place-items:center;font:700 14px/1 sans-serif;color:#5a3d1e}
+.g-room.moving .g-grip{display:block}
+.g-empty{max-width:290px;white-space:normal;line-height:1.5}
