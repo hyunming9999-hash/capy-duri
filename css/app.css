@@ -421,3 +421,7 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .page-watch .w-log:empty{display:none}
 .page-watch .w-log p{background:rgba(255,255,255,.1);max-width:100%}
 .page-watch .w-log p:nth-last-child(n+4){opacity:1}.page-watch .w-log p:nth-last-child(n+3){opacity:.6}
+
+/* 배구: 연습·새 게임은 맨 위로, 조작은 ◀ 점프 ▶ 크게 */
+.g-foot.v-top{margin:0 0 8px}.g-foot.v-top .btn{padding:7px 14px;font-size:15px;min-height:0}
+.vpad{gap:10px;margin-top:12px}.vp{height:78px;font-size:24px;border-radius:22px;box-shadow:0 4px 0 var(--line)}.vp.held{transform:translateY(3px);box-shadow:none}.vp-j{flex:1.25}
