@@ -4,8 +4,8 @@ import { h, toast, holdBtn, loadImg, josa } from './ui.js';
 import { capy } from './capy.js';
 
 /* ---------- 히노끼탕 그림 (192×144 저해상도로 그려 크게 늘려 보여 준다) ---------- */
-const W = 192, H = 144, SW = 28, SH = 36.9;
-const TUB = { x0: 34, y0: 46, x1: 158, y1: 108, rim: 5, face: 12 }; // 바깥 테두리, 테두리 두께, 앞면 높이
+const W = 192, H = 204, SW = 28, SH = 36.9; // 세로로 긴 탕(화면을 크게 쓰도록)
+const TUB = { x0: 34, y0: 46, x1: 158, y1: 150, rim: 5, face: 12 }; // 바깥 테두리, 테두리 두께, 앞면 높이
 const WATER = { x0: TUB.x0 + TUB.rim, y0: TUB.y0 + TUB.rim, x1: TUB.x1 - TUB.rim, y1: TUB.y1 - TUB.rim };
 const inWater = (x, y) => x > WATER.x0 + 3 && x < WATER.x1 - 3 && y > WATER.y0 + 8 && y < WATER.y1 + 1;
 const rnd = (() => { let s = 20261113; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; })();
@@ -27,18 +27,18 @@ function drawBath() {
   for (let x = TUB.x0; x < TUB.x1; x += 9) px(g, '#D3A56D', x, TUB.y0, 1, TUB.rim);
   px(g, '#F6D8A8', TUB.x0, TUB.y0, TUB.x1 - TUB.x0, 1);
   for (let y = WATER.y0; y < WATER.y1; y++) for (let x = WATER.x0; x < WATER.x1; x++) { const edge = y < WATER.y0 + 2; px(g, edge ? '#6FB9C9' : '#8FD3DF', x, y); }
-  for (let i = 0; i < 26; i++) { const x = WATER.x0 + 4 + Math.floor(rnd() * (WATER.x1 - WATER.x0 - 12)), y = WATER.y0 + 5 + Math.floor(rnd() * (WATER.y1 - WATER.y0 - 8)); px(g, '#C3EDF2', x, y, 4 + Math.floor(rnd() * 5), 1); }
+  for (let i = 0; i < 44; i++) { const x = WATER.x0 + 4 + Math.floor(rnd() * (WATER.x1 - WATER.x0 - 12)), y = WATER.y0 + 5 + Math.floor(rnd() * (WATER.y1 - WATER.y0 - 8)); px(g, '#C3EDF2', x, y, 4 + Math.floor(rnd() * 5), 1); }
   // 발 매트
-  px(g, '#7FA9C9', 82, 124, 30, 12); for (let x = 83; x < 111; x += 3) px(g, '#A8C8E0', x, 125, 1, 10);
+  px(g, '#7FA9C9', 82, 170, 30, 12); for (let x = 83; x < 111; x += 3) px(g, '#A8C8E0', x, 171, 1, 10);
   return c;
 }
 // 소품: [그림 함수, x, 바닥 y, 폭(절반), 깊이(절반)]
 const PROPS = [
-  [(g) => { px(g, 'rgba(0,0,0,.15)', 1, 15, 16, 2); px(g, '#C98F55', 2, 4, 14, 12); for (let x = 2; x < 16; x += 3) px(g, '#B07A45', x, 4, 1, 12); px(g, '#6E6E78', 2, 6, 14, 1); px(g, '#6E6E78', 2, 13, 14, 1); px(g, '#8FD3DF', 3, 4, 12, 2); px(g, '#E3B57A', 2, 3, 14, 1); }, 18, 128, 7, 3, 18, 18], // 나무 바가지통
-  [(g) => { px(g, 'rgba(0,0,0,.15)', 0, 11, 18, 2); px(g, '#D8A86E', 1, 3, 16, 3); px(g, '#B98653', 2, 6, 2, 6); px(g, '#B98653', 14, 6, 2, 6); px(g, '#F0CC93', 1, 3, 16, 1); px(g, '#FFFDF7', 4, 0, 9, 3); px(g, '#8FC1E8', 6, 0, 1, 3); px(g, '#8FC1E8', 9, 0, 1, 3); }, 36, 136, 8, 3, 18, 14], // 목욕 의자 + 수건
+  [(g) => { px(g, 'rgba(0,0,0,.15)', 1, 15, 16, 2); px(g, '#C98F55', 2, 4, 14, 12); for (let x = 2; x < 16; x += 3) px(g, '#B07A45', x, 4, 1, 12); px(g, '#6E6E78', 2, 6, 14, 1); px(g, '#6E6E78', 2, 13, 14, 1); px(g, '#8FD3DF', 3, 4, 12, 2); px(g, '#E3B57A', 2, 3, 14, 1); }, 18, 184, 7, 3, 18, 18], // 나무 바가지통
+  [(g) => { px(g, 'rgba(0,0,0,.15)', 0, 11, 18, 2); px(g, '#D8A86E', 1, 3, 16, 3); px(g, '#B98653', 2, 6, 2, 6); px(g, '#B98653', 14, 6, 2, 6); px(g, '#F0CC93', 1, 3, 16, 1); px(g, '#FFFDF7', 4, 0, 9, 3); px(g, '#8FC1E8', 6, 0, 1, 3); px(g, '#8FC1E8', 9, 0, 1, 3); }, 36, 194, 8, 3, 18, 14], // 목욕 의자 + 수건
   [(g) => { px(g, 'rgba(0,0,0,.15)', 1, 27, 14, 2); px(g, '#9C9AA0', 5, 18, 6, 9); px(g, '#B9B7BC', 2, 14, 12, 4); px(g, '#FFE9A8', 4, 9, 8, 5); px(g, '#FFC93C', 6, 10, 4, 3); px(g, '#9C9AA0', 3, 9, 1, 5); px(g, '#9C9AA0', 12, 9, 1, 5); px(g, '#B9B7BC', 1, 5, 14, 4); px(g, '#D6D4D8', 4, 2, 8, 3); px(g, '#B9B7BC', 7, 0, 2, 2); }, 176, 60, 6, 3, 16, 29], // 석등
   [(g) => { px(g, 'rgba(0,0,0,.15)', 0, 23, 14, 2); px(g, '#A0603A', 2, 15, 10, 8); px(g, '#C27A4C', 2, 15, 10, 2); for (const [x, hh] of [[4, 14], [7, 15], [10, 12]]) { px(g, '#5BA65B', x, 15 - hh, 1, hh); px(g, '#7CC45B', x - 2, 15 - hh + 2, 2, 1); px(g, '#7CC45B', x + 1, 15 - hh + 5, 2, 1); } }, 14, 64, 6, 3, 14, 25], // 화분 대나무
-  [(g) => { px(g, 'rgba(0,0,0,.12)', 0, 6, 16, 2); px(g, '#FFB3C7', 0, 1, 16, 5); px(g, '#FFD0DC', 0, 1, 16, 1); px(g, '#F58FB0', 0, 3, 16, 1); }, 178, 130, 8, 2, 16, 8], // 개어 둔 수건
+  [(g) => { px(g, 'rgba(0,0,0,.12)', 0, 6, 16, 2); px(g, '#FFB3C7', 0, 1, 16, 5); px(g, '#FFD0DC', 0, 1, 16, 1); px(g, '#F58FB0', 0, 3, 16, 1); }, 178, 188, 8, 2, 16, 8], // 개어 둔 수건
 ].map(([draw, x, y, hw, hd, cw, ch]) => { const c = h('canvas', { width: cw, height: ch }); draw(c.getContext('2d')); return { c, x, y, hw, hd }; });
 const blocked = (x, y) => (x > TUB.x0 - 2 && x < TUB.x1 + 2 && y > TUB.y1 - 1 && y < TUB.y1 + TUB.face + 3) || PROPS.some(p => Math.abs(x - p.x) < p.hw + 4 && Math.abs(y - p.y) < p.hd + 2);
 
@@ -106,9 +106,9 @@ export function mount(el, ctx) {
   const canvas = h('canvas', { class: 'park' }), g = canvas.getContext('2d');
   const bg = drawBath(), tags = h('div', { class: 'park-tags' }), wrap = h('div', { class: 'park-wrap' }, canvas, tags);
   // 탕에 떠 있는 유자들
-  const yuzus = Array.from({ length: 6 }, (_, i) => ({ x: WATER.x0 + 12 + i * 18 + (i % 2) * 5, y: WATER.y0 + 14 + (i * 13) % 34, ph: i * 1.7, vx: (i % 2 ? 1 : -1) * 2.2 }));
-  const steam = Array.from({ length: 14 }, () => ({ x: WATER.x0 + rnd() * (WATER.x1 - WATER.x0), y: WATER.y1 - rnd() * 50, r: 3 + rnd() * 4, v: 5 + rnd() * 5 }));
-  const me = { x: ctx.idx ? 172 : 20, y: 100, v: 'front', f: false, m: false, mu: false };
+  const yuzus = Array.from({ length: 6 }, (_, i) => ({ x: WATER.x0 + 12 + i * 18 + (i % 2) * 5, y: WATER.y0 + 14 + (i * 29) % 76, ph: i * 1.7, vx: (i % 2 ? 1 : -1) * 2.2 }));
+  const steam = Array.from({ length: 14 }, () => ({ x: WATER.x0 + rnd() * (WATER.x1 - WATER.x0), y: WATER.y1 - rnd() * 90, r: 3 + rnd() * 4, v: 5 + rnd() * 5 }));
+  const me = { x: ctx.idx ? 172 : 20, y: 120, v: 'front', f: false, m: false, mu: false };
   const others = {}, sprites = {}, tagEls = {}, level = {};
   const keys = new Set();
 
@@ -253,7 +253,6 @@ export function mount(el, ctx) {
 
   el.append(wrap,
     h('div', { class: 'voice-bar' }, vStatus, seg),
-    h('p', { class: 'dim walk-hint' }, '탕 안으로 걸어 들어가면 카피바라가 몸을 담가요. 고른 음성 모드는 기억해 두고 다음에 들어오면 그대로 켜져요. 목소리는 저장되지 않고, 이 화면을 나가면 마이크가 꺼져요.'),
     h('div', { class: 'pad-dock' }, pad));
   resize(); drawVoice(); raf = requestAnimationFrame(loop);
   if (mode !== 'off') setMode(mode, true); // 지난번에 켜 둔 모드 그대로

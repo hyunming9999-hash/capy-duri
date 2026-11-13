@@ -431,3 +431,17 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 @keyframes glunge{0%,100%{translate:0 0}45%{translate:calc(var(--d,1)*14px) -3px}}
 .g-fist{position:absolute;left:50%;top:46%;font-size:24px;line-height:1;pointer-events:none;z-index:3;animation:gfist .28s ease-out forwards;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
 @keyframes gfist{0%{transform:translate(calc(-50% + var(--d,1)*8px),-50%) rotate(calc(var(--d,1)*-50deg)) scale(.7);opacity:.2}55%{transform:translate(calc(-50% + var(--d,1)*52px),-70%) rotate(0deg) scale(1.25);opacity:1}100%{transform:translate(calc(-50% + var(--d,1)*38px),-40%) rotate(calc(var(--d,1)*30deg)) scale(.9);opacity:0}}
+
+/* 때리기 버튼: 방향키 위에 길게 정중앙 */
+.dpad.hit{grid-template-areas:"H H H" ". U ." "L D R"}
+.dpad.big .dp-H,.dpad .dp-H{grid-area:H;width:auto;justify-self:stretch;height:46px;flex-direction:row;gap:8px;font-size:22px;border-radius:999px}
+.dpad .dp-H small{font-size:17px}
+.g-pad .dpad.big .dp-H{height:40px;font-size:19px}.g-pad .dpad.big .dp-H small{font-size:15px}
+/* 히노끼탕: 화면을 크게(세로로 긴 탕), 아래는 음성 → 때리기 → 방향키만 */
+.page-walk .park-wrap{width:min(100%,calc((var(--vvh,100vh) - 372px) * 192 / 204))}
+.page-walk .voice-bar{padding:6px 10px}.page-walk .v-status{font-size:14px}.page-walk .seg{margin-top:4px}.page-walk .seg-b{min-height:36px}
+.page-walk .pad-dock{flex:none;padding:0 0 4px}
+.page-walk .dpad.big{gap:8px}.page-walk .dpad.big .dp{width:min(28vw,124px);height:min(15.5vw,64px);font-size:28px}
+.page-walk .dpad.big .dp-H{width:auto;height:46px;font-size:22px}
+@media (max-height:700px){.page-walk .dpad.big .dp{height:52px}.page-walk .dpad.big .dp-H{height:40px}.page-walk .park-wrap{width:min(100%,calc((var(--vvh,100vh) - 336px) * 192 / 204))}}
+.page-gallery .g-pad .dpad.big .dp-H{width:auto;height:40px;font-size:19px}
