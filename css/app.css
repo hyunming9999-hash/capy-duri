@@ -294,3 +294,10 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .composer .send{min-height:52px;padding:8px 14px;font-size:17px}
 .attach{display:flex;gap:10px;justify-content:center;padding:10px 0 4px;border-top:1px dashed var(--line)}
 .att{flex:1;max-width:110px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border:2px solid var(--line);border-radius:18px;background:var(--card);font:15px var(--head)}.att span{font-size:26px}
+
+/* 목욕: 방향키 크게 (남는 아래 공간을 쓴다) */
+.page-walk .pad-dock{flex:1;min-height:0;align-items:flex-end;padding-bottom:6px}
+.dpad.big{gap:10px}.dpad.big .dp{width:min(28vw,124px);height:min(21vw,96px);border-radius:24px;font-size:34px;border-width:3px;box-shadow:0 4px 0 var(--line)}
+.dpad.big .dp.held{transform:translateY(3px);box-shadow:none}
+.page-walk .walk-hint{flex:none}
+@media (max-height:700px){.dpad.big .dp{width:min(24vw,96px);height:min(15vw,66px);font-size:26px}}
