@@ -449,3 +449,7 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 /* 톡: 전화 걸기 버튼 */
 .call.tel{width:38px;padding:0;font-size:17px;background:#E3F5E1;border-color:#9ED09A}
 .tel-num{font:26px var(--head);text-align:center;margin:6px 0 2px;letter-spacing:.5px}
+
+/* 톡: 길게 눌러 복사/삭제 */
+.msg{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.msg[data-held]{opacity:.6}
+.hold-quote{margin:0;padding:10px 12px;border-radius:14px;background:#F6E6C8;white-space:pre-wrap;word-break:break-word;max-height:150px;overflow:auto}

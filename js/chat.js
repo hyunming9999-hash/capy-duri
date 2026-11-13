@@ -38,9 +38,14 @@ export function mount(el, ctx) {
     if (!rest.length) { await delMsg(id); return !msgs[id]; }
     if (!await ask('이 사진만 지울까요?', '지우기', '취소')) return false;
     try { await ctx.store.update('chat/' + id, { img: rest[0], imgs: rest.length > 1 ? rest : null }); delBlob(ctx.store, key).catch(() => {}); toast('지웠어요'); return true; } catch { toast('지우지 못했어요'); return false; } };
-  // 길게 누르면(또는 마우스 오른쪽 버튼) 삭제 메뉴
+  const copyText = async t => { try { await navigator.clipboard.writeText(t); } catch { const ta = h('textarea', { style: { position: 'fixed', opacity: 0 } }); ta.value = t; document.body.append(ta); ta.select(); try { document.execCommand('copy'); } catch {} ta.remove(); } toast('복사했어요', 1200); };
+  // 길게 누르면(또는 마우스 오른쪽 버튼) 메뉴: 글은 복사, 내가 보낸 것은 삭제
+  const holdMenu = (id, row) => { const m = msgs[id]; if (!m) return; const mine = m.by === ctx.uid;
+    if (!m.t) { if (mine) delMsg(id); return; }
+    modal({ body: h('p', { class: 'hold-quote' }, m.t.length > 120 ? m.t.slice(0, 119) + '…' : m.t),
+      actions: [{ label: '📋 복사', primary: true, onClick: close => { close(); copyText(m.t); } }, mine && { label: '삭제', danger: true, onClick: close => { close(); delMsg(id); } }, { label: '닫기' }].filter(Boolean) }); };
   const holdToDelete = (row, id) => { let t = 0, sx = 0, sy = 0;
-    const fire = () => { t = 0; row.dataset.held = '1'; setTimeout(() => { delete row.dataset.held; }, 700); delMsg(id); };
+    const fire = () => { t = 0; row.dataset.held = '1'; setTimeout(() => { delete row.dataset.held; }, 700); holdMenu(id, row); };
     row.addEventListener('pointerdown', e => { sx = e.clientX; sy = e.clientY; clearTimeout(t); t = setTimeout(fire, 550); });
     row.addEventListener('pointermove', e => { if (t && Math.abs(e.clientX - sx) + Math.abs(e.clientY - sy) > 10) { clearTimeout(t); t = 0; } });
     ['pointerup', 'pointercancel', 'pointerleave'].forEach(n => row.addEventListener(n, () => { clearTimeout(t); t = 0; }));
@@ -70,7 +75,7 @@ export function mount(el, ctx) {
       // 카톡처럼: 상대가 아직 안 읽은 내 말 옆에 노란 1, 읽으면 사라진다
       const unread = mine && ctx.partnerId && m.ts > theirRead;
       const row = h('div', { class: 'msg' + (mine ? ' mine' : '') }, !mine && capyEl(ctx.capyOf(m.by, { head: true }), 'mini'), body, h('span', { class: 'meta' }, unread && h('b', { class: 'unread', 'aria-label': '안 읽음' }, '1'), h('small', { class: 'time' }, hm(m.ts))));
-      if (mine) holdToDelete(row, id);
+      if (mine || m.t) holdToDelete(row, id);
       out.push(row);
     }
     if (!ids.length) out.push(h('div', { class: 'empty-box' }, capyEl(ctx.capyOf(ctx.uid, { face: 'happy' }), 'bob'), h('p', null, '첫 마디를 건네 보세요')));
