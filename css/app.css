@@ -282,3 +282,7 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .duo .heart{margin-top:96px}
 .duo .batt{align-self:flex-start;margin-top:56px}
 .duo .me .at{display:block;max-width:118px;text-align:center;line-height:1.3;font-size:12px}
+
+/* 톡: 카톡식 안 읽음 1 */
+.msg .meta{display:flex;flex-direction:column;align-items:flex-end;gap:0;line-height:1.1}.msg:not(.mine) .meta{align-items:flex-start}
+.unread{font:13px var(--head);color:#E0A21C}

@@ -26,7 +26,7 @@ export function mount(el, ctx) {
     const ids = Object.keys(msgs).sort();
     const sig = ids.join() + '|' + theirRead; if (sig === drawn) return; drawn = sig;
     const nearEnd = list.scrollHeight - list.scrollTop - list.clientHeight < 120;
-    let lastDay = '', lastMine = null; const out = [];
+    let lastDay = ''; const out = [];
     for (const id of ids) {
       const m = msgs[id], mine = m.by === ctx.uid, d = ymd(new Date(m.ts));
       if (d !== lastDay) { out.push(h('div', { class: 'day-sep' }, niceDate(d))); lastDay = d; }
@@ -34,11 +34,11 @@ export function mount(el, ctx) {
       if (m.st) body = h('div', { class: 'st' }, capyEl(ctx.capyOf(m.by, { face: m.st })), h('small', null, (STICKERS.find(s => s[0] === m.st) || [])[1] || ''));
       else if (m.img) { const im = h('img', { class: 'photo', alt: '사진', onClick: () => im.src && modal({ body: h('img', { class: 'photo-full', src: im.src, alt: '사진' }), actions: [{ label: '닫기' }] }) }); im.onload = () => { if (list.scrollHeight - list.scrollTop - list.clientHeight < im.height + 200) list.scrollTop = list.scrollHeight; }; getBlob(ctx.store, m.img).then(u => { if (u) im.src = u; }); body = im; }
       else body = h('div', { class: 'bubble' }, m.t);
-      const row = h('div', { class: 'msg' + (mine ? ' mine' : '') }, !mine && capyEl(ctx.capyOf(m.by, { head: true }), 'mini'), body, h('small', { class: 'time' }, hm(m.ts)));
-      if (mine) lastMine = { row, ts: m.ts };
+      // 카톡처럼: 상대가 아직 안 읽은 내 말 옆에 노란 1, 읽으면 사라진다
+      const unread = mine && ctx.partnerId && m.ts > theirRead;
+      const row = h('div', { class: 'msg' + (mine ? ' mine' : '') }, !mine && capyEl(ctx.capyOf(m.by, { head: true }), 'mini'), body, h('span', { class: 'meta' }, unread && h('b', { class: 'unread', 'aria-label': '안 읽음' }, '1'), h('small', { class: 'time' }, hm(m.ts))));
       out.push(row);
     }
-    if (lastMine && theirRead >= lastMine.ts) lastMine.row.append(h('small', { class: 'read' }, '읽음'));
     if (!ids.length) out.push(h('div', { class: 'empty-box' }, capyEl(ctx.capyOf(ctx.uid, { face: 'happy' }), 'bob'), h('p', null, '첫 마디를 건네 보세요')));
     list.replaceChildren(...out);
     if (nearEnd || drawn.length < 3) requestAnimationFrame(() => { list.scrollTop = list.scrollHeight; });
