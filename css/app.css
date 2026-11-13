@@ -453,3 +453,20 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 /* 톡: 길게 눌러 복사/삭제 */
 .msg{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.msg[data-held]{opacity:.6}
 .hold-quote{margin:0;padding:10px 12px;border-radius:14px;background:#F6E6C8;white-space:pre-wrap;word-break:break-word;max-height:150px;overflow:auto}
+
+/* 게임 승리·패배 효과 */
+.gfx{position:fixed;inset:0;z-index:300;pointer-events:none;overflow:hidden;display:grid;place-items:center;animation:gfxbg 2.6s forwards}
+@keyframes gfxbg{0%{background:rgba(255,255,255,0)}12%,70%{background:rgba(255,248,225,.45)}100%{background:rgba(255,255,255,0)}}
+.gfx-lose{animation-name:gfxbg2}@keyframes gfxbg2{0%{background:rgba(60,70,90,0)}12%,70%{background:rgba(60,70,90,.32)}100%{background:rgba(60,70,90,0)}}
+.gfx-box{display:flex;flex-direction:column;align-items:center;gap:4px;animation:gfxpop 2.6s cubic-bezier(.2,1.4,.4,1) forwards}
+.gfx-box b{font:900 min(24vw,110px)/1 var(--head);color:#FFC93C;-webkit-text-stroke:10px #5F3F2B;paint-order:stroke fill;text-shadow:0 8px 0 rgba(95,63,43,.35);letter-spacing:2px}
+.gfx-box small{font:20px var(--head);color:#5F3F2B;background:rgba(255,253,247,.92);padding:4px 14px;border-radius:999px;border:2px solid #E8D9BC}
+.gfx-lose .gfx-box b{color:#B8C4DA;-webkit-text-stroke-color:#3E4658;text-shadow:0 8px 0 rgba(40,46,60,.35)}
+.gfx-draw .gfx-box b{color:#BDEBD8;-webkit-text-stroke-color:#3F7E66}
+@keyframes gfxpop{0%{transform:scale(.2) rotate(-12deg);opacity:0}14%{transform:scale(1.15) rotate(4deg);opacity:1}22%{transform:scale(1) rotate(-2deg)}30%,78%{transform:scale(1) rotate(0)}100%{transform:scale(1.25);opacity:0}}
+.gfx-lose .gfx-box{animation-name:gfxdrop}@keyframes gfxdrop{0%{transform:translateY(-70vh) rotate(-8deg);opacity:0}16%{transform:translateY(0) rotate(3deg);opacity:1}24%{transform:translateY(-18px) rotate(-2deg)}32%,78%{transform:translateY(0) rotate(-4deg)}100%{transform:translateY(30px) rotate(-4deg);opacity:0}}
+.gfx i{position:absolute;top:-40px;font-style:normal;animation:gfxfall 2.2s ease-in forwards}
+@keyframes gfxfall{0%{transform:translateY(0) rotate(0);opacity:1}85%{opacity:1}100%{transform:translateY(108vh) rotate(calc(var(--r,20deg)*6));opacity:0}}
+.gfx-win i{top:auto;bottom:-40px;animation-name:gfxburst;animation-timing-function:cubic-bezier(.15,.8,.3,1)}
+@keyframes gfxburst{0%{transform:translateY(0) rotate(0) scale(.6);opacity:1}55%{transform:translateY(-78vh) rotate(calc(var(--r,20deg)*3)) scale(1.2);opacity:1}100%{transform:translateY(-30vh) rotate(calc(var(--r,20deg)*7)) scale(1);opacity:0}}
+@media (prefers-reduced-motion:reduce){.gfx i{display:none}.gfx-box{animation-duration:2.6s;animation-name:gfxfade}@keyframes gfxfade{0%,100%{opacity:0}15%,80%{opacity:1}}}

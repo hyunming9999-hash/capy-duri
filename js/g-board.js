@@ -1,5 +1,5 @@
 // 차례대로 두는 게임 3종: 오목, 유자 사목, 짝 맞추기
-import { h, toast, ask } from './ui.js';
+import { h, toast, ask, gameFx } from './ui.js';
 import { capy, capyEl, yuzuSvg } from './capy.js';
 
 const stone = who => who === 0 ? capy({ color: 'brown', face: 'smile', head: true }) : yuzuSvg;
@@ -27,7 +27,9 @@ function frame(el, ctx, path, fresh, drawBoard, legend) {
   el.append(players, status, board, h('div', { class: 'g-foot' }, h('span', { class: 'dim' }, legend(ctx)),
     h('button', { class: 'btn', onClick: () => (s && s.win < 0 && s.n > 0 ? ask('지금 판을 버리고 새로 할까요?', '새 게임') : Promise.resolve(true)).then(y => y && reset()) }, '새 게임')));
   const off = ctx.store.on(path, v => {
+    const was = s; // 방금 승부가 났을 때만 효과를 띄운다(끝난 판을 다시 열 때는 안 띄움)
     if (!v) { s = s && !s.n && s.win < 0 ? s : fresh(0); ctx.store.tx(path, c => c || s); } else s = v;
+    if (was && was.win < 0 && s.win >= 0 && s.n > 0) gameFx(s.win === 2 ? 'draw' : solo() || s.win === ctx.idx ? 'win' : 'lose', s.win === 2 ? '' : solo() ? '' : s.win === ctx.idx ? '내가 이겼다' : `${who(ctx, s.win)} 승리`);
     // 옷 입은 카피바라로 누가 두는 차례인지 보여 준다
     players.replaceChildren(...ctx.order.slice(0, 2).map((u, i) => h('div', { class: 'gp' + (s.win < 0 && s.turn === i ? ' on' : '') + (s.win === i ? ' win' : '') },
       capyEl(ctx.capyOf(u, { face: s.win === i ? 'love' : s.win === 1 - i ? 'sad' : s.turn === i ? 'happy' : 'smile' })), h('b', null, ctx.nameOf(u)))));

@@ -1,6 +1,6 @@
 // 카피바라 배구 — 유자 공으로 하는 1:1 배구. 둘이 온라인으로 하거나 컴퓨터와 연습.
 // 온라인 방식: 각자 자기 카피바라를 움직이고, 공은 "공이 있는 쪽" 사람이 계산해서 상대에게 알려 준다.
-import { h, holdBtn, loadImg, josa } from './ui.js';
+import { h, holdBtn, loadImg, josa, gameFx } from './ui.js';
 import { capyUrl, yuzuUrl } from './capy.js';
 
 const W = 800, H = 450, GROUND = 400, NETX = 400, NETW = 12, NETTOP = 268, PR = 40, FOOT = 71, BR = 28, WIN = 7;
@@ -67,7 +67,9 @@ export function mount(el, ctx) {
   const sprites = [null, null], yz = new Image(); yz.src = yuzuUrl;
   const loadSprites = () => [0, 1].forEach(i => { const uid = mode === 'online' ? ctx.order[i] : (i ? null : ctx.uid); loadImg(capyUrl(uid ? ctx.capyOf(uid, { face: 'happy' }) : { color: 'choco', acc: 'towel', face: 'wink' })).then(im => { sprites[i] = im; }); });
 
-  function setGame(v) { const fresh = !v || v.n !== game.n || v.phase !== game.phase || v.at !== game.at; game = v || { sc0: 0, sc1: 0, serve: 0, phase: 'idle', at: 0, n: 0 }; if (fresh) placeBall(); }
+  function setGame(v) { const fresh = !v || v.n !== game.n || v.phase !== game.phase || v.at !== game.at;
+    if (v && v.phase === 'over' && game.phase === 'serve') { const won = (v.sc0 > v.sc1 ? 0 : 1) === my(); gameFx(won ? 'win' : 'lose', `${v.sc0} : ${v.sc1}`); } // 방금 끝났을 때만
+    game = v || { sc0: 0, sc1: 0, serve: 0, phase: 'idle', at: 0, n: 0 }; if (fresh) placeBall(); }
   function newGame() { const v = { sc0: 0, sc1: 0, serve: 0, phase: 'serve', at: now(), n: (game.n || 0) + 1 }; mode === 'online' ? ctx.store.set('games/volley', v) : setGame(v); ps[0].x = 200; ps[1].x = 600; }
   function point(loser) {
     dead = true; deadMine = true;
