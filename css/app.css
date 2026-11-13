@@ -235,9 +235,9 @@ canvas.park{display:block;width:100%;height:auto}
 
 /* 영화관: 스크롤 없는 한 장 화면 (영상 → 객석 → 입력칸), 키보드가 올라오면 보이는 높이에 맞춰 줄어든다 */
 html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-behavior:none}
-.page-watch,.page-walk{position:fixed;left:50%;top:var(--vvt,0px);transform:translateX(-50%);width:min(100vw,760px);height:var(--vvh,100dvh);margin:0!important;padding:env(safe-area-inset-top) 10px calc(env(safe-area-inset-bottom) + 8px);display:flex;flex-direction:column;background:var(--bg)}
-.page-watch .bar,.page-walk .bar{position:static;flex:none;padding:6px 0;background:none}.page-watch .back,.page-walk .back{width:40px;height:40px}.page-watch .bar h2,.page-walk .bar h2{font-size:19px}
-.page-watch .page-body,.page-walk .page-body{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
+.page-watch,.page-walk,.page-gallery{position:fixed;left:50%;top:var(--vvt,0px);transform:translateX(-50%);width:min(100vw,760px);height:var(--vvh,100dvh);margin:0!important;padding:env(safe-area-inset-top) 10px calc(env(safe-area-inset-bottom) + 8px);display:flex;flex-direction:column;background:var(--bg)}
+.page-watch .bar,.page-walk .bar,.page-gallery .bar{position:static;flex:none;padding:6px 0;background:none}.page-watch .back,.page-walk .back,.page-gallery .back{width:40px;height:40px}.page-watch .bar h2,.page-walk .bar h2,.page-gallery .bar h2{font-size:19px}
+.page-watch .page-body,.page-walk .page-body,.page-gallery .page-body{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
 .page-watch .theater{flex:1;min-height:0;display:flex;flex-direction:column}
 .page-watch .curtain{flex:none;padding:8px 8px 6px}
 .page-watch .screen{width:min(100%,calc(var(--vvh,100vh) * .46 * 16 / 9));margin:0 auto}
@@ -379,3 +379,16 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .g-grip::after{content:'↘';position:absolute;inset:0;display:grid;place-items:center;font:700 14px/1 sans-serif;color:#5a3d1e}
 .g-room.moving .g-grip{display:block}
 .g-empty{max-width:290px;white-space:normal;line-height:1.5}
+
+/* 전시회: 한 화면에 전시실·버튼·방향키가 다 들어오게 + 카피바라가 팝업 위로 뚫고 나오지 않게 */
+.g-room{position:relative;z-index:0;isolation:isolate}
+.g-size{position:relative;overflow:hidden}
+.g-in{position:absolute;left:0;top:0;transform-origin:0 0}
+.page-gallery .g-room{flex:1 1 0;min-height:150px;max-height:446px}
+.page-gallery .g-acts{flex:none;margin:0}.page-gallery .g-acts .btn{min-height:46px}
+.page-gallery .page-body>small{flex:none}
+.page-gallery .g-hint{flex:0 1 auto;min-height:0;overflow:hidden;margin:0;font-size:12px;line-height:1.4}
+.page-gallery .g-pad{flex:none;padding:0 0 2px}
+.page-gallery .g-pad .dpad.big{gap:6px}
+.page-gallery .g-pad .dpad.big .dp{width:min(22vw,88px);height:min(13vw,54px);font-size:22px}
+@media (max-height:700px){.page-gallery .g-hint{display:none}.page-gallery .g-pad .dpad.big .dp{height:46px}}

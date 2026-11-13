@@ -23,8 +23,14 @@ export function mount(el, ctx) {
   const wall = h('div', { class: 'g-wall', style: { width: WALL_W + 'px', height: WALL_H + 'px' } });
   const floor = h('div', { class: 'g-floor', style: { width: WALL_W + 'px', height: FLOOR_H + 'px' } }, h('div', { class: 'g-tiles', html: tilesSvg() }),
     [300, 800, 1300].map(x => h('i', { class: 'g-bench', style: { left: x + 'px' } })), [40, 560, 1060, 1560].map(x => h('i', { class: 'g-plant', style: { left: x + 'px' } }, '🪴')));
-  const inner = h('div', { class: 'g-in', style: { width: WALL_W + 'px' } }, wall, floor);
-  const room = h('div', { class: 'g-room' }, inner);
+  const inner = h('div', { class: 'g-in', style: { width: WALL_W + 'px', height: (WALL_H + FLOOR_H) + 'px' } }, wall, floor);
+  const sizer = h('div', { class: 'g-size' }, inner);
+  const room = h('div', { class: 'g-room' }, sizer);
+  // 전시실을 남는 높이에 맞춰 통째로 줄인다(한 화면에 방향키까지 다 보이게). z = 줄인 비율
+  let z = 1;
+  const fitRoom = () => { const H = room.clientHeight; if (!H) return; z = Math.min(1, H / (WALL_H + FLOOR_H));
+    inner.style.transform = `scale(${z})`; sizer.style.width = WALL_W * z + 'px'; sizer.style.height = (WALL_H + FLOOR_H) * z + 'px'; follow(); };
+  const ro = window.ResizeObserver ? new ResizeObserver(fitRoom) : null; ro && ro.observe(room);
 
   /* 걸어 다니기 */
   let alive = true, raf = 0, last = 0, sendT = 0, dirty = true;
@@ -39,7 +45,7 @@ export function mount(el, ctx) {
     const sc = 0.78 + p.y / FLOOR_H * 0.5; // 앞으로 올수록 크게
     Object.assign(a.el.style, { left: p.x + 'px', top: (WALL_H + 6 + p.y) + 'px', zIndex: 200 + Math.round(p.y), transform: `translate(-50%,-100%) scale(${sc.toFixed(3)})` });
   }
-  const follow = () => { room.scrollLeft = Math.max(0, Math.min(WALL_W - room.clientWidth, me.x - room.clientWidth / 2)); };
+  const follow = () => { room.scrollLeft = Math.max(0, Math.min(WALL_W * z - room.clientWidth, me.x * z - room.clientWidth / 2)); };
   function loop(t) {
     if (!alive) return; raf = requestAnimationFrame(loop);
     const dt = Math.min(0.05, (t - (last || t)) / 1000); last = t;
@@ -97,13 +103,13 @@ export function mount(el, ctx) {
       let rs = null, cw = w, ch = hh;
       grip.addEventListener('pointerdown', e => { if (!moving) return; e.preventDefault(); e.stopPropagation(); grip.setPointerCapture(e.pointerId); rs = { x: e.clientX, y: e.clientY, w: cw, h: ch }; });
       grip.addEventListener('pointermove', e => { if (!rs) return; e.stopPropagation();
-        cw = Math.round(Math.max(MIN_W, Math.min(MAX_W, rs.w + (e.clientX - rs.x) * 2))); ch = Math.round(Math.max(MIN_H, Math.min(MAX_H, rs.h + (e.clientY - rs.y) * 2)));
+        cw = Math.round(Math.max(MIN_W, Math.min(MAX_W, rs.w + (e.clientX - rs.x) / z * 2))); ch = Math.round(Math.max(MIN_H, Math.min(MAX_H, rs.h + (e.clientY - rs.y) / z * 2)));
         pic.style.width = cw + 'px'; pic.style.height = ch + 'px'; });
       const endRs = e => { if (!rs) return; e.stopPropagation(); rs = null; f.w = cw; f.h = ch; f.y = Math.round(Math.max(ch / 2 + 36, Math.min(WALL_H - ch / 2 - 50, f.y))); box.style.top = f.y + 'px'; ctx.store.update('gallery/frames/' + id, { w: cw, h: ch, y: f.y }); };
       grip.addEventListener('pointerup', endRs); grip.addEventListener('pointercancel', endRs);
       let st = null;
       box.addEventListener('pointerdown', e => { st = { x: e.clientX, y: e.clientY, fx: f.x, fy: f.y, moved: false }; if (moving) { e.preventDefault(); box.setPointerCapture(e.pointerId); } });
-      box.addEventListener('pointermove', e => { if (!st || !moving) return; const dx = e.clientX - st.x, dy = e.clientY - st.y; if (Math.abs(dx) + Math.abs(dy) > 4) st.moved = true;
+      box.addEventListener('pointermove', e => { if (!st || !moving) return; const dx = (e.clientX - st.x) / z, dy = (e.clientY - st.y) / z; if (Math.abs(dx) + Math.abs(dy) > 4) st.moved = true;
         f.x = Math.round(Math.max(cw / 2 + 24, Math.min(WALL_W - cw / 2 - 24, st.fx + dx))); f.y = Math.round(Math.max(ch / 2 + 36, Math.min(WALL_H - ch / 2 - 50, st.fy + dy))); box.style.left = f.x + 'px'; box.style.top = f.y + 'px'; });
       box.addEventListener('pointerup', () => { const s = st; st = null; if (!s) return; if (moving && s.moved) return void ctx.store.update('gallery/frames/' + id, { x: f.x, y: f.y });
         if (moving) edit(id, f); else if (im.src) view(id, f, im.src); });
@@ -112,10 +118,18 @@ export function mount(el, ctx) {
     }) : [h('p', { class: 'g-empty' }, '아직 빈 벽이에요. 아래 "액자 걸기"로 첫 작품을 걸어 보세요')]));
   }
   el.append(room, h('div', { class: 'row g-acts' }, h('button', { class: 'btn primary', onClick: addFrame }, '🖼️ 액자 걸기'), moveBtn), count,
-    h('p', { class: 'dim' }, '액자를 누르면 크게 보고 제목·설명을 읽어요. 액자는 내 카피바라가 서 있는 자리 위에 걸려요. 모양·크기는 "배치 바꾸기"에서 모서리를 끌어 마음대로 바꿔요.'),
+    h('p', { class: 'dim g-hint' }, '액자를 누르면 크게 보고 제목·설명을 읽어요. 액자는 내 카피바라가 서 있는 자리 위에 걸려요. 모양·크기는 "배치 바꾸기"에서 모서리를 끌어 마음대로 바꿔요.'),
     h('div', { class: 'pad-dock g-pad' }, pad));
+  // 화면을 한 장에 고정: 전시실 → 버튼 → 방향키(맨 아래)
+  const vv = window.visualViewport, root = document.documentElement;
+  const fit = () => { root.style.setProperty('--vvh', (vv ? vv.height : window.innerHeight) + 'px'); root.style.setProperty('--vvt', (vv ? vv.offsetTop : 0) + 'px'); };
+  fit(); root.classList.add('fixed-page');
+  if (vv) { vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit); } window.addEventListener('resize', fit);
   place(ctx.uid, me); ctx.store.ephemeral('rt/gallery/' + ctx.uid, { x: me.x, y: me.y, v: me.v, f: false }).catch(() => {}); raf = requestAnimationFrame(loop);
   const off = ctx.store.on('gallery/frames', v => { const drag = room.querySelector('.g-frame:active'); frames = v || {}; if (!(moving && drag)) draw(); });
   draw();
-  return () => { alive = false; cancelAnimationFrame(raf); off(); offRt(); offDress(); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); ctx.store.remove('rt/gallery/' + ctx.uid).catch(() => {}); };
+  return () => { alive = false; cancelAnimationFrame(raf); off(); offRt(); offDress(); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); ro && ro.disconnect();
+    root.classList.remove('fixed-page'); root.style.removeProperty('--vvh'); root.style.removeProperty('--vvt');
+    if (vv) { vv.removeEventListener('resize', fit); vv.removeEventListener('scroll', fit); } window.removeEventListener('resize', fit);
+    ctx.store.remove('rt/gallery/' + ctx.uid).catch(() => {}); };
 }
