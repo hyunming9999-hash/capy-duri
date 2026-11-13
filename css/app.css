@@ -392,3 +392,10 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .page-gallery .g-pad .dpad.big{gap:6px}
 .page-gallery .g-pad .dpad.big .dp{width:min(22vw,88px);height:min(13vw,54px);font-size:22px}
 @media (max-height:700px){.page-gallery .g-hint{display:none}.page-gallery .g-pad .dpad.big .dp{height:46px}}
+
+/* 전시실 채팅: 벽 위에 최근 대화, 방향키 위에 입력칸 */
+.page-gallery .g-stage{position:relative;flex:1 1 0;min-height:150px;max-height:446px;display:flex;flex-direction:column}
+.page-gallery .g-stage .g-room{flex:1 1 0;min-height:0;max-height:none}
+.g-log{top:10px;left:10px;z-index:5}
+.g-av .say{bottom:calc(100% + 22px);font-size:13px;z-index:2}
+.page-gallery .g-composer{flex:none}.page-gallery .g-composer .inp{padding-top:8px;padding-bottom:8px}

@@ -195,7 +195,7 @@ function enter() {
     if (!m || m.by === ctx.uid || m.ts < enterAt || id === LS.get('chatSnd')) return; LS.set('chatSnd', id);
     capySound();
     const r = curRoute(), text = m.t ? (m.t.length > 30 ? m.t.slice(0, 29) + '…' : m.t) : m.img ? '📷 사진' : '🧡 스티커';
-    if (r !== 'chat' && r !== 'watch') notify(`${ctx.nameOf(m.by)}: ${text}`, '보기', () => ctx.go('chat'));
+    if (r !== 'chat' && r !== 'watch' && r !== 'gallery') notify(`${ctx.nameOf(m.by)}: ${text}`, '보기', () => ctx.go('chat'));
   }, { limit: 1 });
   ctx.store.on('invite', v => {
     if (!v || v.to !== ctx.uid) return;

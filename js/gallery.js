@@ -36,7 +36,7 @@ export function mount(el, ctx) {
   let alive = true, raf = 0, last = 0, sendT = 0, dirty = true;
   const me = { x: 110 + ctx.idx * 80, y: 70, v: 'back', f: false }, avs = {}, keys = new Set();
   function av(uid) {
-    if (!avs[uid]) { const a = { el: h('div', { class: 'g-av' + (uid === ctx.uid ? ' me' : '') }, h('span', { class: 'g-av-body' }), h('b', null, ctx.nameOf(uid))), key: '' }; avs[uid] = a; inner.append(a.el); }
+    if (!avs[uid]) { const a = { el: h('div', { class: 'g-av' + (uid === ctx.uid ? ' me' : '') }, h('span', { class: 'g-av-body' }), h('b', null, ctx.nameOf(uid)), h('span', { class: 'say' })), key: '' }; avs[uid] = a; inner.append(a.el); }
     return avs[uid];
   }
   function place(uid, p) {
@@ -117,8 +117,24 @@ export function mount(el, ctx) {
       return box;
     }) : [h('p', { class: 'g-empty' }, '아직 빈 벽이에요. 아래 "액자 걸기"로 첫 작품을 걸어 보세요')]));
   }
-  el.append(room, h('div', { class: 'row g-acts' }, h('button', { class: 'btn primary', onClick: addFrame }, '🖼️ 액자 걸기'), moveBtn), count,
-    h('p', { class: 'dim g-hint' }, '액자를 누르면 크게 보고 제목·설명을 읽어요. 액자는 내 카피바라가 서 있는 자리 위에 걸려요. 모양·크기는 "배치 바꾸기"에서 모서리를 끌어 마음대로 바꿔요.'),
+  // 전시 보면서 톡: '오늘 얘기나 하지?'와 같은 대화. 최근 몇 줄은 벽 위에 겹쳐 보이고, 새 말은 카피바라 머리 위에도 잠깐 뜬다
+  const log = h('div', { class: 'w-log g-log', 'aria-live': 'polite' }), since = ctx.store.now(); let lastSaid = '', readAt = 0;
+  const msgInp = h('input', { class: 'inp', placeholder: '메시지 보내기', maxLength: 300, enterKeyHint: 'send', autocomplete: 'off' });
+  const sendMsg = () => { const t = msgInp.value.trim(); if (!t) return; msgInp.value = ''; ctx.store.push('chat', { by: ctx.uid, ts: ctx.store.now(), t }).catch(() => {}); };
+  msgInp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); sendMsg(); } });
+  const offChat = ctx.store.on('chat', v => {
+    v = v || {}; const ids = Object.keys(v).sort();
+    log.replaceChildren(...ids.slice(-3).map(id => { const m = v[id]; return h('p', { class: m.by === ctx.uid ? 'mine' : '' }, h('b', null, ctx.nameOf(m.by)), ' ', m.t || (m.img ? '📷 사진' : m.st ? '🧡 스티커' : '')); }));
+    const theirs = Math.max(0, ...ids.map(i => v[i]).filter(m => m.by !== ctx.uid).map(m => m.ts));
+    if (theirs > readAt && !document.hidden) { readAt = theirs; ctx.store.set('read/' + ctx.uid, theirs).catch(() => {}); }
+    const id = ids[ids.length - 1], m = id && v[id];
+    if (!m || id === lastSaid || m.ts < since - 2000 || !avs[m.by]) return; lastSaid = id;
+    const sayEl = avs[m.by].el.querySelector('.say'); sayEl.textContent = m.t ? (m.t.length > 22 ? m.t.slice(0, 21) + '…' : m.t) : m.img ? '📷 사진' : '💬';
+    sayEl.classList.remove('pop'); void sayEl.offsetWidth; sayEl.classList.add('pop');
+  }, { limit: 12 });
+  const stage = h('div', { class: 'g-stage' }, room, log);
+  el.append(stage, h('div', { class: 'row g-acts' }, h('button', { class: 'btn primary', onClick: addFrame }, '🖼️ 액자 걸기'), moveBtn), count,
+    h('div', { class: 'w-composer g-composer' }, msgInp, h('button', { class: 'btn primary', onClick: sendMsg }, '보내기')),
     h('div', { class: 'pad-dock g-pad' }, pad));
   // 화면을 한 장에 고정: 전시실 → 버튼 → 방향키(맨 아래)
   const vv = window.visualViewport, root = document.documentElement;
@@ -128,7 +144,7 @@ export function mount(el, ctx) {
   place(ctx.uid, me); ctx.store.ephemeral('rt/gallery/' + ctx.uid, { x: me.x, y: me.y, v: me.v, f: false }).catch(() => {}); raf = requestAnimationFrame(loop);
   const off = ctx.store.on('gallery/frames', v => { const drag = room.querySelector('.g-frame:active'); frames = v || {}; if (!(moving && drag)) draw(); });
   draw();
-  return () => { alive = false; cancelAnimationFrame(raf); off(); offRt(); offDress(); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); ro && ro.disconnect();
+  return () => { alive = false; cancelAnimationFrame(raf); off(); offRt(); offDress(); offChat(); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); ro && ro.disconnect();
     root.classList.remove('fixed-page'); root.style.removeProperty('--vvh'); root.style.removeProperty('--vvt');
     if (vv) { vv.removeEventListener('resize', fit); vv.removeEventListener('scroll', fit); } window.removeEventListener('resize', fit);
     ctx.store.remove('rt/gallery/' + ctx.uid).catch(() => {}); };
