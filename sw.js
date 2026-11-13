@@ -15,6 +15,8 @@ self.addEventListener('push', e => {
   let d = {}; try { d = e.data ? e.data.json() : {}; } catch {}
   e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
     if (cs.some(c => c.visibilityState === 'visible')) return;
-    return self.registration.showNotification(d.title || '카피두리', { body: d.body || '', icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: d.tag || 'capy', renotify: true });
+    // 알림을 하나씩 따로 쌓아서, 앱 아이콘에 안 읽은 개수가 숫자로 보이게 한다(앱을 열면 모두 지워진다)
+    return self.registration.showNotification(d.title || '카피두리', { body: d.body || '', icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: (d.tag || 'capy') + '-' + Date.now() })
+      .then(() => self.registration.getNotifications()).then(ns => { if (self.navigator && navigator.setAppBadge) return navigator.setAppBadge(ns.length).catch(() => {}); });
   }));
 });

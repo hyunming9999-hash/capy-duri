@@ -194,7 +194,9 @@ function enter() {
   enablePush(ctx); let lastPushed = '';
   // 화면을 보고 있는지 알려 둔다: 안 보고 있을 때만 상대가 폰 알림을 보낸다
   const tellHid = () => ctx.store.update('presence/' + ctx.uid, { hid: document.hidden || null }).catch(() => {});
-  document.addEventListener('visibilitychange', tellHid);
+  // 앱을 열어 보면 쌓인 폰 알림과 아이콘 숫자를 지운다
+  const clearNotes = () => { if (document.hidden) return; try { navigator.serviceWorker && navigator.serviceWorker.ready.then(r => r.getNotifications()).then(ns => ns.forEach(n => n.close())).catch(() => {}); navigator.clearAppBadge && navigator.clearAppBadge().catch(() => {}); } catch {} };
+  document.addEventListener('visibilitychange', () => { tellHid(); clearNotes(); }); clearNotes();
   // 톡이 오면 "카피~" 알림음. 톡 화면·영화관이 아니면 알림 띠도 띄운다
   ctx.store.on('chat', v => {
     const id = Object.keys(v || {}).sort().pop(), m = id && v[id];
