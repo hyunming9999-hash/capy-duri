@@ -78,7 +78,7 @@ const battEl = uid => { const el = h('span', { 'data-batt': uid, role: 'img' });
 function askNotify() { try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().then(() => enablePush(ctx)).catch(() => {}); } catch {} }
 function notify(text, label, go) {
   banner(text, label, go);
-  try { if (document.hidden && 'Notification' in window && Notification.permission === 'granted' && navigator.serviceWorker) navigator.serviceWorker.ready.then(r => r.showNotification('카피두리', { body: text, icon: 'icons/icon-192.png', tag: 'capy', renotify: true })).catch(() => {}); } catch {}
+  try { if (document.hidden && 'Notification' in window && Notification.permission === 'granted' && navigator.serviceWorker) navigator.serviceWorker.ready.then(r => r.showNotification('카피두리', { body: text, icon: 'icons/icon-192.png', badge: 'icons/badge-96.png', tag: 'capy', renotify: true })).catch(() => {}); } catch {}
 }
 // 상대를 지금 화면(또는 where)으로 부른다. 10분 안에 상대가 앱을 열면 알림이 뜬다.
 // 전화 걸기: 상대 번호를 방에 한 번 저장해 두고, 누르면 폰의 전화 앱으로 건다
