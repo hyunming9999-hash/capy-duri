@@ -320,3 +320,10 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .pbtn.main{flex:1 1 100%;background:var(--brown);border-color:var(--brown-d);color:#fff;font-size:17px}
 .pact .check{width:42px;height:42px}.pact .ord{flex-direction:row;gap:4px;margin-left:auto}.pact .ord button{width:42px;height:42px;font-size:14px}.pact .x{width:42px;height:42px}
 .place-list li.pcard.done{opacity:.7}.place-list li.pcard.done .pname{text-decoration:line-through}
+
+/* 찜 순위 고르기 */
+.pimg button.rank{border:0;padding:0;cursor:pointer}
+.rank-pick{display:flex;flex-direction:column;gap:6px}
+.rp{display:flex;align-items:center;gap:12px;min-height:48px;padding:6px 12px;border:2px solid var(--line);border-radius:16px;background:var(--card);text-align:left}
+.rp b{flex:none;width:32px;height:32px;border-radius:50%;background:var(--yuzu);font:18px/32px var(--head);text-align:center}.rp small{font-size:15px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rp.on{border-color:var(--brown);background:#FFE9B8}

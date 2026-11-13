@@ -1,5 +1,5 @@
 // 오늘 뭐 먹지? — 지도 검색으로 넘기기, 둘의 찜 목록(1~7순위, 가게 링크), 룰렛
-import { h, toast, ask, ymd, josa, pickImage, fileToCanvas, jpeg } from './ui.js';
+import { h, toast, ask, ymd, josa, pickImage, fileToCanvas, jpeg, modal } from './ui.js';
 import { capyEl } from './capy.js';
 import { putBlob, getBlob, delBlob } from './store.js';
 
@@ -65,6 +65,12 @@ export function mount(el, ctx) {
     if (url) loadPreview(id, url);
   }
   // 순위 바꾸기: 위아래 두 가게의 순번을 맞바꾼다
+  // 순위 바꾸기: 원하는 순위 칸을 눌러 그 자리로 옮기고, 나머지는 한 칸씩 밀린다
+  const setRank = (ids, from, to) => { if (from === to) return; const arr = ids.slice(); const [x] = arr.splice(from, 1); arr.splice(to, 0, x); const upd = {}; arr.forEach((id, k) => { if (places[id].ord !== k + 1) upd[id + '/ord'] = k + 1; }); ctx.store.update('eat/places', upd); toast(`${places[x].name} → ${to + 1}순위`); };
+  function rankPicker(ids, i) {
+    if (ids.length < 2) return toast('가게가 2곳 이상 있어야 순위를 바꿀 수 있어요');
+    modal({ title: `"${places[ids[i]].name}" 몇 순위로?`, body: h('div', { class: 'rank-pick' }, ids.map((id, k) => h('button', { class: 'rp' + (k === i ? ' on' : ''), onClick: e => { e.target.closest('.modal-wrap').remove(); setRank(ids, i, k); } }, h('b', null, k + 1), h('small', null, k === i ? '지금' : places[id].name)))), actions: [{ label: '닫기' }] });
+  }
   const move = (ids, i, d) => { const a = ids[i], b = ids[i + d]; if (!b) return; ctx.store.update('eat/places', { [a + '/ord']: i + d + 1, [b + '/ord']: i + 1 }); ids.forEach((id, k) => { if (id !== a && id !== b && places[id].ord !== k + 1) ctx.store.update('eat/places/' + id, { ord: k + 1 }); }); };
   const list = h('ol', { class: 'place-list' });
   const wheel = h('div', { class: 'wheel' });
@@ -82,7 +88,7 @@ export function mount(el, ctx) {
   }
   // 대표 사진: 직접 넣은 사진 > 링크 미리보기 사진 > 없으면 그림
   function cover(id, p, i) {
-    const box = h('div', { class: 'pimg' }, h('span', { class: 'rank' }, i + 1));
+    const box = h('div', { class: 'pimg' }, h('button', { class: 'rank', title: '순위 바꾸기', 'aria-label': `${i + 1}순위, 눌러서 순위 바꾸기`, onClick: () => rankPicker(sorted(), i) }, i + 1));
     const show = src => { const im = h('img', { alt: p.name + ' 사진', referrerPolicy: 'no-referrer', loading: 'lazy' }); im.onerror = () => { im.remove(); box.classList.add('empty'); }; im.src = src; box.prepend(im); };
     if (p.photo) getBlob(ctx.store, p.photo).then(u => u ? show(u) : box.classList.add('empty'));
     else if (p.pv && p.pv.img) show(p.pv.img);
@@ -103,6 +109,7 @@ export function mount(el, ctx) {
           h('button', { class: 'pbtn', onClick: () => setPhoto(id) }, '📷 사진'),
           p.link && p.pv && p.pv.fail && !p.photo && h('button', { class: 'pbtn', onClick: () => loadPreview(id, p.link, true) }, '다시 불러오기'),
           h('button', { class: 'check' + (p.done ? ' on' : ''), 'aria-label': '다녀옴', title: '다녀옴', onClick: () => ctx.store.update('eat/places/' + id, { done: !p.done }) }, p.done ? '✓' : ''),
+          h('button', { class: 'pbtn rank-btn', onClick: () => rankPicker(ids, i) }, `🏅 ${i + 1}순위 바꾸기`),
           h('span', { class: 'ord' }, h('button', { 'aria-label': '순위 올리기', disabled: i === 0, onClick: () => move(ids, i, -1) }, '▲'), h('button', { 'aria-label': '순위 내리기', disabled: i === ids.length - 1, onClick: () => move(ids, i, 1) }, '▼')),
           h('button', { class: 'x', 'aria-label': '삭제', onClick: () => ask(`"${p.name}" 지울까요?`, '지우기').then(y => { if (y) { ctx.store.remove('eat/places/' + id); p.photo && delBlob(ctx.store, p.photo); } }) }, '×')));
     }) : [h('li', { class: 'dim' }, '가고 싶은 곳을 1순위부터 7순위까지 찜해 두세요. 룰렛이 여기서 골라 줘요')]));
