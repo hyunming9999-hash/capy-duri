@@ -3,7 +3,7 @@
 import { isMock } from './store.js';
 
 // 알림 배달부 주소. 비어 있으면 푸시 기능은 꺼진 채로 둔다.
-export const PUSH_URL = '';
+export const PUSH_URL = 'https://capy-push.hyunming9999.workers.dev/';
 
 const b64u = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 const unb64u = s => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
