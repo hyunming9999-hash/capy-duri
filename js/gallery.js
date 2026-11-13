@@ -75,7 +75,7 @@ export function mount(el, ctx) {
     let c; try { c = await fileToCanvas(f, 1000); } catch (e) { return toast(e.message); }
     form('액자 걸기', { ori: c.height > c.width ? 'v' : 'h' }, async v => {
       try { const img = await putBlob(ctx.store, jpeg(c, 0.8)); const x = Math.round(Math.min(WALL_W - 120, Math.max(120, me.x))); // 내 카피바라가 서 있는 자리 위에 건다
-        await ctx.store.push('gallery/frames', { ...v, img, x, y: 125, by: ctx.uid, ts: ctx.store.now() }); toast('액자를 걸었어요. "배치 바꾸기"로 옮길 수 있어요'); } catch {}
+        await ctx.store.push('gallery/frames', { ...v, img, x, y: 125, by: ctx.uid, ts: ctx.store.now() }); toast('액자를 걸었어요. "배치 바꾸기"로 옮길 수 있어요'); } catch (e) { toast('액자를 걸지 못했어요: ' + (e.code || e.message || '연결을 확인해 주세요')); }
     });
   }
   const edit = (id, f) => form('액자 고치기', f, v => ctx.store.update('gallery/frames/' + id, v), [{ label: '떼기', danger: true, onClick: c => { c(); ask(`"${f.title || '이 액자'}"를 뗄까요?`, '떼기').then(y => { if (y) { ctx.store.remove('gallery/frames/' + id); delBlob(ctx.store, f.img); } }); } }]);

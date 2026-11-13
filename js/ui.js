@@ -78,9 +78,16 @@ export function loadImg(src) {
 export async function fileToCanvas(file, maxSide) {
   const url = URL.createObjectURL(file);
   try {
-    const img = await loadImg(url);
-    const s = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
-    const c = h('canvas', { width: Math.round(img.naturalWidth * s), height: Math.round(img.naturalHeight * s) });
+    let img, w, hh;
+    try { img = await loadImg(url); w = img.naturalWidth; hh = img.naturalHeight; }
+    catch { // <img>로 못 여는 사진은 다른 방식으로 한 번 더 시도
+      try { img = await createImageBitmap(file); w = img.width; hh = img.height; }
+      catch { const ext = ((file.name || '').split('.').pop() || '').toUpperCase(), kind = /hei[cf]/i.test(file.type + ext) ? 'HEIC' : (file.type || ext || '알 수 없는 형식');
+        throw new Error(`이 사진은 열 수 없어요 (${kind}). 스크린샷을 찍어서 올리거나 JPG로 저장해 주세요`); }
+    }
+    if (!w || !hh) throw new Error('사진이 비어 있어요. 다른 사진으로 해 주세요');
+    const s = Math.min(1, maxSide / Math.max(w, hh));
+    const c = h('canvas', { width: Math.round(w * s), height: Math.round(hh * s) });
     c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
     return c;
   } finally { URL.revokeObjectURL(url); }
