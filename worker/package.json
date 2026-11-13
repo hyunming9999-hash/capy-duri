@@ -1,0 +1,8 @@
+{
+  "name": "capy-push",
+  "private": true,
+  "version": "1.0.0",
+  "description": "카피두리 폰 알림 배달부 (Cloudflare Worker)",
+  "scripts": { "deploy": "wrangler deploy" },
+  "devDependencies": { "wrangler": "^4" }
+}

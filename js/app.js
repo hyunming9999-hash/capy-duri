@@ -1,6 +1,7 @@
 import { $, h, toast, modal, ask, ymd, dayDiff, niceDate, banner, josa } from './ui.js';
 import { openStore, isMock, setErrorHandler } from './store.js';
 import { capyEl, COLORS, ACCS } from './capy.js';
+import { enablePush, sendPush } from './push.js';
 import * as day from './day.js';
 import * as wear from './wear.js';
 import * as eat from './eat.js';
@@ -74,7 +75,7 @@ const battEl = uid => { const el = h('span', { 'data-batt': uid, role: 'img' });
 
 /* ---------- 알림 ---------- */
 // 앱이 열려 있으면 화면 위 알림 띠로, 열어 둔 채 다른 앱을 보고 있으면(허용한 경우) 기기 알림으로도 알려 준다. 앱을 완전히 닫으면 오지 않는다.
-function askNotify() { try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {}); } catch {} }
+function askNotify() { try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().then(() => enablePush(ctx)).catch(() => {}); } catch {} }
 function notify(text, label, go) {
   banner(text, label, go);
   try { if (document.hidden && 'Notification' in window && Notification.permission === 'granted' && navigator.serviceWorker) navigator.serviceWorker.ready.then(r => r.showNotification('카피두리', { body: text, icon: 'icons/icon-192.png', tag: 'capy', renotify: true })).catch(() => {}); } catch {}
@@ -84,6 +85,7 @@ ctx.call = (where, msg) => {
   const pid = ctx.partnerId; if (!pid) return toast('아직 상대가 들어오지 않았어요');
   askNotify();
   ctx.store.set('invite', { from: ctx.uid, to: pid, where: where || fullRoute(), msg: msg || '', ts: ctx.store.now() }).catch(() => {});
+  sendPush(ctx, { body: `${josa(ctx.nameOf(ctx.uid), '가', '이')} 불러요: ${msg || titleOf(where || fullRoute())}`, tag: 'capy-call', go: where || fullRoute() });
   toast(ctx.presence[pid] ? `${josa(ctx.nameOf(pid), '를', '을')} 불렀어요` : `${josa(ctx.nameOf(pid), '는', '은')} 지금 접속해 있지 않아요. 10분 안에 들어오면 알림이 떠요`, 3200);
 };
 
@@ -189,9 +191,15 @@ function enter() {
     seenWhere = w; ctx.partnerWhere = w;
     if (curRoute() === 'home') render(); else document.querySelectorAll('.who').forEach(el => el.classList.toggle('here', !!w && w === fullRoute()));
   });
+  enablePush(ctx); let lastPushed = '';
+  // 화면을 보고 있는지 알려 둔다: 안 보고 있을 때만 상대가 폰 알림을 보낸다
+  const tellHid = () => ctx.store.update('presence/' + ctx.uid, { hid: document.hidden || null }).catch(() => {});
+  document.addEventListener('visibilitychange', tellHid);
   // 톡이 오면 "카피~" 알림음. 톡 화면·영화관이 아니면 알림 띠도 띄운다
   ctx.store.on('chat', v => {
     const id = Object.keys(v || {}).sort().pop(), m = id && v[id];
+    const said = m && (m.t ? (m.t.length > 60 ? m.t.slice(0, 59) + '…' : m.t) : m.img ? '📷 사진' : '🧡 스티커');
+    if (m && m.by === ctx.uid && m.ts >= enterAt && id !== lastPushed) { lastPushed = id; sendPush(ctx, { title: ctx.nameOf(ctx.uid), body: said, tag: 'capy', go: 'chat' }); } // 내가 보낸 톡 → 상대 폰 알림
     if (!m || m.by === ctx.uid || m.ts < enterAt || id === LS.get('chatSnd')) return; LS.set('chatSnd', id);
     capySound();
     const r = curRoute(), text = m.t ? (m.t.length > 30 ? m.t.slice(0, 29) + '…' : m.t) : m.img ? '📷 사진' : '🧡 스티커';

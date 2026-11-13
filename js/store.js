@@ -46,7 +46,7 @@ class FireStore {
     fb.onValue(fb.ref(this.db, '.info/connected'), s => {
       if (!s.val()) return;
       const r = this.r('presence/' + uid);
-      fb.onDisconnect(r).remove(); fb.set(r, { at: fb.serverTimestamp(), where: this.pwhere || 'home' }).catch(() => {});
+      fb.onDisconnect(r).remove(); fb.set(r, { at: fb.serverTimestamp(), where: this.pwhere || 'home', hid: (typeof document !== 'undefined' && document.hidden) || null }).catch(() => {});
     });
   }
   setWhere(w) { this.pwhere = w; if (this.puid && this.connected) fb.set(this.r('presence/' + this.puid + '/where'), w).catch(() => {}); }

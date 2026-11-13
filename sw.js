@@ -9,3 +9,12 @@ self.addEventListener('fetch', e => {
 });
 // 알림을 누르면 열려 있는 앱 화면으로 돌아간다
 self.addEventListener('notificationclick', e => { e.notification.close(); e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => cs.length ? cs[0].focus() : self.clients.openWindow('./'))); });
+
+// 폰 상단 알림(푸시): 앱이 닫혀 있어도 온다. 앱을 화면에 띄워 놓고 있으면 앱 안 알림이 뜨므로 건너뛴다.
+self.addEventListener('push', e => {
+  let d = {}; try { d = e.data ? e.data.json() : {}; } catch {}
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
+    if (cs.some(c => c.visibilityState === 'visible')) return;
+    return self.registration.showNotification(d.title || '카피두리', { body: d.body || '', icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: d.tag || 'capy', renotify: true });
+  }));
+});
