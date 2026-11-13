@@ -17,7 +17,8 @@ self.addEventListener('push', e => {
   e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
     if (cs.some(c => c.visibilityState === 'visible')) return;
     // 알림을 하나씩 따로 쌓아서, 앱 아이콘에 안 읽은 개수가 숫자로 보이게 한다(앱을 열면 모두 지워진다)
-    return self.registration.showNotification(d.title || '카피두리', { body: d.body || '', icon: 'icons/icon-192.png', badge: 'icons/badge-96.png', tag: (d.tag || 'capy') + '-' + Date.now() })
+    // 테스트 알림에는 이 알림 코드의 판 번호를 붙여, 폰이 새 코드를 받았는지 눈으로 확인할 수 있게 한다
+    return self.registration.showNotification(d.title || '카피두리', { body: (d.body || '') + (d.tag === 'capy-test' ? ' · v3' : ''), icon: 'icons/icon-192.png', badge: new URL('icons/badge-96.png', self.registration.scope).href, tag: (d.tag || 'capy') + '-' + Date.now() })
       .then(() => self.registration.getNotifications()).then(ns => { if (self.navigator && navigator.setAppBadge) return navigator.setAppBadge(ns.length).catch(() => {}); });
   }));
 });
