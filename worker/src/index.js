@@ -15,7 +15,7 @@ async function hkdf(salt, ikm, info, len) {
 }
 
 // RFC 8291 (aes128gcm): 받는 폰만 풀 수 있게 알림 내용을 암호화
-export async function encrypt(sub, text) {
+async function encrypt(sub, text) {
   const uaPub = unb64u(sub.keys.p256dh), auth = unb64u(sub.keys.auth);
   const eph = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']);
   const asPub = new Uint8Array(await crypto.subtle.exportKey('raw', eph.publicKey));
@@ -31,7 +31,7 @@ export async function encrypt(sub, text) {
 }
 
 // VAPID: "이 알림은 카피두리 방에서 보낸 것"이라는 서명
-export async function vapidHeader(endpoint, vapid) {
+async function vapidHeader(endpoint, vapid) {
   const key = await crypto.subtle.importKey('jwk', vapid.priv, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
   const head = b64u(enc.encode(JSON.stringify({ typ: 'JWT', alg: 'ES256' })));
   const body = b64u(enc.encode(JSON.stringify({ aud: new URL(endpoint).origin, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: SUBJECT })));
