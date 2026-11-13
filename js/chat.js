@@ -8,11 +8,13 @@ const STICKERS = [['love', '좋아해'], ['happy', '최고야'], ['wow', '헉'],
 export function mount(el, ctx) {
   const offs = []; let msgs = {}, theirRead = 0, drawn = '', trayOpen = false;
   const list = h('div', { class: 'chat-list' });
-  const inp = h('textarea', { class: 'inp', rows: 1, placeholder: '메시지', maxLength: 1000, enterKeyHint: 'send' });
+  const inp = h('textarea', { class: 'inp msg-inp', rows: 1, placeholder: '메시지', maxLength: 1000, enterKeyHint: 'send' });
   const tray = h('div', { class: 'tray', hidden: true }, STICKERS.map(([f, t]) => h('button', { class: 'sticker', onClick: () => { send({ st: f }); toggleTray(false); } }, capyEl(ctx.capyOf(ctx.uid, { face: f })), h('small', null, t))));
-  const toggleTray = on => { trayOpen = on ?? !trayOpen; tray.hidden = !trayOpen; };
+  const toBottom = () => requestAnimationFrame(() => requestAnimationFrame(() => { list.scrollTop = list.scrollHeight; })); // 화면 크기가 바뀐 다음에 내린다
+  let stick = 0; // 내가 보낸 직후 몇 초 동안은 사진이 늦게 떠도 맨 아래로 따라간다
+  const toggleTray = on => { trayOpen = on ?? !trayOpen; tray.hidden = !trayOpen; toBottom(); };
 
-  const send = async m => { try { await ctx.store.push('chat', { by: ctx.uid, ts: ctx.store.now(), ...m }); } catch {} };
+  const send = async m => { stick = Date.now() + 4000; toBottom(); try { await ctx.store.push('chat', { by: ctx.uid, ts: ctx.store.now(), ...m }); } catch {} };
   const sendText = () => { const t = inp.value.trim(); if (!t) return; inp.value = ''; inp.style.height = ''; send({ t }); inp.focus(); };
   const sendPhoto = async camera => {
     const f = await pickImage(camera); if (!f) return;
@@ -32,7 +34,7 @@ export function mount(el, ctx) {
       if (d !== lastDay) { out.push(h('div', { class: 'day-sep' }, niceDate(d))); lastDay = d; }
       let body;
       if (m.st) body = h('div', { class: 'st' }, capyEl(ctx.capyOf(m.by, { face: m.st })), h('small', null, (STICKERS.find(s => s[0] === m.st) || [])[1] || ''));
-      else if (m.img) { const im = h('img', { class: 'photo', alt: '사진', onClick: () => im.src && modal({ body: h('img', { class: 'photo-full', src: im.src, alt: '사진' }), actions: [{ label: '닫기' }] }) }); im.onload = () => { if (list.scrollHeight - list.scrollTop - list.clientHeight < im.height + 200) list.scrollTop = list.scrollHeight; }; getBlob(ctx.store, m.img).then(u => { if (u) im.src = u; }); body = im; }
+      else if (m.img) { const im = h('img', { class: 'photo', alt: '사진', onClick: () => im.src && modal({ body: h('img', { class: 'photo-full', src: im.src, alt: '사진' }), actions: [{ label: '닫기' }] }) }); im.onload = () => { if (Date.now() < stick || list.scrollHeight - list.scrollTop - list.clientHeight < im.height + 200) list.scrollTop = list.scrollHeight; }; getBlob(ctx.store, m.img).then(u => { if (u) im.src = u; }); body = im; }
       else body = h('div', { class: 'bubble' }, m.t);
       // 카톡처럼: 상대가 아직 안 읽은 내 말 옆에 노란 1, 읽으면 사라진다
       const unread = mine && ctx.partnerId && m.ts > theirRead;
@@ -41,7 +43,8 @@ export function mount(el, ctx) {
     }
     if (!ids.length) out.push(h('div', { class: 'empty-box' }, capyEl(ctx.capyOf(ctx.uid, { face: 'happy' }), 'bob'), h('p', null, '첫 마디를 건네 보세요')));
     list.replaceChildren(...out);
-    if (nearEnd || drawn.length < 3) requestAnimationFrame(() => { list.scrollTop = list.scrollHeight; });
+    const newest = ids.length && msgs[ids[ids.length - 1]];
+    if (nearEnd || drawn.length < 3 || Date.now() < stick || (newest && newest.by === ctx.uid)) toBottom();
     markRead();
   }
   function markRead() {
@@ -51,11 +54,15 @@ export function mount(el, ctx) {
   }
   document.addEventListener('visibilitychange', markRead);
 
-  el.append(list, tray, h('div', { class: 'composer' },
-    h('button', { class: 'ic', 'aria-label': '카메라로 찍기', onClick: () => sendPhoto(true) }, '📷'),
-    h('button', { class: 'ic', 'aria-label': '사진첩에서 고르기', onClick: () => sendPhoto(false) }, '🖼️'),
-    h('button', { class: 'ic', 'aria-label': '스티커', onClick: () => toggleTray() }, '🧡'),
-    inp, h('button', { class: 'btn primary', onClick: sendText }, '보내기')));
+  // 카톡처럼 + 버튼 하나에 카메라·사진·스티커를 모으고, 입력칸을 넓게 쓴다
+  const plus = h('button', { class: 'ic plus', 'aria-label': '더보기', 'aria-expanded': 'false', onClick: () => { const open = attach.hidden; attach.hidden = !open; plus.classList.toggle('on', open); plus.setAttribute('aria-expanded', String(open)); if (!open) toggleTray(false); toBottom(); } }, '+');
+  const closeAttach = () => { attach.hidden = true; plus.classList.remove('on'); plus.setAttribute('aria-expanded', 'false'); };
+  const attach = h('div', { class: 'attach', hidden: true },
+    h('button', { class: 'att', 'aria-label': '카메라로 찍기', onClick: () => { closeAttach(); sendPhoto(true); } }, h('span', null, '📷'), '카메라'),
+    h('button', { class: 'att', 'aria-label': '사진첩에서 고르기', onClick: () => { closeAttach(); sendPhoto(false); } }, h('span', null, '🖼️'), '사진'),
+    h('button', { class: 'att', 'aria-label': '스티커', onClick: () => { closeAttach(); toggleTray(); } }, h('span', null, '🧡'), '스티커'));
+  inp.addEventListener('focus', () => { closeAttach(); toBottom(); });
+  el.append(list, tray, attach, h('div', { class: 'composer' }, plus, inp, h('button', { class: 'btn primary send', onClick: sendText }, '보내기')));
 
   let first = true;
   offs.push(ctx.store.on('chat', v => { msgs = v || {}; draw(); if (first) { first = false; requestAnimationFrame(() => { list.scrollTop = list.scrollHeight; }); } }, { limit: 80 }));
