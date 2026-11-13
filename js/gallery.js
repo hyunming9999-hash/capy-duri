@@ -1,18 +1,64 @@
+// 히노끼탕처럼 걸어 다니는 공간: 긴 전시실을 방향키로 걸으면 화면이 따라오고, 상대 카피바라도 실시간으로 보인다.
 // 오늘 전시회가실? — 흰 대리석 전시실. 벽에 액자(소·중·대, 가로·세로)를 걸고 제목을 붙인다. 액자를 누르면 크게 보고 제목·설명을 읽는다.
-import { h, toast, modal, ask, pickImage, fileToCanvas, jpeg } from './ui.js';
+import { h, toast, modal, ask, pickImage, fileToCanvas, jpeg, holdBtn } from './ui.js';
 import { putBlob, getBlob, delBlob } from './store.js';
-import { capyEl } from './capy.js';
+import { capy } from './capy.js';
 
-const WALL_W = 1600, WALL_H = 330;
+const WALL_W = 1600, WALL_H = 270, FLOOR_H = 170;
 const LONG = { s: 92, m: 136, l: 188 }, SIZE_NAME = { s: '소', m: '중', l: '대' };
 const dims = f => { const L = LONG[f.size] || LONG.m, S = Math.round(L * 0.74); return f.ori === 'v' ? [S, L] : [L, S]; };
+
+// 원근감 있는 대리석 바닥: 벽 쪽 소실점으로 모이는 줄눈 + 앞으로 올수록 넓어지는 가로줄 + 대리석 결
+function tilesSvg() {
+  const vx = WALL_W / 2, vy = -230; let d = '';
+  for (let x = -2400; x <= WALL_W + 2400; x += 150) d += `M${vx + (x - vx) * (-vy) / (FLOOR_H - vy)} 0L${x} ${FLOOR_H}`;
+  for (const y of [14, 34, 62, 100, 148]) d += `M0 ${y}H${WALL_W}`;
+  let veins = ''; for (let i = 0; i < 26; i++) { const x = (i * 131) % WALL_W, y = 12 + (i * 47) % (FLOOR_H - 20), w = 60 + (i * 37) % 90; veins += `<path d="M${x} ${y} q${w / 3} ${-8 + (i % 5) * 4} ${w / 2} ${4} t${w / 2} ${-6 + (i % 3) * 5}" fill="none" stroke="#9AA0B4" stroke-opacity="${0.16 + (i % 4) * 0.05}" stroke-width="${1 + (i % 3) * 0.7}" stroke-linecap="round"/>`; }
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WALL_W} ${FLOOR_H}" preserveAspectRatio="none"><defs><linearGradient id="gfl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E4E3EA"/><stop offset=".35" stop-color="#F6F5F9"/><stop offset="1" stop-color="#FFFFFF"/></linearGradient></defs><rect width="${WALL_W}" height="${FLOOR_H}" fill="url(#gfl)"/>${veins}<path d="${d}" stroke="#8C8FA3" stroke-opacity=".3" stroke-width="1.4" fill="none"/></svg>`;
+}
 
 export function mount(el, ctx) {
   let frames = {}, moving = false;
   const wall = h('div', { class: 'g-wall', style: { width: WALL_W + 'px', height: WALL_H + 'px' } });
-  const floor = h('div', { class: 'g-floor', style: { width: WALL_W + 'px' } },
-    ctx.order.map((u, i) => h('span', { class: 'g-visitor', style: { left: 120 + i * 90 + 'px' } }, capyEl(ctx.capyOf(u, { face: 'wow', view: 'front' })))));
-  const room = h('div', { class: 'g-room' }, h('div', { class: 'g-in' }, wall, floor));
+  const floor = h('div', { class: 'g-floor', style: { width: WALL_W + 'px', height: FLOOR_H + 'px' } }, h('div', { class: 'g-tiles', html: tilesSvg() }),
+    [300, 800, 1300].map(x => h('i', { class: 'g-bench', style: { left: x + 'px' } })), [40, 560, 1060, 1560].map(x => h('i', { class: 'g-plant', style: { left: x + 'px' } }, '🪴')));
+  const inner = h('div', { class: 'g-in', style: { width: WALL_W + 'px' } }, wall, floor);
+  const room = h('div', { class: 'g-room' }, inner);
+
+  /* 걸어 다니기 */
+  let alive = true, raf = 0, last = 0, sendT = 0, dirty = true;
+  const me = { x: 110 + ctx.idx * 80, y: 70, v: 'back', f: false }, avs = {}, keys = new Set();
+  function av(uid) {
+    if (!avs[uid]) { const a = { el: h('div', { class: 'g-av' + (uid === ctx.uid ? ' me' : '') }, h('span', { class: 'g-av-body' }), h('b', null, ctx.nameOf(uid))), key: '' }; avs[uid] = a; inner.append(a.el); }
+    return avs[uid];
+  }
+  function place(uid, p) {
+    const a = av(uid), key = p.v + (p.f ? 'f' : '');
+    if (a.key !== key) { a.key = key; a.el.firstChild.innerHTML = capy(ctx.capyOf(uid, { view: p.v, face: 'wow' })); a.el.firstChild.style.transform = p.f ? 'scaleX(-1)' : ''; }
+    const sc = 0.78 + p.y / FLOOR_H * 0.5; // 앞으로 올수록 크게
+    Object.assign(a.el.style, { left: p.x + 'px', top: (WALL_H + 6 + p.y) + 'px', zIndex: 200 + Math.round(p.y), transform: `translate(-50%,-100%) scale(${sc.toFixed(3)})` });
+  }
+  const follow = () => { room.scrollLeft = Math.max(0, Math.min(WALL_W - room.clientWidth, me.x - room.clientWidth / 2)); };
+  function loop(t) {
+    if (!alive) return; raf = requestAnimationFrame(loop);
+    const dt = Math.min(0.05, (t - (last || t)) / 1000); last = t;
+    const dx = (keys.has('R') ? 1 : 0) - (keys.has('L') ? 1 : 0), dy = (keys.has('D') ? 1 : 0) - (keys.has('U') ? 1 : 0);
+    if (dx || dy) {
+      me.x = Math.max(30, Math.min(WALL_W - 30, me.x + dx * 170 * dt)); me.y = Math.max(8, Math.min(FLOOR_H - 8, me.y + dy * 100 * dt));
+      me.v = dy > 0 ? 'front' : 'back'; if (dx) me.f = dx < 0; dirty = true; place(ctx.uid, me); if (!moving) follow();
+    } else if (me.v !== 'back' && !keys.size && dirty && t - sendT > 600) { me.v = 'back'; me.f = false; place(ctx.uid, me); } // 멈추면 벽(작품)을 본다
+    if (dirty && t - sendT > 100) { sendT = t; dirty = dx || dy ? true : me.v !== 'back'; ctx.store.set('rt/gallery/' + ctx.uid, { x: Math.round(me.x), y: Math.round(me.y), v: me.v, f: me.f }).catch(() => {}); }
+  }
+  const KEY = { ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R', w: 'U', s: 'D', a: 'L', d: 'R' };
+  const kd = e => { const k = KEY[e.key]; if (!k || /INPUT|TEXTAREA/.test(document.activeElement?.tagName || '') || document.querySelector('.modal-wrap')) return; e.preventDefault(); keys.add(k); };
+  const ku = e => { const k = KEY[e.key]; if (k) keys.delete(k); };
+  window.addEventListener('keydown', kd); window.addEventListener('keyup', ku);
+  const pad = h('div', { class: 'dpad big' }, [['U', '▲'], ['L', '◀'], ['D', '▼'], ['R', '▶']].map(([k, t]) => { const b = h('button', { class: 'dp dp-' + k, 'aria-label': k }, t); holdBtn(b, () => keys.add(k), () => keys.delete(k)); return b; }));
+  const offRt = ctx.store.on('rt/gallery', v => {
+    for (const [u, p] of Object.entries(v || {})) if (u !== ctx.uid && ctx.members[u] && p) place(u, p);
+    for (const u of Object.keys(avs)) if (u !== ctx.uid && !(v || {})[u]) { avs[u].el.remove(); delete avs[u]; }
+  });
+  const offDress = ctx.store.on('dress', () => { for (const a of Object.values(avs)) a.key = ''; place(ctx.uid, me); });
   const moveBtn = h('button', { class: 'btn', onClick: () => { moving = !moving; draw(); toast(moving ? '액자를 끌어서 옮기세요. 다 되면 "배치 끝"을 눌러요' : '배치를 저장했어요'); } }, '배치 바꾸기');
   const count = h('small', { class: 'dim' });
 
@@ -28,8 +74,8 @@ export function mount(el, ctx) {
     const f = await pickImage(); if (!f) return;
     let c; try { c = await fileToCanvas(f, 1000); } catch (e) { return toast(e.message); }
     form('액자 걸기', { ori: c.height > c.width ? 'v' : 'h' }, async v => {
-      try { const img = await putBlob(ctx.store, jpeg(c, 0.8)); const x = Math.round(Math.min(WALL_W - 120, Math.max(120, room.scrollLeft + room.clientWidth / 2)));
-        await ctx.store.push('gallery/frames', { ...v, img, x, y: 140, by: ctx.uid, ts: ctx.store.now() }); toast('액자를 걸었어요. "배치 바꾸기"로 옮길 수 있어요'); } catch {}
+      try { const img = await putBlob(ctx.store, jpeg(c, 0.8)); const x = Math.round(Math.min(WALL_W - 120, Math.max(120, me.x))); // 내 카피바라가 서 있는 자리 위에 건다
+        await ctx.store.push('gallery/frames', { ...v, img, x, y: 125, by: ctx.uid, ts: ctx.store.now() }); toast('액자를 걸었어요. "배치 바꾸기"로 옮길 수 있어요'); } catch {}
     });
   }
   const edit = (id, f) => form('액자 고치기', f, v => ctx.store.update('gallery/frames/' + id, v), [{ label: '떼기', danger: true, onClick: c => { c(); ask(`"${f.title || '이 액자'}"를 뗄까요?`, '떼기').then(y => { if (y) { ctx.store.remove('gallery/frames/' + id); delBlob(ctx.store, f.img); } }); } }]);
@@ -39,7 +85,7 @@ export function mount(el, ctx) {
   }
   function draw() {
     const ids = Object.keys(frames).sort();
-    count.textContent = ids.length ? `액자 ${ids.length}점 · 벽을 옆으로 밀어 보세요` : '';
+    count.textContent = ids.length ? `액자 ${ids.length}점 · 방향키로 전시실을 걸어 보세요` : '';
     moveBtn.textContent = moving ? '✓ 배치 끝' : '배치 바꾸기'; moveBtn.classList.toggle('primary', moving); room.classList.toggle('moving', moving);
     wall.replaceChildren(h('div', { class: 'g-rail' }), ...(ids.length ? ids.map(id => {
       const f = frames[id], [w, hh] = dims(f), im = h('img', { alt: f.title || '', draggable: false });
@@ -56,8 +102,10 @@ export function mount(el, ctx) {
     }) : [h('p', { class: 'g-empty' }, '아직 빈 벽이에요. 아래 "액자 걸기"로 첫 작품을 걸어 보세요')]));
   }
   el.append(room, h('div', { class: 'row g-acts' }, h('button', { class: 'btn primary', onClick: addFrame }, '🖼️ 액자 걸기'), moveBtn), count,
-    h('p', { class: 'dim' }, '액자를 누르면 크게 보고 제목·설명을 읽을 수 있어요. 크기(소·중·대)와 방향(가로·세로)은 걸 때 고르고, 나중에 "고치기"로 바꿀 수 있어요.'));
+    h('p', { class: 'dim' }, '액자를 누르면 크게 보고 제목·설명을 읽어요. 액자는 내 카피바라가 서 있는 자리 위에 걸려요.'),
+    h('div', { class: 'pad-dock g-pad' }, pad));
+  place(ctx.uid, me); ctx.store.ephemeral('rt/gallery/' + ctx.uid, { x: me.x, y: me.y, v: me.v, f: false }).catch(() => {}); raf = requestAnimationFrame(loop);
   const off = ctx.store.on('gallery/frames', v => { const drag = room.querySelector('.g-frame:active'); frames = v || {}; if (!(moving && drag)) draw(); });
   draw();
-  return () => off();
+  return () => { alive = false; cancelAnimationFrame(raf); off(); offRt(); offDress(); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); ctx.store.remove('rt/gallery/' + ctx.uid).catch(() => {}); };
 }

@@ -347,3 +347,28 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .g-acts{margin:12px 0 6px}.g-acts .btn{flex:1}
 .g-view{text-align:center}.g-view-frame{display:inline-block;border:8px solid #5B4636;padding:6px;background:#fff;box-shadow:0 6px 16px rgba(0,0,0,.25);max-width:100%}.g-view-frame img{display:block;max-width:100%;max-height:56dvh}
 .g-view h3{margin:14px 0 4px;font-size:22px}.g-view p{white-space:pre-wrap;text-align:left;margin:6px 0 8px}
+
+/* 전시실 공간감: 원근 대리석 바닥 + 걸어 다니는 카피바라 */
+.g-in{position:relative}
+.g-floor{overflow:hidden;background:linear-gradient(#DDDCE2,#F6F5F8 30%,#fff)}
+.g-tiles{position:absolute;inset:0}.g-tiles svg{display:block;width:100%;height:100%}
+.g-wall{box-shadow:inset 0 -18px 18px -14px rgba(0,0,0,.12)}
+.g-bench{position:absolute;top:96px;width:120px;height:22px;transform:translateX(-50%);border-radius:6px;background:#fff;border:2px solid #D5D2CC;box-shadow:0 12px 0 -4px #E4E1DB,0 16px 10px rgba(0,0,0,.14);z-index:296}
+.g-plant{position:absolute;top:-6px;transform:translateX(-50%);font-style:normal;font-size:34px;z-index:5;filter:drop-shadow(0 4px 3px rgba(0,0,0,.2))}
+.g-av{position:absolute;width:62px;transform-origin:50% 100%;pointer-events:none;transition:left .12s linear,top .12s linear}.g-av.me{transition:none}
+.g-av-body{display:block;filter:drop-shadow(0 5px 3px rgba(0,0,0,.22))}.g-av-body svg{display:block;width:100%}
+.g-av b{position:absolute;left:50%;top:-14px;transform:translateX(-50%);font-size:11px;white-space:nowrap;color:#fff;background:rgba(0,0,0,.45);padding:0 6px;border-radius:8px}.g-av.me b{background:var(--brown)}
+.g-room{scrollbar-width:none}.g-room::-webkit-scrollbar{display:none}
+.g-pad{padding-top:6px}.g-pad .dpad.big .dp{width:min(24vw,100px);height:min(15vw,62px);font-size:26px}
+
+/* 홈 메뉴: 스크롤 없이 한눈에 보이는 작은 아이콘 5열 */
+.menu{grid-template-columns:repeat(5,1fr);gap:10px 6px}
+.menu .card{padding:0;border:0;background:none;box-shadow:none;gap:4px;min-width:0}
+.menu .card:active{transform:scale(.92)}
+.menu .card .capy{width:100%;max-width:58px;aspect-ratio:1;height:auto;box-sizing:border-box;padding:6px;border-radius:18px;background:var(--tint);border:2px solid rgba(120,90,50,.25);border:2px solid color-mix(in srgb,var(--tint) 70%,#8a6a3a);box-shadow:0 3px 0 rgba(120,90,50,.25);box-shadow:0 3px 0 color-mix(in srgb,var(--tint) 70%,#8a6a3a)}
+.menu .card b{font-size:13px;margin:0;white-space:nowrap;letter-spacing:-.3px}
+.menu .card small{display:none}
+.menu .badge{top:-5px;right:0;min-width:20px;height:20px;padding:0 5px;border-radius:10px;font:12px/20px var(--head)}
+.menu .here-mark{position:absolute;top:-6px;left:-2px;padding:0;background:none;border:0;box-shadow:none;font-size:0;gap:0}
+.menu .here-mark .capy{width:24px;max-width:24px;padding:1px;border-radius:50%;background:#fff;border:2px solid #4CAF50;box-shadow:none}
+.hero{padding:12px 12px 10px}.today-card{margin:10px 0}.foot{margin-top:12px}

@@ -24,16 +24,16 @@ const LS = {
 const rnd = n => { const a = new Uint8Array(n); crypto.getRandomValues(a); return [...a].map(x => 'abcdefghjkmnpqrstuvwxyz23456789'[x % 31]).join(''); };
 
 const MENU = [
-  { id: 'chat', mod: chat, title: '오늘 얘기나 하지?', sub: '톡 · 사진 · 스티커', face: 'love', acc: 'flower', tint: '#F6D3EE' },
-  { id: 'dress', mod: dress, title: '옷입히기 놀이하실?', sub: '상의 50 · 하의 50', face: 'happy', acc: 'ribbon', tint: '#FFDDB8' },
-  { id: 'day', mod: day, title: '오늘 무슨 날이지?', sub: '일정 · 예약 · 일기', face: 'smile', acc: 'leaf', tint: '#FFE3A6' },
-  { id: 'wear', mod: wear, title: '오늘 뭐 입지?', sub: '서로 옷 봐주기', face: 'wink', acc: 'ribbon', tint: '#FFD0D6' },
-  { id: 'eat', mod: eat, title: '오늘 뭐 먹지?', sub: '맛집 찾기 · 룰렛', face: 'wow', acc: 'yuzu', tint: '#CDEBB5' },
-  { id: 'game', mod: game, title: '오늘 무슨 게임하지?', sub: '카피바라 게임 5종', face: 'happy', acc: 'none', tint: '#C9E4F7' },
-  { id: 'where', mod: where, title: '오늘 어디야?', sub: '위치 핑 찍기', face: 'wow', acc: 'leaf', tint: '#BFE8E0' },
-  { id: 'watch', mod: watch, title: '오늘 뭐 보실?', sub: '카피바라 영화관', face: 'sleepy', acc: 'towel', tint: '#D9D2F5' },
-  { id: 'walk', mod: walk, title: '카피바라 목욕하실?', sub: '히노끼탕 · 음성 대화', face: 'sleepy', acc: 'towel', tint: '#F3DDB8' },
-  { id: 'gallery', mod: gallery, title: '오늘 전시회가실?', sub: '둘만의 전시실', face: 'wow', acc: 'flower', tint: '#ECECF4' },
+  { id: 'chat', mod: chat, title: '오늘 얘기나 하지?', short: '톡', sub: '톡 · 사진 · 스티커', face: 'love', acc: 'flower', tint: '#F6D3EE' },
+  { id: 'dress', mod: dress, title: '옷입히기 놀이하실?', short: '옷놀이', sub: '상의 50 · 하의 50', face: 'happy', acc: 'ribbon', tint: '#FFDDB8' },
+  { id: 'day', mod: day, title: '오늘 무슨 날이지?', short: '일정', sub: '일정 · 예약 · 일기', face: 'smile', acc: 'leaf', tint: '#FFE3A6' },
+  { id: 'wear', mod: wear, title: '오늘 뭐 입지?', short: '코디', sub: '서로 옷 봐주기', face: 'wink', acc: 'ribbon', tint: '#FFD0D6' },
+  { id: 'eat', mod: eat, title: '오늘 뭐 먹지?', short: '맛집', sub: '맛집 찾기 · 룰렛', face: 'wow', acc: 'yuzu', tint: '#CDEBB5' },
+  { id: 'game', mod: game, title: '오늘 무슨 게임하지?', short: '게임', sub: '카피바라 게임 5종', face: 'happy', acc: 'none', tint: '#C9E4F7' },
+  { id: 'where', mod: where, title: '오늘 어디야?', short: '어디야', sub: '위치 핑 찍기', face: 'wow', acc: 'leaf', tint: '#BFE8E0' },
+  { id: 'watch', mod: watch, title: '오늘 뭐 보실?', short: '영화관', sub: '카피바라 영화관', face: 'sleepy', acc: 'towel', tint: '#D9D2F5' },
+  { id: 'walk', mod: walk, title: '카피바라 목욕하실?', short: '목욕탕', sub: '히노끼탕 · 음성 대화', face: 'sleepy', acc: 'towel', tint: '#F3DDB8' },
+  { id: 'gallery', mod: gallery, title: '오늘 전시회가실?', short: '전시회', sub: '둘만의 전시실', face: 'wow', acc: 'flower', tint: '#ECECF4' },
 ];
 
 const root = $('#app');
@@ -294,8 +294,8 @@ function home() {
           : h('button', { class: 'me empty', onClick: invite }, h('span', { class: 'ghost-capy' }, '?'), h('b', null, '초대하기')), pid ? battEl(pid) : h('span', { class: 'batt ghost', 'aria-hidden': 'true' })),
       dday),
     today,
-    h('nav', { class: 'menu' }, MENU.map((m, i) => h('button', { class: 'card' + (m.wide ? ' wide' : ''), style: { '--tint': m.tint, animationDelay: i * 50 + 'ms' }, onClick: () => ctx.go(m.id) },
-      capyEl({ color: i % 2 ? ctx.capyOf(pid || ctx.uid).color : ctx.me.color, acc: m.acc, face: m.face, head: true }), h('b', null, m.title), h('small', null, m.sub), m.id === 'chat' && badge,
+    h('nav', { class: 'menu' }, MENU.map((m, i) => h('button', { class: 'card' + (m.wide ? ' wide' : ''), style: { '--tint': m.tint, animationDelay: i * 50 + 'ms' }, 'aria-label': m.title, title: m.title, onClick: () => ctx.go(m.id) },
+      capyEl({ color: i % 2 ? ctx.capyOf(pid || ctx.uid).color : ctx.me.color, acc: m.acc, face: m.face, head: true }), h('b', null, m.short), m.id === 'chat' && badge,
       pid && ctx.presence[pid] && (ctx.partnerWhere || '').split('-')[0] === m.id && h('span', { class: 'here-mark', title: ctx.nameOf(pid) + ' 접속 중' }, capyEl(ctx.capyOf(pid, { head: true }), 'mini'), '여기 있어요')))),
     h('footer', { class: 'foot' },
       h('button', { class: 'link', onClick: invite }, '초대 링크'), h('button', { class: 'link', onClick: installHelp }, '앱으로 추가'),
