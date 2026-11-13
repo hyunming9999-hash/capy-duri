@@ -308,3 +308,15 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .lb{display:flex;align-items:center;justify-content:center;gap:5px;min-height:44px;padding:4px 6px;border-radius:14px;border:2px solid var(--line);background:var(--card);font:15px var(--head);color:var(--ink);text-decoration:none;white-space:nowrap}
 .lb i{display:block;width:20px;height:20px;flex:none}.lb svg{display:block;width:100%;height:100%}
 .lb.naver{background:#03C75A;border-color:#02A64B;color:#fff}.lb.kakao{background:#FEE500;border-color:#E0CA00;color:#3A1D1D}
+
+/* 찜 목록: 크게, 대표 사진 카드 */
+.place-list{display:flex;flex-direction:column;gap:14px}.place-list li.pcard{display:block;padding:0;border:2px solid var(--line);border-radius:22px;background:#fff;overflow:hidden}
+.pimg{position:relative;aspect-ratio:16/9;background:#F3E6D0;display:grid;place-items:center}.pimg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pimg-ph{font-size:44px;color:var(--ink2)}.pimg.empty{aspect-ratio:16/6}
+.pimg .rank{position:absolute;left:10px;top:10px;z-index:1;width:36px;height:36px;font-size:20px;line-height:36px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.pbody{padding:12px 14px 4px}.pname{display:block;font-size:22px;line-height:1.25}.pv-title{display:block;color:var(--brown-d);margin-top:2px}.pmemo{margin:6px 0 4px;font-size:16px}
+.pact{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 14px 14px}
+.pbtn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:6px 14px;border-radius:999px;border:2px solid var(--line);background:var(--card);font:15px var(--head);color:var(--ink);text-decoration:none}
+.pbtn.main{flex:1 1 100%;background:var(--brown);border-color:var(--brown-d);color:#fff;font-size:17px}
+.pact .check{width:42px;height:42px}.pact .ord{flex-direction:row;gap:4px;margin-left:auto}.pact .ord button{width:42px;height:42px;font-size:14px}.pact .x{width:42px;height:42px}
+.place-list li.pcard.done{opacity:.7}.place-list li.pcard.done .pname{text-decoration:line-through}
