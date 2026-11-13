@@ -81,6 +81,23 @@ function notify(text, label, go) {
   try { if (document.hidden && 'Notification' in window && Notification.permission === 'granted' && navigator.serviceWorker) navigator.serviceWorker.ready.then(r => r.showNotification('카피두리', { body: text, icon: 'icons/icon-192.png', tag: 'capy', renotify: true })).catch(() => {}); } catch {}
 }
 // 상대를 지금 화면(또는 where)으로 부른다. 10분 안에 상대가 앱을 열면 알림이 뜬다.
+// 전화 걸기: 상대 번호를 방에 한 번 저장해 두고, 누르면 폰의 전화 앱으로 건다
+const telOf = v => String(v || '').replace(/[^0-9+]/g, '').slice(0, 20);
+const prettyTel = n => /^01\d{8,9}$/.test(n) ? n.replace(/^(\d{3})(\d{3,4})(\d{4})$/, '$1-$2-$3') : n;
+ctx.phone = () => {
+  const pid = ctx.partnerId; if (!pid) return toast('아직 상대가 들어오지 않았어요');
+  const name = ctx.nameOf(pid), cur = telOf((ctx.phones || {})[pid]);
+  const edit = () => {
+    const inp = h('input', { class: 'inp', type: 'tel', inputMode: 'tel', placeholder: '010-1234-5678', value: cur ? prettyTel(cur) : '', maxLength: 20, autocomplete: 'off' });
+    modal({ title: `${name} 전화번호`, body: h('div', null, h('p', { class: 'dim' }, '한 번 저장해 두면 다음부터는 바로 걸 수 있어요. 번호는 둘만의 방에만 저장돼요.'), inp),
+      actions: [{ label: '취소' }, { label: '저장', primary: true, onClick: async close => { const n = telOf(inp.value); if (n.replace(/\D/g, '').length < 8) return toast('전화번호를 다시 확인해 주세요');
+        try { await ctx.store.set('phones/' + pid, n); ctx.phones = { ...(ctx.phones || {}), [pid]: n }; close(); toast('저장했어요. 📞를 누르면 전화를 걸어요'); } catch { toast('저장하지 못했어요'); } } }] });
+    setTimeout(() => inp.focus(), 50);
+  };
+  if (!cur) return edit();
+  modal({ title: `${josa(name, '에게', '에게')} 전화할까요?`, body: h('p', { class: 'tel-num' }, prettyTel(cur)),
+    actions: [{ label: '번호 바꾸기', onClick: close => { close(); edit(); } }, { label: '취소' }, { label: '📞 전화 걸기', primary: true, onClick: close => { close(); location.href = 'tel:' + cur; } }] });
+};
 ctx.call = (where, msg) => {
   const pid = ctx.partnerId; if (!pid) return toast('아직 상대가 들어오지 않았어요');
   askNotify();
@@ -192,6 +209,7 @@ function enter() {
     if (curRoute() === 'home') render(); else document.querySelectorAll('.who').forEach(el => el.classList.toggle('here', !!w && w === fullRoute()));
   });
   enablePush(ctx); let lastPushed = '';
+  ctx.store.on('phones', v => { ctx.phones = v || {}; });
   // 화면을 보고 있는지 알려 둔다: 안 보고 있을 때만 상대가 폰 알림을 보낸다
   const tellHid = () => ctx.store.update('presence/' + ctx.uid, { hid: document.hidden || null }).catch(() => {});
   // 앱을 열어 보면 쌓인 폰 알림과 아이콘 숫자를 지운다
@@ -241,6 +259,7 @@ function render() {
   const title = h('h2', null, item.title);
   root.replaceChildren(h('div', { class: 'page page-' + name },
     h('header', { class: 'bar' }, h('button', { class: 'back', 'aria-label': '뒤로', onClick: () => ctx.go(sub ? name : 'home') }, '‹'), title,
+      name === 'chat' && ctx.partnerId && h('button', { class: 'call tel', 'aria-label': '전화 걸기', title: '전화 걸기', onClick: () => ctx.phone() }, '📞'),
       ctx.partnerId && h('button', { class: 'call', title: '상대를 이 화면으로 부르기', onClick: () => ctx.call() }, '📣 부르기'), partnerBadge()), body));
   ctx.setTitle = t => { title.textContent = t; };
   cleanup = item.mod.mount(body, ctx, sub) || null;

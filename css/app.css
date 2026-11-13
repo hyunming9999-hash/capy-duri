@@ -445,3 +445,7 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .page-walk .dpad.big .dp-H{width:auto;height:46px;font-size:22px}
 @media (max-height:700px){.page-walk .dpad.big .dp{height:52px}.page-walk .dpad.big .dp-H{height:40px}.page-walk .park-wrap{width:min(100%,calc((var(--vvh,100vh) - 336px) * 192 / 204))}}
 .page-gallery .g-pad .dpad.big .dp-H{width:auto;height:40px;font-size:19px}
+
+/* 톡: 전화 걸기 버튼 */
+.call.tel{width:38px;padding:0;font-size:17px;background:#E3F5E1;border-color:#9ED09A}
+.tel-num{font:26px var(--head);text-align:center;margin:6px 0 2px;letter-spacing:.5px}
