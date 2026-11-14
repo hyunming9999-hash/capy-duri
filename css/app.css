@@ -594,3 +594,13 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .bg-pan .bg-gauge{position:relative;z-index:2}.grill .bg-pan{justify-content:flex-end;gap:0;padding:2px 4px 4px}.grill .bg-pan>span{max-width:none;width:auto}.bg-pt{width:40px;height:40px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}
 .bg-pan[data-st="2"] .bg-pt{filter:brightness(.3) saturate(.4) drop-shadow(0 2px 2px rgba(0,0,0,.5))}
 .bg-tray{min-height:64px}.bg-flash{gap:1px 8px;padding:2px 4px;font-size:13px}.bg-flash em{font-size:14px;width:auto}.bg-flash b{font-size:18px}
+.bg-cc{position:relative;z-index:2}.bg-ghost{z-index:6}.bg-ghost.behind{z-index:1}
+.bg-cc-n{position:absolute;left:-3px;top:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#B9A88E;color:#fff;font:11px/17px var(--head);text-align:center;z-index:3}.bg-cc.first .bg-cc-n{background:#E5484D}
+.bg-tray.multi{align-items:stretch;gap:5px;padding:5px 6px 7px}
+.bg-mt{flex:1;min-width:0;display:grid;grid-template-columns:32px 1fr;grid-template-rows:1fr 1fr auto;gap:2px 3px;padding:3px;border-radius:12px;border:2px dashed #C9A66B;background:rgba(255,255,255,.3);font:inherit;color:inherit}
+.bg-mt.on{border:2.5px solid var(--yuzu-d);background:#FFF8DC;box-shadow:0 0 0 2px var(--yuzu)}.bg-mt.first:not(.on){border-color:#E5484D}
+.bg-mt .bg-slot{min-height:27px;border:0;border-radius:8px;background:rgba(255,255,255,.5);flex:none}.bg-mt .bg-slot i{font-size:9px}.bg-mt .bg-slot.d{grid-area:1/1}.bg-mt .bg-slot.s{grid-area:2/1}.bg-mt .bg-slot.wide{grid-area:1/2/3/3}
+.bg-mt .bg-ic{width:26px;height:26px}.bg-mt .bg-slot .bg-stack,.bg-mt .bg-slot.wide svg{width:58px;max-height:54px;height:auto}.bg-mt .bg-slot.money{grid-area:3/1/4/3;min-height:16px}.bg-mt .bg-slot.money b{font-size:12px}
+.bg-cc-b svg{max-height:52px}
+.bg-mt .bg-slot{min-height:23px}.bg-mt .bg-ic{width:23px;height:23px}.bg-mt .bg-slot .bg-stack,.bg-mt .bg-slot.wide svg{max-height:46px}.bg-mt .bg-slot.money{min-height:14px}
+.bg-grid.ing .bg-btn span{height:18px}.bg-grid.ing .bg-btn{padding:4px 2px 3px}.bg-tabs{margin-bottom:5px}.bg-tab{padding:6px 4px}.bg-fin{margin-top:6px}
