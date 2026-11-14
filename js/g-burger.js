@@ -62,11 +62,12 @@ const one = k => `<svg viewBox="0 0 96 ${LAY[k][0] + 2}">${LAY[k][1](1)}</svg>`;
 
 /* ---------- 난이도와 주문 ---------- */
 const D5 = ['cola', 'cider', 'fanta', 'dew', 'pepper'], S5 = ['fries', 'cstick', 'hash', 'lstick', 'churros'], F6 = ['beef', 'chicken', 'lettuce', 'onion', 'cheese', 'tomato'];
+const TIMES = [['짧게', 1], ['보통', 1.5], ['길게', 2]]; // 한 판 길이: 기본 시간(하 120·중 150·상 180초)에 곱한다
 const SKIP = 30; // 먼저 온 손님을 두고 뒤 손님 것을 먼저 내면 깎이는 점수
 const LEVEL = {
-  e: { name: '하', drinks: D5.slice(0, 3), sides: S5.slice(0, 2), fills: ['beef', 'tomato', 'lettuce'], btn: ['beef', 'tomato', 'lettuce'], coop: 240, win: 3600, cust: 1, fry: 4000 },
-  m: { name: '중', drinks: D5, sides: S5, fills: F6, btn: F6, coop: 300, vs: 240, win: 3000, cust: 2, fry: 3000 },
-  h: { name: '상', drinks: [...D5, ...D5.map(k => 'z' + k)], sides: [...S5, 'wrap', 'pie', 'rings', 'sfries'], fills: [...F6, 'seafood', 'shrimp', 'sauce'], btn: [...F6, 'seafood', 'shrimp', 'chili', 'sweet'], coop: 360, vs: 300, win: 2400, cust: 3, fry: 2000 },
+  e: { name: '하', drinks: D5.slice(0, 3), sides: S5.slice(0, 2), fills: ['beef', 'tomato', 'lettuce'], btn: ['beef', 'tomato', 'lettuce'], coop: 120, win: 3600, cust: 1, fry: 4000 },
+  m: { name: '중', drinks: D5, sides: S5, fills: F6, btn: F6, coop: 150, vs: 120, win: 3000, cust: 2, fry: 3000 },
+  h: { name: '상', drinks: [...D5, ...D5.map(k => 'z' + k)], sides: [...S5, 'wrap', 'pie', 'rings', 'sfries'], fills: [...F6, 'seafood', 'shrimp', 'sauce'], btn: [...F6, 'seafood', 'shrimp', 'chili', 'sweet'], coop: 180, vs: 150, win: 2400, cust: 3, fry: 2000 },
 };
 const PATTY = { beef: 1, chicken: 1, seafood: 1 }, NOFRY = { wrap: 1 }; // 패티는 불판에 굽고, 사이드는 (휠랩만 빼고) 튀김기에 튀긴다
 const HOLD = 5; // 다 익은 것을 꺼내 두는 보관함 칸 수
@@ -101,7 +102,9 @@ const PATH = 'games/burger';
 export function mount(el, ctx) {
   ['bg', 'hero', 'grill-big', 'fryer-big', ...['beef', 'chicken', 'seafood'].flatMap(k => ['p-' + k, 'p-' + k + '-raw']), ...Object.keys(SIDE).map(k => 's-' + k), ...['cola', 'cider', 'fanta', 'dew', 'pepper'].map(k => 'd-' + k)].forEach(f => { new Image().src = IMG + f + '.webp'; }); // 그림 미리 받아 두기
   let alive = true, S = null, roles = {}, best = {}, timer = 0;
-  let mode = 'coop', diff = 'e', myRole = 'main', picked = false, calcOn = false, onlyOn = false; // 로비에서 고른 값
+  let mode = 'coop', diff = 'e', myRole = 'main', picked = false, calcOn = false, onlyOn = false, timeI = 1;
+  try { const t = +localStorage.getItem('capy.burgerTime'); if (t >= 0 && t < TIMES.length && localStorage.getItem('capy.burgerTime') != null) timeI = t; } catch {}
+  const durOf = (d, m) => Math.round((LEVEL[d][m === 'coop' ? 'coop' : 'vs'] + (calcOn && !onlyOn ? 20 : 0)) * TIMES[timeI][1]); // 로비에서 고른 값
   let L = null;            // 경쟁 모드의 내 진행 상황 { id, idx, score, tray }
   let mySel = -1, selRun = '';
   let K = null;            // 내 주방(불판·튀김기). 손님이 바뀌어도 그대로 남아서 미리 구워 둘 수 있다
@@ -142,7 +145,9 @@ export function mount(el, ctx) {
       h('label', { class: 'lbl' }, '모드'),
       h('div', { class: 'bg-row' }, chip(mode === 'coop', '🤝 협동', () => { mode = 'coop'; lobby(); }, '역할을 나눠 한 쟁반'), chip(mode === 'vs', '⚔️ 경쟁', () => { mode = 'vs'; lobby(); }, '같은 손님, 총점 대결')),
       h('label', { class: 'lbl' }, '난이도'),
-      h('div', { class: 'bg-row' }, (mode === 'coop' ? ['e', 'm', 'h'] : ['m', 'h']).map(k => chip(diff === k, LEVEL[k].name, () => { diff = k; lobby(); }, `${LEVEL[k][mode === 'coop' ? 'coop' : 'vs']}초`))),
+      h('div', { class: 'bg-row' }, (mode === 'coop' ? ['e', 'm', 'h'] : ['m', 'h']).map(k => chip(diff === k, LEVEL[k].name, () => { diff = k; lobby(); }, `${durOf(k, mode)}초`))),
+      h('label', { class: 'lbl' }, '한 판 길이'),
+      h('div', { class: 'bg-row' }, TIMES.map(([n, m], i) => chip(timeI === i, n, () => { timeI = i; try { localStorage.setItem('capy.burgerTime', i); } catch {} lobby(); }, `×${m}`))),
       h('p', { class: 'dim bg-note' }, `손님 ${LV.cust > 1 ? '최대 ' + LV.cust + '명 동시' : '1명씩'} · 튀김 ${LV.fry / 1000}초 · 음료 ${LV.drinks.length}종 · 사이드 ${LV.sides.length}종 · 버거 재료 ${LV.btn.length}종${diff !== 'e' ? ' · 쉬운 손님도 가끔 와요' : ''}`),
       mode === 'coop' && !onlyOn && h('label', { class: 'lbl' }, '내 역할'),
       mode === 'coop' && !onlyOn && h('div', { class: 'bg-row' }, [['main', '🍔 메인', '굽기 · 버거 · 포장'], ['aux', '🥤 보조', '음료 · 튀김 · 계산'], ['both', '🙋 혼자', '전부 다']].map(([k, n, sub]) => chip(myRole === k, n, () => { myRole = k; picked = true; ctx.store.set('games/burgerRole/' + ctx.uid, k).catch(() => {}); lobby(); }, sub))),
@@ -172,11 +177,11 @@ export function mount(el, ctx) {
       calcOn && !onlyOn && step('<b class="bg-g-em">💵</b>', '계산 (맨 마지막)', `손님이 낸 돈에서 합계를 뺀 거스름돈을 단추로 맞춰요 (${diff === 'h' ? '100원 단위까지' : '1,000원 단위'}). 맞히면 +40점.`),
       step('<b class="bg-g-em">🛍️</b>', '내보내기', onlyOn ? '다 쌓았으면 "손님에게 내기"를 눌러요. 버거가 주문과 똑같아야 점수를 받아요.' : '다 됐으면 손님 주문대로 "포장"이나 "매장"을 눌러요. 버거·음료·사이드·포장이 맞을수록 점수가 높고, 전부 맞으면 보너스가 붙어요.'),
       coop && !onlyOn && step('<b class="bg-g-em">🤝</b>', '역할', myRole === 'both' ? '지금은 "혼자"라서 전부 직접 해요.' : `나는 ${myRole === 'main' ? '메인: 불판·버거·포장' : '보조: 음료·튀김' + (calcOn ? '·계산' : '')}을 맡아요. 상대가 없으면 화면 맨 아래 "혼자 다 하기"를 누르면 돼요.`),
-      h('p', { class: 'dim center' }, `제한 시간 ${LV[coop ? 'coop' : 'vs'] + (calcOn && !onlyOn ? 40 : 0)}초 동안 최대한 많은 손님을 받아요. 게임 중 📖를 누르면 메뉴 그림을 다시 볼 수 있어요.`)].filter(Boolean)),
+      h('p', { class: 'dim center' }, `제한 시간 ${durOf(diff, mode)}초 동안 최대한 많은 손님을 받아요. 게임 중 📖를 누르면 메뉴 그림을 다시 볼 수 있어요.`)].filter(Boolean)),
       actions: [{ label: '닫기' }, { label: '시작!', primary: true, onClick: c => { c(); start(); } }] });
   }
   function start() {
-    const L0 = LEVEL[diff], run = { id: Math.random().toString(36).slice(2, 9), mode, diff, calc: (!onlyOn && calcOn) || null, only: onlyOn || null, seed: Math.floor(Math.random() * 1e6), startAt: now() + 3600, dur: L0[mode === 'coop' ? 'coop' : 'vs'] + (calcOn && !onlyOn ? 40 : 0), by: ctx.uid };
+    const L0 = LEVEL[diff], run = { id: Math.random().toString(36).slice(2, 9), mode, diff, calc: (!onlyOn && calcOn) || null, only: onlyOn || null, seed: Math.floor(Math.random() * 1e6), startAt: now() + 3600, dur: durOf(diff, mode), by: ctx.uid };
     if (mode === 'coop') Object.assign(run, { q: Array.from({ length: L0.cust }, (_, i) => i), nx: L0.cust, sel: 0, score: 0, n: 0, roles: onlyOn ? { [ctx.uid]: 'both', ...(pid() ? { [pid()]: 'both' } : {}) } : myRole === 'both' || !pid() ? { [ctx.uid]: 'both' } : { [ctx.uid]: myRole, [pid()]: myRole === 'main' ? 'aux' : 'main' } });
     dismissed = ''; ctx.store.set(PATH, run).catch(() => toast('시작하지 못했어요'));
   }
@@ -248,10 +253,16 @@ export function mount(el, ctx) {
   }
 
   let top, trayEl, ctl;
+  // 중도 포기: 남은 시간을 없애서 지금 점수로 바로 끝낸다(같이 하는 상대 화면도 함께 끝난다)
+  function giveUp() {
+    if (phase() !== 'play') return;
+    modal({ title: '🏳️ 여기서 그만할까요?', body: h('p', { class: 'center' }, S.mode === 'vs' ? '지금까지 점수로 승부가 나요. 상대 화면도 같이 끝나요.' : '지금까지 점수로 바로 끝나요.'), actions: [{ label: '계속하기' }, { label: '그만하기', danger: true, onClick: c => { c(); if (!S || phase() !== 'play') return;
+      const dur = Math.max(0, (now() - S.startAt) / 1000); S.dur = dur; ctx.store.update(PATH, { dur, quit: ctx.uid }).catch(() => {}); paint(); } }] });
+  }
   function drawTop() {
     const vs = S.mode === 'vs', left = Math.max(0, Math.ceil((endAt(S) - now()) / 1000)), other = vs && pid() && (S.sc || {})[pid()];
     top.replaceChildren(h('b', { class: 'bg-time' + (left <= 10 ? ' hot' : '') }, `⏱ ${left}초`), h('span', null, vs ? `나 ${L.score}점${other ? ` : ${ctx.nameOf(pid())} ${other.s}점` : ''}` : `점수 ${S.score || 0}`),
-      h('small', null, `손님 ${servedN() + 1}번째 · ${LEVEL[S.diff].name}`), h('button', { class: 'bg-book', 'aria-label': '메뉴판', onClick: () => menuBook(S.diff) }, '📖'));
+      h('small', null, `손님 ${servedN() + 1}번째 · ${LEVEL[S.diff].name}`), h('button', { class: 'bg-book', 'aria-label': '메뉴판', onClick: () => menuBook(S.diff) }, '📖'), h('button', { class: 'bg-book quit', 'aria-label': '그만하기', onClick: giveUp }, '🏳️'));
   }
   function drawTray() {
     const vs = S.mode === 'vs', tray = curTray(), fl = flash && Date.now() < flash.until ? flash.r : null;
