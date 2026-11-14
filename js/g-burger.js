@@ -70,6 +70,7 @@ const LEVEL = {
   h: { name: '상', drinks: [...D5, ...D5.map(k => 'z' + k)], sides: [...S5, 'wrap', 'pie', 'rings', 'sfries'], fills: [...F6, 'seafood', 'shrimp', 'sauce'], btn: [...F6, 'seafood', 'shrimp', 'chili', 'sweet'], coop: 180, vs: 150, win: 2400, cust: 3, fry: 2000 },
 };
 const PATTY = { beef: 1, chicken: 1, seafood: 1 }, NOFRY = { wrap: 1 }; // 패티는 불판에 굽고, 사이드는 (휠랩만 빼고) 튀김기에 튀긴다
+const KEEP_MS = 25000; // 꺼내 둔 패티는 이 시간이 지나면 식어서 버린다
 const HOLD = 5; // 다 익은 것을 꺼내 두는 보관함 칸 수
 const GRILL = 5, FRYER = 3, COOK = 4000, TAIL = 2600; // 익는 데 걸리는 시간(ms). 그 뒤 '알맞음' 구간(win)이 지나면 탄다
 const won = n => n.toLocaleString('ko-KR') + '원';
@@ -172,7 +173,7 @@ export function mount(el, ctx) {
       !onlyOn && step(drinkPic('cola'), '음료', '음료 탭에서 손님이 주문한 음료를 눌러요.' + (diff === 'h' ? ' 검은 "0" 딱지가 붙은 건 제로 음료라 따로 골라야 해요.' : '')),
       !onlyOn && step(SIDE.fries[1], '사이드는 튀김기에', `사이드를 누르면 왼쪽 튀김기에 들어가요. ${LV.fry / 1000}초 뒤 "지금"이 뜨면 눌러서 건져요. 너무 늦으면 타서 버려져요.` + (diff === 'h' ? ' 휠랩만 튀기지 않고 바로 올라가요.' : '') + (coop ? '' : ' 경쟁에서는 사이드가 선택(맞히면 +30)이에요.')),
       step(pic('p-beef'), '패티는 불판에', '패티를 누르면 오른쪽 불판에 올라가요. 바늘이 초록 칸에 왔을 때 눌러서 꺼내요. 일찍 누르면 안 꺼내지고, 늦으면 타요. 불판 5칸이라 미리 여러 장 구워 둘 수 있어요.'),
-      step('<b class="bg-g-em">🧺</b>', '보관함', '꺼낸 것은 기기 아래 보관함에 모여요. 보관함에서는 식거나 타지 않고, 눌러서 원하는 때 원하는 손님 쟁반에 올려요.'),
+      step('<b class="bg-g-em">🧺</b>', '보관함', `꺼낸 것은 기기 아래 보관함에 모여요. 눌러서 원하는 때 원하는 손님 쟁반에 올려요. 단, 패티는 ${KEEP_MS / 1000}초 넘게 두면 식어서 버려져요(아래 막대가 남은 시간).`),
       step(one('bunT'), '버거 쌓기', '말풍선 그림의 아래 빵부터 위로 차례대로: 빵 → 재료 → 빵. 순서가 다르면 틀려요. ↩는 하나 빼기, 🗑는 다시 쌓기예요.'),
       calcOn && !onlyOn && step('<b class="bg-g-em">💵</b>', '계산 (맨 마지막)', `손님이 낸 돈에서 합계를 뺀 거스름돈을 단추로 맞춰요 (${diff === 'h' ? '100원 단위까지' : '1,000원 단위'}). 맞히면 +40점.`),
       step('<b class="bg-g-em">🛍️</b>', '내보내기', onlyOn ? '다 쌓았으면 "손님에게 내기"를 눌러요. 버거가 주문과 똑같아야 점수를 받아요.' : '다 됐으면 손님 주문대로 "포장"이나 "매장"을 눌러요. 버거·음료·사이드·포장이 맞을수록 점수가 높고, 전부 맞으면 보너스가 붙어요.'),
@@ -217,14 +218,17 @@ export function mount(el, ctx) {
     if (st === 1 && keep.length >= HOLD) { sfx('miss'); return toast('보관함이 꽉 찼어요. 먼저 쟁반에 올려 주세요', 1300); }
     list[i] = null;
     if (st === 2) { sfx('bad'); toast('타 버렸어요! 버렸어요', 1100); return drawCtl(); }
-    sfx('pop'); keep.push(sl.k); drawCtl(); // 꺼낸 것은 보관함에 두었다가 원하는 때 원하는 쟁반에 올린다
+    sfx('pop'); keep.push(keep === K.hg ? { k: sl.k, t0: performance.now() } : sl.k); drawCtl(); // 꺼낸 것은 보관함에 두었다가 원하는 때 원하는 쟁반에 올린다
   }
   // 보관함: 다 익은 것을 모아 두는 곳. 식거나 타지 않는다
-  const holdRow = (keep, pic1, onUse, label) => h('div', { class: 'bg-hold' }, h('small', null, label), keep.map((k, i) => h('button', { class: 'bg-held', 'data-h': i, 'data-k': k, onClick: () => onUse(i), html: pic1(k) })), !keep.length && h('em', null, '익으면 눌러 꺼내 두기'));
+  const holdRow = (keep, pic1, onUse, label) => h('div', { class: 'bg-hold' }, h('small', null, label), keep.map((k, i) => h('button', { class: 'bg-held', 'data-h': i, 'data-k': k.k || k, onClick: () => onUse(i), html: pic1(k) + (k.t0 ? '<i class="bg-fresh"><u></u></i>' : '') })), !keep.length && h('em', null, '익으면 눌러 꺼내 두기'));
   const cooker = (list, cook, attr, cls, onTake, icon) => h('div', { class: 'bg-cook ' + cls }, list.map((sl, i) => (sl
     ? h('button', { class: 'bg-pan', [attr]: i, onClick: () => onTake(i) }, h('span', { html: icon(sl.k) }), cls === 'fry' && h('em', { class: 'bg-sec' }), h('i', { class: 'bg-gauge', style: { background: gaugeBg(cook) } }, h('b')))
     : h('div', { class: 'bg-pan empty' }))));
   function tickCookers() {
+    if (K && K.hg.length) { const t = performance.now(), n0 = K.hg.length; K.hg = K.hg.filter(it => t - it.t0 < KEEP_MS); // 너무 오래 둔 패티는 버린다
+      if (K.hg.length < n0) { sfx('bad'); toast('오래 둔 패티가 식어서 버렸어요', 1300); return drawCtl(); }
+      box.querySelectorAll('.grillS .bg-held').forEach(e => { const it = K.hg[+e.dataset.h], u = e.querySelector('.bg-fresh u'); if (!it || !u) return; const left = 1 - (t - it.t0) / KEEP_MS; u.style.width = left * 100 + '%'; u.style.background = left > 0.5 ? '#57C26B' : left > 0.25 ? '#F0B429' : '#E5484D'; e.classList.toggle('old', left < 0.25); }); }
     const n = phase() === 'play' ? K.grill.filter(Boolean).length + K.fry.filter(Boolean).length : 0; sizzle(n); if (n && Math.random() < Math.min(0.5, 0.2 * n)) sfx('crackle'); // 굽고 튀기는 동안 지글지글
     for (const [sel, list, cook] of [['[data-g]', K.grill, COOK], ['[data-f]', K.fry, fryMs()]]) for (const e of box.querySelectorAll(sel)) {
       const sl = list[+e.getAttribute(sel.slice(1, -1))]; if (!sl) continue; const T = cook + LEVEL[S.diff].win + TAIL, p = Math.min(1, (performance.now() - sl.t0) / T), st = stage(sl, cook);
@@ -288,12 +292,12 @@ export function mount(el, ctx) {
     const fryBox = () => h('div', { class: 'bg-station fryS' }, cooker(K.fry, fryMs(), 'data-f', 'fry', i => takeFrom(K.fry, i, fryMs(), null, K.hf), k => SIDE[k][1]),
       holdRow(K.hf, k => SIDE[k][1], i => { const k = K.hf.splice(i, 1)[0]; if (tray.s && !NOFRY[tray.s] && K.hf.length < HOLD) K.hf.push(tray.s); sfx('tock'); if (role === 'both' && tab === 's') tab = 'b'; setTray({ s: k }); }, '🫕'));
     const grillBox = () => h('div', { class: 'bg-station grillS' }, cooker(K.grill, COOK, 'data-g', 'grill', i => takeFrom(K.grill, i, COOK, null, K.hg), k => `<span class="bg-pt">${pic('p-' + k + '-raw')}${pic('p-' + k)}</span>`),
-      holdRow(K.hg, k => pic('p-' + k), i => { if (tray.st.length >= 12) return toast('더 쌓을 수 없어요', 900); add(K.hg.splice(i, 1)[0]); }, '🔥'));
+      holdRow(K.hg, it => pic('p-' + it.k), i => { if (tray.st.length >= 12) return toast('더 쌓을 수 없어요', 900); add(K.hg.splice(i, 1)[0].k); }, '🔥'));
     const kitchen = () => h('div', { class: 'bg-kitchen' + (role === 'both' && !S.only ? '' : ' one') }, role !== 'main' && !S.only && fryBox(), role !== 'aux' && grillBox());
     const sides = () => [
       h('div', { class: 'bg-grid' }, LV.sides.map(k => iconBtn(SIDE[k][1], SIDE[k][0], tray.s === k, () => (NOFRY[k] ? (sfx('tock'), role === 'both' && (tab = 'b'), setTray({ s: k })) : putOn(K.fry, k, FRYER, '튀김기가 꽉 찼어요')), NOFRY[k] ? '' : 'raw fry')),
         role === 'both' && h('button', { class: 'bg-btn skip', onClick: () => { tab = 'b'; setTray({ s: null }); } }, h('span', null, '⏭'), h('small', null, vs ? '건너뛰기' : '없음')))];
-    const unstack = n => { if (!tray.st.length) return; const keepN = Math.max(0, tray.st.length - n); tray.st.slice(keepN).forEach(k => { if (PATTY[k] && K.hg.length < HOLD) K.hg.push(k); }); setTray({ st: tray.st.slice(0, keepN) }); };
+    const unstack = n => { if (!tray.st.length) return; const keepN = Math.max(0, tray.st.length - n); tray.st.slice(keepN).forEach(k => { if (PATTY[k] && K.hg.length < HOLD) K.hg.push({ k, t0: performance.now() }); }); setTray({ st: tray.st.slice(0, keepN) }); };
     const packBtns = () => (S.only ? [h('button', { class: 'bg-pack wide2', onClick: () => serve('in') }, '🍔 손님에게 내기')] : [h('button', { class: 'bg-pack', onClick: () => serve('out') }, '🛍️ 포장'), h('button', { class: 'bg-pack', onClick: () => serve('in') }, '🍽️ 매장')]);
     const burger = () => [
       h('div', { class: 'bg-grid ing' }, iconBtn(one(tray.st.length ? 'bunT' : 'bunB'), '햄버거빵', false, () => add('bun')),

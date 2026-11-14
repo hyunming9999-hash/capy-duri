@@ -631,3 +631,4 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .bg-kitchen.one .bg-cook.grill{grid-template-columns:repeat(5,1fr)}
 .bg[data-only="1"] .bg-cc-b svg{max-height:74px;width:70px}.bg[data-only="1"] .bg-cc-r .bg-walker{width:42px}.bg[data-only="1"] .bg-cust.multi{padding-top:24px}.bg[data-only="1"] .bg-kitchen.one .grill .bg-pan{height:64px}.bg[data-only="1"] .bg-kitchen.one .bg-pt{width:46px;height:46px}
 .bg-book.quit{margin-left:4px;filter:saturate(.8)}.bg-top small{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bg-held{position:relative}.bg-fresh{position:absolute;left:1px;right:1px;bottom:-3px;height:4px;border-radius:2px;background:rgba(0,0,0,.55);overflow:hidden}.bg-fresh u{display:block;height:100%;width:100%;background:#57C26B}.bg-held.old{animation:bgpulse .5s infinite alternate}.grillS .bg-hold{padding-bottom:4px}
