@@ -473,3 +473,13 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 
 /* 효과음·배경음 켜기/끄기 버튼 */
 .call.snd{width:38px;padding:0;font-size:16px}
+
+/* 톡 검색 */
+.call.srch-btn{background:#FFF6DC;border-color:#E8D9BC}
+.srch{display:flex;flex-direction:column;gap:8px}.srch-list{display:flex;flex-direction:column;gap:6px;max-height:46vh;overflow:auto;-webkit-overflow-scrolling:touch}
+.srch-hit{display:flex;flex-direction:column;gap:2px;text-align:left;padding:8px 10px;border-radius:12px;border:2px solid var(--line);background:#fff;font:inherit;color:inherit;cursor:pointer}
+.srch-hit small{color:var(--dim,#8a7a66);font-size:12px}.srch-hit span{word-break:break-word}.srch-hit mark,.srch-ctx mark{background:#FFE27A;border-radius:3px;padding:0 1px}
+.srch-ctx{display:flex;flex-direction:column;gap:5px;max-height:56vh;overflow:auto}
+.srch-ctx p{margin:0;padding:6px 10px;border-radius:12px;background:#F6EEDD;display:flex;flex-wrap:wrap;gap:2px 6px;align-items:baseline;word-break:break-word}
+.srch-ctx p.mine{background:#FFF0B8}.srch-ctx p.hit{outline:3px solid #FFC93C}.srch-ctx p b{font-size:13px}.srch-ctx p small{font-size:11px;color:#8a7a66;margin-left:auto}
+.msg.found .bubble{animation:found 1.6s ease-out}@keyframes found{0%,60%{box-shadow:0 0 0 4px #FFC93C}100%{box-shadow:0 0 0 0 rgba(255,201,60,0)}}

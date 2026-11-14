@@ -261,6 +261,7 @@ function render() {
   root.replaceChildren(h('div', { class: 'page page-' + name },
     h('header', { class: 'bar' }, h('button', { class: 'back', 'aria-label': '뒤로', onClick: () => ctx.go(sub ? name : 'home') }, '‹'), title,
       SCENE[name] && sndBtn(),
+      name === 'chat' && h('button', { class: 'call tel srch-btn', 'aria-label': '대화 검색', title: '대화 검색', onClick: () => ctx.chatSearch && ctx.chatSearch() }, '🔍'),
       name === 'chat' && ctx.partnerId && h('button', { class: 'call tel', 'aria-label': '전화 걸기', title: '전화 걸기', onClick: () => ctx.phone() }, '📞'),
       ctx.partnerId && h('button', { class: 'call', title: '상대를 이 화면으로 부르기', onClick: () => ctx.call() }, '📣 부르기'), partnerBadge()), body));
   ctx.setTitle = t => { title.textContent = t; };
