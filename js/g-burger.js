@@ -149,8 +149,28 @@ export function mount(el, ctx) {
       mode === 'vs' && h('p', { class: 'dim bg-note' }, '각자 음료·버거·포장을 만들어요. 사이드는 선택(맞히면 보너스 +30)이고, 시간이 끝났을 때 총점이 높은 쪽이 이겨요'),
       h('label', { class: 'lbl' }, '옵션'),
       h('div', { class: 'bg-row' }, chip(calcOn, `💵 계산 모드 ${calcOn ? '켜짐' : '꺼짐'}`, () => { calcOn = !calcOn; lobby(); }, `손님이 낸 돈의 거스름돈 암산 (${diff === 'h' ? '100원 단위' : '1,000원 단위'})${mode === 'coop' ? ' · 보조가 계산' : ''}`)),
-      h('div', { class: 'bg-row' }, h('button', { class: 'btn', onClick: () => menuBook(diff) }, '📖 메뉴판'), h('button', { class: 'btn primary big', style: { flex: 2 }, onClick: start }, '시작')),
+      h('div', { class: 'bg-row' }, h('button', { class: 'btn', onClick: () => menuBook(diff) }, '📖 메뉴판'), h('button', { class: 'btn primary big', style: { flex: 2 }, onClick: askGuide }, '시작')),
       b && h('p', { class: 'dim center' }, `${mode === 'coop' ? '우리' : '내'} 최고 기록 ${b.s}점`)].filter(Boolean));
+  }
+  // 시작 전에 설명을 들을지 묻는다
+  function askGuide() {
+    modal({ title: '시작하기 전에', body: h('p', { class: 'center' }, '하는 방법 설명을 들을까요?'), actions: [{ label: '바로 시작', onClick: c => { c(); start(); } }, { label: '📖 설명 듣기', primary: true, onClick: c => { c(); guide(); } }] });
+  }
+  function guide() {
+    const LV = LEVEL[diff], coop = mode === 'coop', n = LV.cust, step = (ic, t, d) => h('div', { class: 'bg-g' }, h('span', { html: ic }), h('div', null, h('b', null, t), h('p', null, d)));
+    modal({ title: `📖 카피 버거 하는 법 (${coop ? '협동' : '경쟁'} · ${LV.name})`, body: h('div', { class: 'bg-guide' }, ...[
+      step(ANIMALS[0][0], '손님이 와요', n > 1 ? `손님이 왼쪽에서 걸어와 줄을 서요. 한 번에 최대 ${n}명이고, 빨간 "먼저!"가 붙은 오른쪽 손님이 가장 먼저 온 손님이에요. 먼저 온 손님을 두고 다른 손님 것을 먼저 내면 ${SKIP}점이 깎여요.` : '손님이 왼쪽에서 걸어와요. 말풍선에 포장/매장, 음료, 사이드, 버거가 그려져 있어요.'),
+      n > 1 && step('<b class="bg-g-em">👆</b>', '누구 것을 만들지 고르기', '손님 카드나 그 아래 쟁반을 누르면 그 손님 쟁반에 재료가 올라가요. 손님마다 쟁반이 따로 있어서 여러 손님 것을 같이 준비할 수 있어요.'),
+      step(drinkPic('cola'), '음료', '음료 탭에서 손님이 주문한 음료를 눌러요.' + (diff === 'h' ? ' 검은 "0" 딱지가 붙은 건 제로 음료라 따로 골라야 해요.' : '')),
+      step(SIDE.fries[1], '사이드는 튀김기에', `사이드를 누르면 왼쪽 튀김기에 들어가요. ${LV.fry / 1000}초 뒤 "지금"이 뜨면 눌러서 건져요. 너무 늦으면 타서 버려져요.` + (diff === 'h' ? ' 휠랩만 튀기지 않고 바로 올라가요.' : '') + (coop ? '' : ' 경쟁에서는 사이드가 선택(맞히면 +30)이에요.')),
+      step(pic('p-beef'), '패티는 불판에', '패티를 누르면 오른쪽 불판에 올라가요. 바늘이 초록 칸에 왔을 때 눌러서 꺼내요. 일찍 누르면 안 꺼내지고, 늦으면 타요. 불판 5칸이라 미리 여러 장 구워 둘 수 있어요.'),
+      step('<b class="bg-g-em">🧺</b>', '보관함', '꺼낸 패티와 튀김은 기기 아래 보관함에 모여요. 보관함에서는 식거나 타지 않고, 눌러서 원하는 때 원하는 손님 쟁반에 올려요.'),
+      step(one('bunT'), '버거 쌓기', '말풍선 그림의 아래 빵부터 위로 차례대로: 빵 → 재료 → 빵. 순서가 다르면 틀려요. ↩는 하나 빼기, 🗑는 다시 쌓기예요.'),
+      calcOn && step('<b class="bg-g-em">💵</b>', '계산 (맨 마지막)', `손님이 낸 돈에서 합계를 뺀 거스름돈을 단추로 맞춰요 (${diff === 'h' ? '100원 단위까지' : '1,000원 단위'}). 맞히면 +40점.`),
+      step('<b class="bg-g-em">🛍️</b>', '내보내기', '다 됐으면 손님 주문대로 "포장"이나 "매장"을 눌러요. 버거·음료·사이드·포장이 맞을수록 점수가 높고, 전부 맞으면 보너스가 붙어요.'),
+      coop && step('<b class="bg-g-em">🤝</b>', '역할', myRole === 'both' ? '지금은 "혼자"라서 전부 직접 해요.' : `나는 ${myRole === 'main' ? '메인: 불판·버거·포장' : '보조: 음료·튀김' + (calcOn ? '·계산' : '')}을 맡아요. 상대가 없으면 화면 맨 아래 "혼자 다 하기"를 누르면 돼요.`),
+      h('p', { class: 'dim center' }, `제한 시간 ${LV[coop ? 'coop' : 'vs'] + (calcOn ? 40 : 0)}초 동안 최대한 많은 손님을 받아요. 게임 중 📖를 누르면 메뉴 그림을 다시 볼 수 있어요.`)].filter(Boolean)),
+      actions: [{ label: '닫기' }, { label: '시작!', primary: true, onClick: c => { c(); start(); } }] });
   }
   function start() {
     const L0 = LEVEL[diff], run = { id: Math.random().toString(36).slice(2, 9), mode, diff, calc: calcOn || null, seed: Math.floor(Math.random() * 1e6), startAt: now() + 3600, dur: L0[mode === 'coop' ? 'coop' : 'vs'] + (calcOn ? 40 : 0), by: ctx.uid };

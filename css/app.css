@@ -624,3 +624,6 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .bg-calc{padding:6px 8px}.bg-calc p{margin:0 0 3px;font-size:14px}.bg-calc p b{font-size:17px}.bg-change b{font-size:21px!important}.bg-bill{padding:8px 4px;font-size:15px}.bg-bills{gap:5px}
 .bg-cust.multi{padding-top:19px;padding-bottom:6px}.bg-tray.multi{padding:4px 6px 6px}.bg-top{padding-top:5px;padding-bottom:5px}
 .bg-solo{display:block;width:100%;margin-top:8px;padding:9px 6px;border-radius:14px;border:2px dashed var(--line);background:var(--card);font:14px var(--head);color:var(--ink2)}.bg-note.warn{color:#C0392B}
+.bg-guide{display:flex;flex-direction:column;gap:8px;max-height:58vh;overflow-y:auto;text-align:left}.bg-g{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:14px;background:#FFF8E6;border:1.5px solid var(--line)}
+.bg-g>span{flex:none;width:40px;height:40px;display:grid;place-items:center}.bg-g>span svg,.bg-g>span img{display:block;width:100%;max-height:44px;height:auto;object-fit:contain}.bg-g>span .bg-dp{width:36px;height:36px}.bg-g-em{font-size:28px;font-family:inherit}
+.bg-g b{font:15px var(--head)}.bg-g p{margin:2px 0 0;font-size:13.5px;line-height:1.45;color:var(--ink)}
