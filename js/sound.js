@@ -58,12 +58,25 @@ function tone(dest, type, f0, f1, at, dur, vol, attack = 0.008) {
   o.connect(g).connect(dest); o.start(at); o.stop(at + dur + 0.03);
 }
 let noiseBuf = null;
+function mkNoise() { if (!noiseBuf) { noiseBuf = ac.createBuffer(1, ac.sampleRate * 0.6, ac.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; } }
+// 지글지글: 굽거나 튀기는 동안 계속 나는 소리. n = 익히는 개수(0이면 끔)
+let siz = null;
+export function sizzle(n) {
+  try {
+    if (!ac || !fxOn()) n = 0;
+    if (!siz) { if (!n || !bus()) return; mkNoise(); const src = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(); src.buffer = noiseBuf; src.loop = true; f.type = 'highpass'; f.frequency.value = 4200; g.gain.value = 0.0001; src.connect(f).connect(g).connect(out); src.start(); siz = { g }; }
+    if (n && ac.state === 'suspended') ac.resume();
+    siz.g.gain.setTargetAtTime(n ? Math.min(0.1, 0.04 + 0.018 * n) : 0.0001, ac.currentTime, 0.12);
+  } catch {}
+}
 function noise(dest, at, dur, vol, freq = 1200, q = 0.8, type = 'bandpass') {
-  if (!noiseBuf) { noiseBuf = ac.createBuffer(1, ac.sampleRate * 0.6, ac.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+  mkNoise();
   const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(); s.buffer = noiseBuf; f.type = type; f.frequency.value = freq; f.Q.value = q;
   g.gain.setValueAtTime(vol, at); g.gain.exponentialRampToValueAtTime(0.0001, at + dur); s.connect(f).connect(g).connect(dest); s.start(at); s.stop(at + dur + 0.02);
 }
 const SFX = {
+  sear: (d, t) => { noise(d, t, 0.55, 0.4, 5200, 0.5, 'highpass'); noise(d, t, 0.14, 0.3, 2400, 0.7); },
+  crackle: (d, t) => noise(d, t, 0.035, 0.22, 3200 + Math.random() * 3000, 2.5),
   swing: (d, t) => noise(d, t, 0.14, 0.25, 2400, 0.7),
   miss: (d, t) => { noise(d, t, 0.2, 0.22, 3000, 0.6); tone(d, 'sine', 900, 300, t, 0.18, 0.06); },
   hit: (d, t) => { tone(d, 'sine', 190, 55, t, 0.2, 0.55); noise(d, t, 0.07, 0.4, 900, 0.6); tone(d, 'square', 420, 140, t, 0.07, 0.1); },
