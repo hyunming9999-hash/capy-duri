@@ -132,6 +132,8 @@ export function mount(el, ctx) {
   function lobby() {
     const chip = (on, label, fn, sub) => h('button', { class: 'bg-chip' + (on ? ' on' : ''), onClick: fn }, h('b', null, label), sub && h('small', null, sub));
     if (mode === 'vs' && diff === 'e') diff = 'm';
+    const online = !!(pid() && ctx.presence && ctx.presence[pid()]);
+    if (!picked) myRole = !online ? 'both' : myRole === 'both' ? 'main' : myRole; // 상대가 접속해 있지 않으면 처음부터 '혼자'
     const pr = pid() && roles[pid()], LV = LEVEL[diff];
     const bestKey = (mode === 'coop' ? 'coop-' + diff : 'vs-' + diff + '-' + ctx.uid) + (calcOn ? '-c' : ''), b = best[bestKey];
     box.replaceChildren(...[
@@ -143,7 +145,7 @@ export function mount(el, ctx) {
       h('p', { class: 'dim bg-note' }, `손님 ${LV.cust > 1 ? '최대 ' + LV.cust + '명 동시' : '1명씩'} · 튀김 ${LV.fry / 1000}초 · 음료 ${LV.drinks.length}종 · 사이드 ${LV.sides.length}종 · 버거 재료 ${LV.btn.length}종${diff !== 'e' ? ' · 쉬운 손님도 가끔 와요' : ''}`),
       mode === 'coop' && h('label', { class: 'lbl' }, '내 역할'),
       mode === 'coop' && h('div', { class: 'bg-row' }, [['main', '🍔 메인', '굽기 · 버거 · 포장'], ['aux', '🥤 보조', '음료 · 튀김 · 계산'], ['both', '🙋 혼자', '전부 다']].map(([k, n, sub]) => chip(myRole === k, n, () => { myRole = k; picked = true; ctx.store.set('games/burgerRole/' + ctx.uid, k).catch(() => {}); lobby(); }, sub))),
-      mode === 'coop' && h('p', { class: 'dim bg-note' }, myRole === 'both' ? '혼자서 음료·사이드·버거·포장을 모두 해요' : pid() ? `${ctx.nameOf(pid())}: ${pr === 'main' ? '메인' : pr === 'aux' ? '보조' : '아직 안 골랐어요'} · 시작하면 상대는 ${myRole === 'main' ? '보조' : '메인'}를 맡아요` : '상대가 들어오면 반대 역할을 맡아요'),
+      mode === 'coop' && h('p', { class: 'dim bg-note' + (myRole !== 'both' && !online ? ' warn' : '') }, myRole === 'both' ? '혼자서 음료·사이드·버거·포장을 모두 해요' : !online ? `⚠️ ${pid() ? ctx.nameOf(pid()) + '가 지금 접속해 있지 않아요.' : '상대가 없어요.'} 메인은 버거만, 보조는 음료·사이드만 할 수 있으니 혼자 할 땐 '혼자'를 골라 주세요` : pid() ? `${ctx.nameOf(pid())}: ${pr === 'main' ? '메인' : pr === 'aux' ? '보조' : '아직 안 골랐어요'} · 시작하면 상대는 ${myRole === 'main' ? '보조' : '메인'}를 맡아요` : '상대가 들어오면 반대 역할을 맡아요'),
       mode === 'vs' && h('p', { class: 'dim bg-note' }, '각자 음료·버거·포장을 만들어요. 사이드는 선택(맞히면 보너스 +30)이고, 시간이 끝났을 때 총점이 높은 쪽이 이겨요'),
       h('label', { class: 'lbl' }, '옵션'),
       h('div', { class: 'bg-row' }, chip(calcOn, `💵 계산 모드 ${calcOn ? '켜짐' : '꺼짐'}`, () => { calcOn = !calcOn; lobby(); }, `손님이 낸 돈의 거스름돈 암산 (${diff === 'h' ? '100원 단위' : '1,000원 단위'})${mode === 'coop' ? ' · 보조가 계산' : ''}`)),
@@ -271,6 +273,8 @@ export function mount(el, ctx) {
     let kids;
     if (role === 'aux') kids = [kitchen(), h('label', { class: 'lbl' }, '음료'), drinks(), h('label', { class: 'lbl' }, '사이드'), ...sides(), ...(S.calc ? [h('label', { class: 'lbl' }, '계산'), ...calc()] : []), h('p', { class: 'dim center' }, '버거와 포장은 메인이 해요. 쟁반에 올리면 바로 보여요')];
     else if (role === 'main') kids = [kitchen(), ...burger()];
+    const takeAll = () => { S.roles = { ...(S.roles || {}), [ctx.uid]: 'both' }; tab = 'd'; ctx.store.update(PATH + '/roles', { [ctx.uid]: 'both' }).catch(() => {}); paint(); };
+    if (role === 'aux' || role === 'main') kids.push(h('button', { class: 'bg-solo', onClick: takeAll }, role === 'main' ? '🙋 음료·사이드도 내가 하기 (혼자 다 하기)' : '🙋 버거·포장도 내가 하기 (혼자 다 하기)'));
     else { const tabs = [['d', '① 음료'], ['s', vs ? '② 사이드(선택)' : '② 사이드'], ['b', S.calc ? '③ 버거' : '③ 버거·포장'], ...(S.calc ? [['c', '④ 계산·포장']] : [])]; // 계산은 맨 마지막
       kids = [kitchen(), h('div', { class: 'bg-tabs' }, tabs.map(([k, n]) => h('button', { class: 'bg-tab' + (tab === k ? ' on' : ''), onClick: () => { tab = k; drawCtl(); } }, n))), ...(tab === 'd' ? [drinks()] : tab === 's' ? sides() : tab === 'c' ? [...calc(), h('div', { class: 'bg-fin two' }, packBtns())] : burger())]; }
     ctl.replaceChildren(...kids.filter(Boolean)); tickCookers();

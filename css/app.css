@@ -623,3 +623,4 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .bg-cc-m{display:none}.bg-cc-b svg{max-height:46px}.bg-mt .bg-slot.money:not(.has){display:none}.bg-mt{grid-template-rows:1fr 1fr}.bg-mt .bg-slot.money{position:absolute;left:3px;right:3px;bottom:2px;background:#E6F6EA}.bg-mt{position:relative}
 .bg-calc{padding:6px 8px}.bg-calc p{margin:0 0 3px;font-size:14px}.bg-calc p b{font-size:17px}.bg-change b{font-size:21px!important}.bg-bill{padding:8px 4px;font-size:15px}.bg-bills{gap:5px}
 .bg-cust.multi{padding-top:19px;padding-bottom:6px}.bg-tray.multi{padding:4px 6px 6px}.bg-top{padding-top:5px;padding-bottom:5px}
+.bg-solo{display:block;width:100%;margin-top:8px;padding:9px 6px;border-radius:14px;border:2px dashed var(--line);background:var(--card);font:14px var(--head);color:var(--ink2)}.bg-note.warn{color:#C0392B}
