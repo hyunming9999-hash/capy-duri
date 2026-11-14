@@ -30,7 +30,7 @@ export const DEFS = `<svg width="0" height="0" style="position:absolute" aria-hi
 <linearGradient id="bgBunB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F3C583"/><stop offset="1" stop-color="#CE8A3F"/></linearGradient>
 <linearGradient id="bgBeef" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8A5236"/><stop offset=".5" stop-color="#6A3B25"/><stop offset="1" stop-color="#472516"/></linearGradient>
 <linearGradient id="bgChk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F7C45E"/><stop offset="1" stop-color="#D98A22"/></linearGradient>
-<linearGradient id="bgSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FBE0A8"/><stop offset="1" stop-color="#E3A95C"/></linearGradient>
+<linearGradient id="bgSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFC2B4"/><stop offset="1" stop-color="#F08A7A"/></linearGradient>
 <linearGradient id="bgChz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE266"/><stop offset="1" stop-color="#F7B91E"/></linearGradient>
 <linearGradient id="bgTom" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4625F"/><stop offset="1" stop-color="#C92E33"/></linearGradient>
 <linearGradient id="bgLet" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B5E77C"/><stop offset="1" stop-color="#63B546"/></linearGradient>
@@ -46,7 +46,7 @@ const LAY = {
   onion: [7, y => `<rect x="9" y="${y + 0.5}" width="78" height="6" rx="3" fill="#FBF3FB" stroke="#A96FB8" stroke-width="1.3"/>${[20, 36, 52, 68, 82].map(x => `<ellipse cx="${x}" cy="${y + 3.5}" rx="6.5" ry="1.6" fill="none" stroke="#C79AD2" stroke-width="1.1"/>`).join('')}`],
   cheese: [8, y => `<path d="M5 ${y + 0.5}h86v3.5l-9 0q-3 5.5-6 0h-24q-3.5 6.5-7 0h-14q-2.5 4-5 0H5z" fill="url(#bgChz)" stroke="#C98F0A" stroke-width="1.3" stroke-linejoin="round"/><path d="M10 ${y + 2}h70" stroke="#FFF3B0" stroke-width="1.2" stroke-linecap="round" opacity=".9"/>`],
   tomato: [8, y => [[9, 38], [49, 38]].map(([x, w]) => `<rect x="${x}" y="${y + 0.5}" width="${w}" height="7" rx="3.5" fill="url(#bgTom)" stroke="#8E1F24" stroke-width="1.3"/><path d="M${x + 5} ${y + 3}h${w - 10}" stroke="#FF9C96" stroke-width="1.2" stroke-linecap="round" opacity=".85"/>${[8, 16, 24, 31].map(d => `<ellipse cx="${x + d}" cy="${y + 5.2}" rx="1.1" ry=".7" fill="#FFE39A"/>`).join('')}`).join('')],
-  seafood: [12, y => `<rect x="6" y="${y}" width="84" height="12" rx="6" fill="url(#bgSea)" stroke="#B07A2C" stroke-width="1.5"/>${[[16, 5, '#FF8E99'], [27, 8, '#fff'], [39, 4.5, '#FF8E99'], [50, 8, '#8FD06A'], [61, 5, '#FF8E99'], [72, 8, '#fff'], [82, 5.5, '#FF8E99']].map(([x, d, c]) => `<circle cx="${x}" cy="${y + d}" r="1.8" fill="${c}"/>`).join('')}`],
+  seafood: [12, y => `<rect x="6" y="${y}" width="84" height="12" rx="6" fill="url(#bgSea)" stroke="#B5544A" stroke-width="1.5"/>${[[16, 6, '#fff'], [28, 7.5, '#5FB04A'], [40, 5, '#fff'], [52, 7.5, '#5FB04A'], [64, 5, '#fff'], [76, 7.5, '#5FB04A'], [84, 5.5, '#fff']].map(([x, d, c]) => `<circle cx="${x}" cy="${y + d}" r="1.9" fill="${c}"/>`).join('')}`], // 연어빛 분홍 + 초록 허브: 노릇한 치킨패티와 확실히 다르게
   shrimp: [11, y => [15, 35, 55, 75].map(x => `<path d="M${x - 7} ${y + 9}a8 7 0 1 1 15 0" fill="none" stroke="#D5484A" stroke-width="6" stroke-linecap="round"/><path d="M${x - 7} ${y + 9}a8 7 0 1 1 15 0" fill="none" stroke="#FFA98F" stroke-width="3.6" stroke-linecap="round"/><path d="M${x - 5.5} ${y + 5.5}a6 5 0 0 1 11 -1" fill="none" stroke="#FFE0D2" stroke-width="1" stroke-linecap="round"/>`).join('')],
   chili: [6, y => `<path d="${wave(y + 3, 2.4, 12)}" fill="none" stroke="#9E141C" stroke-width="5.4" stroke-linecap="round"/><path d="${wave(y + 3, 2.4, 12)}" fill="none" stroke="#E5343D" stroke-width="3.6" stroke-linecap="round"/><path d="${wave(y + 2.2, 2.4, 12)}" fill="none" stroke="#FF9A9E" stroke-width=".9" stroke-linecap="round" opacity=".8"/>`],
   sweet: [6, y => `<path d="${wave(y + 3, 2.4, 12)}" fill="none" stroke="#B5720A" stroke-width="5.4" stroke-linecap="round"/><path d="${wave(y + 3, 2.4, 12)}" fill="none" stroke="#F7B02A" stroke-width="3.6" stroke-linecap="round"/><path d="${wave(y + 2.2, 2.4, 12)}" fill="none" stroke="#FFE7A6" stroke-width=".9" stroke-linecap="round" opacity=".9"/>`],
@@ -62,7 +62,8 @@ const one = k => `<svg viewBox="0 0 96 ${LAY[k][0] + 2}">${LAY[k][1](1)}</svg>`;
 
 /* ---------- 난이도와 주문 ---------- */
 const D5 = ['cola', 'cider', 'fanta', 'dew', 'pepper'], S5 = ['fries', 'cstick', 'hash', 'lstick', 'churros'], F6 = ['beef', 'chicken', 'lettuce', 'onion', 'cheese', 'tomato'];
-const TIMES = [['짧게', 1], ['보통', 1.5], ['길게', 2]]; // 한 판 길이: 기본 시간(하 120·중 150·상 180초)에 곱한다
+const TIMES = [['1분', 60], ['1분 30초', 90], ['2분', 120]]; // 한 판 길이(초)
+const SHORT = { beef: '고기', chicken: '치킨', seafood: '씨푸드', fries: '감튀', cstick: '치즈스틱', hash: '해쉬', lstick: '롱치즈', churros: '츄러스', pie: '파이', rings: '양파링', sfries: '시즈닝' }; // 보관함에 쓰는 짧은 이름
 const SKIP = 30; // 먼저 온 손님을 두고 뒤 손님 것을 먼저 내면 깎이는 점수
 const LEVEL = {
   e: { name: '하', drinks: D5.slice(0, 3), sides: S5.slice(0, 2), fills: ['beef', 'tomato', 'lettuce'], btn: ['beef', 'tomato', 'lettuce'], coop: 120, win: 3600, cust: 1, fry: 4000 },
@@ -105,7 +106,7 @@ export function mount(el, ctx) {
   let alive = true, S = null, roles = {}, best = {}, timer = 0;
   let mode = 'coop', diff = 'e', myRole = 'main', picked = false, calcOn = false, onlyOn = false, timeI = 1;
   try { const t = +localStorage.getItem('capy.burgerTime'); if (t >= 0 && t < TIMES.length && localStorage.getItem('capy.burgerTime') != null) timeI = t; } catch {}
-  const durOf = (d, m) => Math.round((LEVEL[d][m === 'coop' ? 'coop' : 'vs'] + (calcOn && !onlyOn ? 20 : 0)) * TIMES[timeI][1]); // 로비에서 고른 값
+  const durOf = () => TIMES[timeI][1]; // 로비에서 고른 값
   let L = null;            // 경쟁 모드의 내 진행 상황 { id, idx, score, tray }
   let mySel = -1, selRun = '';
   let K = null;            // 내 주방(불판·튀김기). 손님이 바뀌어도 그대로 남아서 미리 구워 둘 수 있다
@@ -146,9 +147,9 @@ export function mount(el, ctx) {
       h('label', { class: 'lbl' }, '모드'),
       h('div', { class: 'bg-row' }, chip(mode === 'coop', '🤝 협동', () => { mode = 'coop'; lobby(); }, '역할을 나눠 한 쟁반'), chip(mode === 'vs', '⚔️ 경쟁', () => { mode = 'vs'; lobby(); }, '같은 손님, 총점 대결')),
       h('label', { class: 'lbl' }, '난이도'),
-      h('div', { class: 'bg-row' }, (mode === 'coop' ? ['e', 'm', 'h'] : ['m', 'h']).map(k => chip(diff === k, LEVEL[k].name, () => { diff = k; lobby(); }, `${durOf(k, mode)}초`))),
+      h('div', { class: 'bg-row' }, (mode === 'coop' ? ['e', 'm', 'h'] : ['m', 'h']).map(k => chip(diff === k, LEVEL[k].name, () => { diff = k; lobby(); }, `손님 ${LEVEL[k].cust}명`))),
       h('label', { class: 'lbl' }, '한 판 길이'),
-      h('div', { class: 'bg-row' }, TIMES.map(([n, m], i) => chip(timeI === i, n, () => { timeI = i; try { localStorage.setItem('capy.burgerTime', i); } catch {} lobby(); }, `×${m}`))),
+      h('div', { class: 'bg-row' }, TIMES.map(([n, m], i) => chip(timeI === i, n, () => { timeI = i; try { localStorage.setItem('capy.burgerTime', i); } catch {} lobby(); }, `${m}초`))),
       h('p', { class: 'dim bg-note' }, `손님 ${LV.cust > 1 ? '최대 ' + LV.cust + '명 동시' : '1명씩'} · 튀김 ${LV.fry / 1000}초 · 음료 ${LV.drinks.length}종 · 사이드 ${LV.sides.length}종 · 버거 재료 ${LV.btn.length}종${diff !== 'e' ? ' · 쉬운 손님도 가끔 와요' : ''}`),
       mode === 'coop' && !onlyOn && h('label', { class: 'lbl' }, '내 역할'),
       mode === 'coop' && !onlyOn && h('div', { class: 'bg-row' }, [['main', '🍔 메인', '굽기 · 버거 · 포장'], ['aux', '🥤 보조', '음료 · 튀김 · 계산'], ['both', '🙋 혼자', '전부 다']].map(([k, n, sub]) => chip(myRole === k, n, () => { myRole = k; picked = true; ctx.store.set('games/burgerRole/' + ctx.uid, k).catch(() => {}); lobby(); }, sub))),
@@ -221,7 +222,7 @@ export function mount(el, ctx) {
     sfx('pop'); keep.push(keep === K.hg ? { k: sl.k, t0: performance.now() } : sl.k); drawCtl(); // 꺼낸 것은 보관함에 두었다가 원하는 때 원하는 쟁반에 올린다
   }
   // 보관함: 다 익은 것을 모아 두는 곳. 식거나 타지 않는다
-  const holdRow = (keep, pic1, onUse, label) => h('div', { class: 'bg-hold' }, h('small', null, label), keep.map((k, i) => h('button', { class: 'bg-held', 'data-h': i, 'data-k': k.k || k, onClick: () => onUse(i), html: pic1(k) + (k.t0 ? '<i class="bg-fresh"><u></u></i>' : '') })), !keep.length && h('em', null, '익으면 눌러 꺼내 두기'));
+  const holdRow = (keep, pic1, onUse, label) => h('div', { class: 'bg-hold' }, h('small', null, label), keep.map((k, i) => h('button', { class: 'bg-held', 'data-h': i, 'data-k': k.k || k, onClick: () => onUse(i), html: pic1(k) + `<small>${SHORT[k.k || k] || ''}</small>` + (k.t0 ? '<i class="bg-fresh"><u></u></i>' : '') })), !keep.length && h('em', null, '익으면 눌러 꺼내 두기'));
   const cooker = (list, cook, attr, cls, onTake, icon) => h('div', { class: 'bg-cook ' + cls }, list.map((sl, i) => (sl
     ? h('button', { class: 'bg-pan', [attr]: i, onClick: () => onTake(i) }, h('span', { html: icon(sl.k) }), cls === 'fry' && h('em', { class: 'bg-sec' }), h('i', { class: 'bg-gauge', style: { background: gaugeBg(cook) } }, h('b')))
     : h('div', { class: 'bg-pan empty' }))));
