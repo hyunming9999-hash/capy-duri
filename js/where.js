@@ -72,11 +72,25 @@ export function mount(el, ctx) {
     if (!navigator.geolocation) return toast('이 기기에서는 위치를 알 수 없어요');
     busy = true; pingBtn.disabled = true; pingBtn.textContent = '위치 찾는 중…';
     const done = () => { busy = false; pingBtn.disabled = false; pingBtn.textContent = '📍 지금 내 위치 핑 찍기'; };
-    navigator.geolocation.getCurrentPosition(async p => {
-      try { await ctx.store.push('loc/pings', { by: ctx.uid, lat: +p.coords.latitude.toFixed(6), lng: +p.coords.longitude.toFixed(6), acc: Math.round(p.coords.accuracy || 0), msg: msg.value.trim(), ts: ctx.store.now() }); msg.value = ''; toast('핑을 찍었어요'); } catch {}
+    // 처음 잡히는 위치는 기지국 기준이라 수백~수천 m씩 틀릴 수 있다. GPS가 잡힐 때까지 최대 20초 동안 계속 받아서 가장 정확한 값을 쓴다
+    const GOOD = 30, OK = 150, MAX_WAIT = 20000; let best = null, wid = 0, timer = 0, finished = false;
+    const finish = async err => {
+      if (finished) return; finished = true; navigator.geolocation.clearWatch(wid); clearTimeout(timer);
+      if (!best) { done(); return toast(err && err.code === 1 ? '위치 권한이 꺼져 있어요. 브라우저 설정에서 이 사이트의 위치를 허용해 주세요' : '위치를 찾지 못했어요. 밖이나 창가에서 다시 해보세요', 4000); }
+      const acc = Math.round(best.coords.accuracy || 0);
+      try { await ctx.store.push('loc/pings', { by: ctx.uid, lat: +best.coords.latitude.toFixed(6), lng: +best.coords.longitude.toFixed(6), acc, msg: msg.value.trim(), ts: ctx.store.now() }); msg.value = '';
+        if (acc > 500) modal({ title: '위치가 대략적으로만 잡혔어요', body: h('div', null, h('p', null, `오차가 약 ${acc.toLocaleString()}m예요. 핑은 찍었지만 실제 위치와 많이 다를 수 있어요.`), h('p', { class: 'dim' }, '정확하게 하려면: ① 폰 설정 → 위치를 켜고 ② 설정 → 애플리케이션 → Chrome(또는 카피두리) → 권한 → 위치에서 "정확한 위치 사용"을 켜 주세요. 아이폰은 설정 → 개인정보 보호 → 위치 서비스 → Safari 웹사이트 → "정확한 위치". 실내 깊은 곳이면 창가나 밖에서 다시 찍어 보세요.')), actions: [{ label: '확인', primary: true }] });
+        else toast(acc > OK ? `핑을 찍었어요 (오차 약 ${acc}m · 창가나 밖에서 찍으면 더 정확해요)` : `핑을 찍었어요 (오차 약 ${acc}m)`, 2600);
+      } catch { toast('핑을 저장하지 못했어요'); }
       done();
-    }, e => { done(); toast(e.code === 1 ? '위치 권한이 꺼져 있어요. 브라우저 설정에서 이 사이트의 위치를 허용해 주세요' : e.code === 3 ? '위치를 찾는 데 너무 오래 걸려요. 밖이나 창가에서 다시 해보세요' : '위치를 찾지 못했어요', 4000); },
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+    };
+    const t0 = Date.now();
+    wid = navigator.geolocation.watchPosition(p => {
+      if (!best || (p.coords.accuracy || 1e9) < (best.coords.accuracy || 1e9)) best = p;
+      const acc = Math.round(best.coords.accuracy || 0); pingBtn.textContent = `위치 잡는 중… 오차 ${acc.toLocaleString()}m`;
+      if (acc <= GOOD || (acc <= OK && Date.now() - t0 > 8000)) finish();
+    }, e => { if (e.code === 1 || !best) finish(e); }, { enableHighAccuracy: true, timeout: MAX_WAIT, maximumAge: 0 });
+    timer = setTimeout(() => finish(), MAX_WAIT);
   }
   const latest = () => { const out = {}; for (const id of Object.keys(pings).sort()) out[pings[id].by] = { id, ...pings[id] }; return out; };
   const pinEl = uid => h('div', { class: 'pin-in' + (uid === ctx.uid ? ' me' : '') }, h('span', { class: 'pin-face', html: capy(ctx.capyOf(uid, { head: true, face: 'happy' })) }), h('b', null, ctx.nameOf(uid)));
@@ -95,14 +109,14 @@ export function mount(el, ctx) {
             h('button', { class: 'lb see', onClick: () => map && map.view(p.lat, p.lng, 16) }, h('i', { html: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="#6A4A32" stroke-width="2.6"/><path d="M15 15l5 5" stroke="#6A4A32" stroke-width="2.8" stroke-linecap="round"/></svg>' }), '보기'),
             h('a', { class: 'lb naver', href: `nmap://place?lat=${p.lat}&lng=${p.lng}&name=${encodeURIComponent(nm + ' 위치')}&appname=hyunming9999-hash.github.io` }, h('i', { html: pin('#fff', '#03C75A') }), '네이버지도'),
             h('a', { class: 'lb kakao', href: `https://map.kakao.com/link/map/${encodeURIComponent(nm + ' 위치')},${p.lat},${p.lng}`, target: '_blank', rel: 'noopener' }, h('i', { html: pin('#3A1D1D', '#FEE500') }), '카카오맵'))); })].filter(Boolean));
-    hist.replaceChildren(...(ids.length ? ids.slice(0, 10).map(id => { const p = pings[id]; return h('li', { onClick: () => map && map.view(p.lat, p.lng, 16) }, h('b', null, ctx.nameOf(p.by)), h('small', null, ' ' + ago(p.ts, now)), p.msg && h('span', null, ' · ' + p.msg), h('small', { class: 'dim' }, p.acc ? ` (오차 약 ${p.acc}m)` : '')); })
+    hist.replaceChildren(...(ids.length ? ids.slice(0, 10).map(id => { const p = pings[id]; return h('li', { onClick: () => map && map.view(p.lat, p.lng, 16) }, h('b', null, ctx.nameOf(p.by)), h('small', null, ' ' + ago(p.ts, now)), p.msg && h('span', null, ' · ' + p.msg), h('small', { class: 'dim' }, p.acc ? (p.acc > 500 ? ` (대략적인 위치 · 오차 약 ${p.acc.toLocaleString()}m)` : ` (오차 약 ${p.acc}m)`) : '')); })
       : [h('li', { class: 'dim' }, '아직 찍은 핑이 없어요')]));
     if (!map) return;
     map.clear();
     const pts = [];
     for (const [u, p] of Object.entries(last)) {
       if (!ctx.members[u]) continue; pts.push([p.lat, p.lng]);
-      if (p.acc > 25) map.circle(p.lat, p.lng, Math.min(p.acc, 500), u === ctx.uid ? '#D9960F' : '#E8567A');
+      if (p.acc > 25) map.circle(p.lat, p.lng, Math.min(p.acc, 3000), u === ctx.uid ? '#D9960F' : '#E8567A');
       map.pin(p.lat, p.lng, pinEl(u), u !== ctx.uid);
     }
     const newest = ids[0] || '';
