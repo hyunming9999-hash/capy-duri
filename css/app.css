@@ -575,3 +575,6 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .bg-pan span{aspect-ratio:1}.fry .bg-pan span{max-width:36px}
 .bg-cust.multi{padding-top:24px;padding-bottom:8px}.bg-cc-b svg{max-height:56px}.bg-cc-t{min-height:0}.bg-cc{padding:3px 2px 3px}
 .fry .bg-pan{height:64px;padding-top:17px}.fry .bg-pan span{max-width:34px}.bg-hero-img{height:112px;object-position:50% 35%}
+.bg-cc-st{display:flex;gap:2px;justify-content:center}.bg-cc-st i{font-style:normal;font-size:10px;line-height:1.3;width:17px;text-align:center;border-radius:6px;filter:grayscale(1);opacity:.3}.bg-cc-st i.on{filter:none;opacity:1;background:#DDF5E3}
+.bg-cc-b svg{max-height:50px}
+.bg-cc-st i{line-height:1.15}.bg-tray{min-height:58px}

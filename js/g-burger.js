@@ -100,6 +100,7 @@ export function mount(el, ctx) {
   let alive = true, S = null, roles = {}, best = {}, timer = 0;
   let mode = 'coop', diff = 'e', myRole = 'main', picked = false, calcOn = false; // 로비에서 고른 값
   let L = null;            // 경쟁 모드의 내 진행 상황 { id, idx, score, tray }
+  let mySel = 0, selRun = '';
   let K = null;            // 내 주방(불판·튀김기). 손님이 바뀌어도 그대로 남아서 미리 구워 둘 수 있다
   let seenId = '', dismissed = '', fxDone = '', shownIdx = -1, shownRun = '', tab = 'd', flash = null, lastSeen = 0, lastPh = '';
   const pid = () => ctx.partnerId, now = () => ctx.store.now();
@@ -110,10 +111,10 @@ export function mount(el, ctx) {
   const roleOf = () => (S.mode === 'vs' ? 'both' : (S.roles || {})[ctx.uid] || 'watch');
   // 손님 자리: q = 지금 와 있는 손님 번호들, sel = 지금 만드는 손님 자리, nx = 다음에 올 손님 번호
   const custN = () => LEVEL[S.diff].cust, fryMs = () => LEVEL[S.diff].fry;
-  const Q = () => { const q = arr(S.mode === 'vs' ? L.q : S.q); return q.length ? q : [0]; }, selI = () => Math.min(Q().length - 1, (S.mode === 'vs' ? L.sel : S.sel) || 0);
+  const Q = () => { const q = arr(S.mode === 'vs' ? L.q : S.q); return q.length ? q : [0]; }, selI = () => { if (selRun !== S.id) { selRun = S.id; mySel = 0; } return Math.min(Q().length - 1, mySel); }; // 누구 것을 만들지는 각자 따로 고른다(협동에서 둘이 다른 손님 것을 동시에 준비)
   const servedN = () => (S.mode === 'vs' ? L.n : S.n || 0);
-  function pickCust(i) { if (i === selI()) return; sfx('tock'); if (S.mode === 'vs') L.sel = i; else { S.sel = i; ctx.store.update(PATH, { sel: i }).catch(() => {}); } paint(); }
-  const curIdx = () => Q()[selI()], curTray = () => (S.mode === 'vs' ? L.tray : { d: (S.tray || {}).d, s: (S.tray || {}).s, c: (S.tray || {}).c || 0, st: arr((S.tray || {}).st) });
+  function pickCust(i) { if (i === selI()) return; sfx('tock'); mySel = i; paint(); }
+  const curIdx = () => Q()[selI()], trayAt = i => { if (S.mode === 'vs') return (L.trays[i] = L.trays[i] || { st: [], c: 0 }); const t = (S.tr || {})[i] || {}; return { d: t.d, s: t.s, c: t.c || 0, st: arr(t.st) }; }, curTray = () => trayAt(selI()); // 손님 자리마다 쟁반이 따로 있어서 여러 손님 것을 같이 준비할 수 있다
 
   // 메뉴판: 그림만 보고도 무엇인지 알 수 있게, 그 난이도에 나오는 음료·사이드·재료를 이름과 함께 보여 준다
   function menuBook(d) {
@@ -156,19 +157,20 @@ export function mount(el, ctx) {
   /* ----- 진행 ----- */
   const iconBtn = (svg, label, on, fn, cls = '') => h('button', { class: 'bg-btn ' + cls + (on ? ' on' : ''), onClick: fn }, h('span', { html: svg }), h('small', null, label));
   function setTray(patch) {
-    if (S.mode === 'vs') { Object.assign(L.tray, patch); return paint(); }
-    S.tray = { ...curTray(), ...patch }; paint(); // 먼저 내 화면에 반영
-    ctx.store.update(PATH + '/tray', Object.fromEntries(Object.entries(patch).map(([k, v]) => [k, (Array.isArray(v) && !v.length) || v === 0 ? null : v]))).catch(() => {});
+    const si = selI();
+    if (S.mode === 'vs') { Object.assign(trayAt(si), patch); return paint(); }
+    S.tr = { ...(S.tr || {}), [si]: { ...curTray(), ...patch } }; paint(); // 먼저 내 화면에 반영
+    ctx.store.update(PATH + '/tr/' + si, Object.fromEntries(Object.entries(patch).map(([k, v]) => [k, (Array.isArray(v) && !v.length) || v === 0 ? null : v]))).catch(() => {});
   }
   function serve(pack) {
     const o = orderOf(S.seed, curIdx(), S.diff), calc = !!S.calc;
     if (S.mode === 'vs') {
-      const r = judge(o, L.tray, pack, true, calc); L.score += r.pts; L.q[selI()] = L.nx++; L.n++; L.tray = { st: [], c: 0 }; tab = 'd'; feedback(r);
+      const r = judge(o, curTray(), pack, true, calc); L.score += r.pts; L.trays[selI()] = { st: [], c: 0 }; L.q[selI()] = L.nx++; L.n++; tab = 'd'; feedback(r);
       ctx.store.update(`${PATH}/sc/${ctx.uid}`, { s: L.score, n: L.n }).catch(() => {}); return paint();
     }
     const id = S.id, idx = curIdx(), si = selI();
-    ctx.store.tx(PATH, cur => { if (!cur || cur.id !== id) return; const q = arr(cur.q); if (q[si] !== idx) return; q[si] = cur.nx || q.length; const t = cur.tray || {}, r = judge(o, { d: t.d, s: t.s, c: t.c || 0, st: arr(t.st) }, pack, false, calc);
-      return { ...cur, q, nx: (cur.nx || q.length) + 1, n: (cur.n || 0) + 1, score: (cur.score || 0) + r.pts, tray: null, last: { i: idx, ok: r.ok, pts: r.pts, perfect: r.perfect, at: now() } }; }).catch(() => {});
+    ctx.store.tx(PATH, cur => { if (!cur || cur.id !== id) return; const q = arr(cur.q); if (q[si] !== idx) return; q[si] = cur.nx || q.length; const t = (cur.tr || {})[si] || {}, r = judge(o, { d: t.d, s: t.s, c: t.c || 0, st: arr(t.st) }, pack, false, calc);
+      return { ...cur, q, nx: (cur.nx || q.length) + 1, n: (cur.n || 0) + 1, score: (cur.score || 0) + r.pts, tr: { ...(cur.tr || {}), [si]: null }, last: { i: idx, ok: r.ok, pts: r.pts, perfect: r.perfect, at: now() } }; }).catch(() => {});
   }
   function feedback(r) { flash = { r, until: Date.now() + 1400 }; sfx(r.perfect ? 'pair' : r.pts > 0 ? 'coin' : 'bad'); }
 
@@ -203,6 +205,8 @@ export function mount(el, ctx) {
   }
   function drawTray() {
     const vs = S.mode === 'vs', tray = curTray(), fl = flash && Date.now() < flash.until ? flash.r : null;
+    box.querySelectorAll('.bg-cc').forEach(c => { const t = trayAt(+c.dataset.q), e = c.querySelector('.bg-cc-st'); if (!e) return; // 손님마다 어디까지 준비했는지
+      e.replaceChildren(...[['🥤', t.d], ['🍟', t.s], ['🍔', t.st.length], ...(S.calc ? [['💵', t.c]] : [])].map(([ic, on]) => h('i', { class: on ? 'on' : '' }, ic))); });
     trayEl.replaceChildren(...[
       h('div', { class: 'bg-slot' + (tray.d ? ' has' : '') }, tray.d ? h('span', { class: 'bg-ic', html: drinkPic(tray.d) }) : h('i', null, '음료')),
       h('div', { class: 'bg-slot' + (tray.s ? ' has' : '') }, tray.s ? h('span', { class: 'bg-ic', html: SIDE[tray.s][1] }) : h('i', null, vs ? '사이드(선택)' : '사이드')),
@@ -253,7 +257,7 @@ export function mount(el, ctx) {
           return h('button', { class: 'bg-cc' + (i === si ? ' on' : ''), 'data-q': i, 'data-pack': oo.pack, 'data-fills': oo.fills.join(' '), 'data-change': oo.paid - oo.price, onClick: () => pickCust(i) },
             h('div', { class: 'bg-cc-h' }, h('span', { class: 'bg-cc-a', title: a2[1], html: a2[0] }), h('span', { class: 'bg-cc-k' }, oo.pack === 'out' ? '🛍️' : '🍽️'), h('i', { html: drinkPic(oo.d) }), h('i', { class: vs ? 'opt' : '', html: SIDE[oo.s][1] })),
             h('div', { class: 'bg-cc-t' }, h('b', null, oo.pack === 'out' ? '포장' : '매장'), ' · ', h('span', { class: 'bg-cc-d' }, DRINK[oo.d][0]), ' · ', h('span', { class: 'bg-cc-s' }, SIDE[oo.s][0])),
-            h('div', { class: 'bg-cc-b', html: stackSvg(['bun', ...oo.fills, 'bun']) }), showPaid && h('div', { class: 'bg-cc-m' }, `💵 ${oo.paid.toLocaleString('ko-KR')} − ${oo.price.toLocaleString('ko-KR')}`)); }))
+            h('div', { class: 'bg-cc-b', html: stackSvg(['bun', ...oo.fills, 'bun']) }), h('div', { class: 'bg-cc-st' }), showPaid && h('div', { class: 'bg-cc-m' }, `💵 ${oo.paid.toLocaleString('ko-KR')} − ${oo.price.toLocaleString('ko-KR')}`)); }))
         : h('div', { class: 'bg-cust' },
         h('div', { class: 'bg-animal' }, h('span', { html: an[0] }), h('small', null, an[1])),
         h('div', { class: 'bg-bubble' },
@@ -284,7 +288,7 @@ export function mount(el, ctx) {
     if (!alive) return; const ph = phase(); lastPh = ph;
     if (ph === 'lobby') { shownRun = ''; top = null; return lobby(); }
     seenId = S.id;
-    if (S.mode === 'vs' && (!L || L.id !== S.id)) { const n = LEVEL[S.diff].cust; L = { id: S.id, q: Array.from({ length: n }, (_, i) => i), nx: n, sel: 0, score: 0, n: 0, tray: { st: [], c: 0 } }; tab = 'd'; }
+    if (S.mode === 'vs' && (!L || L.id !== S.id)) { const n = LEVEL[S.diff].cust; L = { id: S.id, q: Array.from({ length: n }, (_, i) => i), nx: n, sel: 0, score: 0, n: 0, trays: [] }; tab = 'd'; }
     if (ph === 'result') { shownRun = ''; top = null; return result(); }
     play(ph);
   }
@@ -302,7 +306,7 @@ export function mount(el, ctx) {
     ctx.store.on(PATH, v => { const was = S; S = v || null;
       const same = S && was && S.id === was.id && phase() === lastPh && lastPh === 'play' && top && top.isConnected;
       if (S && was && S.id === was.id && S.mode === 'coop' && S.last && S.last.at !== lastSeen) { lastSeen = S.last.at; if ((was.nx || 0) !== (S.nx || 0)) { tab = 'd'; feedback({ ok: S.last.ok || {}, pts: S.last.pts || 0, perfect: !!S.last.perfect }); } }
-      if (same && (S.mode === 'vs' || ((was.nx || 0) === (S.nx || 0) && (was.sel || 0) === (S.sel || 0)))) { drawTop(); drawTray(); if (S.mode === 'coop' && roleOf() !== 'main') drawCtl(); return; } // 상대가 쟁반만 바꿨으면 내 버튼은 그대로 둔다
+      if (same && (S.mode === 'vs' || (was.nx || 0) === (S.nx || 0))) { drawTop(); drawTray(); if (S.mode === 'coop' && roleOf() !== 'main') drawCtl(); return; } // 상대가 쟁반만 바꿨으면 내 버튼은 그대로 둔다
       paint(); }),
     ctx.store.on('games/burgerRole', v => { roles = v || {}; const pr = pid() && roles[pid()]; if (!picked && (pr === 'main' || pr === 'aux')) myRole = pr === 'main' ? 'aux' : 'main'; if (phase() === 'lobby') lobby(); }), // 상대가 먼저 고르면 나는 반대 역할
     ctx.store.on('games/burgerBest', v => { best = v || {}; if (phase() === 'lobby') lobby(); }),
