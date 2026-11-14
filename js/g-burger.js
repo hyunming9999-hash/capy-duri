@@ -64,9 +64,9 @@ const one = k => `<svg viewBox="0 0 96 ${LAY[k][0] + 2}">${LAY[k][1](1)}</svg>`;
 const D5 = ['cola', 'cider', 'fanta', 'dew', 'pepper'], S5 = ['fries', 'cstick', 'hash', 'lstick', 'churros'], F6 = ['beef', 'chicken', 'lettuce', 'onion', 'cheese', 'tomato'];
 const SKIP = 30; // 먼저 온 손님을 두고 뒤 손님 것을 먼저 내면 깎이는 점수
 const LEVEL = {
-  e: { name: '하', drinks: D5.slice(0, 3), sides: S5.slice(0, 2), fills: ['beef', 'tomato', 'lettuce'], btn: ['beef', 'tomato', 'lettuce'], coop: 120, win: 3600, cust: 1, fry: 4000 },
-  m: { name: '중', drinks: D5, sides: S5, fills: F6, btn: F6, coop: 150, vs: 120, win: 3000, cust: 2, fry: 3000 },
-  h: { name: '상', drinks: [...D5, ...D5.map(k => 'z' + k)], sides: [...S5, 'wrap', 'pie', 'rings', 'sfries'], fills: [...F6, 'seafood', 'shrimp', 'sauce'], btn: [...F6, 'seafood', 'shrimp', 'chili', 'sweet'], coop: 180, vs: 150, win: 2400, cust: 3, fry: 2000 },
+  e: { name: '하', drinks: D5.slice(0, 3), sides: S5.slice(0, 2), fills: ['beef', 'tomato', 'lettuce'], btn: ['beef', 'tomato', 'lettuce'], coop: 240, win: 3600, cust: 1, fry: 4000 },
+  m: { name: '중', drinks: D5, sides: S5, fills: F6, btn: F6, coop: 300, vs: 240, win: 3000, cust: 2, fry: 3000 },
+  h: { name: '상', drinks: [...D5, ...D5.map(k => 'z' + k)], sides: [...S5, 'wrap', 'pie', 'rings', 'sfries'], fills: [...F6, 'seafood', 'shrimp', 'sauce'], btn: [...F6, 'seafood', 'shrimp', 'chili', 'sweet'], coop: 360, vs: 300, win: 2400, cust: 3, fry: 2000 },
 };
 const PATTY = { beef: 1, chicken: 1, seafood: 1 }, NOFRY = { wrap: 1 }; // 패티는 불판에 굽고, 사이드는 (휠랩만 빼고) 튀김기에 튀긴다
 const HOLD = 5; // 다 익은 것을 꺼내 두는 보관함 칸 수
@@ -153,7 +153,7 @@ export function mount(el, ctx) {
       b && h('p', { class: 'dim center' }, `${mode === 'coop' ? '우리' : '내'} 최고 기록 ${b.s}점`)].filter(Boolean));
   }
   function start() {
-    const L0 = LEVEL[diff], run = { id: Math.random().toString(36).slice(2, 9), mode, diff, calc: calcOn || null, seed: Math.floor(Math.random() * 1e6), startAt: now() + 3600, dur: L0[mode === 'coop' ? 'coop' : 'vs'] + (calcOn ? 20 : 0), by: ctx.uid };
+    const L0 = LEVEL[diff], run = { id: Math.random().toString(36).slice(2, 9), mode, diff, calc: calcOn || null, seed: Math.floor(Math.random() * 1e6), startAt: now() + 3600, dur: L0[mode === 'coop' ? 'coop' : 'vs'] + (calcOn ? 40 : 0), by: ctx.uid };
     if (mode === 'coop') Object.assign(run, { q: Array.from({ length: L0.cust }, (_, i) => i), nx: L0.cust, sel: 0, score: 0, n: 0, roles: myRole === 'both' || !pid() ? { [ctx.uid]: 'both' } : { [ctx.uid]: myRole, [pid()]: myRole === 'main' ? 'aux' : 'main' } });
     dismissed = ''; ctx.store.set(PATH, run).catch(() => toast('시작하지 못했어요'));
   }
