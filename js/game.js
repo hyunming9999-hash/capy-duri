@@ -14,7 +14,7 @@ export const GAMES = [
   { id: 'match', mod: match, title: '짝 맞추기', sub: '같은 카피바라 찾기', face: 'wink', acc: 'flower' },
   { id: 'four', mod: four, title: '유자 사목', sub: '네 알을 먼저 이으면 승리', face: 'wow', acc: 'yuzu' },
   { id: 'yuzu', mod: yuzu, title: '유자 받기', sub: '30초 점수 대결', face: 'love', acc: 'ribbon' },
-  { id: 'burger', mod: burger, title: '카피 버거', sub: '동물 손님 주문 맞추기 · 협동/경쟁', face: 'happy', acc: 'yuzu' },
+  { id: 'burger', mod: burger, title: '카피 버거', sub: '굽고 쌓아 파는 버거 가게 · 가로 화면', face: 'happy', acc: 'yuzu' },
 ];
 
 export function mount(el, ctx, sub) {
