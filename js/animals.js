@@ -65,9 +65,12 @@ export const ANIMALS = [
   A('다람쥐', '#C98448', '#FFF1DA', 'pointy', '#F6C99A', 'std', { over: () => '<path d="M56 15 h8 v24 q-4 4 -8 0z" fill="#7A4A26"/>' + mir('<ellipse cx="24" cy="63" rx="13" ry="11" fill="#FFF1DA"/>') }),
   A('너구리', '#9B8F86', '#F3EEE8', 'round', '#4A4038', 'std', { pre: () => mir('<path d="M9 36 q16 -8 30 2 q2 12 -8 16 q-16 2 -22 -4z" fill="#4A4038"/>'), eye: '#fff' }),
 ];
-export function animalSvg(i) {
+// full = true면 카피바라와 같은 2등신 몸까지 그린다
+export function animalSvg(i, full) {
   const a = ANIMALS[i % ANIMALS.length], d = a.dark || shade(a.body, -0.38), ey = a.eyeY || 0;
   const ear = EAR[a.ear](a.earC || a.body, a.inner, a.es || 1);
   const eyeCol = a.eye || INK, e = a.eye === '#fff' ? mir(`<circle cx="24" cy="41" r="4" fill="#fff"/><circle cx="24.6" cy="41.4" r="2.2" fill="${INK}"/>`) : eyes(eyeCol);
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 112">${a.back ? a.back(a.body) : ''}${ear}${head(a.body)}${a.over ? a.over(a.body) : ''}${a.pre ? a.pre(a.body) : ''}${MUZ[a.muz](a.light, d, a.nose)}<g transform="translate(0 ${ey})">${e}</g>${blush}</svg>`;
+  const bc = a.earC && a.name === '판다' ? '#3B3B44' : a.body, bd = shade(bc, -0.3), belly = a.name === '펭귄' ? '#FFFDF7' : a.muz === 'beak' || a.muz === 'bill' ? shade(bc, a.body === '#FFFDF7' ? -0.06 : 0.45) : a.light;
+  const body = full ? `<ellipse cx="45" cy="128" rx="12" ry="6.5" fill="${bd}"/><ellipse cx="75" cy="128" rx="12" ry="6.5" fill="${bd}"/><rect x="31" y="76" width="58" height="50" rx="24" fill="${bc}"/><ellipse cx="60" cy="105" rx="17" ry="15" fill="${belly}"/><ellipse cx="29" cy="99" rx="8" ry="12" fill="${bc}" transform="rotate(14 29 99)"/><ellipse cx="91" cy="99" rx="8" ry="12" fill="${bc}" transform="rotate(-14 91 99)"/>` : '';
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 ${full ? 158 : 112}">${a.back ? a.back(a.body) : ''}${body}${ear}${head(a.body)}${a.over ? a.over(a.body) : ''}${a.pre ? a.pre(a.body) : ''}${MUZ[a.muz](a.light, d, a.nose)}<g transform="translate(0 ${ey})">${e}</g>${blush}</svg>`;
 }

@@ -578,3 +578,19 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .bg-cc-st{display:flex;gap:2px;justify-content:center}.bg-cc-st i{font-style:normal;font-size:10px;line-height:1.3;width:17px;text-align:center;border-radius:6px;filter:grayscale(1);opacity:.3}.bg-cc-st i.on{filter:none;opacity:1;background:#DDF5E3}
 .bg-cc-b svg{max-height:50px}
 .bg-cc-st i{line-height:1.15}.bg-tray{min-height:58px}
+.bg-fin.two{grid-template-columns:1fr 1fr}.bg-fin .bg-pack.next{grid-column:3/5;background:#FFF1C2;border-color:var(--yuzu-d);box-shadow:0 3px 0 var(--yuzu-d);color:#7A5200;font-size:16px}
+.bg-cust{position:relative;overflow:hidden}.bg-walker{display:block;font-size:0;line-height:0}.bg-walker svg{display:block;width:100%;transform-origin:50% 100%}
+.bg-cc-r{flex:1;display:flex;align-items:flex-end;justify-content:center;gap:1px;width:100%}.bg-cc-r .bg-walker{flex:none;width:36px}.bg-cc-r .bg-cc-b svg{width:58px}
+.bg-animal .bg-walker{width:64px}.bg-animal{width:70px}
+.bg-ghost{position:absolute;z-index:6;pointer-events:none;font-size:0;line-height:0}.bg-ghost svg{display:block;width:100%;transform-origin:50% 100%;animation:bgwaddle .32s linear infinite}
+@keyframes bgwaddle{0%{transform:rotate(-7deg) translateY(0)}25%{transform:rotate(0) translateY(-3px)}50%{transform:rotate(7deg) translateY(0)}75%{transform:rotate(0) translateY(-3px)}100%{transform:rotate(-7deg) translateY(0)}}
+.bg-cc{animation:none;transition:opacity .25s}.bg-cc.coming>:not(.bg-cc-r),.bg-cc.coming .bg-cc-b,.bg-bubble.coming{opacity:.15}
+.bg-station{background:#2E3138}.bg-pan{background:url(../img/burger/grill.webp) center/cover;border-color:#15171C}.fry .bg-pan,.fry .bg-pan.empty{background:url(../img/burger/fryer.webp) center/cover;border-color:#6B5A2A;opacity:1;box-shadow:none}
+.bg-pan.empty{opacity:.8}.grill .bg-pan{height:58px}.bg-pt{position:relative;display:block;width:46px;height:46px;max-width:none}.bg-pan .bg-pt{max-width:none;aspect-ratio:auto}.bg-pt img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.bg-pan[data-st="0"] .bg-pt{filter:none}.grill .bg-pan[data-st="0"] span{filter:none}.bg-pan[data-st="2"] .bg-pt{filter:brightness(.3) saturate(.4)}
+.fry .bg-pan span{filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}.fry .bg-pan[data-st="0"] span{filter:brightness(1.15) saturate(.7) drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.grill .bg-pan,.grill .bg-pan.empty{background:url(../img/burger/grill.webp) center/cover;opacity:1}.grill .bg-pan.empty{filter:brightness(.85)}
+.fry .bg-pan,.fry .bg-pan.empty{background:url(../img/burger/fryer.webp) 50% 62%/118% no-repeat #E0A93A}
+.bg-pan .bg-gauge{position:relative;z-index:2}.grill .bg-pan{justify-content:flex-end;gap:0;padding:2px 4px 4px}.grill .bg-pan>span{max-width:none;width:auto}.bg-pt{width:40px;height:40px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}
+.bg-pan[data-st="2"] .bg-pt{filter:brightness(.3) saturate(.4) drop-shadow(0 2px 2px rgba(0,0,0,.5))}
+.bg-tray{min-height:64px}.bg-flash{gap:1px 8px;padding:2px 4px;font-size:13px}.bg-flash em{font-size:14px;width:auto}.bg-flash b{font-size:18px}

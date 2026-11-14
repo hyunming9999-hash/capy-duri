@@ -4,7 +4,7 @@ import { h, toast, modal, gameFx } from './ui.js';
 import { sfx, sizzle } from './sound.js';
 import { ANIMALS as ZOO, animalSvg } from './animals.js';
 
-const ANIMALS = ZOO.map((a, i) => [animalSvg(i), a.name]); // [그림, 이름]
+const ANIMALS = ZOO.map((a, i) => [animalSvg(i, true), a.name]); // [그림, 이름]
 
 /* ---------- 그림 ---------- */
 const O = '#5F3F2B';
@@ -96,7 +96,7 @@ const arr = v => (Array.isArray(v) ? v : v && typeof v === 'object' ? Object.val
 const PATH = 'games/burger';
 
 export function mount(el, ctx) {
-  ['bg', 'hero', ...Object.keys(SIDE).map(k => 's-' + k), ...['cola', 'cider', 'fanta', 'dew', 'pepper'].map(k => 'd-' + k)].forEach(f => { new Image().src = IMG + f + '.webp'; }); // 그림 미리 받아 두기
+  ['bg', 'hero', 'grill', 'fryer', ...['beef', 'chicken', 'seafood'].flatMap(k => ['p-' + k, 'p-' + k + '-raw']), ...Object.keys(SIDE).map(k => 's-' + k), ...['cola', 'cider', 'fanta', 'dew', 'pepper'].map(k => 'd-' + k)].forEach(f => { new Image().src = IMG + f + '.webp'; }); // 그림 미리 받아 두기
   let alive = true, S = null, roles = {}, best = {}, timer = 0;
   let mode = 'coop', diff = 'e', myRole = 'main', picked = false, calcOn = false; // 로비에서 고른 값
   let L = null;            // 경쟁 모드의 내 진행 상황 { id, idx, score, tray }
@@ -193,11 +193,28 @@ export function mount(el, ctx) {
     for (const [sel, list, cook] of [['[data-g]', K.grill, COOK], ['[data-f]', K.fry, fryMs()]]) for (const e of box.querySelectorAll(sel)) {
       const sl = list[+e.getAttribute(sel.slice(1, -1))]; if (!sl) continue; const T = cook + LEVEL[S.diff].win + TAIL, p = Math.min(1, (performance.now() - sl.t0) / T), st = stage(sl, cook);
       e.querySelector('.bg-gauge b').style.left = p * 100 + '%'; e.dataset.st = st;
+      const done = e.querySelector('.bg-pt img:last-child'); if (done) done.style.opacity = Math.min(1, Math.max(0, (performance.now() - sl.t0) / cook * 1.15 - 0.15));
       const sec = e.querySelector('.bg-sec'); if (sec) { const el2 = performance.now() - sl.t0, txt = st === 0 ? Math.ceil((cook - el2) / 1000) + '초' : st === 1 ? '지금! ' + Math.max(1, Math.ceil((cook + LEVEL[S.diff].win - el2) / 1000)) : '탐'; if (sec.textContent !== txt) sec.textContent = txt; }
     }
   }
 
   let top, trayEl, ctl;
+  // 손님이 왼쪽에서 걸어 들어오고, 음식을 받으면 오른쪽으로 걸어 나간다
+  let walkQ = [], walkRun = '';
+  function walkOut(q) { // 자리가 바뀐 손님의 지금 위치와 그림을 기억해 둔다
+    const out = [], area = box.querySelector('.bg-cust'); if (!area || walkRun !== S.id) return out; const ar = area.getBoundingClientRect();
+    walkQ.forEach((old, i) => { if (old === q[i]) return; const e = area.querySelector(`.bg-walker[data-w="${i}"]`); if (!e) return; const r = e.getBoundingClientRect(); out.push({ html: e.innerHTML, x: r.left - ar.left, y: r.top - ar.top, w: r.width }); });
+    return out;
+  }
+  function walkIn(q, leaving, ph) {
+    const area = box.querySelector('.bg-cust'), fresh = walkRun !== S.id, prev = walkQ; walkRun = S.id; walkQ = q.slice(); if (!area || ph !== 'play') { if (ph !== 'play') walkRun = ''; return; }
+    const ar = area.getBoundingClientRect(), ghost = (o, to, ms, delay, done) => { const g = h('span', { class: 'bg-ghost', style: { left: o.x + 'px', top: o.y + 'px', width: o.w + 'px' }, html: o.html }); area.append(g);
+      const an = g.animate([{ transform: 'translateX(0)' }, { transform: `translateX(${to - o.x}px)` }], { duration: ms, delay, easing: 'linear', fill: 'both' }); an.onfinish = () => { g.remove(); done && done(); }; };
+    leaving.forEach(o => ghost(o, ar.width + 10, 500 + (ar.width - o.x) * 3.2, 0)); // 오른쪽 밖으로
+    q.forEach((qi, i) => { if (!fresh && prev[i] === qi) return; const e = area.querySelector(`.bg-walker[data-w="${i}"]`); if (!e) return; const r = e.getBoundingClientRect(), x = r.left - ar.left, card = e.closest('.bg-cc') || area.querySelector('.bg-bubble');
+      e.style.visibility = 'hidden'; if (card) card.classList.add('coming');
+      ghost({ html: e.innerHTML, x: -r.width - 6, y: r.top - ar.top, w: r.width }, x, 450 + x * 3.2, (fresh ? i * 260 : 320), () => { e.style.visibility = ''; if (card) card.classList.remove('coming'); }); });
+  }
   function drawTop() {
     const vs = S.mode === 'vs', left = Math.max(0, Math.ceil((endAt(S) - now()) / 1000)), other = vs && pid() && (S.sc || {})[pid()];
     top.replaceChildren(h('b', { class: 'bg-time' + (left <= 10 ? ' hot' : '') }, `⏱ ${left}초`), h('span', null, vs ? `나 ${L.score}점${other ? ` : ${ctx.nameOf(pid())} ${other.s}점` : ''}` : `점수 ${S.score || 0}`),
@@ -222,15 +239,16 @@ export function mount(el, ctx) {
     const add = k => { if (tray.st.length >= 12) return toast('더 쌓을 수 없어요', 900); sfx('tock'); setTray({ st: [...tray.st, k] }); };
     const drinks = () => h('div', { class: 'bg-grid' }, LV.drinks.map(k => iconBtn(drinkPic(k), DRINK[k][0], tray.d === k, () => { sfx('tock'); if (role === 'both') tab = 's'; setTray({ d: k }); })));
     const sides = () => [
-      h('div', { class: 'bg-station' }, h('small', null, `🫕 튀김기 · ${fryMs() / 1000}초 뒤 '지금!'일 때 눌러서 건지기`), cooker(K.fry, fryMs(), 'data-f', 'fry', i => takeFrom(K.fry, i, fryMs(), k => { if (role === 'both') tab = S.calc ? 'c' : 'b'; setTray({ s: k }); }), k => SIDE[k][1])),
-      h('div', { class: 'bg-grid' }, LV.sides.map(k => iconBtn(SIDE[k][1], SIDE[k][0], tray.s === k, () => (NOFRY[k] ? (sfx('tock'), role === 'both' && (tab = S.calc ? 'c' : 'b'), setTray({ s: k })) : putOn(K.fry, k, FRYER, '튀김기가 꽉 찼어요')), NOFRY[k] ? '' : 'raw fry')),
-        role === 'both' && h('button', { class: 'bg-btn skip', onClick: () => { tab = S.calc ? 'c' : 'b'; setTray({ s: null }); } }, h('span', null, '⏭'), h('small', null, vs ? '건너뛰기' : '없음')))];
+      h('div', { class: 'bg-station' }, h('small', null, `🫕 튀김기 · ${fryMs() / 1000}초 뒤 '지금!'일 때 눌러서 건지기`), cooker(K.fry, fryMs(), 'data-f', 'fry', i => takeFrom(K.fry, i, fryMs(), k => { if (role === 'both') tab = 'b'; setTray({ s: k }); }), k => SIDE[k][1])),
+      h('div', { class: 'bg-grid' }, LV.sides.map(k => iconBtn(SIDE[k][1], SIDE[k][0], tray.s === k, () => (NOFRY[k] ? (sfx('tock'), role === 'both' && (tab = 'b'), setTray({ s: k })) : putOn(K.fry, k, FRYER, '튀김기가 꽉 찼어요')), NOFRY[k] ? '' : 'raw fry')),
+        role === 'both' && h('button', { class: 'bg-btn skip', onClick: () => { tab = 'b'; setTray({ s: null }); } }, h('span', null, '⏭'), h('small', null, vs ? '건너뛰기' : '없음')))];
+    const packBtns = () => [h('button', { class: 'bg-pack', onClick: () => serve('out') }, '🛍️ 포장'), h('button', { class: 'bg-pack', onClick: () => serve('in') }, '🍽️ 매장')];
     const burger = () => [
-      h('div', { class: 'bg-station' }, h('small', null, '🔥 불판 · 바늘이 초록일 때 눌러서 버거에 올리기 (5칸)'), cooker(K.grill, COOK, 'data-g', 'grill', i => takeFrom(K.grill, i, COOK, k => add(k)), k => one(k))),
+      h('div', { class: 'bg-station' }, h('small', null, '🔥 불판 · 바늘이 초록일 때 눌러서 버거에 올리기'), cooker(K.grill, COOK, 'data-g', 'grill', i => takeFrom(K.grill, i, COOK, k => add(k)), k => `<span class="bg-pt">${pic('p-' + k + '-raw')}${pic('p-' + k)}</span>`)),
       h('div', { class: 'bg-grid ing' }, iconBtn(one(tray.st.length ? 'bunT' : 'bunB'), '햄버거빵', false, () => add('bun')),
         LV.btn.map(k => (PATTY[k] ? iconBtn(one(k), k === 'beef' && S.diff === 'e' ? '패티' : FILL[k], false, () => putOn(K.grill, k, GRILL, '불판이 꽉 찼어요'), 'raw grl') : iconBtn(one(k), FILL[k], false, () => add(k))))),
       h('div', { class: 'bg-fin' }, h('button', { class: 'bg-mini', 'aria-label': '하나 빼기', onClick: () => tray.st.length && setTray({ st: tray.st.slice(0, -1) }) }, '↩'), h('button', { class: 'bg-mini', 'aria-label': '다시 쌓기', onClick: () => tray.st.length && setTray({ st: [] }) }, '🗑'),
-        h('button', { class: 'bg-pack', onClick: () => serve('out') }, '🛍️ 포장'), h('button', { class: 'bg-pack', onClick: () => serve('in') }, '🍽️ 매장'))];
+        ...(role === 'both' && S.calc ? [h('button', { class: 'bg-pack next', onClick: () => { tab = 'c'; drawCtl(); } }, '💵 계산하러 가기 ▶')] : packBtns()))];
     const calc = () => [h('div', { class: 'bg-calc' },
       h('p', null, h('span', null, '받은 돈 ', h('b', null, won(o.paid))), h('span', null, ' − 합계 ', h('b', null, won(o.price)))),
       h('p', { class: 'bg-change' }, '거스름돈 ', h('b', null, won(tray.c || 0)), h('button', { class: 'btn sm', onClick: () => setTray({ c: 0 }) }, '지우기')),
@@ -238,8 +256,8 @@ export function mount(el, ctx) {
     let kids;
     if (role === 'aux') kids = [h('label', { class: 'lbl' }, '음료'), drinks(), h('label', { class: 'lbl' }, '사이드'), ...sides(), ...(S.calc ? [h('label', { class: 'lbl' }, '계산'), ...calc()] : []), h('p', { class: 'dim center' }, '버거와 포장은 메인이 해요. 쟁반에 올리면 바로 보여요')];
     else if (role === 'main') kids = burger();
-    else { const tabs = [['d', '① 음료'], ['s', vs ? '② 사이드(선택)' : '② 사이드'], ...(S.calc ? [['c', '③ 계산']] : []), ['b', (S.calc ? '④' : '③') + ' 버거·포장']];
-      kids = [h('div', { class: 'bg-tabs' }, tabs.map(([k, n]) => h('button', { class: 'bg-tab' + (tab === k ? ' on' : ''), onClick: () => { tab = k; drawCtl(); } }, n))), ...(tab === 'd' ? [drinks()] : tab === 's' ? sides() : tab === 'c' ? calc() : burger())]; }
+    else { const tabs = [['d', '① 음료'], ['s', vs ? '② 사이드(선택)' : '② 사이드'], ['b', S.calc ? '③ 버거' : '③ 버거·포장'], ...(S.calc ? [['c', '④ 계산·포장']] : [])]; // 계산은 맨 마지막
+      kids = [h('div', { class: 'bg-tabs' }, tabs.map(([k, n]) => h('button', { class: 'bg-tab' + (tab === k ? ' on' : ''), onClick: () => { tab = k; drawCtl(); } }, n))), ...(tab === 'd' ? [drinks()] : tab === 's' ? sides() : tab === 'c' ? [...calc(), h('div', { class: 'bg-fin two' }, packBtns())] : burger())]; }
     ctl.replaceChildren(...kids.filter(Boolean)); tickCookers();
   }
 
@@ -247,26 +265,26 @@ export function mount(el, ctx) {
     const vs = S.mode === 'vs', idx = curIdx(), o = orderOf(S.seed, idx, S.diff), an = ANIMALS[o.a], role = roleOf();
     if (!K || K.id !== S.id) K = { id: S.id, grill: new Array(GRILL).fill(null), fry: new Array(FRYER).fill(null) };
     // 손님과 말풍선: 포장/매장 → 음료·사이드 → 버거 순서로 하나씩 나타난다
-    const q = Q(), si = selI(), key = q.join(',') + '|' + si;
-    if (shownRun !== S.id || shownIdx !== key || !top || !top.isConnected) { if (ph === 'play' && (shownRun !== S.id || String(shownIdx).split('|')[0] !== q.join(','))) sfx('flip'); shownRun = S.id; shownIdx = key;
+    const q = Q(), si = selI(), key = q.join(',') + '|' + si + '|' + ph;
+    if (shownRun !== S.id || shownIdx !== key || !top || !top.isConnected) { const leaving = walkOut(q); if (ph === 'play' && (shownRun !== S.id || String(shownIdx).split('|')[0] !== q.join(',') || String(shownIdx).split('|')[2] !== ph)) sfx('flip'); shownRun = S.id; shownIdx = key;
       box.dataset.fills = o.fills.join(' '); box.dataset.pack = o.pack; box.dataset.change = o.paid - o.price;
       top = h('div', { class: 'bg-top' }); trayEl = h('div', { class: 'bg-tray' }); ctl = h('div', { class: 'bg-ctl' });
       const showPaid = S.calc && role !== 'main';
       box.replaceChildren(top, q.length > 1
         ? h('div', { class: 'bg-cust multi' }, q.map((qi, i) => { const oo = orderOf(S.seed, qi, S.diff), a2 = ANIMALS[oo.a]; // 손님을 눌러서 누구 것을 만들지 고른다
           return h('button', { class: 'bg-cc' + (i === si ? ' on' : ''), 'data-q': i, 'data-pack': oo.pack, 'data-fills': oo.fills.join(' '), 'data-change': oo.paid - oo.price, onClick: () => pickCust(i) },
-            h('div', { class: 'bg-cc-h' }, h('span', { class: 'bg-cc-a', title: a2[1], html: a2[0] }), h('span', { class: 'bg-cc-k' }, oo.pack === 'out' ? '🛍️' : '🍽️'), h('i', { html: drinkPic(oo.d) }), h('i', { class: vs ? 'opt' : '', html: SIDE[oo.s][1] })),
+            h('div', { class: 'bg-cc-h' }, h('span', { class: 'bg-cc-k' }, oo.pack === 'out' ? '🛍️' : '🍽️'), h('i', { html: drinkPic(oo.d) }), h('i', { class: vs ? 'opt' : '', html: SIDE[oo.s][1] })),
             h('div', { class: 'bg-cc-t' }, h('b', null, oo.pack === 'out' ? '포장' : '매장'), ' · ', h('span', { class: 'bg-cc-d' }, DRINK[oo.d][0]), ' · ', h('span', { class: 'bg-cc-s' }, SIDE[oo.s][0])),
-            h('div', { class: 'bg-cc-b', html: stackSvg(['bun', ...oo.fills, 'bun']) }), h('div', { class: 'bg-cc-st' }), showPaid && h('div', { class: 'bg-cc-m' }, `💵 ${oo.paid.toLocaleString('ko-KR')} − ${oo.price.toLocaleString('ko-KR')}`)); }))
+            h('div', { class: 'bg-cc-r' }, h('span', { class: 'bg-walker', 'data-w': i, title: a2[1], html: a2[0] }), h('div', { class: 'bg-cc-b', html: stackSvg(['bun', ...oo.fills, 'bun']) })), h('div', { class: 'bg-cc-st' }), showPaid && h('div', { class: 'bg-cc-m' }, `💵 ${oo.paid.toLocaleString('ko-KR')} − ${oo.price.toLocaleString('ko-KR')}`)); }))
         : h('div', { class: 'bg-cust' },
-        h('div', { class: 'bg-animal' }, h('span', { html: an[0] }), h('small', null, an[1])),
+        h('div', { class: 'bg-animal' }, h('span', { class: 'bg-walker', 'data-w': 0, html: an[0] }), h('small', null, an[1])),
         h('div', { class: 'bg-bubble' },
           h('div', { class: 'bg-part p1' }, h('span', { class: 'bg-emo' }, o.pack === 'out' ? '🛍️' : '🍽️'), h('small', null, o.pack === 'out' ? '포장' : '매장')),
           h('div', { class: 'bg-part p2' }, h('span', { class: 'bg-ic', html: drinkPic(o.d) }), h('small', null, DRINK[o.d][0])),
           h('div', { class: 'bg-part p2' + (vs ? ' opt' : '') }, h('span', { class: 'bg-ic', html: SIDE[o.s][1] }), h('small', null, SIDE[o.s][0] + (vs ? ' (선택)' : ''))),
           h('div', { class: 'bg-part p3 burger', html: stackSvg(['bun', ...o.fills, 'bun']) }),
           showPaid && h('div', { class: 'bg-paid p3' }, `💵 ${won(o.paid)} 냈어요 · 합계 ${won(o.price)}`))),
-        h('div', { class: 'bg-counter' }), trayEl, ctl); }
+        h('div', { class: 'bg-counter' }), trayEl, ctl); walkIn(q, leaving, ph); }
     drawTop(); drawTray(); drawCtl();
   }
 
