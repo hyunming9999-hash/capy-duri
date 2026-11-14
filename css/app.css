@@ -523,3 +523,37 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .bg-grid.ing .bg-mi span{width:56px;height:26px;display:grid;place-items:center}.bg-grid.ing .bg-mi span svg{height:auto}
 .bg-flash em{font-style:normal;color:#F0A51E;letter-spacing:1px;font-size:17px;width:100%;text-align:center}
 .bg-row .btn{flex:1}
+
+/* 카피 버거: 불판·튀김기·계산, 가게 꾸밈 */
+.bg-cust{position:relative;align-items:flex-end;padding:22px 8px 10px;border-radius:20px 20px 0 0;background:linear-gradient(#CFEAFB,#F1FAFF 70%);border:2px solid var(--line);border-bottom:0;overflow:hidden}
+.bg-cust::before{content:'';position:absolute;left:0;right:0;top:0;height:16px;background:repeating-linear-gradient(90deg,#E5484D 0 24px,#FFFDF7 24px 48px);border-bottom:2px solid #B8343A;box-shadow:0 3px 0 rgba(0,0,0,.08)}
+.bg-counter{height:14px;margin-top:-8px;border-radius:0 0 14px 14px;background:linear-gradient(#C98A4B,#9C6630);border:2px solid #7A4E22;box-shadow:inset 0 3px 0 rgba(255,255,255,.25)}
+.bg-animal span{font-size:56px;filter:drop-shadow(0 3px 2px rgba(0,0,0,.18))}.bg-animal small{background:#fff;border:2px solid var(--line);border-radius:999px;padding:0 8px;margin-top:-4px}
+.bg-bubble{flex-wrap:wrap;box-shadow:0 3px 0 rgba(0,0,0,.08)}.bg-paid{flex-basis:100%;text-align:center;font:13px var(--head);color:#2E7D4F;background:#E6F6EA;border-radius:10px;padding:3px 6px;opacity:0;animation:bgpop .3s 1.25s forwards}
+.bg-tray{background:linear-gradient(#F7E9CC,#EBD3A6);border-color:#C9A66B;box-shadow:inset 0 -5px 0 rgba(0,0,0,.07),0 3px 0 #C9A66B}
+.bg-slot.money{flex:1.1}.bg-slot.money b{font:15px var(--head);color:#2E7D4F}
+.bg-station{padding:6px 8px 8px;border-radius:16px;background:#3A3F4B;border:2px solid #23262E}.bg-station small{display:block;color:#E9E3D3;font-size:12px;margin-bottom:5px}
+.bg-cook{display:grid;gap:6px}.bg-cook.grill{grid-template-columns:repeat(5,1fr)}.bg-cook.fry{grid-template-columns:repeat(3,1fr)}
+.bg-pan{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;height:58px;padding:4px;border-radius:12px;border:2px solid #15171C;font:inherit;color:inherit;touch-action:manipulation}
+.grill .bg-pan{background:repeating-linear-gradient(90deg,#2B2E36 0 5px,#4B4F5A 5px 8px)}.fry .bg-pan{background:radial-gradient(circle at 30% 30%,#FFE9A8,#F1B93C 70%);border-color:#A9761A}
+.bg-pan.empty{opacity:.55}.bg-pan span{display:block;width:100%;max-width:60px}.bg-pan span svg{display:block;width:100%;height:auto}.fry .bg-pan span{max-width:34px}
+.bg-pan[data-st="0"] span{filter:brightness(1.5) saturate(.55)}.bg-pan[data-st="1"]{box-shadow:0 0 0 3px #57C26B,0 0 12px #57C26B;animation:bgready .4s infinite alternate}.bg-pan[data-st="2"] span{filter:brightness(.3) saturate(.4)}
+.bg-pan[data-st="2"]::after{content:'💨';position:absolute;top:-8px;right:-2px;font-size:16px}.bg-pan[data-st="1"]::after{content:'✨';position:absolute;top:-8px;right:-2px;font-size:14px}
+@keyframes bgready{to{transform:translateY(-2px)}}
+.bg-gauge{position:relative;display:block;width:100%;height:7px;border-radius:4px;border:1px solid rgba(0,0,0,.45)}.bg-gauge b{position:absolute;top:-3px;left:0;width:4px;height:11px;margin-left:-2px;border-radius:2px;background:#fff;border:1px solid #111}
+.bg-btn.raw{border-style:dashed}.bg-btn.raw small{color:#B4572F}
+.bg-calc{padding:10px;border-radius:16px;background:#F2FAF3;border:2px solid #9ED0A8}.bg-calc p{margin:0 0 6px;text-align:center;font-size:15px}.bg-calc p b{font:19px var(--head)}
+.bg-change{display:flex;align-items:center;justify-content:center;gap:8px}.bg-change b{color:#2E7D4F;font-size:24px!important;min-width:92px;text-align:right}.bg-change .btn.sm{padding:5px 10px;font-size:13px;min-height:0}
+.bg-bills{display:flex;gap:6px;flex-wrap:wrap}.bg-bill{flex:1 1 28%;padding:11px 4px;border-radius:10px;border:2px solid #4E9A63;background:linear-gradient(#DFF3E2,#BFE3C6);box-shadow:0 3px 0 #4E9A63;font:16px var(--head);color:#1E5C36}.bg-bill:active{transform:translateY(3px);box-shadow:none}
+.bg-bill.coin{flex:1 1 40%;border-radius:999px;border-color:#B48A2A;background:linear-gradient(#FFE9A8,#F3C552);box-shadow:0 3px 0 #B48A2A;color:#6B4A0A}
+.bg-ctl{display:flex;flex-direction:column;gap:7px}.bg-part.burger{width:88px}
+
+.bg-btn.raw{position:relative}.bg-btn.raw small{color:inherit}.bg-btn.raw::after{position:absolute;top:-7px;right:-4px;font-size:13px;line-height:1;background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:2px 3px}
+.bg-btn.grl::after{content:'🔥'}.bg-btn.fry::after{content:'🫕'}
+.fry .bg-pan.empty{background:radial-gradient(circle at 30% 30%,#F6DFA0,#D9A53A 75%);opacity:.5}
+.bg-fin{display:grid;grid-template-columns:46px 46px 1fr 1fr;gap:6px;margin-top:8px}.bg-fin .bg-pack{padding:11px 4px;font-size:18px}
+.bg-mini{border-radius:14px;border:2px solid var(--line);background:var(--card);box-shadow:0 3px 0 var(--line);font-size:19px;color:inherit}.bg-mini:active{transform:translateY(3px);box-shadow:none}
+.bg-pan{height:46px;gap:2px}.bg-station{padding:5px 8px 7px}.bg-station small{margin-bottom:4px;font-size:11px}
+.bg-tray{min-height:64px}.bg-slot{min-height:50px}.bg-slot .bg-stack{width:66px;max-height:74px}
+.bg-grid.ing .bg-btn span{height:22px}.bg-bubble{min-height:88px}.bg-part.burger{width:74px}.bg-stack{max-height:96px}
+.fry .bg-pan.empty{opacity:1;background:linear-gradient(#F4D67A,#DDAA3C);border-color:#8A6A22;box-shadow:inset 0 3px 0 rgba(255,255,255,.35)}
