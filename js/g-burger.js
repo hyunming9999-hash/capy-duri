@@ -2,27 +2,27 @@
 // 협동: 메인(버거·포장)과 보조(음료·사이드)로 역할을 나눠 한 쟁반을 같이 채운다. 경쟁: 같은 손님 순서로 각자 만들어 총점 대결
 import { h, toast, modal, gameFx } from './ui.js';
 import { sfx, sizzle } from './sound.js';
+import { ANIMALS as ZOO, animalSvg } from './animals.js';
 
-const ANIMALS = [['🐶', '강아지'], ['🐱', '고양이'], ['🐭', '생쥐'], ['🐹', '햄스터'], ['🐰', '토끼'], ['🦊', '여우'], ['🐻', '곰'], ['🐼', '판다'], ['🐨', '코알라'], ['🐯', '호랑이'],
-  ['🦁', '사자'], ['🐮', '소'], ['🐷', '돼지'], ['🐸', '개구리'], ['🐵', '원숭이'], ['🐔', '닭'], ['🐧', '펭귄'], ['🐤', '병아리'], ['🦆', '오리'], ['🦉', '부엉이'],
-  ['🐺', '늑대'], ['🐗', '멧돼지'], ['🐴', '말'], ['🦄', '유니콘'], ['🐢', '거북이'], ['🐙', '문어'], ['🦭', '물개'], ['🦔', '고슴도치'], ['🐿️', '다람쥐'], ['🦝', '너구리']];
+const ANIMALS = ZOO.map((a, i) => [animalSvg(i), a.name]); // [그림, 이름]
 
 /* ---------- 그림 ---------- */
 const O = '#5F3F2B';
-const cup = (c, b, zero) => `<svg viewBox="0 0 48 48"><path d="M31 3l-3 11" stroke="#E5484D" stroke-width="3" stroke-linecap="round"/><rect x="9" y="12" width="30" height="6" rx="3" fill="${zero ? '#2E2E36' : '#fff'}" stroke="${O}" stroke-width="1.5"/><path d="M12 18h24l-3 26H15z" fill="${c}" stroke="${O}" stroke-width="1.5" stroke-linejoin="round"/><path d="M13 25h22l-1.1 10H14.1z" fill="${zero ? '#2E2E36' : b}"/>${zero ? `<text x="24" y="33.5" text-anchor="middle" font-size="9" font-weight="900" font-family="sans-serif" fill="${b}">0</text>` : ''}</svg>`;
 const DRINK = { cola: ['콜라', '#4A2A22', '#E5484D'], cider: ['사이다', '#E3F6E6', '#3FAE5A'], fanta: ['환타', '#FF9D2E', '#F0641A'], dew: ['마운틴듀', '#CBEA4E', '#3F9E3A'], pepper: ['닥터페퍼', '#6A1B2A', '#B8324A'] };
 for (const k of Object.keys(DRINK)) DRINK['z' + k] = ['제로' + DRINK[k][0], DRINK[k][1], DRINK[k][2], true];
-const friesSvg = (box, dots) => `<svg viewBox="0 0 48 48">${[[14, -14], [19, -6], [24, 0], [29, 6], [34, 14], [22, -10], [27, 10]].map(([x, r]) => `<rect x="${x - 2}" y="6" width="4.4" height="26" rx="1.5" fill="#FFD75E" stroke="#C99A1E" stroke-width="1" transform="rotate(${r} ${x} 30)"/>`).join('')}<path d="M11 24h26l-3 20H14z" fill="${box}" stroke="${O}" stroke-width="1.5" stroke-linejoin="round"/>${dots ? [[16, 14], [22, 10], [28, 15], [33, 11], [25, 19], [19, 20]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.5" fill="#E5484D"/>`).join('') + '<path d="M17 31h14" stroke="#FFD75E" stroke-width="3" stroke-linecap="round"/>' : '<circle cx="24" cy="34" r="4" fill="#FFD75E"/>'}</svg>`;
+const IMG = 'img/burger/', pic = f => `<img src="${IMG}${f}.webp" alt="" draggable="false">`;
+// 음료 컵: 제로는 같은 컵에 검은 '0' 딱지
+const drinkPic = k => `<span class="bg-dp${k[0] === 'z' ? ' zero' : ''}">${pic('d-' + k.replace(/^z/, ''))}</span>`;
 const SIDE = {
-  fries: ['감튀', friesSvg('#E5484D')],
-  cstick: ['치즈스틱', `<svg viewBox="0 0 48 48"><g transform="rotate(-20 24 24)"><rect x="8" y="12" width="32" height="10" rx="5" fill="#E3A23C" stroke="#A86F1C" stroke-width="1.4"/><rect x="8" y="27" width="32" height="10" rx="5" fill="#E3A23C" stroke="#A86F1C" stroke-width="1.4"/><path d="M38 14v6M38 29v6" stroke="#FFF6D6" stroke-width="3" stroke-linecap="round"/></g></svg>`],
-  hash: ['해쉬브라운', `<svg viewBox="0 0 48 48"><ellipse cx="24" cy="25" rx="19" ry="13" fill="#E8B04A" stroke="#A86F1C" stroke-width="1.5"/>${[[14, 22], [20, 28], [26, 21], [31, 29], [34, 23], [18, 18], [25, 32]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.8" fill="#C98A2A"/>`).join('')}</svg>`],
-  lstick: ['롱치즈스틱', `<svg viewBox="0 0 48 48"><g transform="rotate(-38 24 24)"><rect x="0" y="19" width="48" height="10" rx="5" fill="#E3A23C" stroke="#A86F1C" stroke-width="1.4"/><path d="M6 24h36" stroke="#F5C76A" stroke-width="2" stroke-dasharray="3 4" stroke-linecap="round"/><rect x="41" y="20.5" width="6" height="7" rx="3" fill="#FFF6D6"/></g></svg>`],
-  churros: ['츄러스', `<svg viewBox="0 0 48 48"><path d="M10 40C4 20 20 4 30 12s-6 20-12 14" fill="none" stroke="#A86F1C" stroke-width="9.5" stroke-linecap="round"/><path d="M10 40C4 20 20 4 30 12s-6 20-12 14" fill="none" stroke="#D99A3E" stroke-width="7" stroke-linecap="round"/><path d="M10 40C4 20 20 4 30 12s-6 20-12 14" fill="none" stroke="#FFF6D6" stroke-width="1.6" stroke-dasharray="1 5" stroke-linecap="round"/></svg>`],
-  wrap: ['휠랩', `<svg viewBox="0 0 48 48"><g transform="rotate(18 24 24)"><path d="M13 9h22l-3 34H16z" fill="#F4DDB0" stroke="#B5803E" stroke-width="1.5" stroke-linejoin="round"/><path d="M14.5 26h19l-1.5 17H16z" fill="#DADDE5" stroke="#8C8FA3" stroke-width="1.2" stroke-linejoin="round"/><path d="M14 10q5-6 10-1 5-5 10 1" fill="#7DBE5A" stroke="#4F8F3A" stroke-width="1.2"/><circle cx="20" cy="9" r="2.4" fill="#E5484D"/><circle cx="29" cy="8" r="2.4" fill="#E8A63C"/></g></svg>`],
-  pie: ['애플파이', `<svg viewBox="0 0 48 48"><g transform="rotate(-14 24 24)"><rect x="5" y="14" width="38" height="20" rx="6" fill="#E8B04A" stroke="#A86F1C" stroke-width="1.5"/><path d="M14 20l6 8M22 20l6 8M30 20l6 8" stroke="#A86F1C" stroke-width="2" stroke-linecap="round"/><path d="M8 17h32" stroke="#F7D48A" stroke-width="2" stroke-linecap="round"/></g></svg>`],
-  rings: ['양파튀김', `<svg viewBox="0 0 48 48">${[[17, 19], [31, 21], [24, 32]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="9" fill="none" stroke="#A86F1C" stroke-width="7.5"/><circle cx="${x}" cy="${y}" r="9" fill="none" stroke="#E8B04A" stroke-width="5"/>`).join('')}</svg>`],
-  sfries: ['시즈닝감튀', friesSvg('#8B6FE8', true)],
+  fries: ['감튀', pic('s-fries')],
+  cstick: ['치즈스틱', pic('s-cstick')],
+  hash: ['해쉬브라운', pic('s-hash')],
+  lstick: ['롱치즈스틱', pic('s-lstick')],
+  churros: ['츄러스', pic('s-churros')],
+  wrap: ['휠랩', pic('s-wrap')],
+  pie: ['애플파이', pic('s-pie')],
+  rings: ['양파튀김', pic('s-rings')],
+  sfries: ['시즈닝감튀', pic('s-sfries')],
 };
 // 버거 한 층: [높이, y를 받아 그리는 함수] (너비 96 기준). 색 번짐(그라디언트)은 화면에 한 번 넣어 둔 DEFS를 같이 쓴다
 export const DEFS = `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -96,6 +96,7 @@ const arr = v => (Array.isArray(v) ? v : v && typeof v === 'object' ? Object.val
 const PATH = 'games/burger';
 
 export function mount(el, ctx) {
+  ['bg', 'hero', ...Object.keys(SIDE).map(k => 's-' + k), ...['cola', 'cider', 'fanta', 'dew', 'pepper'].map(k => 'd-' + k)].forEach(f => { new Image().src = IMG + f + '.webp'; }); // 그림 미리 받아 두기
   let alive = true, S = null, roles = {}, best = {}, timer = 0;
   let mode = 'coop', diff = 'e', myRole = 'main', picked = false, calcOn = false; // 로비에서 고른 값
   let L = null;            // 경쟁 모드의 내 진행 상황 { id, idx, score, tray }
@@ -118,7 +119,7 @@ export function mount(el, ctx) {
   function menuBook(d) {
     const LV = LEVEL[d], cell = (svg, name) => h('div', { class: 'bg-mi' }, h('span', { html: svg }), h('small', null, name));
     modal({ title: `📖 메뉴판 (난이도 ${LV.name})`, body: h('div', { class: 'bg-menu' },
-      h('b', null, '음료'), h('div', { class: 'bg-grid' }, LV.drinks.map(k => cell(cup(...DRINK[k].slice(1)), DRINK[k][0]))),
+      h('b', null, '음료'), h('div', { class: 'bg-grid' }, LV.drinks.map(k => cell(drinkPic(k), DRINK[k][0]))),
       h('b', null, '사이드 (튀김기에서 알맞게 튀겨요)'), h('div', { class: 'bg-grid' }, LV.sides.map(k => cell(SIDE[k][1], SIDE[k][0]))),
       h('b', null, '버거 재료 (패티는 불판에서 구워요)'), h('div', { class: 'bg-grid ing' }, cell(one('bunT'), '햄버거빵'), LV.btn.map(k => cell(one(k), k === 'beef' && d === 'e' ? '패티' : FILL[k]))),
       h('p', { class: 'dim' }, '버거는 말풍선 그림의 아래 빵부터 위로 차례대로 쌓아요. 패티와 튀김은 바늘이 초록 칸에 있을 때 꺼내야 하고, 늦으면 타서 버려져요. 미리 구워 둘 수 있어요(불판 5칸 · 튀김기 3칸).')), actions: [{ label: '닫기', primary: true }] });
@@ -131,7 +132,7 @@ export function mount(el, ctx) {
     const pr = pid() && roles[pid()], LV = LEVEL[diff];
     const bestKey = (mode === 'coop' ? 'coop-' + diff : 'vs-' + diff + '-' + ctx.uid) + (calcOn ? '-c' : ''), b = best[bestKey];
     box.replaceChildren(...[
-      h('div', { class: 'bg-hero' }, h('span', null, '🍔'), h('div', null, h('b', null, '카피 버거'), h('small', null, '동물 손님 30종이 찾아와요. 말풍선 주문대로 준비해 주세요'))),
+      h('img', { class: 'bg-hero-img', src: IMG + 'hero.webp', alt: '' }), h('div', { class: 'bg-hero' }, h('div', null, h('b', null, '카피 버거'), h('small', null, '동물 손님 30종이 찾아와요. 말풍선 주문대로 준비해 주세요'))),
       h('label', { class: 'lbl' }, '모드'),
       h('div', { class: 'bg-row' }, chip(mode === 'coop', '🤝 협동', () => { mode = 'coop'; lobby(); }, '역할을 나눠 한 쟁반'), chip(mode === 'vs', '⚔️ 경쟁', () => { mode = 'vs'; lobby(); }, '같은 손님, 총점 대결')),
       h('label', { class: 'lbl' }, '난이도'),
@@ -203,7 +204,7 @@ export function mount(el, ctx) {
   function drawTray() {
     const vs = S.mode === 'vs', tray = curTray(), fl = flash && Date.now() < flash.until ? flash.r : null;
     trayEl.replaceChildren(...[
-      h('div', { class: 'bg-slot' + (tray.d ? ' has' : '') }, tray.d ? h('span', { class: 'bg-ic', html: cup(...DRINK[tray.d].slice(1)) }) : h('i', null, '음료')),
+      h('div', { class: 'bg-slot' + (tray.d ? ' has' : '') }, tray.d ? h('span', { class: 'bg-ic', html: drinkPic(tray.d) }) : h('i', null, '음료')),
       h('div', { class: 'bg-slot' + (tray.s ? ' has' : '') }, tray.s ? h('span', { class: 'bg-ic', html: SIDE[tray.s][1] }) : h('i', null, vs ? '사이드(선택)' : '사이드')),
       h('div', { class: 'bg-slot wide' + (tray.st.length ? ' has' : ''), html: tray.st.length ? stackSvg(tray.st) : '<i>버거</i>' }),
       S.calc && h('div', { class: 'bg-slot money' + (tray.c ? ' has' : '') }, tray.c ? h('b', null, won(tray.c)) : h('i', null, '거스름돈')),
@@ -215,7 +216,7 @@ export function mount(el, ctx) {
     if (ph === 'ready') return ctl.replaceChildren(h('div', { class: 'bg-count' }, String(Math.max(1, Math.ceil((S.startAt - now()) / 1000))), h('small', null, role === 'watch' ? '구경하기' : role === 'main' ? '나는 메인: 굽기 · 버거 · 포장' : role === 'aux' ? `나는 보조: 음료 · 튀김${S.calc ? ' · 계산' : ''}` : '준비…')));
     if (role === 'watch') return ctl.replaceChildren(h('p', { class: 'dim center' }, '상대가 혼자 하는 중이에요. 구경해요 👀'));
     const add = k => { if (tray.st.length >= 12) return toast('더 쌓을 수 없어요', 900); sfx('tock'); setTray({ st: [...tray.st, k] }); };
-    const drinks = () => h('div', { class: 'bg-grid' }, LV.drinks.map(k => iconBtn(cup(...DRINK[k].slice(1)), DRINK[k][0], tray.d === k, () => { sfx('tock'); if (role === 'both') tab = 's'; setTray({ d: k }); })));
+    const drinks = () => h('div', { class: 'bg-grid' }, LV.drinks.map(k => iconBtn(drinkPic(k), DRINK[k][0], tray.d === k, () => { sfx('tock'); if (role === 'both') tab = 's'; setTray({ d: k }); })));
     const sides = () => [
       h('div', { class: 'bg-station' }, h('small', null, `🫕 튀김기 · ${fryMs() / 1000}초 뒤 '지금!'일 때 눌러서 건지기`), cooker(K.fry, fryMs(), 'data-f', 'fry', i => takeFrom(K.fry, i, fryMs(), k => { if (role === 'both') tab = S.calc ? 'c' : 'b'; setTray({ s: k }); }), k => SIDE[k][1])),
       h('div', { class: 'bg-grid' }, LV.sides.map(k => iconBtn(SIDE[k][1], SIDE[k][0], tray.s === k, () => (NOFRY[k] ? (sfx('tock'), role === 'both' && (tab = S.calc ? 'c' : 'b'), setTray({ s: k })) : putOn(K.fry, k, FRYER, '튀김기가 꽉 찼어요')), NOFRY[k] ? '' : 'raw fry')),
@@ -250,14 +251,14 @@ export function mount(el, ctx) {
       box.replaceChildren(top, q.length > 1
         ? h('div', { class: 'bg-cust multi' }, q.map((qi, i) => { const oo = orderOf(S.seed, qi, S.diff), a2 = ANIMALS[oo.a]; // 손님을 눌러서 누구 것을 만들지 고른다
           return h('button', { class: 'bg-cc' + (i === si ? ' on' : ''), 'data-q': i, 'data-pack': oo.pack, 'data-fills': oo.fills.join(' '), 'data-change': oo.paid - oo.price, onClick: () => pickCust(i) },
-            h('div', { class: 'bg-cc-h' }, h('span', { class: 'bg-cc-a' }, a2[0]), h('span', { class: 'bg-cc-k' }, oo.pack === 'out' ? '🛍️' : '🍽️'), h('i', { html: cup(...DRINK[oo.d].slice(1)) }), h('i', { class: vs ? 'opt' : '', html: SIDE[oo.s][1] })),
+            h('div', { class: 'bg-cc-h' }, h('span', { class: 'bg-cc-a', title: a2[1], html: a2[0] }), h('span', { class: 'bg-cc-k' }, oo.pack === 'out' ? '🛍️' : '🍽️'), h('i', { html: drinkPic(oo.d) }), h('i', { class: vs ? 'opt' : '', html: SIDE[oo.s][1] })),
             h('div', { class: 'bg-cc-t' }, h('b', null, oo.pack === 'out' ? '포장' : '매장'), ' · ', h('span', { class: 'bg-cc-d' }, DRINK[oo.d][0]), ' · ', h('span', { class: 'bg-cc-s' }, SIDE[oo.s][0])),
             h('div', { class: 'bg-cc-b', html: stackSvg(['bun', ...oo.fills, 'bun']) }), showPaid && h('div', { class: 'bg-cc-m' }, `💵 ${oo.paid.toLocaleString('ko-KR')} − ${oo.price.toLocaleString('ko-KR')}`)); }))
         : h('div', { class: 'bg-cust' },
-        h('div', { class: 'bg-animal' }, h('span', null, an[0]), h('small', null, an[1])),
+        h('div', { class: 'bg-animal' }, h('span', { html: an[0] }), h('small', null, an[1])),
         h('div', { class: 'bg-bubble' },
           h('div', { class: 'bg-part p1' }, h('span', { class: 'bg-emo' }, o.pack === 'out' ? '🛍️' : '🍽️'), h('small', null, o.pack === 'out' ? '포장' : '매장')),
-          h('div', { class: 'bg-part p2' }, h('span', { class: 'bg-ic', html: cup(...DRINK[o.d].slice(1)) }), h('small', null, DRINK[o.d][0])),
+          h('div', { class: 'bg-part p2' }, h('span', { class: 'bg-ic', html: drinkPic(o.d) }), h('small', null, DRINK[o.d][0])),
           h('div', { class: 'bg-part p2' + (vs ? ' opt' : '') }, h('span', { class: 'bg-ic', html: SIDE[o.s][1] }), h('small', null, SIDE[o.s][0] + (vs ? ' (선택)' : ''))),
           h('div', { class: 'bg-part p3 burger', html: stackSvg(['bun', ...o.fills, 'bun']) }),
           showPaid && h('div', { class: 'bg-paid p3' }, `💵 ${won(o.paid)} 냈어요 · 합계 ${won(o.price)}`))),

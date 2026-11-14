@@ -565,3 +565,13 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .bg-cc-h i{display:block;width:25px;height:25px}.bg-cc-h i svg{display:block;width:100%;height:100%}.bg-cc-h i.opt{filter:saturate(.7)}.bg-cc-t{font-size:9.5px;line-height:1.15;letter-spacing:-.5px;text-align:center;min-height:22px}.bg-cc-t b{font-family:inherit;font-weight:700}
 .bg-cc-b{flex:1;display:flex;align-items:flex-end;justify-content:center;width:100%}.bg-cc-b svg{display:block;width:62px;height:auto;max-height:70px}
 .bg-cc-m{font:10px var(--head);color:#2E7D4F;background:#E6F6EA;border-radius:8px;padding:1px 4px;white-space:nowrap;letter-spacing:-.3px}
+.bg-animal{width:78px}.bg-animal span{display:block;width:76px;font-size:0;line-height:0;filter:drop-shadow(0 3px 2px rgba(0,0,0,.18))}.bg-animal span svg{display:block;width:100%}
+.bg-cc-a{display:block;width:34px;font-size:0;line-height:0;flex:none}.bg-cc-a svg{display:block;width:100%}
+.bg-hero-img{display:block;width:100%;height:150px;object-fit:cover;object-position:50% 40%;border-radius:20px;border:2px solid var(--line);margin-bottom:8px}
+.bg-btn span img,.bg-ic img,.bg-pan span img,.bg-cc-h i img,.bg-mi span img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.bg-dp{position:relative;display:block;width:100%;height:100%}.bg-dp.zero::after{content:'0';position:absolute;right:-2px;bottom:0;width:42%;aspect-ratio:1;display:grid;place-items:center;border-radius:50%;background:#26262E;color:#fff;font:700 62%/1 sans-serif;border:1.5px solid #fff;container-type:normal}
+.bg-btn span .bg-dp.zero::after{font-size:11px}.bg-ic .bg-dp.zero::after{font-size:11px}.bg-cc-h i .bg-dp.zero::after{font-size:8px;border-width:1px}.bg-dp.zero img{filter:saturate(.8) brightness(.92)}
+.bg-cust{background:url(../img/burger/bg.webp) 50% 0/cover no-repeat;padding-top:30px}.bg-cust::before{display:none}.bg-cust.multi{padding-top:30px}
+.bg-pan span{aspect-ratio:1}.fry .bg-pan span{max-width:36px}
+.bg-cust.multi{padding-top:24px;padding-bottom:8px}.bg-cc-b svg{max-height:56px}.bg-cc-t{min-height:0}.bg-cc{padding:3px 2px 3px}
+.fry .bg-pan{height:64px;padding-top:17px}.fry .bg-pan span{max-width:34px}.bg-hero-img{height:112px;object-position:50% 35%}
