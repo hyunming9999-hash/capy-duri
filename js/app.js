@@ -12,6 +12,7 @@ import * as where from './where.js';
 import * as dress from './dress.js';
 import * as walk from './walk.js';
 import * as gallery from './gallery.js';
+import * as social from './social.js';
 import { GAMES } from './game.js';
 import { capySound, soundOn, setSound, bgm, fxOn, setFx } from './sound.js';
 import { setupMoney, won } from './money.js';
@@ -36,6 +37,7 @@ const MENU = [
   { id: 'watch', mod: watch, title: '오늘 뭐 보실?', short: '영화관', sub: '카피바라 영화관', face: 'sleepy', acc: 'towel', tint: '#D9D2F5' },
   { id: 'walk', mod: walk, title: '카피바라 목욕하실?', short: '목욕탕', sub: '히노끼탕 · 음성 대화', face: 'sleepy', acc: 'towel', tint: '#F3DDB8' },
   { id: 'gallery', mod: gallery, title: '오늘 전시회가실?', short: '전시회', sub: '둘만의 전시실', face: 'wow', acc: 'flower', tint: '#ECECF4' },
+  { id: 'social', mod: social, title: '동물 친목회 가실?', short: '친목회', sub: '동물 30마리와 친구 되기', face: 'love', acc: 'leaf', tint: '#D6F0C2' },
 ];
 
 const root = $('#app');
@@ -47,7 +49,7 @@ Object.defineProperties(ctx, {
 });
 ctx.go = r => { location.hash = r; };
 ctx.nameOf = uid => (ctx.members[uid] || {}).name || '카피';
-ctx.capyOf = (uid, extra = {}) => { const m = ctx.members[uid] || {}, d = ctx.dress[uid] || {}; return { color: m.color, acc: m.acc, top: d.top, bottom: d.bottom, hat: d.hat, ...extra }; };
+ctx.capyOf = (uid, extra = {}) => { const m = ctx.members[uid] || {}, d = ctx.dress[uid] || {}; return { color: m.color, acc: m.acc, top: d.top, bottom: d.bottom, hat: d.hat, pin: m.pin != null && social.PERSONA[m.pin] ? social.PERSONA[m.pin].pin : '', ...extra }; };
 const fullRoute = () => location.hash.slice(1) || 'home';
 const titleOf = r => { const [n, sub] = (r || '').split('-'); const g = n === 'game' && GAMES.find(x => x.id === sub); return g ? g.title : (MENU.find(x => x.id === n) || {}).title || '홈'; };
 

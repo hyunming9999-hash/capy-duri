@@ -46,12 +46,12 @@ function face(f, c) {
     <ellipse cx="18.5" cy="54" rx="6" ry="4" fill="#FF8F8F" opacity=".55"/><ellipse cx="101.5" cy="54" rx="6" ry="4" fill="#FF8F8F" opacity=".55"/>${extra}`;
 }
 
-// opts: {color, acc, face, view:'front'|'back', head:true(머리만), top/bottom/hat: 옷·모자 id}. 모자를 쓰면 머리 장식(acc) 대신 모자가 보인다
+// opts: {color, acc, face, view:'front'|'back', head:true(머리만), top/bottom/hat: 옷·모자 id, pin: 친목회에서 받은 상징(그림 글자)}. 모자를 쓰면 머리 장식(acc) 대신 모자가 보인다
 export function capy(o = {}) {
   const c = COLORS[o.color] || COLORS.brown;
   const back = o.view === 'back';
   const ears = `<ellipse cx="22" cy="21" rx="8" ry="7.5" fill="${c.dark}"/><ellipse cx="98" cy="21" rx="8" ry="7.5" fill="${c.dark}"/>${back ? '' : `<ellipse cx="22.5" cy="22" rx="3.8" ry="3.4" fill="${c.light}"/><ellipse cx="97.5" cy="22" rx="3.8" ry="3.4" fill="${c.light}"/>`}`;
-  const head = `${ears}<rect x="9" y="15" width="102" height="69" rx="25" fill="${c.body}"/>${back ? `<path d="M40 30 q20 -7 40 0" fill="none" stroke="${c.dark}" stroke-width="2" opacity=".35" stroke-linecap="round"/>` : face(o.face, c)}${(o.hat && hatSvg(o.hat)) || acc(o.acc)}`;
+  const head = `${ears}<rect x="9" y="15" width="102" height="69" rx="25" fill="${c.body}"/>${back ? `<path d="M40 30 q20 -7 40 0" fill="none" stroke="${c.dark}" stroke-width="2" opacity=".35" stroke-linecap="round"/>` : face(o.face, c)}${(o.hat && hatSvg(o.hat)) || acc(o.acc)}${o.pin ? `<circle cx="101" cy="40" r="15" fill="#fff" stroke="#E9C46A" stroke-width="2.5"/><text x="101" y="47.5" font-size="19" text-anchor="middle">${o.pin}</text>` : ''}`;
   if (o.head) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 112">${head}</svg>`;
   const cl = o.top || o.bottom ? wearSvg(o.top, o.bottom) : { under: '', top: '', over: '' };
   const body = `<ellipse cx="45" cy="128" rx="12" ry="6.5" fill="${c.dark}"/><ellipse cx="75" cy="128" rx="12" ry="6.5" fill="${c.dark}"/>
