@@ -72,6 +72,7 @@ export function mount(el, ctx) {
   const LANES = [[0.07, 1], [0.13, 0.94], [0.19, 0.88], [0.25, 0.82]], RIDE_S = 0.62, ME_SP = 150, CHASE_SP = 118;
   const tiles = [], spots = []; let vit = null, hpEl, potEl, lockT = 0, playing = false;
   const HP_MAX = 100, HIT_DMG = 5, POTION = [10, 20], // 한 대 맞으면 -5, 포션은 10코인에 HP +20
+  BRIBE = [50, 5], // 돈으로 풀기: 50코인에 +5
   CHASE_AT = -10, TEN_MIN = 600000, SORRY = /미안|죄송|사과|잘못했|용서/, moodOf = v => (v <= CHASE_AT ? 'mad' : v < 0 ? 'angry' : '');
   let actors = [], held = -1, raf = 0, lastT = 0, punchAt = 0;
   const me = { x: 200, y: 0.03, f: 1, dy: 0.03, ds: 1, ride: null, kb: 0, rideT: 0, gain: {} }, keys = new Set(), Y_MAX = 0.27; let rideBtn, rideState = '';
@@ -191,7 +192,7 @@ export function mount(el, ctx) {
         if (Math.abs(d) > 34) { o.x += Math.sign(d) * CHASE_SP * dt; o.e.classList.toggle('left', d < 0); } else if (now > o.nextHit && !paused && Math.abs(o.y - me.dy) < 0.06) gotHit(o, now);
         if (now > o.until) { o.st = 'idle'; o.until = now + 600; o.e.classList.remove('walk', 'chase'); } }
       else {
-        if (!paused && A(i) <= CHASE_AT && Math.abs(me.x - o.x) < 170 && (o.rage || wall - ((mine[i] || {}).chaseAt || 0) > TEN_MIN)) { o.rage = false; setRel(i, { chaseAt: wall }); leave(o); o.st = 'chase'; o.until = now + 7000; o.nextHit = now + 300; o.e.classList.add('walk', 'chase'); pop(o.e, '거기 서!', 'say'); }
+        if (!paused && A(i) <= CHASE_AT && Math.abs(me.x - o.x) < (o.rage ? 420 : 170) && (o.rage || wall - ((mine[i] || {}).chaseAt || 0) > TEN_MIN)) { o.rage = false; setRel(i, { chaseAt: wall }); leave(o); o.st = 'chase'; o.until = now + 7000; o.nextHit = now + 300; o.e.classList.add('walk', 'chase'); pop(o.e, '거기 서!', 'say'); }
         else if (o.st === 'walk') { const d = o.tx - o.x, step1 = o.sp * dt, dir = Math.sign(d);
           const blocked = o.wait < 1.5 && actors.some(q => q !== o && q.lane === o.lane && q.st !== 'ride' && (q.x - o.x) * dir > 0 && (q.x - o.x) * dir < 58 && !(o.spot && Math.abs(d) < 110));
           if (blocked) { o.wait += dt; if (!o.spot && o.wait > 0.5) { o.st = 'idle'; o.until = now + 500 + Math.random() * 1200; o.e.classList.remove('walk'); } }
@@ -241,14 +242,23 @@ export function mount(el, ctx) {
       drawMeter();
     }
     // 사이가 나쁜 동물에게 사과하면 2점 풀린다. 한 동물에게 10분에 한 번만 통한다
+    // 많이 틀어진 사이는 말로 안 된다: -20 이하는 선물을, -15 이하는 돈을 요구하고, 안 들어주면 다시 때리러 온다
+    let demand = '';
+    const settle = ok => { demand = ''; drawQuick(); if (!ok) { actors[i].rage = true; say('그래? 그럼 맞아야겠네. 거기 서!', 'angry'); sfx('bad'); setTimeout(() => close && close(), 900); } };
+    function ask(kind) {
+      demand = kind; sfx('bad');
+      if (kind === 'gift') { say('닥치고 선물을 조공해라.', 'angry'); quick.replaceChildren(h('button', { class: 'so-q q0', onClick: give }, '🎁 선물 바치기'), h('button', { class: 'so-q q2', onClick: () => settle(false) }, '싫어')); }
+      else { say('음... 알겠고, 돈으로 해결할까?', 'angry'); quick.replaceChildren(h('button', { class: 'so-q q0', onClick: async () => { if (!(await ctx.spend(BRIBE[0]))) return settle(false); await setRel(i, { a: A(i) + BRIBE[1] }); settle(true); say('좋아, 이번엔 넘어가 줄게.', 'glad'); after(BRIBE[1]); } }, `🪙 ${BRIBE[0]} 주기`), h('button', { class: 'so-q q2', onClick: () => settle(false) }, '싫어')); }
+    }
     async function sorry(text) {
+      if (A(i) <= -20) return ask('gift'); if (A(i) <= -15) return ask('pay');
       const rel = mine[i] || {}, left = TEN_MIN - (ctx.store.now() - (rel.sorryAt || 0)), mem = Array.isArray(rel.mem) ? rel.mem : Object.values(rel.mem || {});
       if (left > 0) return say(`흥, 아직 화 안 풀렸어. ${Math.ceil(left / 60000)}분 뒤에 다시 사과해.`, 'angry');
       const r = pick(['…알았어. 이번 한 번만 봐줄게.', '사과는 받을게. 근데 아직 다 풀린 건 아니야.', '흥… 진심이지? 조금 풀렸어.']);
       await setRel(i, { a: Math.min(100, A(i) + 2), sorryAt: ctx.store.now(), mem: [...mem.slice(-5), { s: text, r, d: 2, t: ctx.store.now() }] }); say(r, 'glad'); drawQuick(); after(2);
     }
     async function talk(text) {
-      text = text.trim().slice(0, 60); if (!text || busy) return; if (A(i) < 0 && SORRY.test(text)) { input.value = ''; sfx('tock'); return sorry(text); } busy = true; input.value = ''; said = text; sfx('tock');
+      text = text.trim().slice(0, 60); if (!text || busy) return; if (demand) { input.value = ''; return say(demand === 'gift' ? '말은 됐고, 선물.' : '말은 됐고, 돈.', 'angry'); } if (A(i) < 0 && SORRY.test(text)) { input.value = ''; sfx('tock'); return sorry(text); } busy = true; input.value = ''; said = text; sfx('tock');
       const rel = mine[i] || {}, day = today(), n = rel.day === day ? rel.n || 0 : 0, mem = Array.isArray(rel.mem) ? rel.mem : Object.values(rel.mem || {});
       if (n >= TALKS) { say(pick(LINES.tired)); busy = false; return; }
       say('…', 'wait');
@@ -264,7 +274,7 @@ export function mount(el, ctx) {
       if (!have.length) return modal({ title: '🎁 줄 선물이 없어요', body: h('p', { class: 'center' }, '카피수퍼에서 선물을 살 수 있어요.'), actions: [{ label: '닫기' }, { label: '🏪 카피수퍼 가기', primary: true, onClick: c => { c(); openShop(); } }] });
       const cl = modal({ title: `🎁 ${a.name}에게 선물하기`, body: h('div', { class: 'so-list' }, have.map(k => { const [ic, nm, , up] = GIFTS[k]; return h('button', { class: 'so-row', onClick: async () => { cl(); const bonus = p.fav === k ? Math.ceil(up * 0.5) : 0, v = Math.min(100, A(i) + up + bonus);
         await ctx.store.update('bag/' + ctx.uid, { [k]: (bag[k] || 0) - 1 }).catch(() => {}); bag = { ...bag, [k]: (bag[k] || 0) - 1 }; await setRel(i, { a: v });
-        say(bonus ? `우와, ${nm}! 내가 제일 좋아하는 거야! 고마워!` : `${nm} 주는 거야? 고마워, 잘 쓸게!`, 'glad'); after(up + bonus); } }, h('span', null, ic), h('b', null, nm), h('small', null, `${bag[k]}개 · 친밀도 +${up}`)); })), actions: [{ label: '닫기' }] });
+        if (demand === 'gift') { demand = ''; drawQuick(); say(bonus ? `흥, ${nm}라… 내가 좋아하는 걸 아네. 이번엔 봐준다.` : `${nm}? 뭐, 받아는 줄게.`, 'glad'); } else say(bonus ? `우와, ${nm}! 내가 제일 좋아하는 거야! 고마워!` : `${nm} 주는 거야? 고마워, 잘 쓸게!`, 'glad'); after(up + bonus); } }, h('span', null, ic), h('b', null, nm), h('small', null, `${bag[k]}개 · 친밀도 +${up}`)); })), actions: [{ label: '닫기' }] });
     }
     function trade() {
       const v = A(i), ware = wareOf(i), disc = v >= 50 ? 0.5 : v >= 20 ? 0.75 : 1, wp = Math.round(priceOf(ware.id) * disc), hasPin = (bag.pins || {})[i];
@@ -279,7 +289,7 @@ export function mount(el, ctx) {
     close = modal({ title: `${a.name} · ${p.trait}`, body: h('div', { class: 'so-meet' },
       h('div', { class: 'so-face' }, faceEl, bubble), meter, quick,
       h('div', { class: 'so-say' }, input, h('button', { class: 'btn primary', onClick: () => talk(input.value) }, '말하기')),
-      h('div', { class: 'so-acts' }, h('button', { class: 'btn', onClick: give }, '🎁 선물'), h('button', { class: 'btn', onClick: trade }, '🤝 거래'), h('button', { class: 'btn', onClick: memBtn }, '📜 기억'))), actions: [{ label: '닫기' }], onClose: () => { if (held === i) held = -1; const o = actors[i]; if (o && o.st === 'walk') o.e.classList.add('walk'); } });
+      h('div', { class: 'so-acts' }, h('button', { class: 'btn', onClick: give }, '🎁 선물'), h('button', { class: 'btn', onClick: trade }, '🤝 거래'), h('button', { class: 'btn', onClick: memBtn }, '📜 기억'))), actions: [{ label: '닫기' }], onClose: () => { if (demand && actors[i]) actors[i].rage = true; if (held === i) held = -1; const o = actors[i]; if (o && o.st === 'walk') o.e.classList.add('walk'); } });
     const v = A(i); say(v <= ROB_AT ? pick(LINES.cold) : v >= PIN_AT ? `${ctx.me.name}! 왔구나, 보고 싶었어!` : v >= 10 ? `안녕, ${ctx.me.name}! 또 만났네.` : `안녕? 난 ${a.name}야. ${p.likes[0]} 좋아해.`); drawMeter(); drawQuick();
   }
 
