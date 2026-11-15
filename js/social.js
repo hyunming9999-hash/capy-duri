@@ -71,7 +71,7 @@ export function mount(el, ctx) {
   const SEE_X = 598.8 / IW, ROPE = (323 - 243) / IH * H;
   const LANES = [[0.07, 1], [0.13, 0.94], [0.19, 0.88], [0.25, 0.82]], RIDE_S = 0.62, ME_SP = 150, CHASE_SP = 118;
   const tiles = [], spots = [];
-  const moodOf = v => (v <= -30 ? 'mad' : v < 0 ? 'angry' : '');
+  const CHASE_AT = -10, moodOf = v => (v <= CHASE_AT ? 'mad' : v < 0 ? 'angry' : '');
   let actors = [], held = -1, raf = 0, lastT = 0, punchAt = 0;
   const me = { x: 200, y: 0.03, f: 1, dy: 0.03, ds: 1, ride: null }, keys = new Set(), Y_MAX = 0.27; let rideBtn, rideState = '';
   // 움직이는 놀이기구(그네 두 개, 시소)를 배경 위에 그린다
@@ -103,7 +103,7 @@ export function mount(el, ctx) {
     rideBtn = h('button', { class: 'dp so-dp so-ride', disabled: true, onClick: toggleRide }, '🎠', h('small', null, '타기'));
     const pad = h('div', { class: 'so-pad' }, h('div', { class: 'dpad so-dpad' }, [['U', '▲'], ['L', '◀'], ['D', '▼'], ['R', '▶']].map(([k, t]) => { const b = h('button', { class: 'dp so-dp dp-' + k, 'aria-label': k }, t); holdBtn(b, () => keys.add(k), () => keys.delete(k)); return b; })),
       h('span', { class: 'so-sp' }), h('div', { class: 'so-acts2' }, rideBtn, h('button', { class: 'dp so-dp so-hit', onClick: punch }, '👊', h('small', null, '때리기'))));
-    el.replaceChildren(top, scroller, pad, h('p', { class: 'dim center so-hint' }, '방향키로 걸어가요. 놀이기구 앞에서 🎠 를 누르면 탈 수 있어요. 동물을 누르면 말을 걸어요.'));
+    el.replaceChildren(top, scroller, pad, h('p', { class: 'dim center so-hint' }, '방향키로 걸어가요. 놀이기구 앞에서 🎠 로 타요. 동물을 누르면 말을 걸어요. 얼굴이 빨간 동물(-10점 이하)은 쫓아와요!'));
     scores(); lastT = performance.now(); raf = requestAnimationFrame(step);
   }
   const KEY = { ArrowLeft: 'L', ArrowRight: 'R', ArrowUp: 'U', ArrowDown: 'D', a: 'L', d: 'R', w: 'U', s: 'D' };
@@ -125,7 +125,7 @@ export function mount(el, ctx) {
     sfx('hit'); pop(o.e, '퍽!'); leave(o); o.st = 'stun'; o.until = now + 900; o.kb = dir * 46; o.e.classList.remove('walk'); o.e.classList.add('ouch'); setTimeout(() => o.e.classList.remove('ouch'), 500);
     const rel = mine[best] || {}, mem = Array.isArray(rel.mem) ? rel.mem : Object.values(rel.mem || {}), v = Math.max(-100, A(best) - 6);
     setRel(best, { a: v, mem: [...mem.slice(-5), { s: '(말없이 때렸다)', r: '아야! 왜 때려!', d: -6, t: ctx.store.now() }] }); o.cool = 0; scores();
-    setTimeout(() => alive && pop(o.e, v <= ROB_AT ? '가만 안 둬!' : '아야!', 'say'), 250);
+    setTimeout(() => alive && pop(o.e, v <= CHASE_AT ? '가만 안 둬!' : '아야!', 'say'), 250);
   }
   // 사이가 나쁜 동물에게 맞으면 돈이 조금 나간다
   function gotHit(o, now) {
@@ -169,7 +169,7 @@ export function mount(el, ctx) {
         if (Math.abs(d) > 34) { o.x += Math.sign(d) * CHASE_SP * dt; o.e.classList.toggle('left', d < 0); } else if (now > o.nextHit && !paused && Math.abs(o.y - me.dy) < 0.06) gotHit(o, now);
         if (now > o.until) { o.st = 'idle'; o.until = now + 600; o.cool = now + 15000; o.e.classList.remove('walk', 'chase'); } }
       else {
-        if (!paused && A(i) <= ROB_AT && now > o.cool && Math.abs(me.x - o.x) < 170) { leave(o); o.st = 'chase'; o.until = now + 7000; o.nextHit = now + 300; o.e.classList.add('walk', 'chase'); pop(o.e, '거기 서!', 'say'); }
+        if (!paused && A(i) <= CHASE_AT && now > o.cool && Math.abs(me.x - o.x) < 170) { leave(o); o.st = 'chase'; o.until = now + 7000; o.nextHit = now + 300; o.e.classList.add('walk', 'chase'); pop(o.e, '거기 서!', 'say'); }
         else if (o.st === 'walk') { const d = o.tx - o.x, step1 = o.sp * dt, dir = Math.sign(d);
           const blocked = o.wait < 1.5 && actors.some(q => q !== o && q.lane === o.lane && q.st !== 'ride' && (q.x - o.x) * dir > 0 && (q.x - o.x) * dir < 58 && !(o.spot && Math.abs(d) < 110));
           if (blocked) { o.wait += dt; if (!o.spot && o.wait > 0.5) { o.st = 'idle'; o.until = now + 500 + Math.random() * 1200; o.e.classList.remove('walk'); } }
