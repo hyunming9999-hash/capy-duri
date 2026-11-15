@@ -69,7 +69,7 @@ export function mount(el, ctx) {
       h('div', { class: 'bg-row' }, Object.entries(LEVELS).map(([k, v]) => chip(diff === k, v.name, () => { diff = k; save(); lobby(); }, v.sub))),
       h('p', { class: 'dim bg-note' + (mode === 'vs' && !pid() ? ' warn' : '') }, mode === 'vs' ? (pid() ? `시작하면 ${ctx.nameOf(pid())} 화면에서도 같이 시작돼요. 같은 블록이 나오고, 2줄 이상 한 번에 지우면 상대 바닥에 방해 줄이 올라가요. 먼저 꼭대기까지 쌓이면 져요.` : '상대가 아직 방에 없어요. 기록 모드를 골라 주세요') : '꼭대기까지 쌓일 때까지 계속해요. 10줄마다 빨라져요.'),
       h('button', { class: 'btn primary big', onClick: start }, '시작'),
-      h('p', { class: 'dim center' }, '◀ ▶ 옮기기 · ⟳ 돌리기 · ▼ 내리기 · ⤓ 바로 떨어뜨리기 · 보관: 블록 바꿔 두기'),
+      h('p', { class: 'dim center' }, '왼쪽·오른쪽 옮기기 · 내리기 · 돌리기 · 뚝!(바로 떨어뜨리기) · 보관: 블록 바꿔 두기'),
       (b || pb) && h('p', { class: 'dim center' }, [b && `내 최고 ${b.s.toLocaleString()}점`, pb && `${ctx.nameOf(pid())} 최고 ${pb.s.toLocaleString()}점`].filter(Boolean).join(' · '))].filter(Boolean));
   }
   function start() {
@@ -91,13 +91,16 @@ export function mount(el, ctx) {
   const mini = k => { const c = h('canvas', { width: 64, height: 44 }), g2 = c.getContext('2d'); if (!k) return c; const m = SHAPES[k], rows = m.filter(r => r.some(Boolean)), w = m[0].length, s = 14, ox = (64 - w * s) / 2, oy = (44 - rows.length * s) / 2;
     g2.translate(ox, oy); rows.forEach((row, y) => row.forEach((v, x) => v && cellAt(g2, x, y, k, s))); return c; };
   function build() {
-    const vw = Math.min(el.clientWidth || 360, 520), vh = window.innerHeight; cell = Math.max(14, Math.floor(Math.min((vw - 96) / W, (vh - 252) / H)));
+    const vw = Math.min(el.clientWidth || 360, 520), vh = window.innerHeight; cell = Math.max(14, Math.floor(Math.min((vw - 96) / W, (vh - 268) / H)));
     cv = h('canvas', { class: 'tt-board', width: W * cell, height: H * cell }); cx = cv.getContext('2d'); side = h('div', { class: 'tt-side' }); top = h('div', { class: 'tt-top' });
-    const hold = (fn, label, cls = '', rep = 0) => { const b = h('button', { class: 'tt-key ' + cls, 'aria-label': label }, label); let t = 0, iv = 0;
-      const stop = () => { clearTimeout(t); clearInterval(iv); }; b.addEventListener('pointerdown', e => { e.preventDefault(); fn(); if (rep) t = setTimeout(() => { iv = setInterval(fn, rep); }, 190); });
+    const ICON = { l: '<path d="M26 8 9 20l17 12z"/>', r: '<path d="M14 8l17 12-17 12z"/>', down: '<path d="M8 13h24L20 31z"/>',
+      rot: '<path d="M30.5 20a10.5 10.5 0 1 1-4-8.2" fill="none" stroke="currentColor" stroke-width="4.6" stroke-linecap="round"/><path d="M21.5 5.5 31 9l-3.5 9.5z"/>',
+      drop: '<path d="M16.5 4h7v11h7L20 27 9.500 15h7z"/><rect x="7" y="30" width="26" height="5" rx="2.5"/>' };
+    const hold = (fn, label, cls = '', rep = 0, ic = 'l') => { const b = h('button', { class: 'tt-key ' + cls, 'aria-label': label }, h('span', { class: 'tt-ic', html: `<svg viewBox="0 0 40 40" fill="currentColor" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round">${ICON[ic]}</svg>` }), h('small', null, label)); let t = 0, iv = 0;
+      const stop = () => { clearTimeout(t); clearInterval(iv); b.classList.remove('on'); }; b.addEventListener('pointerdown', e => { e.preventDefault(); b.classList.add('on'); try { navigator.vibrate && navigator.vibrate(8); } catch {} fn(); if (rep) t = setTimeout(() => { iv = setInterval(fn, rep); }, 190); });
       ['pointerup', 'pointerleave', 'pointercancel'].forEach(n => b.addEventListener(n, stop)); return b; };
     box.replaceChildren(top, h('div', { class: 'tt-play' }, cv, side),
-      h('div', { class: 'tt-keys' }, hold(() => act('l'), '◀', '', 70), hold(() => act('r'), '▶', '', 70), hold(() => act('rot'), '⟳', 'rot'), hold(() => act('down'), '▼', '', 50), hold(() => act('drop'), '⤓', 'drop')));
+      h('div', { class: 'tt-keys' }, hold(() => act('l'), '왼쪽', 'mv', 70, 'l'), hold(() => act('down'), '내리기', 'dn', 50, 'down'), hold(() => act('r'), '오른쪽', 'mv', 70, 'r'), h('i'), hold(() => act('rot'), '돌리기', 'rot', 0, 'rot'), hold(() => act('drop'), '뚝!', 'drop', 0, 'drop')));
   }
   function drawSide() {
     const o = them();
