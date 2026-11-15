@@ -135,7 +135,7 @@ export function mount(el, ctx) {
   }
   function die() { document.querySelectorAll('.modal-wrap').forEach(w => w.remove()); held = -1; sfx('lose'); saveVit({ hp: 0, deadAt: ctx.store.now() }).then(() => alive && lock()); }
   const KEY = { ArrowLeft: 'L', ArrowRight: 'R', ArrowUp: 'U', ArrowDown: 'D', a: 'L', d: 'R', w: 'U', s: 'D' };
-  const kd = e => { if (document.querySelector('.modal-wrap')) return; if (sorryBtn && e.key === 'Enter') { e.preventDefault(); return sorryBtn.click(); } if (KEY[e.key]) { keys.add(KEY[e.key]); e.preventDefault(); } else if (e.key === ' ' && !e.repeat) { e.preventDefault(); punch(); } };
+  const kd = e => { if (document.querySelector('.modal-wrap') || (e.target && e.target.tagName === 'INPUT')) return; if (SORRY_UI.btn.el && e.key === 'Enter') { e.preventDefault(); return forgive('btn'); } if (KEY[e.key]) { keys.add(KEY[e.key]); e.preventDefault(); } else if (e.key === ' ' && !e.repeat) { e.preventDefault(); punch(); } };
   const ku = e => { if (KEY[e.key]) keys.delete(KEY[e.key]); };
   window.addEventListener('keydown', kd); window.addEventListener('keyup', ku);
   const pop = (parent, text, cls = '') => { const f = h('em', { class: 'so-pop ' + cls }, text); parent.append(f); setTimeout(() => f.remove(), 1000); };
@@ -156,14 +156,17 @@ export function mount(el, ctx) {
     setRel(best, { a: v, mem: [...mem.slice(-5), { s: '(말없이 때렸다)', r: '아야! 왜 때려!', d: -6, t: ctx.store.now() }] }); o.rage = true; scores();
     setTimeout(() => alive && pop(o.e, toned(best, v <= CHASE_AT ? '가만 안 둬!' : '아야!'), 'say'), 250);
   }
-  // 쫓아오기 시작한 순간 1초 안에 "미안해!"를 누르면 그 동물은 쫓기를 그만둔다
-  let sorryBtn = null, sorryFor = [], sorryT = 0;
+  // 쫓아오기 시작한 순간 사과하면 그 동물은 쫓기를 그만둔다. -15점까지는 1초 안에 버튼, 그보다 나쁘면 1.5초 안에 "미안해"를 직접 입력해야 한다
+  const SORRY_UI = { btn: { el: null, list: [], t: 0, ms: 1000 }, type: { el: null, list: [], t: 0, ms: 1500 } };
+  function endSorry(kind) { (kind ? [kind] : ['btn', 'type']).forEach(k => { const u = SORRY_UI[k]; clearTimeout(u.t); if (u.el) u.el.remove(); u.el = null; u.list = []; }); }
+  function forgive(kind) { SORRY_UI[kind].list.forEach(k => { const o = actors[k]; if (!o || o.st !== 'chase') return; o.st = 'idle'; o.until = performance.now() + 1500; o.e.classList.remove('walk', 'chase'); pop(o.e, toned(k, '…이번만 봐준다'), 'say'); }); sfx('point'); endSorry(kind); }
   function quickSorry(i) {
-    sorryFor.push(i); if (sorryBtn) return;
-    sorryBtn = h('button', { class: 'so-sorry', onClick: () => { sorryFor.forEach(k => { const o = actors[k]; if (!o || o.st !== 'chase') return; o.st = 'idle'; o.until = performance.now() + 1500; o.e.classList.remove('walk', 'chase'); pop(o.e, toned(k, '…이번만 봐준다'), 'say'); }); sfx('point'); endSorry(); } }, '🙇 미안해!', h('i'));
-    scroller.parentNode.insertBefore(sorryBtn, scroller.nextSibling); sorryT = setTimeout(endSorry, 1000);
+    const kind = A(i) < -15 ? 'type' : 'btn', u = SORRY_UI[kind]; u.list.push(i); if (u.el) return;
+    if (kind === 'btn') u.el = h('button', { class: 'so-sorry', onClick: () => forgive('btn') }, '🙇 미안해!', h('i'));
+    else { const inp = h('input', { class: 'so-sorryin', placeholder: '미안해', maxLength: 8, autocomplete: 'off', enterKeyHint: 'send' }); inp.addEventListener('input', () => { if (inp.value.replace(/\s/g, '').includes('미안해')) forgive('type'); });
+      u.el = h('label', { class: 'so-sorry type' }, h('span', null, '1.5초 만에 "미안해"라고 입력하세요'), inp, h('i')); keys.clear(); setTimeout(() => inp.focus(), 0); }
+    scroller.parentNode.insertBefore(u.el, scroller.nextSibling); u.t = setTimeout(() => endSorry(kind), u.ms);
   }
-  function endSorry() { clearTimeout(sorryT); if (sorryBtn) sorryBtn.remove(); sorryBtn = null; sorryFor = []; }
   // 사이가 나쁜 동물에게 맞으면 돈이 조금 나간다
   function gotHit(o, now) {
     o.nextHit = now + 900; getOff(); me.kb = (me.x >= o.x ? 1 : -1) * 70; sfx('hit'); pop(mePop, '퍽!'); meEl.classList.remove('ouch'); void meEl.offsetWidth; meEl.classList.add('ouch');
@@ -339,5 +342,5 @@ export function mount(el, ctx) {
     ctx.store.on('socialme/' + ctx.uid, v => { const first = vit === null; vit = v || {};
       if (first) { if (vit.deadAt && ctx.store.now() - vit.deadAt < TEN_MIN) lock(); else { if (vit.deadAt) saveVit({ hp: HP_MAX, deadAt: 0 }); scene(); } } else drawHp(); }),
   ];
-  return () => { alive = false; clearTimeout(sorryT); clearInterval(lockT); cancelAnimationFrame(raf); offs.forEach(f => f()); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
+  return () => { alive = false; endSorry(); clearInterval(lockT); cancelAnimationFrame(raf); offs.forEach(f => f()); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
 }

@@ -822,3 +822,8 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .so-sorry i { position: absolute; left: 0; bottom: 0; height: 7px; width: 100%; background: #E5484D; transform-origin: left; animation: soSorryBar 1s linear forwards; }
 @keyframes soSorryBar { to { transform: scaleX(0); } }
 @keyframes soSorryIn { from { transform: scale(.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.so-sorry.type { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; height: 78px; margin-top: -86px; padding: 4px 10px 9px; }
+.so-sorry.type span { font: 800 13px/1.2 var(--head); }
+.so-sorry.type input { width: 62%; text-align: center; border: 2px solid #E5484D; border-radius: 10px; padding: 4px 6px; font: 800 18px/1.2 var(--head); background: #fff; }
+.so-sorry.type i { animation-duration: 1.5s; }
