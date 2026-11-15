@@ -1,5 +1,5 @@
 // 돈(🪙): 게임에서 번 점수가 돈이 되고, 옷·선물을 사는 데 쓴다. 지갑과 산 물건은 사람마다 따로다
-import { toast } from './ui.js';
+import { toast, h } from './ui.js';
 import { TOPS, BOTTOMS, HATS } from './clothes.js';
 import { sfx } from './sound.js';
 
@@ -8,6 +8,8 @@ const FREE = new Set([TOPS, BOTTOMS, HATS].flatMap(a => a.slice(0, FREE_N).map(x
 const PRICES = {}; // 게임 한 판에 50쯤 벌어서, 다섯 판쯤 하면 한 벌
 [[TOPS, 250], [BOTTOMS, 250], [HATS, 200]].forEach(([a, p]) => a.forEach((x, i) => { PRICES[x.id] = p + (i % 3) * 30; }));
 export const priceOf = id => (FREE.has(id) ? 0 : PRICES[id] || 0);
+// 게임별 환산 규칙(게임 목록과 적립 카드에 그대로 보여 준다)
+export const RATE = { burger: '8점당 1코인', tetris: '5코인 + 25점당 1코인 (최대 150) · 이기면 +30', yuzu: '1점당 2코인', mahjong: '3점당 1코인 · 이기면 +20', omok: '승 50 · 무 25 · 패 15 · 혼자 10코인', four: '승 50 · 무 25 · 패 15 · 혼자 10코인', match: '승 50 · 무 25 · 패 15 · 혼자 10코인', volley: '승 50 · 패 15코인 (컴퓨터전은 60%)' };
 export const won = n => '🪙 ' + Math.round(n).toLocaleString('ko-KR');
 // 게임 결과 → 돈
 export const PAY = { burger: s => Math.floor(Math.max(0, s) / 8), tetris: s => Math.min(150, 5 + Math.floor(s / 25)), yuzu: s => Math.max(0, s) * 2, board: r => ({ win: 50, draw: 25, lose: 15, solo: 10 })[r] || 0, volley: w => (w ? 50 : 15), mahjong: s => Math.floor(Math.max(0, s) / 3) };
@@ -16,7 +18,13 @@ export function setupMoney(ctx, onChange) {
   ctx.money = {}; ctx.owned = {};
   ctx.coins = (u = ctx.uid) => ((ctx.money[u] || {}).c) || 0;
   ctx.owns = id => !id || FREE.has(id) || !!((ctx.owned[ctx.uid] || {})[id]);
-  ctx.earn = (n, why) => { n = Math.round(n); if (!(n > 0)) return Promise.resolve(0); toast(`${why ? why + ' ' : ''}+${n} 🪙`, 1600); return ctx.store.tx('money/' + ctx.uid, c => ({ ...(c || {}), c: ((c && c.c) || 0) + n, total: ((c && c.total) || 0) + n })).then(() => n).catch(() => 0); };
+  // 게임이 끝나면: 점수가 얼마로 환산됐고 얼마가 쌓였는지 카드로 보여 준다. lines = 환산 내역(글 줄들)
+  ctx.earn = (n, why, lines = []) => { n = Math.max(0, Math.round(n)); const before = ctx.coins();
+    const show = after => { document.querySelectorAll('.earn-card').forEach(e => e.remove());
+      const card = h('div', { class: 'earn-card', onClick: () => card.remove() }, h('b', null, `🪙 ${why || '게임'} 적립`), ...lines.map(t => h('p', null, t)), h('p', { class: 'sum' }, n > 0 ? `+${n.toLocaleString('ko-KR')}코인 적립` : '이번 판은 적립 없음'), h('small', null, `내 돈 ${before.toLocaleString('ko-KR')} → ${after.toLocaleString('ko-KR')}코인 · 누르면 닫혀요`));
+      document.body.append(card); setTimeout(() => card.remove(), 7000); };
+    if (!(n > 0)) { show(before); return Promise.resolve(0); }
+    return ctx.store.tx('money/' + ctx.uid, c => ({ ...(c || {}), c: ((c && c.c) || 0) + n, total: ((c && c.total) || 0) + n })).then(() => { show(before + n); return n; }).catch(() => 0); };
   // 돈이 모자라면 false. 쓴 뒤에 무엇을 얻는지는 부르는 쪽에서 적는다
   ctx.spend = async n => { n = Math.round(n); if (n <= 0) return true; let ok = false;
     try { await ctx.store.tx('money/' + ctx.uid, c => { const have = (c && c.c) || 0; if (have < n) { ok = false; return undefined; } ok = true; return { ...(c || {}), c: have - n }; }); } catch { ok = false; }

@@ -7,6 +7,7 @@ import * as yuzu from './g-yuzu.js';
 import * as burger from './g-burger.js';
 import * as tetris from './g-tetris.js';
 import * as mahjong from './g-mahjong.js';
+import { RATE } from './money.js';
 
 const HOTTEOK = 'https://hyunming9999-hash.github.io/hotteok-tekken/';
 
@@ -25,6 +26,6 @@ export function mount(el, ctx, sub) {
   const g = GAMES.find(x => x.id === sub);
   if (g) { ctx.setTitle(g.title); el.classList.add('game-' + g.id); return g.mod.mount(el, ctx); }
   el.append(h('div', { class: 'game-list' }, GAMES.map((x, i) => h('button', { class: 'game-card', style: { animationDelay: i * 50 + 'ms' }, onClick: () => ctx.go('game-' + x.id) },
-    capyEl({ color: ['brown', 'cream', 'choco', 'peach'][i % 4], acc: x.acc, face: x.face, head: true }), h('div', null, h('b', null, x.title), h('small', null, x.sub)), h('span', { class: 'go' }, '›'))),
+    capyEl({ color: ['brown', 'cream', 'choco', 'peach'][i % 4], acc: x.acc, face: x.face, head: true }), h('div', null, h('b', null, x.title), h('small', null, x.sub), RATE[x.id] && h('small', { class: 'g-rate' }, '🪙 ' + RATE[x.id])), h('span', { class: 'go' }, '›'))),
     h('a', { class: 'game-card ext', href: HOTTEOK, target: '_blank', rel: 'noopener', style: { animationDelay: '300ms' } }, h('span', { class: 'ext-ic' }, '🥊'), h('div', null, h('b', null, '호떡 철권'), h('small', null, '따로 만든 게임 · 새 창에서 열려요')), h('span', { class: 'go' }, '↗'))));
 }

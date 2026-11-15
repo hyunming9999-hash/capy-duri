@@ -29,7 +29,7 @@ export function mount(el, ctx) {
   }
   function start() { st = 'play'; score = 0; left = TIME; items = []; pops = []; spawn = 0; btn.hidden = true; }
   function end() {
-    st = 'over'; btn.hidden = false; btn.textContent = '다시 하기'; ctx.earn(PAY.yuzu(score), '유자 받기');
+    st = 'over'; btn.hidden = false; btn.textContent = '다시 하기'; ctx.earn(PAY.yuzu(score), '유자 받기', [`내 점수 ${score}점 × 2 = ${PAY.yuzu(score)}코인`]);
     const b = best[ctx.uid], pb = ctx.partnerId && best[ctx.partnerId];
     // 30초 점수 대결: 상대 최고 기록을 넘으면 승리, 못 넘으면 패배. 상대 기록이 없으면 내 신기록일 때 승리
     if (pb) gameFx(score > pb.s ? 'win' : score < pb.s ? 'lose' : 'draw', `${score}점 · ${ctx.nameOf(ctx.partnerId)} 최고 ${pb.s}점`); else if (score > 0 && (!b || score > b.s)) gameFx('win', `${score}점 신기록`);
