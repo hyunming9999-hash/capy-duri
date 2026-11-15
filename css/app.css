@@ -794,3 +794,13 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 
 .so-an.late .so-body, .so-me.late svg { animation-delay: -1.7s; }
 .so-pop.up { color: #E64980; font-size: 14px; top: -22px; }
+
+/* 친목회: 체력 */
+.so-hp { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-size: 13px; }
+.so-hp > i { flex: 1; height: 12px; background: #EEE6D8; border: 2px solid #D9C9AE; border-radius: 8px; overflow: hidden; }
+.so-hp u { display: block; height: 100%; border-radius: 6px; transition: width .3s, background .3s; }
+.so-hpn { font-weight: 800; white-space: nowrap; min-width: 62px; text-align: right; }
+.so-pot:disabled { opacity: .45; }
+.so-lock { text-align: center; padding: 26px 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.so-lockc { width: 120px; filter: grayscale(.5); transform: rotate(90deg); margin: 10px 0 0; } .so-lockc svg { width: 100%; display: block; }
+.so-lockt { font-size: 34px; color: #C0392B; }
