@@ -773,3 +773,21 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 
 .so-bagme { width: 96px; margin: 0 auto; } .so-bagme svg { width: 100%; display: block; }
 .so-row.on { border-color: #FF7FA8; background: #FFF0F5; }
+
+/* 친목회: 상하 이동·내가 타는 놀이기구 */
+.so-me { transform-origin: 50% 100%; }
+.so-me.r-slide svg { animation: soSlide 3.4s ease-in infinite; } .so-me.r-slide.rev svg { animation-name: soSlideRev; }
+.so-me.r-sand svg { animation: soDig .7s ease-in-out infinite alternate; }
+.so-me.r-gym svg { animation: soClimb 4.5s ease-in-out infinite alternate; }
+.so-me.r-bench svg { animation: soNap 3s ease-in-out infinite; }
+.so-me.r-swing svg, .so-me.r-seeL svg, .so-me.r-seeR svg { transform-origin: 50% 100%; }
+.so-pad { align-items: flex-end; }
+.so-dpad { grid-template-areas: ". U ." "L D R"; gap: 5px; }
+.so-pad .so-dpad .so-dp { width: min(19vw, 76px); height: 46px; font-size: 20px; border-radius: 14px; }
+.so-acts2 { display: flex; flex-direction: column; gap: 5px; }
+.so-pad .so-acts2 .so-dp { width: min(27vw, 106px); height: 46px; flex-direction: row; gap: 5px; font-size: 20px; display: flex; align-items: center; justify-content: center; border-radius: 14px; }
+.so-pad .so-ride { background: #E3F4FF; border-color: #9CCBEA; box-shadow: 0 4px 0 #9CCBEA; }
+.so-pad .so-ride small { font: 700 12px/1.2 var(--head); color: #2F6F9A; }
+.so-pad .so-ride:disabled { opacity: .4; box-shadow: none; }
+.so-pad .so-ride.ready { animation: soReady .8s ease-in-out infinite alternate; }
+@keyframes soReady { to { background: #BFE6FF; transform: translateY(-2px); } }
