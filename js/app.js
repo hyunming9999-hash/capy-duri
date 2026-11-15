@@ -273,7 +273,7 @@ function render() {
   if (SCENE[name] && (name !== 'game' || sub)) bgm.start(SCENE[name]); // 게임 목록에서는 조용히, 게임 안에서만
 }
 // 배경음이 나오는 곳과 소리 켜기/끄기 버튼
-const SCENE = { walk: 'bath', gallery: 'gallery', game: 'game' };
+const SCENE = { walk: 'bath', gallery: 'gallery', game: 'game', social: 'social' };
 function sndBtn() { const b = h('button', { class: 'call snd', 'aria-label': '효과음·배경음 켜기/끄기', title: '효과음·배경음', onClick: () => { setFx(!fxOn()); b.textContent = fxOn() ? '🔊' : '🔇'; toast(fxOn() ? '효과음·배경음을 켰어요' : '효과음·배경음을 껐어요', 1300); } }, fxOn() ? '🔊' : '🔇'); return b; }
 
 function partnerBadge() {

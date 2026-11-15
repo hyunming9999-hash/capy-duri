@@ -4,7 +4,7 @@ import { capy } from './capy.js';
 import { ANIMALS, animalSvg } from './animals.js';
 import { TOPS, BOTTOMS, HATS, nameOf } from './clothes.js';
 import { priceOf, won } from './money.js';
-import { sfx } from './sound.js';
+import { sfx, animalVoice } from './sound.js';
 import { PUSH_URL } from './push.js';
 import { isMock } from './store.js';
 
@@ -249,7 +249,7 @@ export function mount(el, ctx) {
 
   // ----- 동물과 만나기 -----
   function openAnimal(i) {
-    const a = ANIMALS[i], p = PERSONA[i]; let busy = false, said = '', close; held = i; actors[i] && actors[i].e.classList.remove('walk');
+    const a = ANIMALS[i], p = PERSONA[i]; let busy = false, said = '', close; held = i; animalVoice(i); actors[i] && actors[i].e.classList.remove('walk');
     const faceEl = h('span', { html: animalSvg(i, true, moodOf(A(i))) }); let faceMood = moodOf(A(i));
     const bubble = h('p', { class: 'so-bubble' }), meter = h('div', { class: 'so-meter' }), quick = h('div', { class: 'so-quick' }), input = h('input', { class: 'so-input', maxLength: 60, placeholder: `${a.name}에게 하고 싶은 말`, enterKeyHint: 'send' });
     const say = (t, cls = '', raw = false) => { bubble.className = 'so-bubble ' + cls; bubble.textContent = raw || t === '…' ? t : toned(i, t); };
