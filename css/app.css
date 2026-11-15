@@ -635,3 +635,8 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .bg-held{width:30px;height:auto;padding:1px 0 2px;border-radius:9px;display:flex;flex-direction:column;align-items:center}.bg-held img{width:22px;height:22px}.bg-station .bg-hold .bg-held small{display:block;margin:0;font-size:8.5px;line-height:1.1;color:#3B2618;white-space:nowrap;letter-spacing:-.7px}
 .bg-hold{min-height:38px}.bg-fresh{bottom:-4px}.grill .bg-pan{height:33px}.fry .bg-pan{height:62px}
 .bg-pan .bg-gauge{flex:none}.grill .bg-pan{height:36px}
+/* 카피 버거: 탭 그림, 늘 보이는 포장·매장 */
+.bg-tab{display:flex;align-items:center;justify-content:center;gap:4px}.bg-tab i{font-style:normal;font-size:19px;line-height:1}.bg-slot i.em{font-style:normal;font-size:20px;filter:grayscale(1);opacity:.32}.bg-mt .bg-slot i.em{font-size:15px}.bg-mt .bg-slot.wide i.em{font-size:24px}
+.bg-fin{position:sticky;bottom:6px;z-index:5;margin-top:8px}.bg-cc-star{position:absolute;right:-3px;top:-6px;padding:0 5px;height:17px;border-radius:9px;background:#F5A623;color:#fff;font:10px/17px var(--head);z-index:3}.bg-cc.hard{border-style:double}
+.bg-score{white-space:nowrap}
+.bg-slot i.em{opacity:.5}
