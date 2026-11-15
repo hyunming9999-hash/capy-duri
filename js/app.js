@@ -30,7 +30,7 @@ const MENU = [
   { id: 'day', mod: day, title: '오늘 무슨 날이지?', short: '일정', sub: '일정 · 예약 · 일기', face: 'smile', acc: 'leaf', tint: '#FFE3A6' },
   { id: 'wear', mod: wear, title: '오늘 뭐 입지?', short: '코디', sub: '서로 옷 봐주기', face: 'wink', acc: 'ribbon', tint: '#FFD0D6' },
   { id: 'eat', mod: eat, title: '오늘 뭐 먹지?', short: '맛집', sub: '맛집 찾기 · 룰렛', face: 'wow', acc: 'yuzu', tint: '#CDEBB5' },
-  { id: 'game', mod: game, title: '오늘 무슨 게임하지?', short: '게임', sub: '카피바라 게임 5종', face: 'happy', acc: 'none', tint: '#C9E4F7' },
+  { id: 'game', mod: game, title: '오늘 무슨 게임하지?', short: '게임', sub: '카피바라 게임 7종', face: 'happy', acc: 'none', tint: '#C9E4F7' },
   { id: 'where', mod: where, title: '오늘 어디야?', short: '어디야', sub: '위치 핑 찍기', face: 'wow', acc: 'leaf', tint: '#BFE8E0' },
   { id: 'watch', mod: watch, title: '오늘 뭐 보실?', short: '영화관', sub: '카피바라 영화관', face: 'sleepy', acc: 'towel', tint: '#D9D2F5' },
   { id: 'walk', mod: walk, title: '카피바라 목욕하실?', short: '목욕탕', sub: '히노끼탕 · 음성 대화', face: 'sleepy', acc: 'towel', tint: '#F3DDB8' },

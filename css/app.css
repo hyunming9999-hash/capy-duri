@@ -640,3 +640,13 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .bg-fin{position:sticky;bottom:6px;z-index:5;margin-top:8px}.bg-cc-star{position:absolute;right:-3px;top:-6px;padding:0 5px;height:17px;border-radius:9px;background:#F5A623;color:#fff;font:10px/17px var(--head);z-index:3}.bg-cc.hard{border-style:double}
 .bg-score{white-space:nowrap}
 .bg-slot i.em{opacity:.5}
+/* 카피 테트리스 */
+.tt-hero{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:20px;background:var(--card);border:2px solid var(--line)}.tt-hero span{font-size:40px}.tt-hero b{display:block;font:22px var(--head)}.tt-hero small{color:var(--ink2)}
+.tt .btn.big{display:block;width:100%;margin-top:10px}
+.tt-top{display:flex;align-items:center;gap:8px;padding:5px 12px;border-radius:999px;background:var(--card);border:2px solid var(--line);font:17px var(--head);margin-bottom:6px}.tt-top span{flex:1;min-width:0;font:12px var(--body,inherit);color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tt-play{position:relative;display:flex;justify-content:center;align-items:flex-start;gap:8px}.tt-board{border-radius:12px;border:3px solid #5F3F2B;box-shadow:0 4px 0 #5F3F2B;touch-action:none;max-width:100%}
+.tt-side{width:74px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;border-radius:14px;background:var(--card);border:2px solid var(--line)}.tt-side small{color:var(--ink2);font-size:11px;margin-top:3px}.tt-side b{font:18px var(--head)}.tt-side canvas{display:block;width:64px;height:44px}
+.tt-hold{padding:0;border:2px dashed var(--line);border-radius:10px;background:#fff}.tt-warn{font-style:normal;font:12px var(--head);color:#fff;background:#E5484D;border-radius:8px;padding:1px 6px;margin-top:4px;animation:bgpulse .5s infinite alternate}
+.tt-keys{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px;touch-action:none;user-select:none;-webkit-user-select:none}.tt-key{height:54px;border-radius:16px;border:2px solid var(--line);background:var(--card);box-shadow:0 4px 0 var(--line);font-size:24px;color:inherit;touch-action:none}
+.tt-key:active{transform:translateY(4px);box-shadow:none}.tt-key.rot{background:#FFF1C2;border-color:var(--yuzu-d);box-shadow:0 4px 0 var(--yuzu-d)}.tt-key.drop{background:#DDF5E3;border-color:#2E9B57;box-shadow:0 4px 0 #2E9B57}
+.tt-count{position:absolute;inset:0;margin:auto;height:fit-content;background:rgba(255,253,247,.9);border-radius:20px;padding:10px 0}
