@@ -791,3 +791,6 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .so-pad .so-ride:disabled { opacity: .4; box-shadow: none; }
 .so-pad .so-ride.ready { animation: soReady .8s ease-in-out infinite alternate; }
 @keyframes soReady { to { background: #BFE6FF; transform: translateY(-2px); } }
+
+.so-an.late .so-body, .so-me.late svg { animation-delay: -1.7s; }
+.so-pop.up { color: #E64980; font-size: 14px; top: -22px; }

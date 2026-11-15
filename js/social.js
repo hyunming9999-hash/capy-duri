@@ -67,13 +67,13 @@ export function mount(el, ctx) {
   const pid = () => ctx.partnerId, A = i => (mine[i] && mine[i].a) || 0;
   const H = Math.round(Math.min(innerHeight * 0.48, 470)), TILE = Math.round(H * 1213 / 520), TILES = 3, WIDTH = TILE * TILES, IW = 1344, IH = 576;
   // 놀이기구 자리: [종류, 그림 속 가로 위치(0~1), 바닥에서 높이(0~1), 그네 번호]
-  const SPOT_DEFS = [['slide', 0.243, 0.385], ['swing', 0.2943, 0.43, 0], ['swing', 0.3286, 0.43, 1], ['seeL', 0.3964, 0.45], ['seeR', 0.4947, 0.45], ['sand', 0.555, 0.41], ['gym', 0.675, 0.4], ['bench', 0.768, 0.435]];
+  const SPOT_DEFS = [['slide', 0.243, 0.385], ['slide', 0.243, 0.385, 0, 'late'], ['swing', 0.2943, 0.43, 0], ['swing', 0.3286, 0.43, 1], ['seeL', 0.3964, 0.45], ['seeR', 0.4947, 0.45], ['sand', 0.538, 0.41], ['sand', 0.574, 0.41], ['gym', 0.661, 0.4], ['gym', 0.691, 0.4, 0, 'late'], ['bench', 0.753, 0.435], ['bench', 0.784, 0.435]];
   const SEE_X = 598.8 / IW, ROPE = (323 - 243) / IH * H;
   const LANES = [[0.07, 1], [0.13, 0.94], [0.19, 0.88], [0.25, 0.82]], RIDE_S = 0.62, ME_SP = 150, CHASE_SP = 118;
   const tiles = [], spots = [];
   const CHASE_AT = -10, moodOf = v => (v <= CHASE_AT ? 'mad' : v < 0 ? 'angry' : '');
   let actors = [], held = -1, raf = 0, lastT = 0, punchAt = 0;
-  const me = { x: 200, y: 0.03, f: 1, dy: 0.03, ds: 1, ride: null }, keys = new Set(), Y_MAX = 0.27; let rideBtn, rideState = '';
+  const me = { x: 200, y: 0.03, f: 1, dy: 0.03, ds: 1, ride: null, kb: 0, rideT: 0, gain: {} }, keys = new Set(), Y_MAX = 0.27; let rideBtn, rideState = '';
   // 움직이는 놀이기구(그네 두 개, 시소)를 배경 위에 그린다
   const EQ = `<svg class="so-eq" viewBox="0 0 ${IW} ${IH}" preserveAspectRatio="none">${[395.5, 441.6].map(x => `<g class="eq-sw"><path d="M${x - 16} 243V319M${x + 16} 243V319" stroke="#A8743C" stroke-width="5.5" stroke-linecap="round"/><path d="M${x - 16} 243V319M${x + 16} 243V319" stroke="#F3E3C3" stroke-width="2.6" stroke-dasharray="3 3"/><rect x="${x - 23}" y="316" width="46" height="13" rx="6.5" fill="#FFD21F" stroke="#B5651D" stroke-width="2.2"/></g>`).join('')}
     <g class="eq-see"><rect x="523" y="315" width="152" height="11" rx="5.5" fill="#F8C24A" stroke="#B5651D" stroke-width="2.2"/><rect x="520" y="308" width="34" height="11" rx="5.5" fill="#F47C72" stroke="#B5473C" stroke-width="2"/><rect x="644" y="308" width="34" height="11" rx="5.5" fill="#F47C72" stroke="#B5473C" stroke-width="2"/><path d="M560 315V298M638 315V298" stroke="#EFC27A" stroke-width="5" stroke-linecap="round"/><rect x="551" y="293" width="18" height="8" rx="4" fill="#FFD21F" stroke="#B5651D" stroke-width="1.8"/><rect x="629" y="293" width="18" height="8" rx="4" fill="#F47C72" stroke="#B5473C" stroke-width="1.8"/></g>
@@ -94,7 +94,7 @@ export function mount(el, ctx) {
     const world = h('div', { class: 'so-world', style: { width: WIDTH + 'px', height: H + 'px', '--sx': Math.round(-0.05 * TILE) + 'px', '--sy': Math.round(-0.115 * H) + 'px', '--gy': Math.round(-0.13 * H) + 'px' } });
     for (let k = 0; k < TILES; k++) { const flip = k % 2 === 1, bg = h('i', { class: 'so-bg' + (flip ? ' flip' : ''), style: { left: k * TILE + 'px', width: TILE + 1 + 'px' }, html: EQ }); world.append(bg);
       const fx = f => (k + (flip ? 1 - f : f)) * TILE, t = { dir: flip ? -1 : 1, sw: [...bg.querySelectorAll('.eq-sw')].map((g, n) => ({ g, cx: [395.5, 441.6][n], a: 3, cur: 0, ph: n * 1.4 + k, on: 0 })), see: { g: bg.querySelector('.eq-see'), cur: -11, x: fx(SEE_X), on: 0 } };
-      tiles.push(t); SPOT_DEFS.forEach(([type, f, b, n]) => spots.push({ type, x: fx(f), b, dir: t.dir, by: -1, eq: type === 'swing' ? t.sw[n] : type[0] === 's' && type[1] === 'e' ? t.see : null, t })); }
+      tiles.push(t); SPOT_DEFS.forEach(([type, f, b, n, late]) => spots.push({ type, late: late ? ' late' : '', grp: k + type.slice(0, 3), x: fx(f), b, dir: t.dir, by: -1, eq: type === 'swing' ? t.sw[n] : type[0] === 's' && type[1] === 'e' ? t.see : null, t })); }
     actors = ANIMALS.map((a, i) => { const lane = i % LANES.length, x = 90 + (i + 0.5) * (WIDTH - 180) / ANIMALS.length;
       const e = h('button', { class: 'so-an', 'data-i': i, style: { left: x + 'px', zIndex: 10 - lane }, onClick: () => openAnimal(i) }, h('span', { class: 'so-score' }), h('span', { class: 'so-hearts' }), h('span', { class: 'so-body', html: animalSvg(i, true) }), h('small', null, a.name));
       world.append(e); return { e, body: e.querySelector('.so-body'), x, lane, y: LANES[lane][0], s: LANES[lane][1], st: 'idle', until: performance.now() + 400 + Math.random() * 3500, tx: x, spot: null, sp: 24 + Math.random() * 16, cool: 0, nextHit: 0, wait: 0 }; });
@@ -103,7 +103,7 @@ export function mount(el, ctx) {
     rideBtn = h('button', { class: 'dp so-dp so-ride', disabled: true, onClick: toggleRide }, '🎠', h('small', null, '타기'));
     const pad = h('div', { class: 'so-pad' }, h('div', { class: 'dpad so-dpad' }, [['U', '▲'], ['L', '◀'], ['D', '▼'], ['R', '▶']].map(([k, t]) => { const b = h('button', { class: 'dp so-dp dp-' + k, 'aria-label': k }, t); holdBtn(b, () => keys.add(k), () => keys.delete(k)); return b; })),
       h('span', { class: 'so-sp' }), h('div', { class: 'so-acts2' }, rideBtn, h('button', { class: 'dp so-dp so-hit', onClick: punch }, '👊', h('small', null, '때리기'))));
-    el.replaceChildren(top, scroller, pad, h('p', { class: 'dim center so-hint' }, '방향키로 걸어가요. 놀이기구 앞에서 🎠 로 타요. 동물을 누르면 말을 걸어요. 얼굴이 빨간 동물(-10점 이하)은 쫓아와요!'));
+    el.replaceChildren(top, scroller, pad, h('p', { class: 'dim center so-hint' }, '방향키로 걸어가요. 놀이기구 앞에서 🎠 로 타요. 동물과 같이 타면 친해져요. 동물을 누르면 말을 걸어요. 얼굴이 빨간 동물(-10점 이하)은 쫓아와요!'));
     scores(); lastT = performance.now(); raf = requestAnimationFrame(step);
   }
   const KEY = { ArrowLeft: 'L', ArrowRight: 'R', ArrowUp: 'U', ArrowDown: 'D', a: 'L', d: 'R', w: 'U', s: 'D' };
@@ -113,9 +113,10 @@ export function mount(el, ctx) {
   const pop = (parent, text, cls = '') => { const f = h('em', { class: 'so-pop ' + cls }, text); parent.append(f); setTimeout(() => f.remove(), 1000); };
 
   // 나도 놀이기구를 탄다: 빈 놀이기구 앞에서 🎠, 다시 누르거나 방향키를 누르면 내린다
-  const nearSpot = () => spots.filter(q => q.by < 0 && Math.abs(q.x - me.x) < 55).sort((a, b) => Math.abs(a.x - me.x) - Math.abs(b.x - me.x))[0];
+  const buddiesOf = q => actors.map((o, i) => (o.st === 'ride' && o.spot && o.spot.grp === q.grp ? i : -1)).filter(i => i >= 0);
+  const nearSpot = () => spots.filter(q => q.by < 0 && Math.abs(q.x - me.x) < 60).sort((a, b) => (buddiesOf(b).length ? 1 : 0) - (buddiesOf(a).length ? 1 : 0) || Math.abs(a.x - me.x) - Math.abs(b.x - me.x))[0];
   function getOff() { const q = me.ride; if (!q) return; if (q.eq) q.eq.on = Math.max(0, q.eq.on - 1); q.by = -1; me.ride = null; me.y = Y_MAX - 0.02; meEl.className = 'so-me'; const g = meEl.firstElementChild; if (g) g.style.transform = ''; }
-  function toggleRide() { if (me.ride) return getOff(); const q = nearSpot(); if (!q) return; q.by = 99; if (q.eq) q.eq.on++; me.ride = q; me.f = 1; meEl.className = 'so-me r-' + q.type + (q.dir < 0 ? ' rev' : ''); sfx('jump'); }
+  function toggleRide() { if (me.ride) return getOff(); const q = nearSpot(); if (!q) return; q.by = 99; if (q.eq) q.eq.on++; me.ride = q; me.f = 1; me.rideT = 0; me.gain = {}; meEl.className = 'so-me r-' + q.type + (q.dir < 0 ? ' rev' : '') + q.late; sfx('jump'); }
   // 때리기: 앞에 있는 가까운 동물을 친다. 맞은 동물은 밀려나고 친밀도가 떨어지며, 그 일을 기억한다
   function punch() {
     const now = performance.now(); if (now - punchAt < 600 || document.querySelector('.modal-wrap')) return; punchAt = now; getOff();
@@ -129,12 +130,12 @@ export function mount(el, ctx) {
   }
   // 사이가 나쁜 동물에게 맞으면 돈이 조금 나간다
   function gotHit(o, now) {
-    o.nextHit = now + 900; getOff(); sfx('hit'); pop(mePop, '퍽!'); meEl.classList.remove('ouch'); void meEl.offsetWidth; meEl.classList.add('ouch');
+    o.nextHit = now + 900; getOff(); me.kb = (me.x >= o.x ? 1 : -1) * 70; sfx('hit'); pop(mePop, '퍽!'); meEl.classList.remove('ouch'); void meEl.offsetWidth; meEl.classList.add('ouch');
     const n = Math.min(ctx.coins(), 3 + Math.floor(Math.random() * 4)); if (n <= 0) return;
     ctx.store.tx('money/' + ctx.uid, c => ({ ...(c || {}), c: Math.max(0, ((c && c.c) || 0) - n) })).catch(() => {}); setTimeout(() => alive && pop(mePop, `-${n}🪙`, 'lose'), 200);
   }
   // 동물들이 걸어 다니다가 가까운 놀이기구가 비면 가서 탄다. 말을 걸고 있는 동물(held)은 그 자리에 멈춘다
-  function leave(o) { if (!o.spot) return; o.e.className = o.e.className.replace(/ ride r-\w+/g, '').replace(' rev', ''); if (o.spot.eq) o.spot.eq.on = Math.max(0, o.spot.eq.on - (o.st === 'ride' ? 1 : 0)); o.body.style.transform = ''; o.spot.by = -1; o.spot = null; }
+  function leave(o) { if (!o.spot) return; o.e.className = o.e.className.replace(/ ride r-\w+/g, '').replace(' rev', '').replace(' late', ''); if (o.spot.eq) o.spot.eq.on = Math.max(0, o.spot.eq.on - (o.st === 'ride' ? 1 : 0)); o.body.style.transform = ''; o.spot.by = -1; o.spot = null; }
   const crowded = (o, x) => actors.some(q => q !== o && q.lane === o.lane && q.st !== 'ride' && (Math.abs(q.x - x) < 64 || Math.abs(q.tx - x) < 64));
   function decide(o, i) {
     const free = Math.random() < 0.25 ? spots.filter(s => s.by < 0 && Math.abs(s.x - o.x) < 520) : [];
@@ -146,6 +147,7 @@ export function mount(el, ctx) {
     if (!alive) return; const dt = Math.min(0.1, (now - lastT) / 1000), t = now / 1000, paused = !!document.querySelector('.modal-wrap'); lastT = now;
     // 나: 화살표로 걷고, 화면이 따라온다
     const mx = paused ? 0 : (keys.has('R') ? 1 : 0) - (keys.has('L') ? 1 : 0), my = paused ? 0 : (keys.has('U') ? 1 : 0) - (keys.has('D') ? 1 : 0);
+    if (me.kb) { const k = me.kb * Math.min(1, dt * 9); me.x = Math.max(40, Math.min(WIDTH - 40, me.x + k)); me.kb = Math.abs(me.kb - k) < 1 ? 0 : me.kb - k; }
     if ((mx || my) && me.ride) getOff();
     if (mx) { me.f = mx; me.x = Math.max(40, Math.min(WIDTH - 40, me.x + mx * ME_SP * dt)); }
     if (my) me.y = Math.max(0, Math.min(Y_MAX, me.y + my * 0.22 * dt));
@@ -153,10 +155,13 @@ export function mount(el, ctx) {
     if (R) { me.x += (R.x - me.x) * Math.min(1, dt * 6); mty = R.b; mts = RIDE_S; const q = R.eq;
       if (g && q && R.type === 'swing') { const ph = q.cur * R.dir * Math.PI / 180; g.style.transform = `translate(${(-ROPE * Math.sin(ph) / mts).toFixed(1)}px, ${(ROPE * (Math.cos(ph) - 1) / mts).toFixed(1)}px) rotate(${(q.cur * R.dir).toFixed(1)}deg)`; }
       else if (g && q) g.style.transform = `translateY(${((R.x - q.x) * Math.sin(q.cur * R.dir * Math.PI / 180) / mts).toFixed(1)}px)`; }
+    if (R && !paused) { const pals = buddiesOf(R); pals.forEach(i => { actors[i].until = Math.max(actors[i].until, now + 2500); }); // 같이 타는 동안은 동물도 안 내린다
+      me.rideT = pals.length ? me.rideT + dt : 0;
+      if (me.rideT >= 4) { me.rideT = 0; pals.forEach(i => { if (A(i) >= 100 || (me.gain[i] || 0) >= 8) return; me.gain[i] = (me.gain[i] || 0) + 1; setRel(i, { a: A(i) + 1 }); pop(actors[i].e, '+1 💗', 'up'); }); sfx('point'); scores(); } }
     const mk = Math.min(1, dt * (R ? 5 : 14)); me.dy += (mty - me.dy) * mk; me.ds += (mts - me.ds) * mk;
     meEl.classList.toggle('walk', !!(mx || my) && !R); meEl.style.left = mePop.style.left = me.x + 'px'; meEl.style.bottom = (me.dy * 100).toFixed(2) + '%'; mePop.style.bottom = Math.round(me.dy * H + 96 * me.ds) + 'px';
     meEl.style.transform = `scale(${(me.f * me.ds).toFixed(3)}, ${me.ds.toFixed(3)})`; meEl.style.zIndex = R ? 6 : me.dy < 0.07 ? 11 : me.dy < 0.13 ? 10 : me.dy < 0.19 ? 9 : me.dy < 0.25 ? 8 : 7;
-    const rs = R ? 'off' : nearSpot() ? 'on' : ''; if (rs !== rideState) { rideState = rs; rideBtn.disabled = !rs; rideBtn.classList.toggle('ready', rs === 'on'); rideBtn.lastChild.textContent = rs === 'off' ? '내리기' : '타기'; }
+    const ns = R ? null : nearSpot(), rs = R ? 'off' : ns ? (buddiesOf(ns).length ? 'with' : 'on') : ''; if (rs !== rideState) { rideState = rs; rideBtn.disabled = !rs; rideBtn.classList.toggle('ready', rs === 'on' || rs === 'with'); rideBtn.lastChild.textContent = rs === 'off' ? '내리기' : rs === 'with' ? '같이 타기' : '타기'; }
     scroller.scrollLeft = Math.max(0, Math.min(WIDTH - scroller.clientWidth, me.x - scroller.clientWidth / 2));
     // 놀이기구: 누가 타면 크게, 아니면 살짝 흔들린다
     tiles.forEach(T => { T.sw.forEach(w => { w.a += ((w.on ? 17 : 3) - w.a) * Math.min(1, dt * 2); w.cur = w.a * Math.sin(t * 2.3 + w.ph); w.g.setAttribute('transform', `rotate(${w.cur.toFixed(2)} ${w.cx} 243)`); });
@@ -174,7 +179,7 @@ export function mount(el, ctx) {
           const blocked = o.wait < 1.5 && actors.some(q => q !== o && q.lane === o.lane && q.st !== 'ride' && (q.x - o.x) * dir > 0 && (q.x - o.x) * dir < 58 && !(o.spot && Math.abs(d) < 110));
           if (blocked) { o.wait += dt; if (!o.spot && o.wait > 0.5) { o.st = 'idle'; o.until = now + 500 + Math.random() * 1200; o.e.classList.remove('walk'); } }
           else if (Math.abs(d) <= step1) { o.x = o.tx; o.e.classList.remove('walk', 'left');
-            if (o.spot) { o.st = 'ride'; o.until = now + 9000 + Math.random() * 7000; if (o.spot.eq) o.spot.eq.on++; o.e.className += ' ride r-' + o.spot.type + (o.spot.dir < 0 ? ' rev' : ''); }
+            if (o.spot) { o.st = 'ride'; o.until = now + 9000 + Math.random() * 7000; if (o.spot.eq) o.spot.eq.on++; o.e.className += ' ride r-' + o.spot.type + (o.spot.dir < 0 ? ' rev' : '') + o.spot.late; }
             else { o.st = 'idle'; o.until = now + 900 + Math.random() * 3600; } }
           else o.x += dir * step1;
           if (o.spot) { const k = Math.max(0, 1 - Math.abs(o.tx - o.x) / 110); ty += (o.spot.b - ty) * k; ts += (RIDE_S - ts) * k; } }
