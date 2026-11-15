@@ -47,18 +47,24 @@ function face(f, c) {
 }
 
 // opts: {color, acc, face, view:'front'|'back', head:true(머리만), top/bottom/hat: 옷·모자 id, pin: 친목회에서 받은 상징(그림 글자)}. 모자를 쓰면 머리 장식(acc) 대신 모자가 보인다
+// 가슴에 다는 상징(나머지는 손에 든다)
+export const PIN_CHEST = new Set(['👑', '🥇', '🌈', '🌕', '🌙', '⚓', '🧊', '🫧', '🐚', '🌼', '🪷', '🌻']);
 export function capy(o = {}) {
   const c = COLORS[o.color] || COLORS.brown;
   const back = o.view === 'back';
   const ears = `<ellipse cx="22" cy="21" rx="8" ry="7.5" fill="${c.dark}"/><ellipse cx="98" cy="21" rx="8" ry="7.5" fill="${c.dark}"/>${back ? '' : `<ellipse cx="22.5" cy="22" rx="3.8" ry="3.4" fill="${c.light}"/><ellipse cx="97.5" cy="22" rx="3.8" ry="3.4" fill="${c.light}"/>`}`;
-  const head = `${ears}<rect x="9" y="15" width="102" height="69" rx="25" fill="${c.body}"/>${back ? `<path d="M40 30 q20 -7 40 0" fill="none" stroke="${c.dark}" stroke-width="2" opacity=".35" stroke-linecap="round"/>` : face(o.face, c)}${(o.hat && hatSvg(o.hat)) || acc(o.acc)}${o.pin ? `<circle cx="101" cy="40" r="15" fill="#fff" stroke="#E9C46A" stroke-width="2.5"/><text x="101" y="47.5" font-size="19" text-anchor="middle">${o.pin}</text>` : ''}`;
-  if (o.head) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 112">${head}</svg>`;
+  const head = `${ears}<rect x="9" y="15" width="102" height="69" rx="25" fill="${c.body}"/>${back ? `<path d="M40 30 q20 -7 40 0" fill="none" stroke="${c.dark}" stroke-width="2" opacity=".35" stroke-linecap="round"/>` : face(o.face, c)}${(o.hat && hatSvg(o.hat)) || acc(o.acc)}`;
+  // 친목회 상징: 배지 같은 것은 가슴에 달고, 먹을 것·물건은 손에 든다. 머리만 그릴 때는 턱 옆에 작게 단다
+  const pin = !o.pin || back ? '' : o.head ? `<circle cx="99" cy="76" r="11" fill="#fff" stroke="#E9C46A" stroke-width="2.2"/><text x="99" y="81.5" font-size="14" text-anchor="middle">${o.pin}</text>`
+    : PIN_CHEST.has(o.pin) ? `<circle cx="44" cy="93" r="9.5" fill="#fff" stroke="#E9C46A" stroke-width="2.2"/><text x="44" y="97.6" font-size="12.5" text-anchor="middle">${o.pin}</text>`
+    : `<text x="98" y="115" font-size="23" text-anchor="middle" transform="rotate(-12 98 108)">${o.pin}</text><ellipse cx="92" cy="109" rx="5.5" ry="4.5" fill="${c.body}"/>`;
+  if (o.head) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 112">${head}${pin}</svg>`;
   const cl = o.top || o.bottom ? wearSvg(o.top, o.bottom) : { under: '', top: '', over: '' };
   const body = `<ellipse cx="45" cy="128" rx="12" ry="6.5" fill="${c.dark}"/><ellipse cx="75" cy="128" rx="12" ry="6.5" fill="${c.dark}"/>
     <rect x="31" y="76" width="58" height="50" rx="24" fill="${c.body}"/>
     ${back ? `<ellipse cx="60" cy="118" rx="6" ry="5" fill="${c.dark}"/>` : `<ellipse cx="60" cy="105" rx="17" ry="15" fill="${c.light}"/>`}${cl.under}
     <ellipse cx="29" cy="99" rx="8" ry="12" fill="${c.body}" transform="rotate(14 29 99)"/><ellipse cx="91" cy="99" rx="8" ry="12" fill="${c.body}" transform="rotate(-14 91 99)"/>${cl.top}${cl.over}`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158">${body}${head}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158">${body}${head}${pin}</svg>`;
 }
 
 export function capyEl(o = {}, cls = '') {
