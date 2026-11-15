@@ -1,6 +1,7 @@
 // 카피 테트리스 — 기록(혼자 최고 점수) · 경쟁(같은 블록, 여러 줄을 지우면 상대에게 방해 줄)
 import { h, toast, modal, gameFx } from './ui.js';
 import { sfx } from './sound.js';
+import { PAY } from './money.js';
 
 const W = 10, H = 20, PATH = 'games/tetris';
 // 블록 모양(정사각 행렬)과 색. 색은 동물 손님들 털색에서 가져왔다
@@ -144,7 +145,7 @@ export function mount(el, ctx) {
   let lastPh = '';
   function result() {
     const o = them(), vs = S.kind === 'vs', key = `${S.diff}-${ctx.uid}`, my = G ? G.score : ((S.sc || {})[ctx.uid] || {}).s || 0, prev = best[key], won = vs && o ? (meDead() ? false : true) : null;
-    if (fxDone !== S.id) { fxDone = S.id; sfx(won === false ? 'lose' : 'win');
+    if (fxDone !== S.id) { fxDone = S.id; sfx(won === false ? 'lose' : 'win'); ctx.earn(PAY.tetris(my) + (won ? 30 : 0), '테트리스');
       if (my > 0 && (!prev || my > prev.s)) ctx.store.tx('games/tetrisBest/' + key, c => (c && c.s >= my ? undefined : { s: my, at: now() })).catch(() => {});
       if (vs && o) gameFx(won ? 'win' : 'lose', `${my.toLocaleString()} : ${(o.s || 0).toLocaleString()}`); else if (my > 0) gameFx('win', `${my.toLocaleString()}점${prev && my > prev.s ? ' 신기록' : ''}`); }
     box.replaceChildren(h('div', { class: 'bg-end' }, ...[h('span', null, '🧱'), h('b', null, vs && o ? (won ? '이겼어요!' : '졌어요…') : '끝!'),

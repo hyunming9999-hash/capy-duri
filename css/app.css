@@ -650,3 +650,8 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .tt-keys{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px;touch-action:none;user-select:none;-webkit-user-select:none}.tt-key{height:54px;border-radius:16px;border:2px solid var(--line);background:var(--card);box-shadow:0 4px 0 var(--line);font-size:24px;color:inherit;touch-action:none}
 .tt-key:active{transform:translateY(4px);box-shadow:none}.tt-key.rot{background:#FFF1C2;border-color:var(--yuzu-d);box-shadow:0 4px 0 var(--yuzu-d)}.tt-key.drop{background:#DDF5E3;border-color:#2E9B57;box-shadow:0 4px 0 #2E9B57}
 .tt-count{position:absolute;inset:0;margin:auto;height:fit-content;background:rgba(255,253,247,.9);border-radius:20px;padding:10px 0}
+/* 돈 */
+.coin-chip{display:inline-block;margin-top:2px;padding:1px 8px;border-radius:999px;background:#FFF1C2;border:1.5px solid var(--yuzu-d);font:12px var(--head);color:#7A5200}
+.dress-item{position:relative}.dress-item.lock::after{content:attr(data-price);position:absolute;left:50%;top:3px;transform:translateX(-50%);padding:0 6px;border-radius:999px;background:rgba(59,38,24,.82);color:#FFE08A;font:10px/16px var(--head);white-space:nowrap}.dress-item.lock span{filter:saturate(.75)}
+.dress-wallet{flex-basis:100%;text-align:center;color:var(--ink2)}.dress-wallet b{font-family:var(--head);color:#7A5200}
+.dress-ctl{flex-wrap:wrap}

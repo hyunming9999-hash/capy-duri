@@ -3,6 +3,7 @@
 import { h, toast, modal, gameFx } from './ui.js';
 import { sfx, sizzle } from './sound.js';
 import { ANIMALS as ZOO, animalSvg } from './animals.js';
+import { PAY } from './money.js';
 
 const ANIMALS = ZOO.map((a, i) => [animalSvg(i, true), a.name]); // [그림, 이름]
 
@@ -335,7 +336,7 @@ export function mount(el, ctx) {
 
   function result() {
     const key = `${S.kind}-${S.diff}-${ctx.uid}${S.calc ? '-c' : ''}`, my = L && L.id === S.id ? L.score : ((S.sc || {})[ctx.uid] || {}).s || 0, served = L && L.id === S.id ? L.n : 0, other = otherScore(), prev = best[key];
-    if (fxDone !== S.id) { fxDone = S.id; const id = S.id;
+    if (fxDone !== S.id) { fxDone = S.id; const id = S.id; ctx.earn(PAY.burger(my), '카피 버거');
       if (my > 0 && (!prev || my > prev.s)) ctx.store.tx('games/burgerBest/' + key, c => (c && c.s >= my ? undefined : { s: my, at: now() })).catch(() => {});
       setTimeout(() => { if (!alive || !S || S.id !== id) return; const o2 = otherScore(); // 경쟁은 상대 마지막 점수가 올 때까지 잠깐 기다린다
         if (o2) gameFx(my > o2.s ? 'win' : my < o2.s ? 'lose' : 'draw', `${my} : ${o2.s}`); else if (my > 0) gameFx('win', `${my}점${prev && my > prev.s ? ' 신기록' : ''}`); if (S.kind === 'vs') paint(); }, S.kind === 'vs' ? 1300 : 200); }

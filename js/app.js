@@ -14,6 +14,7 @@ import * as walk from './walk.js';
 import * as gallery from './gallery.js';
 import { GAMES } from './game.js';
 import { capySound, soundOn, setSound, bgm, fxOn, setFx } from './sound.js';
+import { setupMoney, won } from './money.js';
 
 // 연습 모드(?mock=이름)에서는 한 브라우저에서 두 사람 흉내를 낼 수 있게 저장 칸을 나눈다
 const NS = 'capy.' + (isMock ? (new URLSearchParams(location.search).get('mock') || '') + '.' : '');
@@ -236,6 +237,7 @@ function enter() {
     if (!p || p.by === ctx.uid || p.ts < enterAt || id === LS.get('ping')) return; LS.set('ping', id);
     if (curRoute() !== 'where') notify(`${josa(ctx.nameOf(p.by), '가', '이')} 위치 핑을 찍었어요${p.msg ? ': “' + p.msg + '”' : ''}`, '보기', () => ctx.go('where'));
   }, { limit: 1 });
+  setupMoney(ctx);
   ctx.store.on('dress', v => {
     const before = ctx.dress[ctx.uid] || {}, now = (v || {})[ctx.uid] || {}; ctx.dress = v || {};
     if (!firstDress && now.by && now.by !== ctx.uid && now.ts !== before.ts && curRoute() !== 'dress') notify(`${josa(ctx.nameOf(now.by), '가', '이')} 내 카피바라에게 옷을 입혀 줬어요`, '보기', () => ctx.go('dress'));
@@ -323,7 +325,7 @@ function home() {
   root.replaceChildren(h('div', { class: 'home' },
     h('section', { class: 'hero' },
       h('div', { class: 'duo' }, battEl(ctx.uid),
-        h('button', { class: 'me', onClick: () => ctx.go('profile') }, capyEl(ctx.capyOf(ctx.uid, { face: 'happy' }), 'bob'), h('b', null, ctx.me.name)),
+        h('button', { class: 'me', onClick: () => ctx.go('profile') }, capyEl(ctx.capyOf(ctx.uid, { face: 'happy' }), 'bob'), h('b', null, ctx.me.name), h('small', { class: 'coin-chip', 'data-coins': 1 }, won(ctx.coins ? ctx.coins() : 0))),
         h('span', { class: 'heart beat' }, '♥'),
         pid ? h('div', { class: 'me' }, capyEl(ctx.capyOf(pid, { face: 'happy' }), 'bob late'), h('b', null, ctx.nameOf(pid), h('i', { class: 'online' + (ctx.presence[pid] ? ' on' : ''), 'data-online': pid })),
             h('small', { class: 'at' }, !ctx.presence[pid] ? '지금은 접속 안 함' : ctx.partnerWhere && ctx.partnerWhere !== 'home' && ctx.partnerWhere !== 'profile' ? `${titleOf(ctx.partnerWhere)} 접속 중` : '지금 홈 화면'))
