@@ -85,6 +85,8 @@ export function mount(el, ctx) {
   // 받은 액세서리 달기, 산 옷 입기(다시 누르면 벗는다). 내 카피바라에 바로 보인다
   const SLOT = { t: 'top', b: 'bottom', h: 'hat' };
   async function wearPin(i) { await ctx.store.update('members/' + ctx.uid, { pin: i }).catch(() => {}); ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), pin: i }; scores(); }
+  // 그 옷 한 벌만 내 카피바라가 입은 모습(거래·가방 목록에 실제 그림으로 보여 준다)
+  const tryOn = id => h('span', { class: 'so-try', html: capy({ color: ctx.me.color, acc: 'none', face: 'happy', [SLOT[id[0]]]: id }) });
   const wearing = id => (ctx.dress[ctx.uid] || {})[SLOT[id[0]]] === id;
   async function wearCloth(id, on = true) { const d = ctx.dress[ctx.uid] || {}, nx = { top: d.top || '', bottom: d.bottom || '', hat: d.hat || '', by: ctx.uid, ts: ctx.store.now() }; nx[SLOT[id[0]]] = on ? id : '';
     ctx.dress[ctx.uid] = nx; await ctx.store.set('dress/' + ctx.uid, nx).catch(() => {}); scores(); }
@@ -279,10 +281,10 @@ export function mount(el, ctx) {
     function trade() {
       const v = A(i), ware = wareOf(i), disc = v >= 50 ? 0.5 : v >= 20 ? 0.75 : 1, wp = Math.round(priceOf(ware.id) * disc), hasPin = (bag.pins || {})[i];
       if (v < 0) return say('너한텐 아무것도 안 팔아. 저리 가!', 'angry');
-      const row = (ic, nm, sub, price, owned, fn) => h('button', { class: 'so-row', disabled: owned, onClick: fn }, h('span', null, ic), h('b', null, nm), h('small', null, owned ? '이미 갖고 있어요' : `${won(price)} · ${sub}`));
+      const row = (ic, nm, sub, price, owned, fn) => h('button', { class: 'so-row' + (typeof ic === 'string' ? '' : ' big'), disabled: owned, onClick: fn }, typeof ic === 'string' ? h('span', null, ic) : ic, h('b', null, nm), h('small', null, owned ? '이미 갖고 있어요' : `${won(price)} · ${sub}`));
       const cl = modal({ title: `🤝 ${a.name}와 거래`, body: h('div', { class: 'so-list' },
         row(p.pin, `${a.name}의 상징 액세서리`, v >= 10 ? '친해지면(50점) 그냥 줘요' : '아는 사이(10점)부터 팔아요', 500, hasPin, async () => { if (v < 10) return toast('아직 그 정도로 친하지 않대요'); if (!(await ctx.spend(500))) return; await ctx.store.update('bag/' + ctx.uid + '/pins', { [i]: true }).catch(() => {}); bag = { ...bag, pins: { ...(bag.pins || {}), [i]: true } }; await setRel(i, { got: true }); await wearPin(i); cl(); say(`자, ${p.pin} 여기. 내가 달아 줬어, 잘 달고 다녀!`, 'glad'); }),
-        row('👕', `${a.name}의 옷: ${ware.name}`, disc < 1 ? `친구 할인 ${Math.round((1 - disc) * 100)}%` : '친해지면 깎아 줘요', wp, ctx.owns(ware.id), async () => { if (!(await ctx.spend(wp))) return; await ctx.store.set(`owned/${ctx.uid}/${ware.id}`, true).catch(() => {}); ctx.owned[ctx.uid] = { ...(ctx.owned[ctx.uid] || {}), [ware.id]: true }; await wearCloth(ware.id); cl(); say(`${ware.name}, 입혀 줬어. 잘 어울린다! (가방이나 옷놀이에서 갈아입을 수 있어)`, 'glad'); })), actions: [{ label: '닫기' }] });
+        row(tryOn(ware.id), `${a.name}의 옷: ${ware.name}`, disc < 1 ? `친구 할인 ${Math.round((1 - disc) * 100)}%` : '친해지면 깎아 줘요', wp, ctx.owns(ware.id), async () => { if (!(await ctx.spend(wp))) return; await ctx.store.set(`owned/${ctx.uid}/${ware.id}`, true).catch(() => {}); ctx.owned[ctx.uid] = { ...(ctx.owned[ctx.uid] || {}), [ware.id]: true }; await wearCloth(ware.id); cl(); say(`${ware.name}, 입혀 줬어. 잘 어울린다! (가방이나 옷놀이에서 갈아입을 수 있어)`, 'glad'); })), actions: [{ label: '닫기' }] });
     }
     const memBtn = () => { const mem = Array.isArray((mine[i] || {}).mem) ? mine[i].mem : Object.values((mine[i] || {}).mem || {}); modal({ title: `📜 ${a.name}가 기억하는 말`, body: mem.length ? h('div', { class: 'so-mem' }, mem.slice().reverse().map(m => h('p', null, h('b', null, `나: ${m.s}`), h('span', null, `${a.name}: ${m.r}`), h('em', { class: m.d > 0 ? 'up' : m.d < 0 ? 'down' : '' }, (m.d > 0 ? '+' : '') + m.d)))) : h('p', { class: 'center' }, '아직 나눈 말이 없어요.'), actions: [{ label: '닫기', primary: true }] }); };
     input.addEventListener('keydown', e => { if (e.key === 'Enter') talk(input.value); });
@@ -309,7 +311,7 @@ export function mount(el, ctx) {
         h('b', null, `동물에게 받은 액세서리 ${pins.length} / ${ANIMALS.length}`),
         pins.length ? h('div', { class: 'so-pins' }, pins.map(i => h('button', { class: 'so-pin' + (worn === i ? ' on' : ''), onClick: async () => { await wearPin(worn === i ? null : i); draw(); } }, h('span', null, PERSONA[i].pin), h('small', null, worn === i ? '착용 중' : ANIMALS[i].name)))) : h('p', { class: 'dim center' }, `동물과 ${PIN_AT}점까지 친해지면 그 동물의 상징을 선물로 받아요.`),
         h('b', null, `동물에게 산 옷 ${wares.length}벌`),
-        wares.length ? h('div', { class: 'so-list' }, wares.map(i => { const w = wareOf(i), on = wearing(w.id); return h('button', { class: 'so-row' + (on ? ' on' : ''), onClick: async () => { await wearCloth(w.id, !on); draw(); } }, h('span', null, { t: '👕', b: '👖', h: '🎩' }[w.id[0]]), h('b', null, w.name), h('small', null, `${ANIMALS[i].name}에게 삼 · ${on ? '입는 중 (누르면 벗기)' : '누르면 입기'}`)); })) : h('p', { class: 'dim center' }, '동물과 거래하면 그 동물의 옷을 살 수 있어요.'),
+        wares.length ? h('div', { class: 'so-list' }, wares.map(i => { const w = wareOf(i), on = wearing(w.id); return h('button', { class: 'so-row big' + (on ? ' on' : ''), onClick: async () => { await wearCloth(w.id, !on); draw(); } }, tryOn(w.id), h('b', null, w.name), h('small', null, `${ANIMALS[i].name}에게 삼 · ${on ? '입는 중 (누르면 벗기)' : '누르면 입기'}`)); })) : h('p', { class: 'dim center' }, '동물과 거래하면 그 동물의 옷을 살 수 있어요.'),
         h('p', { class: 'dim center' }, '눌러서 착용하거나 빼요. 다른 화면의 내 카피바라에도 그대로 보여요.')); };
     draw(); cl = modal({ title: '🎒 가방', body, actions: [{ label: '닫기', primary: true }] });
   }

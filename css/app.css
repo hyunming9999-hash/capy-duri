@@ -804,3 +804,6 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .so-lock { text-align: center; padding: 26px 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .so-lockc { width: 120px; filter: grayscale(.5); transform: rotate(90deg); margin: 10px 0 0; } .so-lockc svg { width: 100%; display: block; }
 .so-lockt { font-size: 34px; color: #C0392B; }
+
+.so-row.big { grid-template-columns: 62px 1fr; }
+.so-row .so-try { font-size: 0; width: 62px; } .so-row .so-try svg { width: 100%; display: block; }
