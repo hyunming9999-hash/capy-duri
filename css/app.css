@@ -655,3 +655,13 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .dress-item{position:relative}.dress-item.lock::after{content:attr(data-price);position:absolute;left:50%;top:3px;transform:translateX(-50%);padding:0 6px;border-radius:999px;background:rgba(59,38,24,.82);color:#FFE08A;font:10px/16px var(--head);white-space:nowrap}.dress-item.lock span{filter:saturate(.75)}
 .dress-wallet{flex-basis:100%;text-align:center;color:var(--ink2)}.dress-wallet b{font-family:var(--head);color:#7A5200}
 .dress-ctl{flex-wrap:wrap}
+/* 동물 마작 */
+.mj .btn.big{display:block;width:100%;margin-top:10px}.mj-hero{display:block;width:56px;font-size:0}.mj-hero svg{display:block;width:100%}
+.mj-top{display:flex;align-items:center;gap:6px;margin-bottom:8px}.mj-p{min-width:62px;padding:3px 10px;border-radius:14px;background:var(--card);border:2px solid var(--line);text-align:center;opacity:.6}.mj-p.on{opacity:1;border-color:var(--yuzu-d);background:#FFF8DC;box-shadow:0 0 0 2px var(--yuzu)}
+.mj-p small{display:block;font-size:11px;color:var(--ink2);white-space:nowrap;max-width:74px;overflow:hidden;text-overflow:ellipsis}.mj-p b{font:20px var(--head)}
+.mj-turn{flex:1;min-width:0;text-align:center}.mj-turn span{font:14px var(--head)}.mj-turn i{display:block;height:8px;margin-top:3px;border-radius:4px;background:#E6DECF;overflow:hidden}.mj-turn u{display:block;height:100%;background:#57C26B}
+.mj-grid{position:relative;display:grid;gap:3px;padding:8px;border-radius:18px;background:#3E7A55;border:3px solid #2C5A3E;box-shadow:0 4px 0 #2C5A3E;touch-action:manipulation;user-select:none;-webkit-user-select:none}.mj-grid:not(.mine){filter:saturate(.75) brightness(.93)}
+.mj-t{aspect-ratio:1/1.12;padding:2px 2px 4px;border:0;border-radius:8px;background:linear-gradient(#FFFDF4,#F3E9CF);box-shadow:0 3px 0 #C9B88F,0 4px 3px rgba(0,0,0,.25);font-size:0;line-height:0}.mj-t svg{display:block;width:100%;height:100%}.mj-e{aspect-ratio:1/1.12}
+.mj-t.on{background:linear-gradient(#FFF1B8,#FFD75E);box-shadow:0 3px 0 #D9A21C,0 0 0 3px #FF8A3C;transform:translateY(-2px)}.mj-t.shake{animation:kbshake .25s}
+.mj-line{position:absolute;left:8px;top:8px;right:8px;bottom:8px;pointer-events:none;z-index:3}.mj-line svg{display:block;width:100%;height:100%}
+@keyframes kbshake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
