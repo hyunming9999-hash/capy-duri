@@ -157,15 +157,19 @@ export function mount(el, ctx) {
     setTimeout(() => alive && pop(o.e, toned(best, v <= CHASE_AT ? '가만 안 둬!' : '아야!'), 'say'), 250);
   }
   // 쫓아오기 시작한 순간 사과하면 그 동물은 쫓기를 그만둔다. -15점까지는 1초 안에 버튼, 그보다 나쁘면 3.5초 안에 "미안해"를 직접 입력해야 한다
-  const SORRY_UI = { btn: { el: null, list: [], t: 0, ms: 1000 }, type: { el: null, list: [], t: 0, ms: 3500 } };
+  const SORRY_UI = { btn: { el: null, list: [], t: 0, ms: 1000 }, type: { el: null, list: [], t: 0, ms: 2500, typing: false } };
   function endSorry(kind) { (kind ? [kind] : ['btn', 'type']).forEach(k => { const u = SORRY_UI[k]; clearTimeout(u.t); if (u.el) u.el.remove(); u.el = null; u.list = []; }); }
   function forgive(kind) { SORRY_UI[kind].list.forEach(k => { const o = actors[k]; if (!o || o.st !== 'chase') return; o.st = 'idle'; o.until = performance.now() + 1500; o.e.classList.remove('walk', 'chase'); pop(o.e, toned(k, '…이번만 봐준다'), 'say'); }); sfx('point'); endSorry(kind); }
   function quickSorry(i) {
     const kind = A(i) < -15 ? 'type' : 'btn', u = SORRY_UI[kind]; u.list.push(i); actors[i].nextHit = performance.now() + u.ms; actors[i].until += u.ms; // 사과할 시간 동안은 때리지 않고, 그만큼 더 쫓는다 if (u.el) return;
     if (kind === 'btn') u.el = h('button', { class: 'so-sorry', onClick: () => forgive('btn') }, '🙇 미안해!', h('i'));
-    else { const inp = h('input', { class: 'so-sorryin', placeholder: '미안해', maxLength: 8, autocomplete: 'off', enterKeyHint: 'send' }); inp.addEventListener('input', () => { if (inp.value.replace(/\s/g, '').includes('미안해')) forgive('type'); });
-      u.el = h('label', { class: 'so-sorry type' }, h('span', null, '3.5초 만에 "미안해"라고 입력하세요'), inp, h('i')); keys.clear(); setTimeout(() => inp.focus(), 0); }
-    scroller.parentNode.insertBefore(u.el, scroller.nextSibling); u.t = setTimeout(() => endSorry(kind), u.ms);
+    else { const inp = h('input', { class: 'so-sorryin', placeholder: '미안해', maxLength: 8, autocomplete: 'off', enterKeyHint: 'send' }), bar = h('i'), tip = h('span', null, '👇 여기를 눌러 "미안해"라고 입력하세요');
+      const hold = ms => { const t = performance.now() + ms; u.list.forEach(k => { const o = actors[k]; if (o) { o.until += Math.max(0, t - o.nextHit); o.nextHit = t; } }); };
+      inp.addEventListener('input', () => { if (inp.value.replace(/\s/g, '').includes('미안해')) forgive('type'); });
+      // 폰은 직접 눌러야 키보드가 올라온다: 누른 순간부터 3.5초를 센다(누르기까지는 2.5초 기다려 준다)
+      inp.addEventListener('focus', () => { if (u.typing) return; u.typing = true; tip.textContent = '3.5초 만에 "미안해"라고 입력하세요'; clearTimeout(u.t); u.t = setTimeout(() => endSorry('type'), 3500); hold(3500); bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = 'soSorryBar 3.5s linear forwards'; });
+      u.typing = false; u.el = h('label', { class: 'so-sorry type' }, tip, inp, bar); keys.clear(); setTimeout(() => inp.focus(), 0); }
+    scroller.parentNode.insertBefore(u.el, scroller.nextSibling); if (!(kind === 'type' && u.typing)) u.t = setTimeout(() => endSorry(kind), kind === 'type' ? 2500 : u.ms);
   }
   // 사이가 나쁜 동물에게 맞으면 돈이 조금 나간다
   function gotHit(o, now) {
