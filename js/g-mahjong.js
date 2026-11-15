@@ -61,7 +61,7 @@ export function mount(el, ctx) {
       h('div', { class: 'bg-row' }, chip(mode === 'vs', '⚔️ 경쟁', () => { mode = 'vs'; save(); lobby(); }, '둘이 번갈아'), chip(mode === 'cpu', '🤖 컴퓨터랑', () => { mode = 'cpu'; save(); lobby(); }, '컴퓨터와 번갈아')),
       h('label', { class: 'lbl' }, '난이도'),
       h('div', { class: 'bg-row' }, Object.entries(LEVELS).map(([k, v]) => chip(diff === k, v.name, () => { diff = k; save(); lobby(); }, v.sub))),
-      h('p', { class: 'dim bg-note' + (mode === 'vs' && !pid() ? ' warn' : '') }, mode === 'vs' && !pid() ? '상대가 아직 방에 없어요. 컴퓨터랑 하기를 골라 주세요' : '내 차례에 같은 동물 패 두 장을 눌러요. 두 패 사이가 두 번까지만 꺾이는 빈 길로 이어져야 없어져요(판 바깥으로 돌아가도 돼요). 한 쌍에 10점, 3초 안에 찾으면 +5점. 시간 안에 못 찾으면 차례가 넘어가요.'),
+      h('p', { class: 'dim bg-note' + (mode === 'vs' && !pid() ? ' warn' : '') }, mode === 'vs' && !pid() ? '상대가 아직 방에 없어요. 컴퓨터랑 하기를 골라 주세요' : '내 차례에 같은 동물 패 두 장을 눌러요. 두 패 사이가 두 번까지만 꺾이는 빈 길로 이어져야 없어져요(판 바깥으로 돌아가도 돼요). 한 쌍에 10점, 빨리 찾을수록 가산점(남은 시간만큼 최대 +10점). 틀린 짝을 누르면 -3점. 시간 안에 못 찾으면 차례가 넘어가요.'),
       h('button', { class: 'btn primary big', onClick: start }, '시작'),
       b && h('p', { class: 'dim center' }, `내 최고 ${b.s}점`)].filter(Boolean));
   }
@@ -74,7 +74,7 @@ export function mount(el, ctx) {
   // 한 수: who가 a·b를 없앤다(pair가 없으면 차례만 넘긴다). 경쟁은 방에 적고, 컴퓨터 판은 내 폰에서만 바꾼다
   function apply(s, who, pair, quick) {
     const L = LEVELS[s.diff], cells = cellsOf(s), sc = (s.sc || [0, 0]).slice(); let last = { who, at: now() };
-    if (pair) { const path = linkPath(cells, L.cols, L.rows, pair[0], pair[1]); if (!path) return null; sc[who] += 10 + (quick ? 5 : 0); last = { ...last, a: pair[0], b: pair[1], k: cells[pair[0]], path: path.flat(), pts: 10 + (quick ? 5 : 0) }; cells[pair[0]] = -1; cells[pair[1]] = -1;
+    if (pair) { const path = linkPath(cells, L.cols, L.rows, pair[0], pair[1]); if (!path) return null; const pts = 10 + Math.max(0, Math.min(10, Math.round(+quick || 0))); sc[who] += pts; last = { ...last, a: pair[0], b: pair[1], k: cells[pair[0]], path: path.flat(), pts }; cells[pair[0]] = -1; cells[pair[1]] = -1;
       if (ensureMove(cells, L.cols, L.rows, rng(s.seed + s.n * 97 + 5))) last.mix = true; }
     return { ...s, cells, sc, turn: 1 - who, turnAt: now() + (pair ? 700 : 300), n: (s.n || 0) + 1, last };
   }
@@ -82,11 +82,19 @@ export function mount(el, ctx) {
     if (S.kind === 'cpu') { const nx = apply(S, who, pair, quick); if (!nx) return false; mine = nx; pickS(); onChange(); return true; }
     const id = S.id, n = S.n || 0; ctx.store.tx(PATH, cur => { if (!cur || cur.id !== id || (cur.n || 0) !== n || cur.turn !== who) return; return apply(cur, who, pair, quick) || undefined; }).catch(() => {}); return true;
   }
+  // 빨리 찾을수록 가산점: 남은 시간에 비례해 최대 +10점. 틀린 짝을 누르면 -3점(0점 밑으로는 안 내려간다)
+  const WRONG = 3, speedBonus = s => Math.round(10 * Math.max(0, 1 - (now() - s.turnAt) / (LEVELS[s.diff].sec * 1000)));
+  function miss(who) {
+    const dock = s => { const sc = (s.sc || [0, 0]).slice(); sc[who] = Math.max(0, (sc[who] || 0) - WRONG); return { ...s, sc }; };
+    toast(`틀렸어요 -${WRONG}점`, 700);
+    if (S.kind === 'cpu') { mine = dock(S); pickS(); drawTop && drawTop(); return; }
+    const id = S.id; ctx.store.tx(PATH, cur => (cur && cur.id === id ? dock(cur) : undefined)).catch(() => {});
+  }
   function tapTile(i) {
     if (phase() !== 'play' || !myTurn() || now() < S.turnAt) return; const cells = cellsOf(S), L = LEVELS[S.diff]; if (cells[i] < 0) return;
     if (sel < 0 || sel === i) { sel = sel === i ? -1 : i; sfx('tock'); return drawBoard(); }
-    if (cells[sel] === cells[i] && linkPath(cells, L.cols, L.rows, sel, i)) { const a = sel; sel = -1; move(myI(), [a, i], now() - S.turnAt < 3000); }
-    else { sfx('miss'); const e = box.querySelector(`.mj-t[data-i="${i}"]`); if (e) { e.classList.remove('shake'); void e.offsetWidth; e.classList.add('shake'); } sel = cells[sel] === cells[i] ? -1 : i; setTimeout(drawBoard, 250); }
+    if (cells[sel] === cells[i] && linkPath(cells, L.cols, L.rows, sel, i)) { const a = sel; sel = -1; move(myI(), [a, i], speedBonus(S)); }
+    else { miss(myI()); sfx('miss'); const e = box.querySelector(`.mj-t[data-i="${i}"]`); if (e) { e.classList.remove('shake'); void e.offsetWidth; e.classList.add('shake'); } sel = -1; setTimeout(drawBoard, 250); }
   }
 
   let grid, topEl;
@@ -121,7 +129,7 @@ export function mount(el, ctx) {
   }
   function scheduleCpu() {
     clearTimeout(cpuT); if (!S || S.kind !== 'cpu' || S.turn !== 1 || over(S)) return; const L = LEVELS[S.diff], [p, ms] = L.cpu, id = S.id, n = S.n;
-    cpuT = setTimeout(() => { if (!alive || !S || S.id !== id || S.n !== n) return; const cells = cellsOf(S), mv = Math.random() < p ? anyMove(cells, L.cols, L.rows) : null; if (!mv) toast('🤖 못 찾았어요', 900); move(1, mv, false); }, ms * (0.7 + Math.random() * 0.6) + 800);
+    cpuT = setTimeout(() => { if (!alive || !S || S.id !== id || S.n !== n) return; const cells = cellsOf(S), mv = Math.random() < p ? anyMove(cells, L.cols, L.rows) : null; if (!mv) toast('🤖 못 찾았어요', 900); move(1, mv, mv ? speedBonus(S) : 0); }, ms * (0.7 + Math.random() * 0.6) + 800);
   }
   function tick() {
     if (!alive || phase() !== 'play' || !topEl || !topEl.isConnected) return; const L = LEVELS[S.diff], el2 = (now() - S.turnAt) / 1000, u = topEl.querySelector('.mj-turn u');

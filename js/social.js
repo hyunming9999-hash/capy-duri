@@ -1,5 +1,5 @@
 // 동물 친목회 — 놀이터에서 동물 30마리와 말하고, 선물하고, 거래한다. 친밀도와 기억은 사람마다 따로다
-import { h, toast, modal, gameFx } from './ui.js';
+import { h, toast, modal, gameFx, holdBtn } from './ui.js';
 import { capy } from './capy.js';
 import { ANIMALS, animalSvg } from './animals.js';
 import { TOPS, BOTTOMS, HATS, nameOf } from './clothes.js';
@@ -63,49 +63,115 @@ async function askAI(room, body) {
 }
 
 export function mount(el, ctx) {
-  let alive = true, mine = {}, theirs = {}, bag = {}, scroller, meEl, lastX = 0, walkT = 0;
+  let alive = true, mine = {}, theirs = {}, bag = {}, scroller, meEl, mePop;
   const pid = () => ctx.partnerId, A = i => (mine[i] && mine[i].a) || 0;
-  const H = Math.round(Math.min(innerHeight * 0.62, 470)), TILE = Math.round(H * 1213 / 520), TILES = 3, WIDTH = TILE * TILES;
-  // 놀이기구 자리: [종류, 그림 속 가로 위치(0~1), 바닥에서 높이(0~1)]
-  const SPOT_DEFS = [['slide', 0.243, 0.385], ['swing', 0.292, 0.4], ['swing', 0.327, 0.4], ['seeL', 0.405, 0.42], ['seeR', 0.478, 0.46], ['sand', 0.555, 0.41], ['gym', 0.675, 0.4], ['bench', 0.768, 0.435]];
-  const spots = []; for (let k = 0; k < TILES; k++) SPOT_DEFS.forEach(([type, fx, fb]) => spots.push({ type, x: (k + (k % 2 ? 1 - fx : fx)) * TILE, b: fb, dir: k % 2 ? -1 : 1, by: -1 }));
+  const H = Math.round(Math.min(innerHeight * 0.52, 470)), TILE = Math.round(H * 1213 / 520), TILES = 3, WIDTH = TILE * TILES, IW = 1344, IH = 576;
+  // 놀이기구 자리: [종류, 그림 속 가로 위치(0~1), 바닥에서 높이(0~1), 그네 번호]
+  const SPOT_DEFS = [['slide', 0.243, 0.385], ['swing', 0.2943, 0.43, 0], ['swing', 0.3286, 0.43, 1], ['seeL', 0.3964, 0.45], ['seeR', 0.4947, 0.45], ['sand', 0.555, 0.41], ['gym', 0.675, 0.4], ['bench', 0.768, 0.435]];
+  const SEE_X = 598.8 / IW, ROPE = (323 - 243) / IH * H;
+  const LANES = [[0.07, 1], [0.13, 0.94], [0.19, 0.88], [0.25, 0.82]], RIDE_S = 0.62, ME_SP = 150, CHASE_SP = 118;
+  const tiles = [], spots = [];
   const moodOf = v => (v <= -30 ? 'mad' : v < 0 ? 'angry' : '');
-  let actors = [], held = -1, raf = 0, lastT = 0;
+  let actors = [], held = -1, raf = 0, lastT = 0, punchAt = 0;
+  const me = { x: 200, f: 1 }, keys = new Set();
+  // 움직이는 놀이기구(그네 두 개, 시소)를 배경 위에 그린다
+  const EQ = `<svg class="so-eq" viewBox="0 0 ${IW} ${IH}" preserveAspectRatio="none">${[395.5, 441.6].map(x => `<g class="eq-sw"><path d="M${x - 16} 243V319M${x + 16} 243V319" stroke="#A8743C" stroke-width="5.5" stroke-linecap="round"/><path d="M${x - 16} 243V319M${x + 16} 243V319" stroke="#F3E3C3" stroke-width="2.6" stroke-dasharray="3 3"/><rect x="${x - 23}" y="316" width="46" height="13" rx="6.5" fill="#FFD21F" stroke="#B5651D" stroke-width="2.2"/></g>`).join('')}
+    <g class="eq-see"><rect x="523" y="315" width="152" height="11" rx="5.5" fill="#F8C24A" stroke="#B5651D" stroke-width="2.2"/><rect x="520" y="308" width="34" height="11" rx="5.5" fill="#F47C72" stroke="#B5473C" stroke-width="2"/><rect x="644" y="308" width="34" height="11" rx="5.5" fill="#F47C72" stroke="#B5473C" stroke-width="2"/><path d="M560 315V298M638 315V298" stroke="#EFC27A" stroke-width="5" stroke-linecap="round"/><rect x="551" y="293" width="18" height="8" rx="4" fill="#FFD21F" stroke="#B5651D" stroke-width="1.8"/><rect x="629" y="293" width="18" height="8" rx="4" fill="#F47C72" stroke="#B5473C" stroke-width="1.8"/></g>
+    <path d="M573 357 L594 324 q5 -6 10 0 L625 357z" fill="#F0625A" stroke="#B5473C" stroke-width="2.4" stroke-linejoin="round"/><circle cx="599" cy="339" r="4.5" fill="#FFD21F"/></svg>`;
   const setRel = (i, patch) => { mine = { ...mine, [i]: { ...(mine[i] || {}), ...patch } }; return ctx.store.update(`social/${ctx.uid}/${i}`, patch).catch(() => {}); };
   const pinOf = u => (ctx.members[u] || {}).pin;
+  // 받은 액세서리 달기, 산 옷 입기(다시 누르면 벗는다). 내 카피바라에 바로 보인다
+  const SLOT = { t: 'top', b: 'bottom', h: 'hat' };
+  async function wearPin(i) { await ctx.store.update('members/' + ctx.uid, { pin: i }).catch(() => {}); ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), pin: i }; scores(); }
+  const wearing = id => (ctx.dress[ctx.uid] || {})[SLOT[id[0]]] === id;
+  async function wearCloth(id, on = true) { const d = ctx.dress[ctx.uid] || {}, nx = { top: d.top || '', bottom: d.bottom || '', hat: d.hat || '', by: ctx.uid, ts: ctx.store.now() }; nx[SLOT[id[0]]] = on ? id : '';
+    ctx.dress[ctx.uid] = nx; await ctx.store.set('dress/' + ctx.uid, nx).catch(() => {}); scores(); }
 
   function scene() {
     const top = h('div', { class: 'so-top' }, h('span', { class: 'coin-chip', 'data-coins': 1 }, won(ctx.coins())), h('span', { class: 'so-sp' }),
       h('button', { class: 'btn sm', onClick: openBag }, '🎒 가방'), h('button', { class: 'btn sm', onClick: openShop }, '🏪 카피수퍼'));
     scroller = h('div', { class: 'so-scroll' });
-    const world = h('div', { class: 'so-world', style: { width: WIDTH + 'px', height: H + 'px', '--sx': Math.round(-0.05 * TILE) + 'px', '--sy': Math.round(-0.115 * H) + 'px', '--gy': Math.round(-0.13 * H) + 'px', '--pv': Math.round(-0.07 * H) + 'px' } },
-      ...Array.from({ length: TILES }, (_, k) => h('i', { class: 'so-bg' + (k % 2 ? ' flip' : ''), style: { left: k * TILE + 'px', width: TILE + 1 + 'px' } })));
-    actors = ANIMALS.map((a, i) => { const x = 60 + (i + 0.5) * (WIDTH - 120) / ANIMALS.length;
-      const e = h('button', { class: 'so-an' + (i % 2 ? ' back' : ''), 'data-i': i, style: { left: x + 'px' }, onClick: () => openAnimal(i) }, h('span', { class: 'so-score' }), h('span', { class: 'so-hearts' }), h('span', { class: 'so-body', html: animalSvg(i, true) }), h('small', null, a.name));
-      world.append(e); return { e, x, st: 'idle', until: performance.now() + 400 + Math.random() * 3500, tx: x, spot: null, sp: 24 + Math.random() * 16 }; });
-    meEl = h('div', { class: 'so-me', html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) }); world.append(meEl);
+    const world = h('div', { class: 'so-world', style: { width: WIDTH + 'px', height: H + 'px', '--sx': Math.round(-0.05 * TILE) + 'px', '--sy': Math.round(-0.115 * H) + 'px', '--gy': Math.round(-0.13 * H) + 'px' } });
+    for (let k = 0; k < TILES; k++) { const flip = k % 2 === 1, bg = h('i', { class: 'so-bg' + (flip ? ' flip' : ''), style: { left: k * TILE + 'px', width: TILE + 1 + 'px' }, html: EQ }); world.append(bg);
+      const fx = f => (k + (flip ? 1 - f : f)) * TILE, t = { dir: flip ? -1 : 1, sw: [...bg.querySelectorAll('.eq-sw')].map((g, n) => ({ g, cx: [395.5, 441.6][n], a: 3, cur: 0, ph: n * 1.4 + k, on: 0 })), see: { g: bg.querySelector('.eq-see'), cur: -11, x: fx(SEE_X), on: 0 } };
+      tiles.push(t); SPOT_DEFS.forEach(([type, f, b, n]) => spots.push({ type, x: fx(f), b, dir: t.dir, by: -1, eq: type === 'swing' ? t.sw[n] : type[0] === 's' && type[1] === 'e' ? t.see : null, t })); }
+    actors = ANIMALS.map((a, i) => { const lane = i % LANES.length, x = 90 + (i + 0.5) * (WIDTH - 180) / ANIMALS.length;
+      const e = h('button', { class: 'so-an', 'data-i': i, style: { left: x + 'px', zIndex: 10 - lane }, onClick: () => openAnimal(i) }, h('span', { class: 'so-score' }), h('span', { class: 'so-hearts' }), h('span', { class: 'so-body', html: animalSvg(i, true) }), h('small', null, a.name));
+      world.append(e); return { e, body: e.querySelector('.so-body'), x, lane, y: LANES[lane][0], s: LANES[lane][1], st: 'idle', until: performance.now() + 400 + Math.random() * 3500, tx: x, spot: null, sp: 24 + Math.random() * 16, cool: 0, nextHit: 0, wait: 0 }; });
+    meEl = h('div', { class: 'so-me', html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) }); mePop = h('div', { class: 'so-mepop' }); world.append(meEl, mePop);
     scroller.append(world);
-    scroller.addEventListener('scroll', () => { const x = scroller.scrollLeft + scroller.clientWidth / 2; meEl.style.left = x + 'px'; meEl.classList.toggle('left', x < lastX); meEl.classList.add('walk'); lastX = x; clearTimeout(walkT); walkT = setTimeout(() => meEl.classList.remove('walk'), 160); }, { passive: true });
-    el.replaceChildren(top, scroller, h('p', { class: 'dim center' }, '옆으로 밀어서 놀이터를 돌아다녀요. 돌아다니는 동물을 누르면 멈춰서 말을 걸 수 있어요.'));
-    requestAnimationFrame(() => { meEl.style.left = scroller.clientWidth / 2 + 'px'; }); scores(); lastT = performance.now(); raf = requestAnimationFrame(step);
+    const pad = h('div', { class: 'so-pad' }, ...[['L', '◀'], ['R', '▶']].map(([k, t]) => { const b = h('button', { class: 'dp so-dp', 'aria-label': k }, t); holdBtn(b, () => keys.add(k), () => keys.delete(k)); return b; }),
+      h('span', { class: 'so-sp' }), h('button', { class: 'dp so-dp so-hit', onClick: punch }, '👊', h('small', null, '때리기')));
+    el.replaceChildren(top, scroller, pad, h('p', { class: 'dim center so-hint' }, '◀ ▶ 로 걸어가요. 동물을 누르면 멈춰서 말을 걸 수 있어요. 사이가 나쁜 동물 근처는 조심!'));
+    scores(); lastT = performance.now(); raf = requestAnimationFrame(step);
+  }
+  const KEY = { ArrowLeft: 'L', ArrowRight: 'R', a: 'L', d: 'R' };
+  const kd = e => { if (document.querySelector('.modal-wrap')) return; if (KEY[e.key]) { keys.add(KEY[e.key]); e.preventDefault(); } else if (e.key === ' ' && !e.repeat) { e.preventDefault(); punch(); } };
+  const ku = e => { if (KEY[e.key]) keys.delete(KEY[e.key]); };
+  window.addEventListener('keydown', kd); window.addEventListener('keyup', ku);
+  const pop = (parent, text, cls = '') => { const f = h('em', { class: 'so-pop ' + cls }, text); parent.append(f); setTimeout(() => f.remove(), 1000); };
+
+  // 때리기: 앞에 있는 가까운 동물을 친다. 맞은 동물은 밀려나고 친밀도가 떨어지며, 그 일을 기억한다
+  function punch() {
+    const now = performance.now(); if (now - punchAt < 600 || document.querySelector('.modal-wrap')) return; punchAt = now;
+    meEl.classList.remove('punch'); void meEl.offsetWidth; meEl.classList.add('punch'); sfx('swing');
+    let best = -1, bd = 92; actors.forEach((o, i) => { const dx = o.x - me.x, d = Math.abs(dx) + (dx * me.f < 0 ? 20 : 0); if (d < bd) { bd = d; best = i; } });
+    if (best < 0) return; const o = actors[best], dir = o.x >= me.x ? 1 : -1; me.f = dir;
+    sfx('hit'); pop(o.e, '퍽!'); leave(o); o.st = 'stun'; o.until = now + 900; o.kb = dir * 46; o.e.classList.remove('walk'); o.e.classList.add('ouch'); setTimeout(() => o.e.classList.remove('ouch'), 500);
+    const rel = mine[best] || {}, mem = Array.isArray(rel.mem) ? rel.mem : Object.values(rel.mem || {}), v = Math.max(-100, A(best) - 6);
+    setRel(best, { a: v, mem: [...mem.slice(-5), { s: '(말없이 때렸다)', r: '아야! 왜 때려!', d: -6, t: ctx.store.now() }] }); o.cool = 0; scores();
+    setTimeout(() => alive && pop(o.e, v <= ROB_AT ? '가만 안 둬!' : '아야!', 'say'), 250);
+  }
+  // 사이가 나쁜 동물에게 맞으면 돈이 조금 나간다
+  function gotHit(o, now) {
+    o.nextHit = now + 900; sfx('hit'); pop(mePop, '퍽!'); meEl.classList.remove('ouch'); void meEl.offsetWidth; meEl.classList.add('ouch');
+    const n = Math.min(ctx.coins(), 3 + Math.floor(Math.random() * 4)); if (n <= 0) return;
+    ctx.store.tx('money/' + ctx.uid, c => ({ ...(c || {}), c: Math.max(0, ((c && c.c) || 0) - n) })).catch(() => {}); setTimeout(() => alive && pop(mePop, `-${n}🪙`, 'lose'), 200);
   }
   // 동물들이 걸어 다니다가 가까운 놀이기구가 비면 가서 탄다. 말을 걸고 있는 동물(held)은 그 자리에 멈춘다
-  function leave(o) { if (!o.spot) return; o.e.className = o.e.className.replace(/ ride r-\w+/g, '').replace(' rev', ''); o.e.style.bottom = ''; o.spot.by = -1; o.spot = null; }
-  function decide(o, i, now) {
+  function leave(o) { if (!o.spot) return; o.e.className = o.e.className.replace(/ ride r-\w+/g, '').replace(' rev', ''); if (o.spot.eq) o.spot.eq.on = Math.max(0, o.spot.eq.on - (o.st === 'ride' ? 1 : 0)); o.body.style.transform = ''; o.spot.by = -1; o.spot = null; }
+  const crowded = (o, x) => actors.some(q => q !== o && q.lane === o.lane && q.st !== 'ride' && (Math.abs(q.x - x) < 64 || Math.abs(q.tx - x) < 64));
+  function decide(o, i) {
     const free = Math.random() < 0.25 ? spots.filter(s => s.by < 0 && Math.abs(s.x - o.x) < 520) : [];
-    if (free.length) { const s = pick(free); s.by = i; o.spot = s; o.tx = s.x; } else o.tx = Math.max(50, Math.min(WIDTH - 50, o.x + (Math.random() * 2 - 1) * 240));
-    o.st = 'walk'; o.e.classList.add('walk'); o.e.classList.toggle('left', o.tx < o.x);
+    if (free.length) { const s = pick(free); s.by = i; o.spot = s; o.tx = s.x; }
+    else { let tx = o.x; for (let n = 0; n < 8; n++) { tx = Math.max(60, Math.min(WIDTH - 60, o.x + (Math.random() * 2 - 1) * 260)); if (!crowded(o, tx)) break; tx = o.x; } o.tx = tx; if (tx === o.x) { o.until = performance.now() + 800; return; } }
+    o.st = 'walk'; o.wait = 0; o.e.classList.add('walk'); o.e.classList.toggle('left', o.tx < o.x);
   }
   function step(now) {
-    if (!alive) return; const dt = Math.min(0.1, (now - lastT) / 1000); lastT = now;
-    actors.forEach((o, i) => { if (i === held) return;
-      if (o.st === 'walk') { const d = o.tx - o.x, mv = o.sp * dt;
-        if (Math.abs(d) <= mv) { o.x = o.tx; o.e.classList.remove('walk', 'left');
-          if (o.spot) { o.st = 'ride'; o.until = now + 9000 + Math.random() * 7000; o.e.className += ' ride r-' + o.spot.type + (o.spot.dir < 0 ? ' rev' : ''); o.e.style.bottom = o.spot.b * 100 + '%'; }
-          else { o.st = 'idle'; o.until = now + 900 + Math.random() * 3600; } }
-        else o.x += Math.sign(d) * mv;
-        o.e.style.left = o.x + 'px'; }
-      else if (now > o.until) { if (o.st === 'ride') { leave(o); o.st = 'idle'; o.until = now + 700; } else decide(o, i, now); } });
+    if (!alive) return; const dt = Math.min(0.1, (now - lastT) / 1000), t = now / 1000, paused = !!document.querySelector('.modal-wrap'); lastT = now;
+    // 나: 화살표로 걷고, 화면이 따라온다
+    const mv = paused ? 0 : (keys.has('R') ? 1 : 0) - (keys.has('L') ? 1 : 0);
+    if (mv) { me.f = mv; me.x = Math.max(40, Math.min(WIDTH - 40, me.x + mv * ME_SP * dt)); }
+    meEl.classList.toggle('walk', !!mv); meEl.classList.toggle('left', me.f < 0); meEl.style.left = mePop.style.left = me.x + 'px';
+    scroller.scrollLeft = Math.max(0, Math.min(WIDTH - scroller.clientWidth, me.x - scroller.clientWidth / 2));
+    // 놀이기구: 누가 타면 크게, 아니면 살짝 흔들린다
+    tiles.forEach(T => { T.sw.forEach(w => { w.a += ((w.on ? 17 : 3) - w.a) * Math.min(1, dt * 2); w.cur = w.a * Math.sin(t * 2.3 + w.ph); w.g.setAttribute('transform', `rotate(${w.cur.toFixed(2)} ${w.cx} 243)`); });
+      const S = T.see; S.cur += ((S.on ? 11 * Math.sin(t * 2.6) : -11) - S.cur) * Math.min(1, dt * 6); S.g.setAttribute('transform', `rotate(${S.cur.toFixed(2)} 598.8 320)`); });
+    actors.forEach((o, i) => {
+      const lane = LANES[o.lane]; let ty = lane[0], ts = lane[1];
+      if (i === held) { /* 붙잡혀서 얘기하는 중 */ }
+      else if (o.st === 'stun') { if (o.kb) { const k = o.kb * Math.min(1, dt * 8); o.x = Math.max(40, Math.min(WIDTH - 40, o.x + k)); o.kb -= k; } if (now > o.until) { o.st = 'idle'; o.until = now + 300; o.kb = 0; } }
+      else if (o.st === 'chase') { ty = 0.02; ts = 1; if (paused) o.until += dt * 1000; const d = me.x - o.x;
+        if (Math.abs(d) > 34) { o.x += Math.sign(d) * CHASE_SP * dt; o.e.classList.toggle('left', d < 0); } else if (now > o.nextHit && !paused) gotHit(o, now);
+        if (now > o.until) { o.st = 'idle'; o.until = now + 600; o.cool = now + 15000; o.e.classList.remove('walk', 'chase'); } }
+      else {
+        if (!paused && A(i) <= ROB_AT && now > o.cool && Math.abs(me.x - o.x) < 170) { leave(o); o.st = 'chase'; o.until = now + 7000; o.nextHit = now + 300; o.e.classList.add('walk', 'chase'); pop(o.e, '거기 서!', 'say'); }
+        else if (o.st === 'walk') { const d = o.tx - o.x, step1 = o.sp * dt, dir = Math.sign(d);
+          const blocked = o.wait < 1.5 && actors.some(q => q !== o && q.lane === o.lane && q.st !== 'ride' && (q.x - o.x) * dir > 0 && (q.x - o.x) * dir < 58 && !(o.spot && Math.abs(d) < 110));
+          if (blocked) { o.wait += dt; if (!o.spot && o.wait > 0.5) { o.st = 'idle'; o.until = now + 500 + Math.random() * 1200; o.e.classList.remove('walk'); } }
+          else if (Math.abs(d) <= step1) { o.x = o.tx; o.e.classList.remove('walk', 'left');
+            if (o.spot) { o.st = 'ride'; o.until = now + 9000 + Math.random() * 7000; if (o.spot.eq) o.spot.eq.on++; o.e.className += ' ride r-' + o.spot.type + (o.spot.dir < 0 ? ' rev' : ''); }
+            else { o.st = 'idle'; o.until = now + 900 + Math.random() * 3600; } }
+          else o.x += dir * step1;
+          if (o.spot) { const k = Math.max(0, 1 - Math.abs(o.tx - o.x) / 110); ty += (o.spot.b - ty) * k; ts += (RIDE_S - ts) * k; } }
+        else if (o.st === 'ride') { ty = o.spot.b; ts = RIDE_S; const q = o.spot.eq;
+          if (q && o.spot.type === 'swing') { const ph = q.cur * o.spot.dir * Math.PI / 180; o.body.style.transform = `translate(${(-ROPE * Math.sin(ph) / ts).toFixed(1)}px, ${(ROPE * (Math.cos(ph) - 1) / ts).toFixed(1)}px) rotate(${(q.cur * o.spot.dir).toFixed(1)}deg)`; }
+          else if (q) o.body.style.transform = `translateY(${((o.x - q.x) * Math.sin(q.cur * o.spot.dir * Math.PI / 180) / ts).toFixed(1)}px)`;
+          if (now > o.until) { leave(o); o.st = 'idle'; o.until = now + 500; } }
+        else if (now > o.until) decide(o, i);
+      }
+      const k = Math.min(1, dt * 5); o.y += (ty - o.y) * k; o.s += (ts - o.s) * k;
+      o.e.style.left = o.x + 'px'; o.e.style.bottom = (o.y * 100).toFixed(2) + '%'; o.e.style.transform = `scale(${o.s.toFixed(3)})`; });
     raf = requestAnimationFrame(step);
   }
   // 동물 머리 위 친밀도: 내 점수(크게)와 상대 점수(작게). 사이가 나쁘면 찌푸리고, 좋으면 하트가 떠오른다
@@ -131,9 +197,10 @@ export function mount(el, ctx) {
       const v = A(i), rel = mine[i] || {};
       if (d) { sfx(d > 0 ? 'coin' : 'bad'); const f = h('em', { class: 'so-float ' + (d > 0 ? 'up' : 'down') }, (d > 0 ? '+' : '') + d); meter.append(f); setTimeout(() => f.remove(), 1200); }
       if (v >= PIN_AT && !rel.got) { await setRel(i, { got: true }); await ctx.store.update('bag/' + ctx.uid + '/pins', { [i]: true }).catch(() => {}); bag = { ...bag, pins: { ...(bag.pins || {}), [i]: true } };
-        setTimeout(() => { gameFx('win', `${a.name}의 ${p.pin} 받음`); say(`우리 이제 친한 친구지? 내 상징 ${p.pin} 줄게. 가방에서 달아 봐!`, 'gift'); }, 500); }
+        await wearPin(i);
+        setTimeout(() => { gameFx('win', `${a.name}의 ${p.pin} 받음`); say(`우리 이제 친한 친구지? 내 상징 ${p.pin} 줄게. 내가 달아 줬어! (가방에서 바꿀 수 있어)`, 'gift'); }, 500); }
       else if (v <= ROB_AT && d < 0 && Math.random() < 0.4) { // 사이가 나쁘면 준 액세서리를 뺏거나 돈을 뜯는다
-        if ((bag.pins || {})[i]) { await ctx.store.update('bag/' + ctx.uid + '/pins', { [i]: null }).catch(() => {}); bag = { ...bag, pins: { ...(bag.pins || {}), [i]: null } }; if (pinOf(ctx.uid) === i) ctx.store.update('members/' + ctx.uid, { pin: null }).catch(() => {}); await setRel(i, { got: null }); setTimeout(() => { sfx('hit'); say(`내가 준 ${p.pin} 도로 내놔! 너한텐 아까워!`, 'angry'); }, 600); }
+        if ((bag.pins || {})[i]) { await ctx.store.update('bag/' + ctx.uid + '/pins', { [i]: null }).catch(() => {}); bag = { ...bag, pins: { ...(bag.pins || {}), [i]: null } }; if (pinOf(ctx.uid) === i) await wearPin(null); await setRel(i, { got: null }); setTimeout(() => { sfx('hit'); say(`내가 준 ${p.pin} 도로 내놔! 너한텐 아까워!`, 'angry'); }, 600); }
         else { const take = Math.min(ctx.coins(), 20 + Math.floor(Math.random() * 41)); if (take > 0) { await ctx.spend(take); setTimeout(() => { sfx('hit'); say(`까불지 마! 가진 돈 ${take}🪙 내놔!`, 'angry'); toast(`${a.name}에게 ${take} 🪙 뜯겼어요`, 2000); }, 600); } } }
       drawMeter();
     }
@@ -161,8 +228,8 @@ export function mount(el, ctx) {
       if (v < 0) return say('너한텐 아무것도 안 팔아. 저리 가!', 'angry');
       const row = (ic, nm, sub, price, owned, fn) => h('button', { class: 'so-row', disabled: owned, onClick: fn }, h('span', null, ic), h('b', null, nm), h('small', null, owned ? '이미 갖고 있어요' : `${won(price)} · ${sub}`));
       const cl = modal({ title: `🤝 ${a.name}와 거래`, body: h('div', { class: 'so-list' },
-        row(p.pin, `${a.name}의 상징 액세서리`, v >= 10 ? '친해지면(50점) 그냥 줘요' : '아는 사이(10점)부터 팔아요', 500, hasPin, async () => { if (v < 10) return toast('아직 그 정도로 친하지 않대요'); if (!(await ctx.spend(500))) return; await ctx.store.update('bag/' + ctx.uid + '/pins', { [i]: true }).catch(() => {}); bag = { ...bag, pins: { ...(bag.pins || {}), [i]: true } }; await setRel(i, { got: true }); cl(); say(`자, ${p.pin} 여기. 잘 달고 다녀!`, 'glad'); }),
-        row('👕', `${a.name}의 옷: ${ware.name}`, disc < 1 ? `친구 할인 ${Math.round((1 - disc) * 100)}%` : '친해지면 깎아 줘요', wp, ctx.owns(ware.id), async () => { if (!(await ctx.spend(wp))) return; await ctx.store.set(`owned/${ctx.uid}/${ware.id}`, true).catch(() => {}); ctx.owned[ctx.uid] = { ...(ctx.owned[ctx.uid] || {}), [ware.id]: true }; cl(); say(`${ware.name}, 너한테 잘 어울릴 거야. 옷놀이에서 입어 봐!`, 'glad'); })), actions: [{ label: '닫기' }] });
+        row(p.pin, `${a.name}의 상징 액세서리`, v >= 10 ? '친해지면(50점) 그냥 줘요' : '아는 사이(10점)부터 팔아요', 500, hasPin, async () => { if (v < 10) return toast('아직 그 정도로 친하지 않대요'); if (!(await ctx.spend(500))) return; await ctx.store.update('bag/' + ctx.uid + '/pins', { [i]: true }).catch(() => {}); bag = { ...bag, pins: { ...(bag.pins || {}), [i]: true } }; await setRel(i, { got: true }); await wearPin(i); cl(); say(`자, ${p.pin} 여기. 내가 달아 줬어, 잘 달고 다녀!`, 'glad'); }),
+        row('👕', `${a.name}의 옷: ${ware.name}`, disc < 1 ? `친구 할인 ${Math.round((1 - disc) * 100)}%` : '친해지면 깎아 줘요', wp, ctx.owns(ware.id), async () => { if (!(await ctx.spend(wp))) return; await ctx.store.set(`owned/${ctx.uid}/${ware.id}`, true).catch(() => {}); ctx.owned[ctx.uid] = { ...(ctx.owned[ctx.uid] || {}), [ware.id]: true }; await wearCloth(ware.id); cl(); say(`${ware.name}, 입혀 줬어. 잘 어울린다! (가방이나 옷놀이에서 갈아입을 수 있어)`, 'glad'); })), actions: [{ label: '닫기' }] });
     }
     const memBtn = () => { const mem = Array.isArray((mine[i] || {}).mem) ? mine[i].mem : Object.values((mine[i] || {}).mem || {}); modal({ title: `📜 ${a.name}가 기억하는 말`, body: mem.length ? h('div', { class: 'so-mem' }, mem.slice().reverse().map(m => h('p', null, h('b', null, `나: ${m.s}`), h('span', null, `${a.name}: ${m.r}`), h('em', { class: m.d > 0 ? 'up' : m.d < 0 ? 'down' : '' }, (m.d > 0 ? '+' : '') + m.d)))) : h('p', { class: 'center' }, '아직 나눈 말이 없어요.'), actions: [{ label: '닫기', primary: true }] }); };
     input.addEventListener('keydown', e => { if (e.key === 'Enter') talk(input.value); });
@@ -181,13 +248,16 @@ export function mount(el, ctx) {
     draw(); modal({ title: '🏪 카피수퍼', body, actions: [{ label: '닫기', primary: true }] });
   }
   function openBag() {
-    const pins = Object.keys(bag.pins || {}).filter(k => bag.pins[k]).map(Number), worn = pinOf(ctx.uid), body = h('div', { class: 'so-list' });
-    const wear = async i => { await ctx.store.update('members/' + ctx.uid, { pin: i }).catch(() => {}); ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), pin: i }; toast(i == null ? '액세서리를 뺐어요' : `${ANIMALS[i].name}의 상징 ${PERSONA[i].pin} 달았어요`); cl(); scores(); };
-    body.replaceChildren(h('p', { class: 'center' }, Object.entries(GIFTS).map(([k, [ic, nm]]) => `${ic} ${nm} ${bag[k] || 0}개`).join(' · ')),
-      h('b', null, `동물에게 받은 액세서리 ${pins.length} / ${ANIMALS.length}`),
-      pins.length ? h('div', { class: 'so-pins' }, pins.map(i => h('button', { class: 'so-pin' + (worn === i ? ' on' : ''), onClick: () => wear(worn === i ? null : i) }, h('span', null, PERSONA[i].pin), h('small', null, ANIMALS[i].name)))) : h('p', { class: 'dim center' }, `동물과 ${PIN_AT}점까지 친해지면 그 동물의 상징을 선물로 받아요.`),
-      pins.length > 0 && h('p', { class: 'dim center' }, '눌러서 달거나 빼요. 달면 내 카피바라 머리 옆에 보여요.'));
-    const cl = modal({ title: '🎒 가방', body, actions: [{ label: '닫기', primary: true }] });
+    const body = h('div', { class: 'so-list' }); let cl;
+    const draw = () => { const pins = Object.keys(bag.pins || {}).filter(k => bag.pins[k]).map(Number), worn = pinOf(ctx.uid), wares = ANIMALS.map((_, i) => i).filter(i => ctx.owns(wareOf(i).id) && priceOf(wareOf(i).id) > 0);
+      body.replaceChildren(h('div', { class: 'so-bagme', html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) }),
+        h('p', { class: 'center' }, Object.entries(GIFTS).map(([k, [ic, nm]]) => `${ic} ${nm} ${bag[k] || 0}개`).join(' · ')),
+        h('b', null, `동물에게 받은 액세서리 ${pins.length} / ${ANIMALS.length}`),
+        pins.length ? h('div', { class: 'so-pins' }, pins.map(i => h('button', { class: 'so-pin' + (worn === i ? ' on' : ''), onClick: async () => { await wearPin(worn === i ? null : i); draw(); } }, h('span', null, PERSONA[i].pin), h('small', null, worn === i ? '착용 중' : ANIMALS[i].name)))) : h('p', { class: 'dim center' }, `동물과 ${PIN_AT}점까지 친해지면 그 동물의 상징을 선물로 받아요.`),
+        h('b', null, `동물에게 산 옷 ${wares.length}벌`),
+        wares.length ? h('div', { class: 'so-list' }, wares.map(i => { const w = wareOf(i), on = wearing(w.id); return h('button', { class: 'so-row' + (on ? ' on' : ''), onClick: async () => { await wearCloth(w.id, !on); draw(); } }, h('span', null, { t: '👕', b: '👖', h: '🎩' }[w.id[0]]), h('b', null, w.name), h('small', null, `${ANIMALS[i].name}에게 삼 · ${on ? '입는 중 (누르면 벗기)' : '누르면 입기'}`)); })) : h('p', { class: 'dim center' }, '동물과 거래하면 그 동물의 옷을 살 수 있어요.'),
+        h('p', { class: 'dim center' }, '눌러서 착용하거나 빼요. 다른 화면의 내 카피바라에도 그대로 보여요.')); };
+    draw(); cl = modal({ title: '🎒 가방', body, actions: [{ label: '닫기', primary: true }] });
   }
 
   const offs = [
@@ -195,5 +265,5 @@ export function mount(el, ctx) {
     ctx.store.on('bag/' + ctx.uid, v => { bag = v || {}; }),
   ];
   scene();
-  return () => { alive = false; cancelAnimationFrame(raf); offs.forEach(f => f()); };
+  return () => { alive = false; cancelAnimationFrame(raf); offs.forEach(f => f()); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
 }

@@ -743,3 +743,33 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .so-hearts { position: relative; width: 100%; height: 0; pointer-events: none; }
 .so-hearts i { position: absolute; bottom: 0; margin-left: -7px; font-size: 13px; font-style: normal; opacity: 0; animation: soHeart 2.2s ease-out infinite; }
 @keyframes soHeart { 0% { opacity: 0; transform: translateY(8px) scale(.6); } 25% { opacity: 1; } 100% { opacity: 0; transform: translateY(-26px) scale(1.15); } }
+
+/* 친목회: 화살표 이동·때리기·움직이는 놀이기구 */
+.so-scroll { overflow: hidden; }
+.so-bg .so-eq { position: absolute; inset: 0; width: 100%; height: 100%; }
+.so-an { transform-origin: 50% 100%; transition: none; bottom: 0; }
+.so-an.ride { width: 74px; margin-left: -37px; }
+.so-an.r-swing .so-body, .so-an.r-seeL .so-body, .so-an.r-seeR .so-body { animation: none; transform-origin: 50% 100%; }
+.so-an.chase .so-body { animation-duration: .24s; }
+.so-an.chase .so-score { border-color: #E5484D; background: #FDECEC; }
+.so-an.ouch .so-body, .so-me.ouch svg { animation: soOuch .45s ease-out; }
+.so-me { z-index: 20; transition: none; }
+.so-me.punch svg { animation: soPunch .3s ease-out; }
+.so-mepop { position: absolute; bottom: 96px; width: 0; height: 0; z-index: 30; }
+@keyframes soOuch { 0% { transform: rotate(0); filter: brightness(1.6) saturate(1.4); } 30% { transform: rotate(-14deg) translateY(-6px); } 100% { transform: rotate(0); } }
+@keyframes soPunch { 0% { transform: translateX(0); } 40% { transform: translateX(16px) rotate(8deg); } 100% { transform: translateX(0); } }
+@keyframes soPunchL { 0% { transform: scaleX(-1) translateX(0); } 40% { transform: scaleX(-1) translateX(16px) rotate(8deg); } 100% { transform: scaleX(-1) translateX(0); } }
+.so-pop { position: absolute; left: 50%; top: -8px; transform: translateX(-50%); font-style: normal; font-weight: 900; font-size: 20px; color: #E5484D; -webkit-text-stroke: .6px #fff; white-space: nowrap; pointer-events: none; animation: soPop 1s ease-out forwards; z-index: 30; }
+.so-pop.say { font-size: 12px; color: #5B4636; background: #fff; border: 2px solid #E8DCC8; border-radius: 10px; padding: 1px 7px; -webkit-text-stroke: 0; top: -24px; }
+.so-pop.lose { color: #C98A00; font-size: 15px; top: -26px; }
+@keyframes soPop { 0% { opacity: 0; margin-top: 8px; } 15% { opacity: 1; margin-top: 0; } 75% { opacity: 1; } 100% { opacity: 0; margin-top: -22px; } }
+.so-pad { display: flex; align-items: center; gap: 10px; margin-top: 8px; touch-action: none; }
+.so-pad .so-dp { width: min(24vw, 96px); height: 58px; border-radius: 18px; font-size: 24px; border-width: 3px; box-shadow: 0 4px 0 var(--line); }
+.so-pad .so-dp.held { transform: translateY(3px); box-shadow: none; }
+.so-pad .so-hit { display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; background: #FFE1DA; border-color: #F0A090; box-shadow: 0 4px 0 #F0A090; }
+.so-pad .so-hit small { font: 700 11px/1.2 var(--head); color: #B4432F; }
+.so-pad .so-hit:active { transform: translateY(3px); box-shadow: none; background: #FFC7BA; }
+.so-hint { margin: 6px 0 0; font-size: 12px; }
+
+.so-bagme { width: 96px; margin: 0 auto; } .so-bagme svg { width: 100%; display: block; }
+.so-row.on { border-color: #FF7FA8; background: #FFF0F5; }
