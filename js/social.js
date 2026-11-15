@@ -27,6 +27,15 @@ export const PERSONA = [
   P('재주 많고 박수받기 좋아하는 성격', ['공', '생선', '박수'], ['더위', '무관심'], '🏐', 'candy'), P('까칠해 보여도 정 많은 성격', ['버섯', '낙엽', '밤'], ['찌르', '풍선'], '🍄', 'flower'),
   P('부지런하고 모으기 좋아하는 성격', ['도토리', '나무', '저축'], ['낭비', '겨울'], '🌰', 'candy'), P('호기심 많고 손 씻기 좋아하는 성격', ['손 씻', '보물', '밤'], ['더럽', '도둑이라'], '🧺', 'cake'),
 ];
+// 동물마다 말투: [말끝에 붙는 소리, AI에게 알려 주는 말투 설명]
+export const TONE = [['멍', '신나서 들뜬 말투, 말끝마다 "멍"'], ['냥', '도도하고 새침한 말투, 말끝에 "냥"'], ['찍', '소심해서 더듬는 말투, 말끝에 "찍"'], ['뀨', '느긋하고 먹는 얘기를 섞는 말투, 말끝에 "뀨"'], ['깡총', '발랄하고 빠른 말투, 말끝에 "깡총"'], ['캥', '능글맞게 놀리는 말투, 말끝에 "캥"'],
+  ['곰', '느리고 듬직한 아저씨 말투, 말끝에 "곰"'], ['뿌', '태평하고 늘어지는 말투, 말끝에 "뿌"'], ['음냐', '졸려서 말을 늘이는 말투, 말끝에 "음냐"'], ['어흥', '허세 부리는 센 말투, 말끝에 "어흥"'], ['크앙', '왕처럼 거만한 말투("짐은", "~하도다"), 말끝에 "크앙"'], ['음메', '순하고 느린 시골 말투, 말끝에 "음메"'],
+  ['꿀', '까다로운 미식가 말투, 말끝에 "꿀"'], ['개굴', '노래하듯 흥얼거리는 말투, 말끝에 "개굴"'], ['우끼', '장난치며 깔깔대는 말투, 말끝에 "우끼"'], ['꼬꼬', '잔소리하는 엄마 말투, 말끝에 "꼬꼬"'], ['펭', '깍듯한 존댓말("~입니다", "~하십시오"), 말끝에 "펭"'], ['삐약', '아기처럼 혀 짧은 말투, 말끝에 "삐약"'],
+  ['꽥', '수다스럽고 말이 많은 말투, 말끝에 "꽥"'], ['부엉', '점잖은 학자 말투("~하는 법이지", "~라네"), 말끝에 "부엉"'], ['아우', '무뚝뚝하고 짧게 끊는 말투, 말끝에 "아우"'], ['킁', '단순하고 씩씩한 말투, 말끝에 "킁"'], ['히힝', '멋 부리며 으스대는 말투, 말끝에 "히힝"'], ['반짝', '꿈꾸는 듯 몽글몽글한 말투, 말끝에 "반짝"'],
+  ['엉금', '아주 천천히 말하는 할아버지 말투("~하구먼", "~일세"), 말끝에 "엉금"'], ['뿌우', '요리사처럼 맛에 빗대는 말투, 말끝에 "뿌우"'], ['아웅', '박수받고 싶어 하는 무대 말투, 말끝에 "아웅"'], ['삐죽', '퉁명스럽지만 속정 있는 말투, 말끝에 "삐죽"'], ['쪼르', '바쁘고 알뜰한 말투, 말끝에 "쪼르"'], ['구리', '호기심 많아 자꾸 되묻는 말투, 말끝에 "구리"']];
+// 정해진 문장에 그 동물의 말끝을 붙인다(AI가 못 답할 때 쓰는 문장들)
+export const toned = (i, t) => { if (!TONE[i]) return t; const suf = TONE[i][0], parts = t.match(/[^.!?…~]+[.!?…~]*\s*/g) || [t];
+  return parts.map((p, k) => (k === parts.length - 1 || p.trim().length >= 9 ? p.replace(/([^.!?…~\s])([.!?…~]*\s*)$/, `$1${suf}$2`) : p)).join(''); };
 export const GIFTS = { candy: ['🍬', '사탕', 30, 3], flower: ['💐', '꽃다발', 120, 8], cake: ['🎂', '케이크', 400, 20] }; // [그림, 이름, 값, 친밀도]
 const GOOD = ['귀여', '귀엽', '멋지', '멋있', '좋아', '최고', '사랑', '고마', '예쁘', '예뻐', '착하', '대단', '잘생', '반가', '보고 싶', '친구', '훌륭', '똑똑', '재밌', '행복', '든든', '응원', '칭찬', '짱'];
 const BAD = ['바보', '못생', '싫어', '꺼져', '멍청', '뚱뚱', '냄새', '미워', '짜증', '나빠', '더러', '재수', '찌질', '한심', '쓰레기', '죽어', '닥쳐', '시끄러워', '별로', '못난', '돼지야', '거지'];
@@ -94,7 +103,7 @@ export function mount(el, ctx) {
   function scene() {
     const top = h('div', { class: 'so-top' }, h('span', { class: 'coin-chip', 'data-coins': 1 }, won(ctx.coins())), h('span', { class: 'so-sp' }),
       h('button', { class: 'btn sm', onClick: openBag }, '🎒 가방'), h('button', { class: 'btn sm', onClick: openShop }, '🏪 카피수퍼'));
-    tiles.length = 0; spots.length = 0; me.ride = null; me.kb = 0; keys.clear(); rideState = ''; playing = true;
+    endSorry(); tiles.length = 0; spots.length = 0; me.ride = null; me.kb = 0; keys.clear(); rideState = ''; playing = true;
     hpEl = h('u'); potEl = h('button', { class: 'btn sm so-pot', onClick: drink }, '🧪 0');
     const hpRow = h('div', { class: 'so-hp' }, h('b', null, '❤️'), h('i', null, hpEl), h('span', { class: 'so-hpn' }), potEl);
     scroller = h('div', { class: 'so-scroll' });
@@ -126,7 +135,7 @@ export function mount(el, ctx) {
   }
   function die() { document.querySelectorAll('.modal-wrap').forEach(w => w.remove()); held = -1; sfx('lose'); saveVit({ hp: 0, deadAt: ctx.store.now() }).then(() => alive && lock()); }
   const KEY = { ArrowLeft: 'L', ArrowRight: 'R', ArrowUp: 'U', ArrowDown: 'D', a: 'L', d: 'R', w: 'U', s: 'D' };
-  const kd = e => { if (document.querySelector('.modal-wrap')) return; if (KEY[e.key]) { keys.add(KEY[e.key]); e.preventDefault(); } else if (e.key === ' ' && !e.repeat) { e.preventDefault(); punch(); } };
+  const kd = e => { if (document.querySelector('.modal-wrap')) return; if (sorryBtn && e.key === 'Enter') { e.preventDefault(); return sorryBtn.click(); } if (KEY[e.key]) { keys.add(KEY[e.key]); e.preventDefault(); } else if (e.key === ' ' && !e.repeat) { e.preventDefault(); punch(); } };
   const ku = e => { if (KEY[e.key]) keys.delete(KEY[e.key]); };
   window.addEventListener('keydown', kd); window.addEventListener('keyup', ku);
   const pop = (parent, text, cls = '') => { const f = h('em', { class: 'so-pop ' + cls }, text); parent.append(f); setTimeout(() => f.remove(), 1000); };
@@ -145,8 +154,16 @@ export function mount(el, ctx) {
     sfx('hit'); pop(o.e, '퍽!'); leave(o); o.st = 'stun'; o.until = now + 900; o.kb = dir * 46; o.e.classList.remove('walk'); o.e.classList.add('ouch'); setTimeout(() => o.e.classList.remove('ouch'), 500);
     const rel = mine[best] || {}, mem = Array.isArray(rel.mem) ? rel.mem : Object.values(rel.mem || {}), v = Math.max(-100, A(best) - 6);
     setRel(best, { a: v, mem: [...mem.slice(-5), { s: '(말없이 때렸다)', r: '아야! 왜 때려!', d: -6, t: ctx.store.now() }] }); o.rage = true; scores();
-    setTimeout(() => alive && pop(o.e, v <= CHASE_AT ? '가만 안 둬!' : '아야!', 'say'), 250);
+    setTimeout(() => alive && pop(o.e, toned(best, v <= CHASE_AT ? '가만 안 둬!' : '아야!'), 'say'), 250);
   }
+  // 쫓아오기 시작한 순간 1초 안에 "미안해!"를 누르면 그 동물은 쫓기를 그만둔다
+  let sorryBtn = null, sorryFor = [], sorryT = 0;
+  function quickSorry(i) {
+    sorryFor.push(i); if (sorryBtn) return;
+    sorryBtn = h('button', { class: 'so-sorry', onClick: () => { sorryFor.forEach(k => { const o = actors[k]; if (!o || o.st !== 'chase') return; o.st = 'idle'; o.until = performance.now() + 1500; o.e.classList.remove('walk', 'chase'); pop(o.e, toned(k, '…이번만 봐준다'), 'say'); }); sfx('point'); endSorry(); } }, '🙇 미안해!', h('i'));
+    scroller.parentNode.insertBefore(sorryBtn, scroller.nextSibling); sorryT = setTimeout(endSorry, 1000);
+  }
+  function endSorry() { clearTimeout(sorryT); if (sorryBtn) sorryBtn.remove(); sorryBtn = null; sorryFor = []; }
   // 사이가 나쁜 동물에게 맞으면 돈이 조금 나간다
   function gotHit(o, now) {
     o.nextHit = now + 900; getOff(); me.kb = (me.x >= o.x ? 1 : -1) * 70; sfx('hit'); pop(mePop, '퍽!'); meEl.classList.remove('ouch'); void meEl.offsetWidth; meEl.classList.add('ouch');
@@ -194,7 +211,7 @@ export function mount(el, ctx) {
         if (Math.abs(d) > 34) { o.x += Math.sign(d) * CHASE_SP * dt; o.e.classList.toggle('left', d < 0); } else if (now > o.nextHit && !paused && Math.abs(o.y - me.dy) < 0.06) gotHit(o, now);
         if (now > o.until) { o.st = 'idle'; o.until = now + 600; o.e.classList.remove('walk', 'chase'); } }
       else {
-        if (!paused && A(i) <= CHASE_AT && Math.abs(me.x - o.x) < (o.rage ? 420 : 170) && (o.rage || wall - ((mine[i] || {}).chaseAt || 0) > TEN_MIN)) { o.rage = false; setRel(i, { chaseAt: wall }); leave(o); o.st = 'chase'; o.until = now + 7000; o.nextHit = now + 300; o.e.classList.add('walk', 'chase'); pop(o.e, '거기 서!', 'say'); }
+        if (!paused && A(i) <= CHASE_AT && Math.abs(me.x - o.x) < (o.rage ? 420 : 170) && (o.rage || wall - ((mine[i] || {}).chaseAt || 0) > TEN_MIN)) { o.rage = false; setRel(i, { chaseAt: wall }); leave(o); o.st = 'chase'; o.until = now + 7000; o.nextHit = now + 300; o.e.classList.add('walk', 'chase'); pop(o.e, toned(i, '거기 서!'), 'say'); quickSorry(i); }
         else if (o.st === 'walk') { const d = o.tx - o.x, step1 = o.sp * dt, dir = Math.sign(d);
           const blocked = o.wait < 1.5 && actors.some(q => q !== o && q.lane === o.lane && q.st !== 'ride' && (q.x - o.x) * dir > 0 && (q.x - o.x) * dir < 58 && !(o.spot && Math.abs(d) < 110));
           if (blocked) { o.wait += dt; if (!o.spot && o.wait > 0.5) { o.st = 'idle'; o.until = now + 500 + Math.random() * 1200; o.e.classList.remove('walk'); } }
@@ -228,7 +245,7 @@ export function mount(el, ctx) {
     const a = ANIMALS[i], p = PERSONA[i]; let busy = false, said = '', close; held = i; actors[i] && actors[i].e.classList.remove('walk');
     const faceEl = h('span', { html: animalSvg(i, true, moodOf(A(i))) }); let faceMood = moodOf(A(i));
     const bubble = h('p', { class: 'so-bubble' }), meter = h('div', { class: 'so-meter' }), quick = h('div', { class: 'so-quick' }), input = h('input', { class: 'so-input', maxLength: 60, placeholder: `${a.name}에게 하고 싶은 말`, enterKeyHint: 'send' });
-    const say = (t, cls = '') => { bubble.className = 'so-bubble ' + cls; bubble.textContent = t; };
+    const say = (t, cls = '', raw = false) => { bubble.className = 'so-bubble ' + cls; bubble.textContent = raw || t === '…' ? t : toned(i, t); };
     const drawMeter = () => { const v = A(i), lv = levelOf(v), nx = LEVELS.find(l => l[0] > v); if (moodOf(v) !== faceMood) { faceMood = moodOf(v); faceEl.innerHTML = animalSvg(i, true, faceMood); } meter.replaceChildren(h('b', null, `${lv[2]} ${lv[1]}`), h('i', null, h('u', { style: { width: (v + 100) / 2 + '%', background: v < 0 ? '#E5484D' : v >= PIN_AT ? '#FF7FA8' : '#57C26B' } })), h('span', null, `${v}점${nx ? ` · ${nx[1]}까지 ${nx[0] - v}` : ''}`)); scores(); };
     const drawQuick = () => quick.replaceChildren(...[pick(QUICK.good), A(i) < 0 ? '미안해, 내가 잘못했어' : pick(QUICK.flat), pick(QUICK.bad)].map((t, k) => h('button', { class: 'so-q q' + k, onClick: () => talk(t) }, t)));
     // 친밀도가 바뀐 뒤: 선물로 받는 액세서리, 사이가 나쁠 때 삥 뜯기
@@ -249,8 +266,8 @@ export function mount(el, ctx) {
     const settle = ok => { demand = ''; drawQuick(); if (!ok) { actors[i].rage = true; say('그래? 그럼 맞아야겠네. 거기 서!', 'angry'); sfx('bad'); setTimeout(() => close && close(), 900); } };
     function ask(kind) {
       demand = kind; sfx('bad');
-      if (kind === 'gift') { say('닥치고 선물을 조공해라.', 'angry'); quick.replaceChildren(h('button', { class: 'so-q q0', onClick: give }, '🎁 선물 바치기'), h('button', { class: 'so-q q2', onClick: () => settle(false) }, '싫어')); }
-      else { say('음... 알겠고, 돈으로 해결할까?', 'angry'); quick.replaceChildren(h('button', { class: 'so-q q0', onClick: async () => { if (!(await ctx.spend(BRIBE[0]))) return settle(false); await setRel(i, { a: A(i) + BRIBE[1] }); settle(true); say('좋아, 이번엔 넘어가 줄게.', 'glad'); after(BRIBE[1]); } }, `🪙 ${BRIBE[0]} 주기`), h('button', { class: 'so-q q2', onClick: () => settle(false) }, '싫어')); }
+      if (kind === 'gift') { say('닥치고 선물을 조공해라.', 'angry', true); quick.replaceChildren(h('button', { class: 'so-q q0', onClick: give }, '🎁 선물 바치기'), h('button', { class: 'so-q q2', onClick: () => settle(false) }, '싫어')); }
+      else { say('음... 알겠고, 돈으로 해결할까?', 'angry', true); quick.replaceChildren(h('button', { class: 'so-q q0', onClick: async () => { if (!(await ctx.spend(BRIBE[0]))) return settle(false); await setRel(i, { a: A(i) + BRIBE[1] }); settle(true); say('좋아, 이번엔 넘어가 줄게.', 'glad'); after(BRIBE[1]); } }, `🪙 ${BRIBE[0]} 주기`), h('button', { class: 'so-q q2', onClick: () => settle(false) }, '싫어')); }
     }
     async function sorry(text) {
       if (A(i) <= -20) return ask('gift'); if (A(i) <= -15) return ask('pay');
@@ -264,12 +281,12 @@ export function mount(el, ctx) {
       const rel = mine[i] || {}, day = today(), n = rel.day === day ? rel.n || 0 : 0, mem = Array.isArray(rel.mem) ? rel.mem : Object.values(rel.mem || {});
       if (n >= TALKS) { say(pick(LINES.tired)); busy = false; return; }
       say('…', 'wait');
-      let r = await askAI(ctx.room, { name: a.name, trait: p.trait, likes: p.likes.join(', '), hates: p.hates.join(', '), user: ctx.me.name, a: A(i), mem: mem.slice(-4).map(m => `${ctx.me.name}: "${m.s}" → 나: "${m.r}"`).join('\n'), text });
+      let r = await askAI(ctx.room, { name: a.name, trait: p.trait, likes: p.likes.join(', '), hates: p.hates.join(', '), user: ctx.me.name, a: A(i), mem: `(말투 규칙: ${TONE[i][1]}. 대답은 반드시 이 말투로 한다)\n` + mem.slice(-4).map(m => `${ctx.me.name}: "${m.s}" → 나: "${m.r}"`).join('\n'), text });
       if (!r) { r = judgeLocal(text, p); const old = mem.length && Math.random() < 0.35 ? pick(mem) : null; // AI를 못 쓰면 낱말로 판정하고, 가끔 예전 말을 꺼낸다
         if (A(i) < -10 && r.delta <= 0) r.reply = pick(LINES.cold); else if (old && old.d < 0) r.reply += ` …그리고 저번에 "${old.s}"라고 한 거, 아직 안 잊었어.`; else if (old && old.d > 0) r.reply += ` 저번에 "${old.s}"라고 해 줘서 기뻤어.`; }
       if (!alive) return; const d = r.delta, v = Math.max(-100, Math.min(100, A(i) + d));
       await setRel(i, { a: v, day, n: n + 1, mem: [...mem.slice(-5), { s: text, r: r.reply.slice(0, 120), d, t: ctx.store.now() }] });
-      say(r.reply, d > 0 ? 'glad' : d < 0 ? 'angry' : ''); busy = false; drawQuick(); after(d);
+      say(r.reply, d > 0 ? 'glad' : d < 0 ? 'angry' : '', !!r.ai); busy = false; drawQuick(); after(d);
     }
     function give() {
       const have = Object.keys(GIFTS).filter(k => (bag[k] || 0) > 0);
@@ -322,5 +339,5 @@ export function mount(el, ctx) {
     ctx.store.on('socialme/' + ctx.uid, v => { const first = vit === null; vit = v || {};
       if (first) { if (vit.deadAt && ctx.store.now() - vit.deadAt < TEN_MIN) lock(); else { if (vit.deadAt) saveVit({ hp: HP_MAX, deadAt: 0 }); scene(); } } else drawHp(); }),
   ];
-  return () => { alive = false; clearInterval(lockT); cancelAnimationFrame(raf); offs.forEach(f => f()); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
+  return () => { alive = false; clearTimeout(sorryT); clearInterval(lockT); cancelAnimationFrame(raf); offs.forEach(f => f()); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
 }

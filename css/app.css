@@ -816,3 +816,9 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .earn-card small { display: block; margin-top: 4px; font-size: 11px; color: #9A8B7A; }
 @keyframes earnIn { from { opacity: 0; transform: translate(-50%, -14px); } to { opacity: 1; transform: translate(-50%, 0); } }
 .g-rate { display: block; color: #B07A00 !important; font-weight: 700; }
+
+/* 친목회: 쫓길 때 1초 사과 버튼 */
+.so-sorry { position: relative; display: block; width: 100%; margin: -74px 0 8px; height: 66px; z-index: 40; border: 3px solid #E5484D; border-radius: 18px; background: #FFF1F1; font: 900 22px/1 var(--head); color: #C62828; box-shadow: 0 5px 0 #E5484D; overflow: hidden; animation: soSorryIn .12s ease-out; }
+.so-sorry i { position: absolute; left: 0; bottom: 0; height: 7px; width: 100%; background: #E5484D; transform-origin: left; animation: soSorryBar 1s linear forwards; }
+@keyframes soSorryBar { to { transform: scaleX(0); } }
+@keyframes soSorryIn { from { transform: scale(.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
