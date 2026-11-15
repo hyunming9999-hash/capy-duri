@@ -5,7 +5,7 @@ import { ANIMALS, animalSvg } from './animals.js';
 import { PAY } from './money.js';
 
 const PATH = 'games/mahjong';
-const LEVELS = { e: { name: '하', sub: '6×6 · 8초', cols: 6, rows: 6, sec: 8, cpu: [0.55, 2600] }, m: { name: '중', sub: '7×8 · 6초', cols: 7, rows: 8, sec: 6, cpu: [0.78, 2000] }, h: { name: '상', sub: '8×9 · 4초', cols: 8, rows: 9, sec: 4, cpu: [0.95, 1400] } };
+const LEVELS = { e: { name: '하', sub: '6×6 · 6초', cols: 6, rows: 6, sec: 6, cpu: [0.55, 2600] }, m: { name: '중', sub: '7×8 · 4초', cols: 7, rows: 8, sec: 4, cpu: [0.78, 2000] }, h: { name: '상', sub: '8×9 · 2초', cols: 8, rows: 9, sec: 2, cpu: [0.95, 700] } };
 function rng(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 const shuffle = (a, r) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
