@@ -65,7 +65,12 @@ async function askAI(room, body) {
 export function mount(el, ctx) {
   let alive = true, mine = {}, theirs = {}, bag = {}, scroller, meEl, lastX = 0, walkT = 0;
   const pid = () => ctx.partnerId, A = i => (mine[i] && mine[i].a) || 0;
-  const SPACING = 78, WIDTH = ANIMALS.length * SPACING + 240, TILE = 760;
+  const H = Math.round(Math.min(innerHeight * 0.62, 470)), TILE = Math.round(H * 1213 / 520), TILES = 3, WIDTH = TILE * TILES;
+  // 놀이기구 자리: [종류, 그림 속 가로 위치(0~1), 바닥에서 높이(0~1)]
+  const SPOT_DEFS = [['slide', 0.243, 0.385], ['swing', 0.292, 0.4], ['swing', 0.327, 0.4], ['seeL', 0.405, 0.42], ['seeR', 0.478, 0.46], ['sand', 0.555, 0.41], ['gym', 0.675, 0.4], ['bench', 0.768, 0.435]];
+  const spots = []; for (let k = 0; k < TILES; k++) SPOT_DEFS.forEach(([type, fx, fb]) => spots.push({ type, x: (k + (k % 2 ? 1 - fx : fx)) * TILE, b: fb, dir: k % 2 ? -1 : 1, by: -1 }));
+  const moodOf = v => (v <= -30 ? 'mad' : v < 0 ? 'angry' : '');
+  let actors = [], held = -1, raf = 0, lastT = 0;
   const setRel = (i, patch) => { mine = { ...mine, [i]: { ...(mine[i] || {}), ...patch } }; return ctx.store.update(`social/${ctx.uid}/${i}`, patch).catch(() => {}); };
   const pinOf = u => (ctx.members[u] || {}).pin;
 
@@ -73,30 +78,53 @@ export function mount(el, ctx) {
     const top = h('div', { class: 'so-top' }, h('span', { class: 'coin-chip', 'data-coins': 1 }, won(ctx.coins())), h('span', { class: 'so-sp' }),
       h('button', { class: 'btn sm', onClick: openBag }, '🎒 가방'), h('button', { class: 'btn sm', onClick: openShop }, '🏪 카피수퍼'));
     scroller = h('div', { class: 'so-scroll' });
-    const world = h('div', { class: 'so-world', style: { width: WIDTH + 'px' } },
-      ...Array.from({ length: Math.ceil(WIDTH / TILE) }, (_, k) => h('i', { class: 'so-bg' + (k % 2 ? ' flip' : ''), style: { left: k * TILE + 'px', width: TILE + 1 + 'px' } })),
-      ...ANIMALS.map((a, i) => h('button', { class: 'so-an' + (i % 2 ? ' back' : ''), 'data-i': i, style: { left: 130 + i * SPACING + 'px', animationDelay: (i % 7) * -0.4 + 's' }, onClick: () => openAnimal(i) },
-        h('span', { class: 'so-score' }), h('span', { class: 'so-body', html: animalSvg(i, true) }), h('small', null, a.name))));
+    const world = h('div', { class: 'so-world', style: { width: WIDTH + 'px', height: H + 'px', '--sx': Math.round(-0.05 * TILE) + 'px', '--sy': Math.round(-0.115 * H) + 'px', '--gy': Math.round(-0.13 * H) + 'px', '--pv': Math.round(-0.07 * H) + 'px' } },
+      ...Array.from({ length: TILES }, (_, k) => h('i', { class: 'so-bg' + (k % 2 ? ' flip' : ''), style: { left: k * TILE + 'px', width: TILE + 1 + 'px' } })));
+    actors = ANIMALS.map((a, i) => { const x = 60 + (i + 0.5) * (WIDTH - 120) / ANIMALS.length;
+      const e = h('button', { class: 'so-an' + (i % 2 ? ' back' : ''), 'data-i': i, style: { left: x + 'px' }, onClick: () => openAnimal(i) }, h('span', { class: 'so-score' }), h('span', { class: 'so-hearts' }), h('span', { class: 'so-body', html: animalSvg(i, true) }), h('small', null, a.name));
+      world.append(e); return { e, x, st: 'idle', until: performance.now() + 400 + Math.random() * 3500, tx: x, spot: null, sp: 24 + Math.random() * 16 }; });
     meEl = h('div', { class: 'so-me', html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) }); world.append(meEl);
     scroller.append(world);
     scroller.addEventListener('scroll', () => { const x = scroller.scrollLeft + scroller.clientWidth / 2; meEl.style.left = x + 'px'; meEl.classList.toggle('left', x < lastX); meEl.classList.add('walk'); lastX = x; clearTimeout(walkT); walkT = setTimeout(() => meEl.classList.remove('walk'), 160); }, { passive: true });
-    el.replaceChildren(top, scroller, h('p', { class: 'dim center' }, '옆으로 밀어서 놀이터를 돌아다녀요. 동물을 누르면 말을 걸 수 있어요.'));
-    requestAnimationFrame(() => { meEl.style.left = scroller.clientWidth / 2 + 'px'; }); scores();
+    el.replaceChildren(top, scroller, h('p', { class: 'dim center' }, '옆으로 밀어서 놀이터를 돌아다녀요. 돌아다니는 동물을 누르면 멈춰서 말을 걸 수 있어요.'));
+    requestAnimationFrame(() => { meEl.style.left = scroller.clientWidth / 2 + 'px'; }); scores(); lastT = performance.now(); raf = requestAnimationFrame(step);
   }
-  // 동물 머리 위 친밀도: 내 점수(크게)와 상대 점수(작게)
+  // 동물들이 걸어 다니다가 가까운 놀이기구가 비면 가서 탄다. 말을 걸고 있는 동물(held)은 그 자리에 멈춘다
+  function leave(o) { if (!o.spot) return; o.e.className = o.e.className.replace(/ ride r-\w+/g, '').replace(' rev', ''); o.e.style.bottom = ''; o.spot.by = -1; o.spot = null; }
+  function decide(o, i, now) {
+    const free = Math.random() < 0.25 ? spots.filter(s => s.by < 0 && Math.abs(s.x - o.x) < 520) : [];
+    if (free.length) { const s = pick(free); s.by = i; o.spot = s; o.tx = s.x; } else o.tx = Math.max(50, Math.min(WIDTH - 50, o.x + (Math.random() * 2 - 1) * 240));
+    o.st = 'walk'; o.e.classList.add('walk'); o.e.classList.toggle('left', o.tx < o.x);
+  }
+  function step(now) {
+    if (!alive) return; const dt = Math.min(0.1, (now - lastT) / 1000); lastT = now;
+    actors.forEach((o, i) => { if (i === held) return;
+      if (o.st === 'walk') { const d = o.tx - o.x, mv = o.sp * dt;
+        if (Math.abs(d) <= mv) { o.x = o.tx; o.e.classList.remove('walk', 'left');
+          if (o.spot) { o.st = 'ride'; o.until = now + 9000 + Math.random() * 7000; o.e.className += ' ride r-' + o.spot.type + (o.spot.dir < 0 ? ' rev' : ''); o.e.style.bottom = o.spot.b * 100 + '%'; }
+          else { o.st = 'idle'; o.until = now + 900 + Math.random() * 3600; } }
+        else o.x += Math.sign(d) * mv;
+        o.e.style.left = o.x + 'px'; }
+      else if (now > o.until) { if (o.st === 'ride') { leave(o); o.st = 'idle'; o.until = now + 700; } else decide(o, i, now); } });
+    raf = requestAnimationFrame(step);
+  }
+  // 동물 머리 위 친밀도: 내 점수(크게)와 상대 점수(작게). 사이가 나쁘면 찌푸리고, 좋으면 하트가 떠오른다
   function scores() {
     if (!scroller) return;
-    scroller.querySelectorAll('.so-an').forEach(e => { const i = +e.dataset.i, a = A(i), lv = levelOf(a), t = pid() && theirs[i] ? theirs[i].a || 0 : null, s = e.querySelector('.so-score');
-      s.className = 'so-score' + (a < 0 ? ' neg' : a >= PIN_AT ? ' hi' : ''); s.replaceChildren(h('b', null, `${lv[2]} ${a}`), t != null && h('i', null, `${ctx.nameOf(pid()).slice(0, 3)} ${t}`) || ''); });
+    scroller.querySelectorAll('.so-an').forEach(e => { const i = +e.dataset.i, a = A(i), lv = levelOf(a), t = pid() && theirs[i] ? theirs[i].a || 0 : null, s = e.querySelector('.so-score'), mood = moodOf(a), hearts = a >= 80 ? 3 : a >= 50 ? 2 : a >= 30 ? 1 : 0;
+      s.className = 'so-score' + (a < 0 ? ' neg' : a >= PIN_AT ? ' hi' : ''); s.replaceChildren(h('b', null, `${lv[2]} ${a}`), t != null && h('i', null, `${ctx.nameOf(pid()).slice(0, 3)} ${t}`) || '');
+      if (e.dataset.mood !== mood) { e.dataset.mood = mood; e.querySelector('.so-body').innerHTML = animalSvg(i, true, mood); }
+      if (+e.dataset.hearts !== hearts) { e.dataset.hearts = hearts; e.querySelector('.so-hearts').replaceChildren(...Array.from({ length: hearts }, (_, k) => h('i', { style: { animationDelay: k * 0.7 + 's', left: [50, 22, 78][k] + '%' } }, '💗'))); } });
     const face = h('div', { html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) }); if (meEl) meEl.innerHTML = face.innerHTML;
   }
 
   // ----- 동물과 만나기 -----
   function openAnimal(i) {
-    const a = ANIMALS[i], p = PERSONA[i]; let busy = false, said = '', close;
+    const a = ANIMALS[i], p = PERSONA[i]; let busy = false, said = '', close; held = i; actors[i] && actors[i].e.classList.remove('walk');
+    const faceEl = h('span', { html: animalSvg(i, true, moodOf(A(i))) }); let faceMood = moodOf(A(i));
     const bubble = h('p', { class: 'so-bubble' }), meter = h('div', { class: 'so-meter' }), quick = h('div', { class: 'so-quick' }), input = h('input', { class: 'so-input', maxLength: 60, placeholder: `${a.name}에게 하고 싶은 말`, enterKeyHint: 'send' });
     const say = (t, cls = '') => { bubble.className = 'so-bubble ' + cls; bubble.textContent = t; };
-    const drawMeter = () => { const v = A(i), lv = levelOf(v), nx = LEVELS.find(l => l[0] > v); meter.replaceChildren(h('b', null, `${lv[2]} ${lv[1]}`), h('i', null, h('u', { style: { width: (v + 100) / 2 + '%', background: v < 0 ? '#E5484D' : v >= PIN_AT ? '#FF7FA8' : '#57C26B' } })), h('span', null, `${v}점${nx ? ` · ${nx[1]}까지 ${nx[0] - v}` : ''}`)); scores(); };
+    const drawMeter = () => { const v = A(i), lv = levelOf(v), nx = LEVELS.find(l => l[0] > v); if (moodOf(v) !== faceMood) { faceMood = moodOf(v); faceEl.innerHTML = animalSvg(i, true, faceMood); } meter.replaceChildren(h('b', null, `${lv[2]} ${lv[1]}`), h('i', null, h('u', { style: { width: (v + 100) / 2 + '%', background: v < 0 ? '#E5484D' : v >= PIN_AT ? '#FF7FA8' : '#57C26B' } })), h('span', null, `${v}점${nx ? ` · ${nx[1]}까지 ${nx[0] - v}` : ''}`)); scores(); };
     const drawQuick = () => quick.replaceChildren(...[pick(QUICK.good), pick(QUICK.flat), pick(QUICK.bad)].map((t, k) => h('button', { class: 'so-q q' + k, onClick: () => talk(t) }, t)));
     // 친밀도가 바뀐 뒤: 선물로 받는 액세서리, 사이가 나쁠 때 삥 뜯기
     async function after(d, was) {
@@ -139,9 +167,9 @@ export function mount(el, ctx) {
     const memBtn = () => { const mem = Array.isArray((mine[i] || {}).mem) ? mine[i].mem : Object.values((mine[i] || {}).mem || {}); modal({ title: `📜 ${a.name}가 기억하는 말`, body: mem.length ? h('div', { class: 'so-mem' }, mem.slice().reverse().map(m => h('p', null, h('b', null, `나: ${m.s}`), h('span', null, `${a.name}: ${m.r}`), h('em', { class: m.d > 0 ? 'up' : m.d < 0 ? 'down' : '' }, (m.d > 0 ? '+' : '') + m.d)))) : h('p', { class: 'center' }, '아직 나눈 말이 없어요.'), actions: [{ label: '닫기', primary: true }] }); };
     input.addEventListener('keydown', e => { if (e.key === 'Enter') talk(input.value); });
     close = modal({ title: `${a.name} · ${p.trait}`, body: h('div', { class: 'so-meet' },
-      h('div', { class: 'so-face' }, h('span', { html: animalSvg(i, true) }), bubble), meter, quick,
+      h('div', { class: 'so-face' }, faceEl, bubble), meter, quick,
       h('div', { class: 'so-say' }, input, h('button', { class: 'btn primary', onClick: () => talk(input.value) }, '말하기')),
-      h('div', { class: 'so-acts' }, h('button', { class: 'btn', onClick: give }, '🎁 선물'), h('button', { class: 'btn', onClick: trade }, '🤝 거래'), h('button', { class: 'btn', onClick: memBtn }, '📜 기억'))), actions: [{ label: '닫기' }] });
+      h('div', { class: 'so-acts' }, h('button', { class: 'btn', onClick: give }, '🎁 선물'), h('button', { class: 'btn', onClick: trade }, '🤝 거래'), h('button', { class: 'btn', onClick: memBtn }, '📜 기억'))), actions: [{ label: '닫기' }], onClose: () => { if (held === i) held = -1; const o = actors[i]; if (o && o.st === 'walk') o.e.classList.add('walk'); } });
     const v = A(i); say(v <= ROB_AT ? pick(LINES.cold) : v >= PIN_AT ? `${ctx.me.name}! 왔구나, 보고 싶었어!` : v >= 10 ? `안녕, ${ctx.me.name}! 또 만났네.` : `안녕? 난 ${a.name}야. ${p.likes[0]} 좋아해.`); drawMeter(); drawQuick();
   }
 
@@ -167,5 +195,5 @@ export function mount(el, ctx) {
     ctx.store.on('bag/' + ctx.uid, v => { bag = v || {}; }),
   ];
   scene();
-  return () => { alive = false; offs.forEach(f => f()); };
+  return () => { alive = false; cancelAnimationFrame(raf); offs.forEach(f => f()); };
 }
