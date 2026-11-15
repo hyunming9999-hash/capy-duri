@@ -291,8 +291,12 @@ export function mount(el, ctx) {
       let r = await askAI(ctx.room, { name: a.name, trait: p.trait, likes: p.likes.join(', '), hates: p.hates.join(', '), user: ctx.me.name, a: A(i), mem: `(말투 규칙: ${TONE[i][1]}. 대답은 반드시 이 말투로 한다)\n` + mem.slice(-4).map(m => `${ctx.me.name}: "${m.s}" → 나: "${m.r}"`).join('\n'), text });
       if (!r) { r = judgeLocal(text, p); const old = mem.length && Math.random() < 0.35 ? pick(mem) : null; // AI를 못 쓰면 낱말로 판정하고, 가끔 예전 말을 꺼낸다
         if (A(i) < -10 && r.delta <= 0) r.reply = pick(LINES.cold); else if (old && old.d < 0) r.reply += ` …그리고 저번에 "${old.s}"라고 한 거, 아직 안 잊었어.`; else if (old && old.d > 0) r.reply += ` 저번에 "${old.s}"라고 해 줘서 기뻤어.`; }
-      if (!alive) return; const d = r.delta, v = Math.max(-100, Math.min(100, A(i) + d));
-      await setRel(i, { a: v, day, n: n + 1, mem: [...mem.slice(-5), { s: text, r: r.reply.slice(0, 120), d, t: ctx.store.now() }] });
+      if (!alive) return;
+      // 칭찬은 연달아 안 통한다: 한 동물에게 10분에 한 번만 점수가 오른다
+      const praiseLeft = TEN_MIN - (ctx.store.now() - (rel.praiseAt || 0)), praised = r.delta > 0 && praiseLeft <= 0;
+      if (r.delta > 0 && !praised) { r = { reply: `아까도 칭찬했잖아. 자꾸 들으니까 별로야. ${Math.ceil(praiseLeft / 60000)}분 뒤에 다시 해 줘.`, delta: 0 }; }
+      const d = r.delta, v = Math.max(-100, Math.min(100, A(i) + d));
+      await setRel(i, { a: v, day, n: n + 1, ...(praised ? { praiseAt: ctx.store.now() } : {}), mem: [...mem.slice(-5), { s: text, r: r.reply.slice(0, 120), d, t: ctx.store.now() }] });
       say(r.reply, d > 0 ? 'glad' : d < 0 ? 'angry' : '', !!r.ai); busy = false; drawQuick(); after(d);
     }
     function give() {
