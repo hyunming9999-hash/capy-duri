@@ -56,8 +56,30 @@ export function mount(el, ctx) {
     ['pointerup', 'pointercancel', 'pointerleave'].forEach(n => row.addEventListener(n, () => { clearTimeout(t); t = 0; }));
     row.addEventListener('contextmenu', e => { e.preventDefault(); if (!row.dataset.held) { clearTimeout(t); fire(); } });
   };
+  // 사진 크게 보기: 두 손가락으로 벌리거나 두 번 눌러 확대, 끌어서 옮기기, 저장
+  const savePhoto = async src => {
+    const d = new Date(), z = n => String(n).padStart(2, '0'), name = `capyduri-${d.getFullYear()}${z(d.getMonth() + 1)}${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}${z(d.getSeconds())}.jpg`;
+    try { const blob = await (await fetch(src)).blob(), file = new File([blob], name, { type: blob.type || 'image/jpeg' });
+      if (/iPhone|iPad|iPod/.test(navigator.userAgent) && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file] }); return; } // 아이폰은 공유 창에서 '이미지 저장'
+      const url = URL.createObjectURL(blob), a = h('a', { href: url, download: name }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000); toast('사진을 저장했어요 (다운로드 폴더)', 2200);
+    } catch (e) { if (!e || e.name !== 'AbortError') toast('저장하지 못했어요'); } };
   const openPhoto = (id, key, src, row) => { if (row.dataset.held) return; const mine = msgs[id] && msgs[id].by === ctx.uid;
-    const m = modal({ body: h('img', { class: 'photo-full', src, alt: '사진' }), actions: [mine && { label: '삭제', danger: true, onClick: async close => { if (await delPhoto(id, key)) close(); } }, { label: '닫기' }].filter(Boolean) }); return m; };
+    let sc = 1, tx = 0, ty = 0, lastTap = 0; const pts = new Map(); let d0 = 0, s0 = 1, moved = false;
+    const img = h('img', { class: 'pv-img', src, alt: '사진', draggable: false }), stage = h('div', { class: 'pv-stage' }, img), hint = h('small', { class: 'pv-hint' }, '두 손가락으로 벌리거나 두 번 눌러 확대');
+    const apply = () => { const mx = Math.max(0, (img.offsetWidth * sc - stage.clientWidth) / 2), my = Math.max(0, (img.offsetHeight * sc - stage.clientHeight) / 2); tx = Math.max(-mx, Math.min(mx, tx)); ty = Math.max(-my, Math.min(my, ty)); img.style.transform = `translate(${tx}px, ${ty}px) scale(${sc})`; hint.hidden = sc > 1; };
+    const close = () => { wrap.remove(); document.removeEventListener('keydown', onKey); }, onKey = e => { if (e.key === 'Escape') close(); };
+    const dist = () => { const [a, b] = [...pts.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+    stage.addEventListener('pointerdown', e => { stage.setPointerCapture(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); moved = false; if (pts.size === 2) { d0 = dist(); s0 = sc; } });
+    stage.addEventListener('pointermove', e => { const p = pts.get(e.pointerId); if (!p) return; const dx = e.clientX - p.x, dy = e.clientY - p.y; if (Math.abs(dx) + Math.abs(dy) > 3) moved = true; pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size === 2 && d0) sc = Math.max(1, Math.min(5, s0 * dist() / d0)); else if (pts.size === 1 && sc > 1) { tx += dx; ty += dy; } if (sc === 1) { tx = 0; ty = 0; } apply(); });
+    const up = e => { if (!pts.delete(e.pointerId)) return; d0 = 0; if (!moved && e.type === 'pointerup') { const now = Date.now(); if (now - lastTap < 320) { sc = sc > 1 ? 1 : 2.5; tx = ty = 0; img.classList.add('ease'); apply(); setTimeout(() => img.classList.remove('ease'), 220); lastTap = 0; } else lastTap = now; } };
+    ['pointerup', 'pointercancel'].forEach(n => stage.addEventListener(n, up));
+    stage.addEventListener('dragstart', e => e.preventDefault());
+    stage.addEventListener('wheel', e => { e.preventDefault(); sc = Math.max(1, Math.min(5, sc * (e.deltaY < 0 ? 1.15 : 0.87))); if (sc === 1) { tx = 0; ty = 0; } apply(); }, { passive: false });
+    const wrap = h('div', { class: 'pv' }, stage, hint, h('div', { class: 'pv-bar' },
+      h('button', { class: 'btn primary', onClick: () => savePhoto(src) }, '💾 저장'), h('button', { class: 'btn', onClick: () => { sc = sc > 1 ? 1 : 2.5; tx = ty = 0; img.classList.add('ease'); apply(); setTimeout(() => img.classList.remove('ease'), 220); } }, '🔍 확대'),
+      mine && h('button', { class: 'btn danger', onClick: async () => { if (await delPhoto(id, key)) close(); } }, '삭제'), h('button', { class: 'btn', onClick: close }, '닫기')));
+    document.body.append(wrap); document.addEventListener('keydown', onKey); return { close }; };
   inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendText(); } });
   inp.addEventListener('input', () => { inp.style.height = ''; inp.style.height = Math.min(110, inp.scrollHeight) + 'px'; });
 

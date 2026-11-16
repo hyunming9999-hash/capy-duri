@@ -868,3 +868,13 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .msg.flash .bubble, .msg.flash .photo, .msg.flash .st { animation: reFlash 1.2s ease-out; }
 @keyframes reFlash { 0%, 40% { box-shadow: 0 0 0 4px #FFD75E; } 100% { box-shadow: 0 0 0 0 transparent; } }
 .msg .re-wrap { max-width: 74%; } .msg .re-wrap .bubble { max-width: 100%; } .re-q span { max-width: 100%; }
+
+/* 톡 사진 크게 보기 */
+.pv { position: fixed; inset: 0; z-index: 5000; background: rgba(20, 14, 8, .94); display: flex; flex-direction: column; }
+.pv-stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; touch-action: none; }
+.pv-img { max-width: 100%; max-height: 100%; object-fit: contain; user-select: none; -webkit-user-select: none; -webkit-touch-callout: default; will-change: transform; }
+.pv-img.ease { transition: transform .2s ease-out; }
+.pv-hint { position: absolute; left: 0; right: 0; bottom: 84px; text-align: center; color: rgba(255, 255, 255, .7); font-size: 12px; pointer-events: none; }
+.pv-hint[hidden] { display: none; }
+.pv-bar { display: flex; gap: 8px; padding: 10px 12px calc(12px + env(safe-area-inset-bottom)); justify-content: center; }
+.pv-bar .btn { flex: 1; max-width: 120px; padding-left: 6px; padding-right: 6px; white-space: nowrap; }
