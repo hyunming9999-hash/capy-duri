@@ -1,6 +1,6 @@
 // 바닷가 낚시 — 카피바라들의 주요 경제활동. 낚시터는 배를 타야만 갈 수 있고, 초급·중급·고급 세 구역으로 나뉜다
 // 던지기(힘 조절) → 입질 기다리기 → 챔질 → 밀고 당기기(줄 팽팽함을 조절하며 감기). 물고기는 클수록 값이 나간다
-import { h, toast } from './ui.js';
+import { h, toast, holdBtn } from './ui.js';
 import { capy } from './capy.js';
 import { sfx } from './sound.js';
 import { gullSvg } from './animals.js';
@@ -161,14 +161,15 @@ export function openFishing(o) {
 // e = { world, stage, panel, zone, meEl, boatEl, shout(t), me:{x, y(바닥에서 px), s}, foeX, balls(), useBall(), cam(x), onEnd(win) }
 const SHIP_SVG = `<svg viewBox="0 0 170 130"><path d="M96 74 V8" stroke="#5A3B22" stroke-width="5" stroke-linecap="round"/><path d="M93 12 L44 38 L93 62z" fill="#3A3A44" stroke="#1F1F26" stroke-width="2" stroke-linejoin="round"/><circle cx="74" cy="36" r="7" fill="#fff"/><circle cx="71.6" cy="35" r="1.6" fill="#1F1F26"/><circle cx="76.4" cy="35" r="1.6" fill="#1F1F26"/><path d="M66 43 l16 5M82 43 l-16 5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><path d="M96 8 h20 q-4 6 0 12 h-20z" fill="#1F1F26"/><path d="M6 72 H164 Q160 112 132 116 H40 Q12 112 6 72z" fill="#6B4A32" stroke="#2E1E12" stroke-width="2.4" stroke-linejoin="round"/><path d="M9 86 H161" stroke="#C0392B" stroke-width="7"/><circle cx="60" cy="100" r="5" fill="#2E1E12"/><circle cx="90" cy="100" r="5" fill="#2E1E12"/><circle cx="120" cy="100" r="5" fill="#2E1E12"/><g class="gun-b" style="transform-origin:42px 56px"><rect x="2" y="45" width="52" height="21" rx="9" fill="#3E3E48" stroke="#1F1F26" stroke-width="2"/><rect x="1" y="42" width="9" height="27" rx="4" fill="#2A2A33" stroke="#1F1F26" stroke-width="1.5"/></g><circle cx="40" cy="67" r="11" fill="#3A2A1E" stroke="#1F140C" stroke-width="2"/><path d="M-2 118 q14 -9 28 0 t28 0 t28 0 t28 0 t28 0 t28 0 t28 0" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".8"/></svg>`;
 export function seaBattle(e) {
-  const G = 520, me = e.me, dir = e.foeX > me.x ? 1 : -1, D0 = Math.abs(e.foeX - me.x), VMAX = Math.sqrt(1.3 * D0 * G), HITR = 52 * me.s + 6, HITS = 4, BALL_PX = Math.round(20 * me.s), A0 = 45, P0 = 60;
+  const G = 520, me = e.me, dir = e.foeX > me.x ? 1 : -1, D0 = Math.abs(e.foeX - me.x), VMAX = Math.sqrt(1.3 * D0 * G), HITR = 68 * me.s, HITH = 80 * me.s, HITS = 4, // 배 반 너비와 높이: 포탄이 배나 캐릭터에 닿으면 무조건 맞은 것이다
+     BALL_PX = Math.round(20 * me.s), A0 = 45, P0 = 60;
   const PX = 41 * me.s, PY = 46 * me.s, BL = 36 * me.s, DROP = 16 * me.s; // 포신 축(배 가운데에서)과 포신 길이, 배 바닥이 기준선보다 내려간 만큼
   const my0 = me.x, foe0 = e.foeX, STEP = 16, BUDGET = 80; let foeX = e.foeX, foeTo = foeX, moved = 0;
   const dist = () => Math.abs(foeX - me.x);
   // 배가 파도에 흔들리는 만큼(기울기·높이) 포구와 쏘는 각도도 같이 움직인다
   const sway = el => { const cs = getComputedStyle(el), r = parseFloat(cs.rotate) || 0, t = cs.translate && cs.translate !== 'none' ? parseFloat(cs.translate.split(' ')[1]) || 0 : 0; return { r, up: -t }; };
   const muzzle = (el, x0, d, a) => { const w = sway(el), ph = -w.r * Math.PI / 180, rx = d * (PX + BL * Math.cos(a)), ry = PY + DROP + BL * Math.sin(a); return { x: x0 + rx * Math.cos(ph) - ry * Math.sin(ph), y: -DROP + rx * Math.sin(ph) + ry * Math.cos(ph) + w.up, a: a - w.r * d * Math.PI / 180 }; };
-  let alive = true, raf = 0, last = 0, turn = 'intro', shot = null, wind = 0, myHp = HITS, foeHp = HITS, camX = me.x, camTo = me.x, timer = 0, next = null, misses = 0, streak = 0;
+  let alive = true, raf = 0, last = 0, turn = 'intro', shot = null, wind = 0, myHp = HITS, foeHp = HITS, camX = me.x, camTo = me.x, timer = 0, next = null, round = 0, still = 0, sailing = 0;
   const pips = () => h('div', { class: 'sb-hp' }, ...Array.from({ length: HITS }, () => h('i')));
   const foeEl = h('div', { class: 'so-boat sb-foe hv' + e.zone, style: { left: foeX + 'px', bottom: me.y + 'px', transform: `scale(${(dir * me.s).toFixed(3)}, ${me.s.toFixed(3)})`, zIndex: 12 } }, h('div', { class: 'sb-crew a', html: gullSvg(true) }), h('div', { class: 'sb-crew b', html: gullSvg(false) }), h('div', { class: 'sb-ship', html: SHIP_SVG }));
   const fHp = pips(), mHp = pips(), ball = h('i', { class: 'sb-ball', style: { display: 'none', width: BALL_PX + 'px', height: BALL_PX + 'px', margin: `0 0 ${-BALL_PX / 2}px ${-BALL_PX / 2}px` } }), dots = [0, 1, 2, 3, 4, 5].map(() => h('i', { class: 'sb-dot' }));
@@ -178,48 +179,49 @@ export function seaBattle(e) {
   const ang = h('input', { type: 'range', min: 10, max: 80, value: A0 }), pow = h('input', { type: 'range', min: 20, max: 100, value: P0 }), aV = h('b'), pV = h('b'), msg = h('p', { class: 'sb-msg' }), info = h('span', { class: 'sb-info' }), fire = h('button', { class: 'sb-fire', onClick: shoot }, h('span', null, '💣'), h('b', null, '발사'));
   const nudge = (inp, d) => h('button', { class: 'sb-nd', onClick: () => { inp.value = +inp.value + d; lab(); } }, d < 0 ? '−' : '+');
   const row = (ic, nm, inp, val, cls) => h('div', { class: 'sb-row ' + cls }, h('div', { class: 'sb-rl' }, h('span', null, ic + ' ' + nm), val), h('div', { class: 'sb-sl' }, nudge(inp, -1), inp, nudge(inp, 1)));
-  const mvL = h('span', { class: 'sb-mvl' }), mvB = h('button', { class: 'sb-mv', onClick: () => sail(-1) }, '◀ 뒤로'), mvF = h('button', { class: 'sb-mv', onClick: () => sail(1) }, '앞으로 ▶');
+  const mvL = h('span', { class: 'sb-mvl' }), mvB = h('button', { class: 'sb-mv' }, '◀ 뒤로'), mvF = h('button', { class: 'sb-mv' }, '앞으로 ▶'); holdBtn(mvB, () => { sailing = -1; }, () => { sailing = 0; }); holdBtn(mvF, () => { sailing = 1; }, () => { sailing = 0; });
   e.panel.replaceChildren(h('div', { class: 'sb-move' }, mvB, h('div', { class: 'sb-mid' }, info, mvL), mvF), msg, h('div', { class: 'sb-deck' }, h('div', { class: 'sb-ctl' }, row('📐', '각도', ang, aV, 'ang'), row('💪', '힘', pow, pV, 'pow')), fire)); e.panel.hidden = false;
-  // 명중률: 중급은 낮게 시작해 천천히, 고급은 조금 높게. 너무 높아지지 않게 위를 막는다
-  const acc = () => (e.zone === 3 ? Math.min(0.5, 0.12 + misses * 0.08) : Math.min(0.35, 0.06 + misses * 0.06));
+  // 명중률: 차례가 거듭될수록 조금씩 오른다. 중급은 낮게, 고급은 조금 높게, 너무 높아지지 않게 위를 막는다
+  const acc = () => (e.zone === 3 ? Math.min(0.55, 0.12 + round * 0.06) : Math.min(0.4, 0.06 + round * 0.05));
   const windTxt = () => (wind ? `바람 ${wind * dir > 0 ? '뒤에서' : '앞에서'} ${Math.abs(wind)}` : '바람 없음');
   const fill = inp => { inp.style.setProperty('--p', (inp.value - inp.min) / (inp.max - inp.min) * 100 + '%'); };
-  function lab() { aV.textContent = ang.value + '°'; pV.textContent = pow.value; fill(ang); fill(pow); info.textContent = `포탄 ${e.balls()} · 거리 ${Math.round(dist() / 4)}m · ${windTxt()}`; if (turn === 'me' || turn === 'intro') setGun(myGun(), +ang.value); const on = turn === 'me' && alive && !shot; mvB.disabled = !on || moved >= BUDGET; mvF.disabled = !on || moved >= BUDGET; mvL.textContent = `◀ ▶ 배 움직이기: 이번 차례 ${Math.round((BUDGET - moved) / 4)}m 남음`; } ang.oninput = pow.oninput = lab;
+  function lab() { aV.textContent = ang.value + '°'; pV.textContent = pow.value; fill(ang); fill(pow); info.textContent = `포탄 ${e.balls()} · 거리 ${Math.round(dist() / 4)}m · ${windTxt()}`; if (turn === 'me' || turn === 'intro') setGun(myGun(), +ang.value); const on = turn === 'me' && alive && !shot; mvB.disabled = !on || moved >= BUDGET; mvF.disabled = !on || moved >= BUDGET; mvL.textContent = `꾹 눌러 배 움직이기 · 이번 차례 ${Math.max(0, Math.round((BUDGET - moved) / 4))}m 남음`; } ang.oninput = pow.oninput = lab;
   const hp = () => { [...fHp.children].forEach((n, k) => n.classList.toggle('off', k >= foeHp)); [...mHp.children].forEach((n, k) => n.classList.toggle('off', k >= myHp)); };
   const fly = (x, y, vx, vy, t) => { for (let k = 0; k < t / 0.016; k++) { vx += wind * 0.016; vy -= G * 0.016; x += vx * 0.016; y += vy * 0.016; if (y <= 0) break; } return { x, y }; };
   function aim() { const on = turn === 'me' && alive && !shot; if (!on) return dots.forEach(d => { d.style.display = 'none'; }); const v = pow.value / 100 * VMAX, m = muzzle(e.boatEl, me.x + 3, dir, ang.value * Math.PI / 180); dots.forEach((d, k) => { d.style.display = ''; const q = fly(m.x, m.y, dir * Math.cos(m.a) * v, Math.sin(m.a) * v, 0.07 * (k + 1)); d.style.left = q.x + 'px'; d.style.bottom = me.y + q.y + 'px'; }); } // 조준 도움선은 앞부분만, 배가 흔들리면 같이 흔들린다
-  // 내 차례에는 배를 앞뒤로 조금 움직일 수 있다(한 차례에 20m까지)
-  function sail(sgn) { if (turn !== 'me' || shot || !alive || moved >= BUDGET) return; const nx = Math.max(Math.min(my0 - BUDGET, my0 + BUDGET), Math.min(Math.max(my0 - BUDGET, my0 + BUDGET), Math.max(e.minX, Math.min(e.maxX, me.x + sgn * dir * STEP)))); if (nx === me.x) return; moved += Math.abs(nx - me.x); me.x = nx; e.move(nx); place(); camTo = me.x + dir * 90; sfx('tock'); lab(); }
+  // 내 차례에는 버튼을 누르고 있는 동안 배가 앞뒤로 미끄러지듯 움직인다(한 차례에 20m까지). 5m 넘게 움직이면 해적단이 재던 거리가 흐트러진다
+  function sail(sgn, dt) { if (turn !== 'me' || shot || !alive || moved >= BUDGET) return; const lo = Math.max(e.minX, my0 - BUDGET), hi = Math.min(e.maxX, my0 + BUDGET), nx = Math.max(lo, Math.min(hi, me.x + sgn * dir * Math.min(64 * dt, BUDGET - moved))); if (nx === me.x) return;
+    const was = moved; moved += Math.abs(nx - me.x); me.x = nx; e.move(nx); place(); camTo = me.x + dir * 90; if (was < 20 && moved >= 20) { if (still) msg.textContent = '배를 움직였어요! 해적단이 거리를 다시 재야 해요.'; still = 0; sfx('point'); } lab(); }
   const clean = () => { cancelAnimationFrame(raf); [foeEl, fHp, mHp, ball, ...dots].forEach(n => n.remove()); e.world.querySelectorAll('.sb-fx').forEach(n => n.remove()); setGun(myGun(), 0); e.panel.hidden = true; e.panel.replaceChildren(); e.cam(null); };
   function end(win, text) { if (!alive) return; alive = false; aim(); lab(); msg.textContent = text; fire.lastChild.textContent = '확인'; fire.firstChild.textContent = win ? '🏆' : '🏳️'; fire.disabled = false; fire.classList.add('done'); camTo = me.x; fire.onclick = () => { clean(); e.onEnd(win); }; }
-  function myTurn() { turn = 'me'; moved = 0; ang.value = A0; pow.value = P0; wind = Math.round(rnd(-60, 60)); camTo = me.x + dir * 90; lab(); if (e.balls() <= 0) return end(false, '포탄이 떨어졌어요! 해적단에게 당했어요.'); msg.textContent = streak >= 2 ? '⚠️ 이번에 못 맞히면 해적단의 포가 반드시 맞아요!' : '내 차례! 각도와 힘을 맞춰 쏘세요.'; fire.disabled = false; }
+  function myTurn() { turn = 'me'; moved = 0; ang.value = A0; pow.value = P0; wind = Math.round(rnd(-60, 60)); camTo = me.x + dir * 90; lab(); if (e.balls() <= 0) return end(false, '포탄이 떨어졌어요! 해적단에게 당했어요.'); msg.textContent = still >= 1 ? '⚠️ 가만히 있으면 해적단의 다음 포는 반드시 맞아요! 배를 움직이세요.' : '내 차례! 각도와 힘을 맞춰 쏘세요.'; fire.disabled = false; }
   function puff(x, y) { const f = h('i', { class: 'sb-fx sb-puff', style: { left: x + 'px', bottom: me.y + y + 'px' } }); e.world.append(f); setTimeout(() => f.remove(), 500); }
   const kick = (...els) => { els.forEach(n => n.classList.add('sb-kick')); setTimeout(() => els.forEach(n => n.classList.remove('sb-kick')), 260); };
   function shoot() { if (turn !== 'me' || shot || !alive) return; e.useBall(); sfx('cannon'); const v = pow.value / 100 * VMAX, m = muzzle(e.boatEl, me.x + 3, dir, ang.value * Math.PI / 180); shot = { x: m.x, y: m.y, vx: dir * Math.cos(m.a) * v, vy: Math.sin(m.a) * v, by: 'me' }; puff(m.x, m.y); kick(e.boatEl, e.meEl); fire.disabled = true; turn = 'fly'; lab(); aim(); msg.textContent = '날아갑니다…'; }
   function foeShoot() { turn = 'foe'; wind = Math.round(rnd(-60, 60)); lab(); camTo = foeX - dir * 90;
-    // 맞힐지 빗나갈지 먼저 정하고, 그 자리에 떨어지는 각도와 힘을 찾는다
-    const sure = streak >= 2, hitNow = sure || Math.random() < acc(), want = me.x + (hitNow ? rnd(-14, 14) : (Math.random() < 0.5 ? -1 : 1) * rnd(HITR + 30, HITR + 150)); if (sure) streak = 0;
-    msg.textContent = sure ? '해적단이 거리를 다 쟀어요! 피할 수 없어요!' : '갈매기 해적단이 포를 겨눠요!'; let best = { e: 1e9, a: 0.8, v: VMAX * 0.7 };
-    for (let a = 0.5; a < 1.15; a += 0.05) for (let v = VMAX * 0.45; v <= VMAX * 1.15; v += VMAX / 90) { const q = fly(foeX - dir * (PX + BL * Math.cos(a)), PY + BL * Math.sin(a), -dir * Math.cos(a) * v, Math.sin(a) * v, 9), er = Math.abs(q.x - want); if (er < best.e) best = { e: er, a, v }; }
+    // 맞힐지 빗나갈지 먼저 정하고, 그 자리에 떨어지는 각도와 힘을 찾는다 빗나갈 때는 내 앞에 떨어지거나 머리 위로 넉넉히 넘어간다(배에 스치면 맞은 것이 되므로)
+    still++; const sure = still >= 2, hitNow = sure || Math.random() < acc(), want = me.x + (hitNow ? rnd(-14, 14) : Math.random() < 0.5 ? dir * rnd(HITR + 25, HITR + 150) : -dir * rnd(HITR + 120, HITR + 240)); if (sure) still = 0; round++;
+    msg.textContent = sure ? '가만히 있었더니 해적단이 거리를 다 쟀어요! 피할 수 없어요!' : '갈매기 해적단이 포를 겨눠요!'; let best = { e: 1e9, a: 0.8, v: VMAX * 0.7 };
+    for (let a = 0.72; a < 1.15; a += 0.05) for (let v = VMAX * 0.45; v <= VMAX * 1.15; v += VMAX / 90) { const q = fly(foeX - dir * (PX + BL * Math.cos(a)), PY + BL * Math.sin(a), -dir * Math.cos(a) * v, Math.sin(a) * v, 9), er = Math.abs(q.x - want); if (er < best.e) best = { e: er, a, v }; }
     setGun(foeGun, best.a * 180 / Math.PI, -1);
-    timer = 1.2; next = () => { sfx('cannon'); const mx = foeX - dir * (PX + BL * Math.cos(best.a)), my = PY + BL * Math.sin(best.a); shot = { x: mx, y: my, vx: -dir * Math.cos(best.a) * best.v, vy: Math.sin(best.a) * best.v, by: 'foe', hit: hitNow }; puff(mx, my); kick(foeEl); turn = 'fly'; }; }
+    timer = 1.2; next = () => { sfx('cannon'); const mx = foeX - dir * (PX + BL * Math.cos(best.a)), my = PY + BL * Math.sin(best.a); shot = { x: mx, y: my, vx: -dir * Math.cos(best.a) * best.v, vy: Math.sin(best.a) * best.v, by: 'foe' }; puff(mx, my); kick(foeEl); turn = 'fly'; }; }
   // 한 발 쏘고 난 틈에 해적선이 앞뒤로 조금 움직일 수 있다. 움직이면 화면이 해적선을 비춘다
   function foeDrift(then) { if (Math.random() > 0.55) return then(); const to = Math.max(Math.min(foe0 - 100, foe0 + 100), Math.min(Math.max(foe0 - 100, foe0 + 100), Math.max(e.minX, Math.min(e.maxX, foeX + (Math.random() < 0.5 ? -1 : 1) * rnd(36, 96))))); if (Math.abs(to - foeX) < 20 || Math.abs(to - me.x) < 380) return then();
     const closer = Math.abs(to - me.x) < dist(); foeTo = to; turn = 'drift'; camTo = to - dir * 60; setGun(foeGun, 0, -1); msg.textContent = `해적선이 ${closer ? '다가와요' : '물러나요'}! (${Math.round(Math.abs(to - foeX) / 4)}m)`; next = then; timer = 0; }
-  function fx(cls, x, n) { const f = h('div', { class: 'sb-fx ' + cls, style: { left: x + 'px', bottom: me.y + 'px' } }, ...Array.from({ length: n }, (_, k) => h('i', { style: { '--a': (k / n * 360 + rnd(-12, 12)).toFixed(0) + 'deg', '--d': rnd(26, 62).toFixed(0) + 'px', '--t': rnd(0, 0.12).toFixed(2) + 's' } }))); e.world.append(f); setTimeout(() => f.remove(), 1100); }
-  function land(s) { const mine = s.by === 'me', tx = mine ? foeX : me.x, d = Math.abs(s.x - tx), hit = mine ? d < HITR : !!s.hit; ball.style.display = 'none'; const ix = hit && !mine ? tx + Math.max(-20, Math.min(20, s.x - tx)) : s.x;
-    if (hit) { sfx('boom'); fx('sb-bang', ix, 10); e.stage.classList.add('sb-quake'); setTimeout(() => e.stage.classList.remove('sb-quake'), 420); const els = mine ? [foeEl] : [e.boatEl, e.meEl]; els.forEach(n => n.classList.add('sb-hit')); setTimeout(() => els.forEach(n => n.classList.remove('sb-hit')), 600);
-      if (mine) { foeHp--; streak = 0; } else myHp--; hp(); }
-    else { sfx('splash'); fx('sb-water', ix, 9); if (mine) { misses++; streak++; } }
+  function fx(cls, x, n, y = 0) { const f = h('div', { class: 'sb-fx ' + cls, style: { left: x + 'px', bottom: me.y + y + 'px' } }, ...Array.from({ length: n }, (_, k) => h('i', { style: { '--a': (k / n * 360 + rnd(-12, 12)).toFixed(0) + 'deg', '--d': rnd(26, 62).toFixed(0) + 'px', '--t': rnd(0, 0.12).toFixed(2) + 's' } }))); e.world.append(f); setTimeout(() => f.remove(), 1100); }
+  function land(s, touched) { const mine = s.by === 'me', tx = mine ? foeX : me.x, d = Math.abs(s.x - tx), hit = !!touched || d < HITR; ball.style.display = 'none'; const ix = s.x;
+    if (hit) { sfx('boom'); fx('sb-bang', ix, 10, Math.max(0, s.y - 20)); e.stage.classList.add('sb-quake'); setTimeout(() => e.stage.classList.remove('sb-quake'), 420); const els = mine ? [foeEl] : [e.boatEl, e.meEl]; els.forEach(n => n.classList.add('sb-hit')); setTimeout(() => els.forEach(n => n.classList.remove('sb-hit')), 600);
+      if (mine) foeHp--; else myHp--; hp(); }
+    else { sfx('splash'); fx('sb-water', ix, 9); }
     const off = Math.round(d / 4), short = (s.x - tx) * dir < 0;
-    msg.textContent = mine ? (hit ? `명중! 앞으로 ${foeHp}방!` : `${off}m ${short ? '짧았어요' : '넘어갔어요'}. 해적단이 거리를 재요 (명중률 ${Math.round(acc() * 100)}%)`) : (hit ? `으악, 맞았어요! 내 배는 앞으로 ${myHp}방…` : '해적단의 포가 빗나갔어요.');
+    msg.textContent = mine ? (hit ? `명중! 앞으로 ${foeHp}방!` : `${off}m ${short ? '짧았어요' : '넘어갔어요'}. (해적단 명중률 ${Math.round(acc() * 100)}%)`) : (hit ? `으악, 맞았어요! 내 배는 앞으로 ${myHp}방…` : '해적단의 포가 빗나갔어요.');
     shot = null; if (foeHp <= 0) return end(true, '갈매기 해적단을 물리쳤어요! 보물을 챙겼어요.'); if (myHp <= 0) return end(false, '배가 크게 부서졌어요…');
     timer = 1.4; next = () => foeDrift(mine ? foeShoot : myTurn); }
   function step(now) { const dt = Math.min(0.033, (now - last) / 1000); last = now;
     if (alive) { if (timer > 0) { timer -= dt; if (timer <= 0 && next) { const f = next; next = null; f(); } }
       if (turn === 'drift') { const d = foeTo - foeX, st = 70 * dt; if (Math.abs(d) <= st) { foeX = foeTo; place(); turn = 'wait'; lab(); msg.textContent += ` 이제 거리 ${Math.round(dist() / 4)}m`; timer = 0.9; } else { foeX += Math.sign(d) * st; place(); } }
-      if (turn === 'me') aim();
-      if (shot) { shot.vx += wind * dt; shot.vy -= G * dt; shot.x += shot.vx * dt; shot.y += shot.vy * dt; ball.style.display = ''; ball.style.left = shot.x + 'px'; ball.style.bottom = me.y + Math.max(0, shot.y) + 'px'; camTo = shot.x; if (shot.y <= 0) land(shot); } }
+      if (turn === 'me') { if (sailing) sail(sailing, dt); aim(); }
+      if (shot) { shot.vx += wind * dt; shot.vy -= G * dt; shot.x += shot.vx * dt; shot.y += shot.vy * dt; ball.style.display = ''; ball.style.left = shot.x + 'px'; ball.style.bottom = me.y + Math.max(0, shot.y) + 'px'; camTo = shot.x; const tx = shot.by === 'me' ? foeX : me.x; if (Math.abs(shot.x - tx) < HITR && shot.y < HITH && shot.y > 0) land(shot, true); else if (shot.y <= 0) land(shot); } }
     camX += (camTo - camX) * Math.min(1, dt * 5); e.cam(camX); raf = requestAnimationFrame(step); }
   // 등장: 먼저 외치고, 화면이 해적선 위치를 보여 준 다음 다시 내 보트로 돌아와 내 차례
   place(); hp(); lab(); fire.disabled = true; e.shout('앗! 해적선이다!'); sfx('bad'); msg.textContent = '앗! 해적선이다!'; timer = 1.1; next = () => { camTo = foeX - dir * 60; msg.textContent = '갈매기 해적단이 나타났어요! 서로 4방이면 끝나요.'; timer = 2.2; next = () => { camTo = me.x + dir * 90; timer = 0.9; next = myTurn; }; };
