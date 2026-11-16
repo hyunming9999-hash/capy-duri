@@ -4,7 +4,8 @@ import { capy, PIN_CHEST } from './capy.js';
 import { ANIMALS, animalSvg } from './animals.js';
 import { ZOO_HATS } from './clothes.js';
 import { priceOf, won } from './money.js';
-import { sfx, animalVoice } from './sound.js';
+import { sfx, animalVoice, bgm } from './sound.js';
+import { makeVoice } from './walk.js';
 import { PUSH_URL } from './push.js';
 import { isMock } from './store.js';
 
@@ -92,6 +93,18 @@ export function mount(el, ctx) {
   // 같이 접속한 상대: 위치를 1초에 몇 번 주고받아 놀이터에 함께 보인다(동물들의 움직임은 각자 화면에서 따로 돈다)
   const pal = { on: false, x: 0, y: 0, f: 1, ride: -1, boat: -1, t: 0, dx: -1, dy: 0, ds: 1, spot: null }; let palEl = null, sentAt = 0, sentKey = '';
   let savedPos = '', savedAt = 0; const keepPos = () => { if (!playing) return; const k = (me.x / WIDTH).toFixed(3) + '|' + me.y.toFixed(2); if (k === savedPos) return; savedPos = k; saveVit({ px: +(me.x / WIDTH).toFixed(4), py: +me.y.toFixed(3) }); };
+  // 둘이 나누는 말: 글은 머리 위 말풍선과 화면 구석 기록으로, 목소리는 🎤로(히노끼탕과 같은 방식, 저장 안 됨)
+  let chatLog = null, palPop = null, micBtn = null, vState = 'off', vPeer = false; const chatSeen = new Set(), bornAt = Date.now();
+  const voice = makeVoice(ctx, { state: v => { vState = v; drawMic(); }, peer: on => { vPeer = on; drawMic(); }, level: () => {} });
+  function drawMic() { if (!micBtn) return; const on = voice.on; micBtn.classList.toggle('on', on); micBtn.classList.toggle('live', vState === 'connected'); micBtn.lastChild.textContent = !on ? '음성' : vState === 'connected' ? '통화 중' : vState === 'failed' ? '연결 실패' : vPeer ? '연결 중…' : '상대 기다리는 중'; }
+  async function toggleMic() { if (voice.on) { voice.leave(); bgm.duck(false); return drawMic(); }
+    if (!pid()) return toast('상대가 들어와야 음성 대화를 할 수 있어요');
+    try { micBtn.disabled = true; await voice.join(); bgm.duck(true); if (!vPeer) toast('마이크를 켰어요. 상대도 🎤를 눌러야 연결돼요', 3200); } catch (e) { toast(e.message, 4500); } micBtn.disabled = false; if (!alive) voice.leave(); drawMic(); }
+  const sendChat = inp => { const t = inp.value.trim().slice(0, 80); if (!t) return; inp.value = ''; ctx.store.push('socialchat', { by: ctx.uid, t, ts: ctx.store.now() }).catch(() => toast('보내지 못했어요')); };
+  function onChat(v) { if (!chatLog) return; const ids = Object.keys(v || {}).sort().slice(-20);
+    ids.forEach(id => { if (chatSeen.has(id)) return; chatSeen.add(id); const m = v[id]; if (!m || !m.t || m.ts < bornAt - 3000) return; const mineMsg = m.by === ctx.uid;
+      const target = mineMsg ? mePop : palPop; if (target && (mineMsg || (palEl && palEl.style.display !== 'none'))) pop(target, m.t, 'say chat'); if (!mineMsg) sfx('tock');
+      const line = h('p', { class: mineMsg ? 'me' : '' }, h('b', null, ctx.nameOf(m.by)), ' ' + m.t); chatLog.append(line); while (chatLog.children.length > 3) chatLog.firstChild.remove(); setTimeout(() => line.remove(), 12000); }); }
   let waveBar = null; // 내 보트의 파도 세기
   let meTube = null, palTube = null, boatEl = null, palBoat = null, palBoatI = -1, palBoatDrawn = -1, offer = null, calmChk = 0; // 물놀이: 튜브·보트, 보트 제안
   const tiles = [], spots = []; let vit = null, hpEl, potEl, lockT = 0, playing = false;
@@ -123,6 +136,7 @@ export function mount(el, ctx) {
     endSorry(); tiles.length = 0; spots.length = 0; me.ride = null; me.kb = 0; keys.clear(); rideState = ''; playing = true;
     hpEl = h('u'); potEl = h('button', { class: 'btn sm so-pot', onClick: drink }, '🧪 0');
     const hpRow = h('div', { class: 'so-hp' }, h('b', null, '❤️'), h('i', null, hpEl), h('span', { class: 'so-hpn' }), potEl);
+    chatLog = h('div', { class: 'so-chatlog' }); palPop = h('div', { class: 'so-mepop' });
     waveBar = h('div', { class: 'so-wavebar', hidden: true }, h('b', null, '🌊'), h('i', null, h('u')), h('span', null, '잔잔'));
     scroller = h('div', { class: 'so-scroll' });
     const world = h('div', { class: 'so-world', style: { width: WIDTH + 'px', height: H + 'px', '--sx': Math.round(-0.05 * TILE) + 'px', '--sy': Math.round(-0.115 * H) + 'px', '--gy': Math.round(-0.13 * H) + 'px' } });
@@ -134,13 +148,17 @@ export function mount(el, ctx) {
       const e = h('button', { class: 'so-an', 'data-i': i, style: { left: x + 'px', zIndex: 10 - lane }, onClick: () => openAnimal(i) }, h('span', { class: 'so-score' }), h('span', { class: 'so-hearts' }), h('span', { class: 'so-body', html: animalSvg(i, true) }), h('small', null, a.name), h('span', { class: 'so-tube', html: tubeSvg(a.body) }));
       world.append(e); return { greetAt: 0, offerAt: 0, e, body: e.querySelector('.so-body'), x, lane, y: LANES[lane][0], s: LANES[lane][1], st: 'idle', until: performance.now() + 400 + Math.random() * 3500, tx: x, spot: null, sp: 24 + Math.random() * 16, cool: 0, nextHit: 0, wait: 0 }; });
     meEl = h('div', { class: 'so-me', html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) }); mePop = h('div', { class: 'so-mepop' }); world.append(meEl, mePop);
-    meTube = h('div', { class: 'so-metube', html: tubeSvg('#FF6B6B'), style: { display: 'none' } }); palTube = h('div', { class: 'so-metube', html: tubeSvg('#FF9DB8'), style: { display: 'none' } }); boatEl = h('div', { class: 'so-boat', style: { display: 'none' } }); palBoat = h('div', { class: 'so-boat', style: { display: 'none' } }); palBoatI = palBoatDrawn = -1; world.append(meTube, palTube, boatEl, palBoat); me.boat = null; offer = null;
+    meTube = h('div', { class: 'so-metube', html: tubeSvg('#FF6B6B'), style: { display: 'none' } }); palTube = h('div', { class: 'so-metube', html: tubeSvg('#FF9DB8'), style: { display: 'none' } }); boatEl = h('div', { class: 'so-boat', style: { display: 'none' } }); palBoat = h('div', { class: 'so-boat', style: { display: 'none' } }); palBoatI = palBoatDrawn = -1; world.append(meTube, palTube, boatEl, palBoat, palPop); me.boat = null; offer = null;
     palEl = h('div', { class: 'so-me so-pal', style: { display: 'none' } }); pal.spot = null; pal.dx = -1; world.append(palEl); drawPal();
     scroller.append(world);
     rideBtn = h('button', { class: 'dp so-dp so-ride', disabled: true, onClick: toggleRide }, '🎠', h('small', null, '타기'));
     const pad = h('div', { class: 'so-pad' }, h('div', { class: 'dpad so-dpad' }, [['U', '▲'], ['L', '◀'], ['D', '▼'], ['R', '▶']].map(([k, t]) => { const b = h('button', { class: 'dp so-dp dp-' + k, 'aria-label': k }, t); holdBtn(b, () => keys.add(k), () => keys.delete(k)); return b; })),
       h('span', { class: 'so-sp' }), h('div', { class: 'so-acts2' }, rideBtn, h('button', { class: 'dp so-dp so-hit', onClick: punch }, '👊', h('small', null, '때리기'))));
-    el.replaceChildren(top, hpRow, waveBar, scroller, pad, h('p', { class: 'dim center so-hint' }, '방향키로 걸어가요. 놀이기구 앞에서 🎠 로 타요. 동물과 같이 타면 친해져요. 동물을 누르면 말을 걸어요. 얼굴이 빨간 동물(-10점 이하)은 쫓아와요! 오른쪽 끝은 바닷가예요.'));
+    const chatIn = h('input', { class: 'so-chatin', maxLength: 80, placeholder: ctx.partnerId ? `${ctx.nameOf(ctx.partnerId)}에게 말하기` : '상대가 들어오면 말할 수 있어요', enterKeyHint: 'send' });
+    chatIn.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); sendChat(chatIn); } }); chatIn.addEventListener('focus', () => keys.clear());
+    micBtn = h('button', { class: 'btn sm so-mic', onClick: toggleMic }, '🎤', h('small', null, '음성')); drawMic();
+    const chatBar = h('div', { class: 'so-chatbar' }, chatIn, h('button', { class: 'btn sm primary', onClick: () => sendChat(chatIn) }, '보내기'), micBtn, h('button', { class: 'btn sm so-help', 'aria-label': '도움말', onClick: () => modal({ title: '🐾 동물 친목회', body: h('p', null, '방향키로 걸어가요. 놀이기구 앞에서 🎠 로 타요. 동물과 같이 타면 친해져요. 동물을 누르면 말을 걸어요. 얼굴이 빨간 동물(-10점 이하)은 쫓아와요! 오른쪽 끝은 바닷가예요. 아래 칸에 글을 쓰면 상대 머리 위에 말풍선이 뜨고, 🎤를 둘 다 누르면 목소리로 얘기할 수 있어요.'), actions: [{ label: '닫기', primary: true }] }) }, '?'));
+    el.replaceChildren(top, hpRow, waveBar, h('div', { class: 'so-stage' }, scroller, chatLog), pad, chatBar);
     scores(); drawHp(); lastT = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(step);
   }
   // 체력: 맞으면 줄고, 0이 되면 쓰러져서 10분 동안 친목회에 못 들어온다. 회복 포션은 카피수퍼에서 판다
@@ -158,11 +176,12 @@ export function mount(el, ctx) {
     tick(); lockT = setInterval(() => alive && tick(), 1000);
   }
   function die() { document.querySelectorAll('.modal-wrap').forEach(w => w.remove()); held = -1; sfx('lose'); saveVit({ hp: 0, deadAt: ctx.store.now() }).then(() => alive && lock()); }
+  const wakeVoice = () => voice.wake(); window.addEventListener('pointerdown', wakeVoice);
   const KEY = { ArrowLeft: 'L', ArrowRight: 'R', ArrowUp: 'U', ArrowDown: 'D', a: 'L', d: 'R', w: 'U', s: 'D' };
   const kd = e => { if (document.querySelector('.modal-wrap') || (e.target && e.target.tagName === 'INPUT')) return; if (SORRY_UI.btn.el && e.key === 'Enter') { e.preventDefault(); return forgive('btn'); } if (KEY[e.key]) { keys.add(KEY[e.key]); e.preventDefault(); } else if (e.key === ' ' && !e.repeat) { e.preventDefault(); punch(); } };
   const ku = e => { if (KEY[e.key]) keys.delete(KEY[e.key]); };
   window.addEventListener('keydown', kd); window.addEventListener('keyup', ku);
-  const pop = (parent, text, cls = '') => { const f = h('em', { class: 'so-pop ' + cls }, text); parent.append(f); setTimeout(() => f.remove(), cls.includes('long') ? 2600 : 1000); };
+  const pop = (parent, text, cls = '') => { const f = h('em', { class: 'so-pop ' + cls }, text); parent.append(f); setTimeout(() => f.remove(), cls.includes('chat') ? 4500 : cls.includes('long') ? 2600 : 1000); };
 
   // 나도 놀이기구를 탄다: 빈 놀이기구 앞에서 🎠, 다시 누르거나 방향키를 누르면 내린다
   const buddiesOf = q => actors.map((o, i) => (o.st === 'ride' && o.spot && o.spot.grp === q.grp ? i : -1)).filter(i => i >= 0);
@@ -208,7 +227,7 @@ export function mount(el, ctx) {
       // 폰은 직접 눌러야 키보드가 올라온다: 누른 순간부터 3.5초를 센다(누르기까지는 2.5초 기다려 준다)
       inp.addEventListener('focus', () => { if (u.typing) return; u.typing = true; tip.textContent = '3.5초 만에 "미안해"라고 입력하세요'; clearTimeout(u.t); u.t = setTimeout(() => endSorry('type'), 3500); hold(3500); bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = 'soSorryBar 3.5s linear forwards'; });
       u.typing = false; u.el = h('label', { class: 'so-sorry type' }, tip, inp, bar); keys.clear(); setTimeout(() => inp.focus(), 0); }
-    scroller.parentNode.insertBefore(u.el, scroller.nextSibling); if (!(kind === 'type' && u.typing)) u.t = setTimeout(() => endSorry(kind), kind === 'type' ? 2500 : u.ms);
+    scroller.parentNode.parentNode.insertBefore(u.el, scroller.parentNode.nextSibling); if (!(kind === 'type' && u.typing)) u.t = setTimeout(() => endSorry(kind), kind === 'type' ? 2500 : u.ms);
   }
   // 사이가 나쁜 동물에게 맞으면 돈이 조금 나간다
   function gotHit(o, now) {
@@ -258,6 +277,7 @@ export function mount(el, ctx) {
       if (!show) palSpot(null); else { const q = pal.ride >= 0 ? spots[pal.ride] || null : null; palSpot(q); const tx = q ? q.x : pal.x * WIDTH, ty = q ? q.b : pal.y, ts = q ? RIDE_S : 1 - pal.y * 0.7, k = Math.min(1, dt * 7), pg = palEl.firstElementChild;
         if (pal.dx < 0) { pal.dx = tx; pal.dy = ty; pal.ds = ts; } palEl.classList.toggle('walk', !q && Math.abs(tx - pal.dx) > 3); pal.dx += (tx - pal.dx) * k; pal.dy += (ty - pal.dy) * k; pal.ds += (ts - pal.ds) * k;
         if (pg) { const e = q && q.eq; pg.style.transform = !e ? '' : q.type === 'swing' ? `translate(${(-ROPE * Math.sin(e.cur * q.dir * Math.PI / 180) / ts).toFixed(1)}px, ${(ROPE * (Math.cos(e.cur * q.dir * Math.PI / 180) - 1) / ts).toFixed(1)}px) rotate(${(e.cur * q.dir).toFixed(1)}deg)` : `translateY(${((q.x - e.x) * Math.sin(e.cur * q.dir * Math.PI / 180) / ts).toFixed(1)}px)`; pg.style.scale = q ? '1 1' : `${pal.f} 1`; }
+        palPop.style.left = pal.dx + 'px'; palPop.style.bottom = Math.round(pal.dy * H + 112 * pal.ds) + 'px';
         palEl.style.left = pal.dx + 'px'; palEl.style.bottom = (pal.dy * 100).toFixed(2) + '%'; palEl.style.transform = `scale(${pal.ds.toFixed(3)})`; palEl.style.zIndex = q ? 6 : pal.dy < 0.07 ? 11 : pal.dy < 0.13 ? 10 : pal.dy < 0.19 ? 9 : 8; } }
     // 튜브와 보트는 나를 따라다닌다
     { const z = +meEl.style.zIndex + 1, sc = `scale(${me.ds.toFixed(3)})`, bt = (me.dy * 100).toFixed(2) + '%';
@@ -421,9 +441,10 @@ export function mount(el, ctx) {
   const offs = [
     ctx.store.on('social', v => { v = v || {}; mine = v[ctx.uid] || {}; theirs = (pid() && v[pid()]) || {}; scores(); }),
     ctx.store.on('bag/' + ctx.uid, v => { bag = v || {}; drawHp(); }),
+    ctx.store.on('socialchat', onChat, { limit: 20 }),
     ctx.store.on('socialpos', v => { const q = pid() && v && v[pid()]; pal.on = !!q; if (q) { pal.x = q.x || 0; pal.y = q.y || 0; pal.f = q.f || 1; pal.ride = q.r == null ? -1 : q.r; pal.boat = q.b == null ? -1 : q.b; pal.t = q.t || 0; } }),
     ctx.store.on('socialme/' + ctx.uid, v => { const first = vit === null; vit = v || {};
       if (first) { if (vit.deadAt && ctx.store.now() - vit.deadAt < TEN_MIN) lock(); else { if (vit.deadAt) saveVit({ hp: HP_MAX, deadAt: 0 }); scene(); } } else drawHp(); }),
   ];
-  return () => { keepPos(); alive = false; leavePos(); me.boat = null; offer = null; endSorry(); clearInterval(lockT); cancelAnimationFrame(raf); offs.forEach(f => f()); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
+  return () => { keepPos(); alive = false; voice.destroy(); bgm.duck(false); window.removeEventListener('pointerdown', wakeVoice); leavePos(); me.boat = null; offer = null; endSorry(); clearInterval(lockT); cancelAnimationFrame(raf); offs.forEach(f => f()); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
 }

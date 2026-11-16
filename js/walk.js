@@ -45,7 +45,7 @@ const blocked = (x, y) => (x > TUB.x0 - 2 && x < TUB.x1 + 2 && y > TUB.y1 - 1 &&
 
 /* ---------- 음성 대화 ---------- */
 // 둘 다 "음성 켜기"를 누르면 서로 직접 연결된다(WebRTC). 연결에 필요한 정보만 방 데이터(rt/voice)로 주고받고, 목소리는 저장되지 않는다.
-function makeVoice(ctx, ui) {
+export function makeVoice(ctx, ui) {
   let pc = null, stream = null, handled = '', state = {}, ac = null, raf = 0;
   const audio = h('audio', { autoplay: true, playsInline: true }), meters = {};
   const caller = () => ctx.idx === 0;

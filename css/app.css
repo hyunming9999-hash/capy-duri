@@ -912,3 +912,17 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 @keyframes soSurfT { 0%, 100% { transform: translateX(-50%) translateY(0); } 40% { transform: translateX(-50%) translateY(-22px); } 70% { transform: translateX(-50%) translateY(-8px); } }
 
 .so-bg.so-sea { background-image: url(../img/social/sea.webp); -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 28px); mask-image: linear-gradient(90deg, transparent 0, #000 28px); }
+
+/* 친목회: 채팅·음성 */
+.so-stage { position: relative; }
+.so-chatlog { position: absolute; left: 8px; top: 8px; max-width: 72%; display: flex; flex-direction: column; gap: 3px; pointer-events: none; z-index: 25; }
+.so-chatlog p { margin: 0; align-self: flex-start; background: rgba(255, 255, 255, .88); border-radius: 10px; padding: 2px 8px; font-size: 12px; line-height: 1.4; color: #5B4636; word-break: break-all; animation: soChatLine 12s linear forwards; }
+.so-chatlog p.me { background: rgba(255, 233, 168, .92); } .so-chatlog b { color: #B5741B; }
+@keyframes soChatLine { 0%, 85% { opacity: 1; } 100% { opacity: 0; } }
+.so-pop.chat { animation-duration: 4.5s; font-size: 13px; max-width: 200px; white-space: normal; width: max-content; text-align: center; top: auto; bottom: 0; background: #FFFDF3; border-color: #E9C46A; line-height: 1.35; }
+.so-chatbar { display: flex; align-items: center; gap: 5px; margin-top: 8px; }
+.so-chatin { flex: 1; min-width: 0; border: 2px solid var(--line); border-radius: 14px; padding: 8px 10px; font-size: 15px; background: #fff; }
+.so-chatbar .btn.sm { flex: none; padding-left: 9px; padding-right: 9px; white-space: nowrap; }
+.so-mic { display: inline-flex; align-items: center; gap: 3px; } .so-mic small { font: 800 11px/1 var(--head); }
+.so-mic.on { background: #FFE3E3; border-color: #F08A8A; } .so-mic.live { background: #DDF7E3; border-color: #5DBB80; }
+.so-help { width: 34px; padding: 0 !important; }
