@@ -8,7 +8,7 @@ import { sfx, animalVoice, bgm } from './sound.js';
 import { makeVoice } from './walk.js';
 import { PUSH_URL } from './push.js';
 import { isMock } from './store.js';
-import { openFishing, openBattle, FISH, RODS, ZONES, BAIT, BALL, CANNON, WBOAT, fishSvg } from './fishing.js';
+import { openFishing, seaBattle, FISH, RODS, ZONES, BAIT, BALL, CANNON, WBOAT, BOAT_FIX, fishSvg } from './fishing.js';
 
 // 동물마다: 성격, 좋아하는 것, 싫어하는 것, 상징 액세서리, 제일 좋아하는 선물
 const P = (trait, likes, hates, pin, fav) => ({ trait, likes, hates, pin, fav });
@@ -54,8 +54,9 @@ const KEEP_AT = 50, DAY_MS = 86400000, KEEP_DROP = 3;
 // 되팔 때 값: 게임 3~5판 번 것쯤(150~250코인). 물건마다 값이 정해져 있다
 const sellPin = i => 150 + (i * 37) % 101, sellHat = i => 150 + (i * 53 + 20) % 101;
 const MY_BOAT = 99, BOAT_PRICE = 1000; // 내 카피보트: 카피수퍼에서 1000코인
+const CARE = ['너무 깊은 곳은 조심해.', '넌 소중한 존재야. 다치면 안 돼.', '멀리 나가면 꼭 돌아와야 해.', '물 차갑지 않아? 감기 조심해.', '파도가 세면 무리하지 마.', '힘들면 언제든 쉬었다 가.', '해적 만나면 다치지 말고 도망쳐도 돼.', '밥은 챙겨 먹고 다니는 거지?', '네가 무사하면 그걸로 충분해.', '낚시 잘 안 돼도 괜찮아. 넌 잘하고 있어.'];
 const MY_WBOAT = 98, MY_WBOAT_GUN = 97; // 흰 배(더 빠르다), 대포를 단 흰 배
-const boatSvg = i => { const mine = i >= MY_WBOAT_GUN, white = mine && i !== MY_BOAT, a = white ? { body: '#FFFFFF', light: '#4C8FE0', ear: '#DDE6F2' } : mine ? { body: '#C08F62', light: '#F0D2A8', ear: '#8A5A3B' } : ANIMALS[i], pin = mine ? '🍊' : PERSONA[i].pin, gun = i === MY_WBOAT_GUN ? '<rect x="132" y="52" width="30" height="11" rx="5" fill="#3E3E48" stroke="#1F1F26" stroke-width="1.5"/><circle cx="136" cy="63" r="7" fill="#5A4632" stroke="#3E2A1B" stroke-width="1.5"/>' : ''; return `<svg viewBox="0 0 170 120"><path d="M92 62 V8" stroke="#8A5A2B" stroke-width="4" stroke-linecap="round"/><path d="M95 10 L142 34 L95 54z" fill="#FFFDF7" stroke="#C9B28A" stroke-width="2" stroke-linejoin="round"/><text x="111" y="42" font-size="19" text-anchor="middle">${pin}</text><circle cx="14" cy="60" r="8" fill="${a.ear || a.body}" stroke="rgba(0,0,0,.25)" stroke-width="1.5"/><circle cx="30" cy="54" r="8" fill="${a.ear || a.body}" stroke="rgba(0,0,0,.25)" stroke-width="1.5"/><path d="M6 66 H164 Q160 106 132 108 H40 Q12 106 6 66z" fill="${a.body}" stroke="rgba(0,0,0,.3)" stroke-width="2.4" stroke-linejoin="round"/><path d="M9 78 H161" stroke="${a.light}" stroke-width="7"/><circle cx="26" cy="74" r="2.6" fill="#3E2A1B"/>${gun}<path d="M-2 110 q14 -9 28 0 t28 0 t28 0 t28 0 t28 0 t28 0 t28 0" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".8"/></svg>`; };
+const boatSvg = i => { const mine = i >= MY_WBOAT_GUN, white = mine && i !== MY_BOAT, a = white ? { body: '#FFFFFF', light: '#4C8FE0', ear: '#DDE6F2' } : mine ? { body: '#C08F62', light: '#F0D2A8', ear: '#8A5A3B' } : ANIMALS[i], pin = mine ? '🍊' : PERSONA[i].pin, gun = i === MY_WBOAT_GUN ? '<rect x="116" y="38" width="52" height="21" rx="9" fill="#3E3E48" stroke="#1F1F26" stroke-width="2"/><rect x="160" y="35" width="9" height="27" rx="4" fill="#2A2A33" stroke="#1F1F26" stroke-width="1.5"/><rect x="118" y="42" width="34" height="4" rx="2" fill="#6A6A78"/><circle cx="130" cy="61" r="11" fill="#5A4632" stroke="#3E2A1B" stroke-width="2"/><circle cx="130" cy="61" r="3.5" fill="#3E2A1B"/>' : ''; return `<svg viewBox="0 0 170 120"><path d="M92 62 V8" stroke="#8A5A2B" stroke-width="4" stroke-linecap="round"/><path d="M95 10 L142 34 L95 54z" fill="#FFFDF7" stroke="#C9B28A" stroke-width="2" stroke-linejoin="round"/><text x="111" y="42" font-size="19" text-anchor="middle">${pin}</text><circle cx="14" cy="60" r="8" fill="${a.ear || a.body}" stroke="rgba(0,0,0,.25)" stroke-width="1.5"/><circle cx="30" cy="54" r="8" fill="${a.ear || a.body}" stroke="rgba(0,0,0,.25)" stroke-width="1.5"/><path d="M6 66 H164 Q160 106 132 108 H40 Q12 106 6 66z" fill="${a.body}" stroke="rgba(0,0,0,.3)" stroke-width="2.4" stroke-linejoin="round"/><path d="M9 78 H161" stroke="${a.light}" stroke-width="7"/><circle cx="26" cy="74" r="2.6" fill="#3E2A1B"/>${gun}<path d="M-2 110 q14 -9 28 0 t28 0 t28 0 t28 0 t28 0 t28 0 t28 0" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".8"/></svg>`; };
 export const GIFTS = { candy: ['🍬', '사탕', 30, 3], flower: ['💐', '꽃다발', 120, 8], cake: ['🎂', '케이크', 400, 20] }; // [그림, 이름, 값, 친밀도]
 const GOOD = ['귀여', '귀엽', '귀요', '멋지', '멋져', '멋있', '좋아', '좋은', '최고', '사랑', '고마', '고맙', '감사', '예쁘', '예뻐', '예쁜', '이쁘', '이뻐', '이뿌', '착하', '착해', '착한', '대단', '잘생', '잘했', '잘한', '반가', '보고 싶', '보고싶', '친구', '훌륭', '똑똑', '재밌', '재미있', '행복', '든든', '응원', '칭찬', '짱', '덕분', '소중', '자랑', '완벽', '존경', '부럽'];
 const BAD = ['바보', '못생', '싫어', '꺼져', '멍청', '뚱뚱', '냄새', '미워', '짜증', '나빠', '더러', '재수', '찌질', '한심', '쓰레기', '죽어', '닥쳐', '시끄러워', '별로', '못난', '돼지야', '거지'];
@@ -158,7 +159,8 @@ export function mount(el, ctx) {
     for (let k = 0; k < TILES; k++) { const flip = k % 2 === 1, bg = h('i', { class: 'so-bg' + (flip ? ' flip' : ''), style: { left: k * TILE + 'px', width: TILE + 1 + 'px' }, html: EQ }); world.append(bg);
       const fx = f => (k + (flip ? 1 - f : f)) * TILE, t = { dir: flip ? -1 : 1, sw: [...bg.querySelectorAll('.eq-sw')].map((g, n) => ({ g, cx: [395.5, 441.6][n], a: 3, cur: 0, ph: n * 1.4 + k, on: 0 })), see: { g: bg.querySelector('.eq-see'), cur: -11, x: fx(SEE_X), on: 0 } };
       if (k === TILES - 1) world.append(h('i', { class: 'so-bg so-beach', style: { left: PW + 'px', width: TILE + 1 + 'px' } }), h('i', { class: 'so-bg so-sea', style: { left: PW + TILE - 28 + 'px', width: TILE + 29 + 'px' } }),
-        ...[1, 2, 3].map(z => h('i', { class: `so-bg so-sea2 fz${z}${z % 2 ? ' flip' : ''}`, style: { left: FISH_X + (z - 1) * TILE - 1 + 'px', width: TILE + 2 + 'px' } })),
+        ...[1, 2, 3].map(z => h('i', { class: `so-bg so-sea2${z % 2 ? ' flip' : ''}`, style: { left: FISH_X + (z - 1) * TILE - 1 + 'px', width: TILE + 2 + 'px' } })),
+        ...[1, 2, 3].map(z => h('i', { class: 'so-swell z' + z, style: { left: FISH_X + (z - 1) * TILE + 'px', width: TILE + 'px' } })),
         ...[1, 2, 3].map(z => h('div', { class: 'so-sign z' + z, style: { left: FISH_X + (z - 1) * TILE + 34 + 'px' } }, h('b', null, `🎣 ${ZONES[z]}`), h('small', null, z === 1 ? '배를 타야 들어갈 수 있어요' : '흰 배 + 대포 필요 · 해적 주의'))));
       tiles.push(t); SPOT_DEFS.forEach(([type, f, b, n, late]) => spots.push({ type, late: late ? ' late' : '', grp: k + type.slice(0, 3), x: fx(f), b, dir: t.dir, by: -1, eq: type === 'swing' ? t.sw[n] : type[0] === 's' && type[1] === 'e' ? t.see : null, t })); }
     actors = ANIMALS.map((a, i) => { const lane = i % LANES.length, x = 90 + (i + 0.5) * (FISH_X - 180) / ANIMALS.length;
@@ -175,7 +177,7 @@ export function mount(el, ctx) {
     chatIn.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); sendChat(chatIn); } }); chatIn.addEventListener('focus', () => keys.clear());
     micBtn = h('button', { class: 'btn sm so-mic', onClick: toggleMic }, '🎤', h('small', null, '음성')); drawMic();
     const chatBar = h('div', { class: 'so-chatbar' }, chatIn, h('button', { class: 'btn sm primary', onClick: () => sendChat(chatIn) }, '보내기'), micBtn, h('button', { class: 'btn sm so-help', 'aria-label': '도움말', onClick: () => modal({ title: '🐾 동물 친목회', body: h('p', null, '방향키로 걸어가요. 놀이기구 앞에서 🎠 로 타요. 동물과 같이 타면 친해져요. 동물을 누르면 말을 걸어요. 얼굴이 빨간 동물(-10점 이하)은 쫓아와요! 오른쪽 끝은 바닷가예요. 아래 칸에 글을 쓰면 상대 머리 위에 말풍선이 뜨고, 🎤를 둘 다 누르면 목소리로 얘기할 수 있어요.'), actions: [{ label: '닫기', primary: true }] }) }, '?'));
-    el.replaceChildren(top, hpRow, waveBar, h('div', { class: 'so-stage' }, scroller, chatLog), pad, chatBar);
+    el.replaceChildren(top, hpRow, waveBar, h('div', { class: 'so-stage' }, scroller, chatLog), (sbPanel = h('div', { class: 'sb-panel', hidden: true })), pad, chatBar);
     scores(); drawHp(); lastT = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(step);
   }
   // 체력: 맞으면 줄고, 0이 되면 쓰러져서 10분 동안 친목회에 못 들어온다. 회복 포션은 카피수퍼에서 판다
@@ -212,14 +214,17 @@ export function mount(el, ctx) {
   // 가방 고치기·돈 넣고 빼기·도감(낚시에서 쓴다)
   const saveBag = patch => { bag = { ...bag, ...patch }; drawHp(); return ctx.store.update('bag/' + ctx.uid, patch).catch(() => {}); };
   const addCoins = n => ctx.store.tx('money/' + ctx.uid, c => ({ ...(c || {}), c: Math.max(0, ((c && c.c) || 0) + n), total: ((c && c.total) || 0) + Math.max(0, n) })).catch(() => {});
-  let fishOpen = false, hintAt = 0, fishBtn = null, fishMode = -1, dex = {};
+  let fishOpen = false, hintAt = 0, fishBtn = null, fishMode = -1, dex = {}, battle = null, camX = null, sbPanel = null, heave = 0;
+  const boatD = () => (bag.boatD == null ? 100 : bag.boatD), BOAT_MIN = 20;
   // 낚시: 낚시터에서 내 배를 탄 채 🎣. 중급부터는 가끔 갈매기 해적단이 먼저 덤빈다
-  function goFish() { const zone = zoneOf(me.x); if (!zone || fishOpen || !(me.boat && me.boat.own)) return; fishOpen = true; keys.clear(); bgm.duck(true);
+  function goFish() { const zone = zoneOf(me.x); if (!zone || fishOpen || battle || !(me.boat && me.boat.own)) return; fishOpen = true; keys.clear(); bgm.duck(true);
     const done = () => { fishOpen = false; if (!voice.on) bgm.duck(false); lastT = performance.now(); };
-    const fish = () => openFishing({ ctx, zone, bag: () => bag, save: saveBag, coins: addCoins, dex: (id, cm) => ctx.store.tx(`fishdex/${ctx.uid}/${id}`, c => ({ n: ((c && c.n) || 0) + 1, best: Math.max((c && c.best) || 0, cm) })).catch(() => {}), onClose: done });
-    if (zone >= 2 && Math.random() < 0.15) return openBattle({ zone, balls: () => bag.balls || 0, useBall: () => saveBag({ balls: Math.max(0, (bag.balls || 0) - 1) }), onEnd: win => { if (win) { const loot = zone === 3 ? 300 : 150; addCoins(loot); toast(`해적단의 보물 +${loot} 🪙`, 2600); done(); }
-      else { addCoins(-100); me.x = FISH_X + TILE - 80; toast('해적단에게 100 🪙 뺏기고 초급 낚시터로 밀려났어요', 3200); done(); } } });
-    fish(); }
+    openFishing({ ctx, zone, boat: boatSvg(me.boat.skin), bag: () => bag, save: saveBag, coins: addCoins, dex: (id, cm) => ctx.store.tx(`fishdex/${ctx.uid}/${id}`, c => ({ n: ((c && c.n) || 0) + 1, best: Math.max((c && c.best) || 0, cm) })).catch(() => {}), onClose: done, onPirate: () => pirates(zone) }); }
+  // 갈매기 해적단: 낚시하던 그 바다에서, 멀찍이 떨어져 포를 주고받는다. 지면 배 내구도가 반으로 줄고 500코인을 뺏긴다
+  function pirates(zone) { if (battle || !alive) return; keys.clear(); const D = Math.max(620, scroller.clientWidth * 1.9), foeX = me.x + D <= WIDTH - 90 ? me.x + D : me.x - D; me.f = foeX > me.x ? 1 : -1; sfx('bad');
+    battle = seaBattle({ world: scroller.firstElementChild, panel: sbPanel, zone, meEl, me: { x: me.x, y: me.dy * H, s: me.ds }, foeX, balls: () => bag.balls || 0, useBall: () => saveBag({ balls: Math.max(0, (bag.balls || 0) - 1) }), cam: x => { camX = x; },
+      onEnd: win => { battle = null; camX = null; lastT = performance.now(); if (win) { const loot = zone === 3 ? 300 : 150; addCoins(loot); toast(`해적단의 보물 +${loot} 🪙`, 2800); }
+        else { const d = Math.floor(boatD() / 2); saveBag({ boatD: d }); addCoins(-500); toast(`해적단에게 500 🪙 뺏기고 배 내구도가 ${d}로 줄었어요${d < BOAT_MIN ? '. 수리해야 중급 바다에 나갈 수 있어요' : ''}`, 4200); } } }); }
   function makeWave(now) { const B = me.boat, hard = B.wave >= 70, w = h('i', { class: 'so-wave' + (hard ? ' hard' : ''), style: { left: me.x + 'px', bottom: (me.dy * 100).toFixed(1) + '%' } }); meEl.parentNode.append(w); setTimeout(() => w.remove(), 1300); sfx(hard ? 'swing' : 'tock');
     actors.forEach((o, i) => { if (i === held || o.x <= WATER_X || Math.abs(o.x - me.x) > 230 || ['chase', 'boat', 'palboat', 'offer', 'stun'].includes(o.st)) return;
       if (hard) { o.st = 'stun'; o.until = now + 900; o.kb = (o.x >= me.x ? 1 : -1) * 130; o.e.classList.remove('walk'); pop(o.e, toned(i, pick(['으악, 밀려난다!', '너무 세!', '살살 해!'])), 'say'); if (now > (o.pushAt || 0)) { o.pushAt = now + 6000; setRel(i, { a: Math.max(-100, A(i) - 1) }); scores(); } }
@@ -277,18 +282,19 @@ export function mount(el, ctx) {
     o.st = 'walk'; o.wait = 0; o.e.classList.add('walk'); o.e.classList.toggle('left', o.tx < o.x);
   }
   function step(now) {
-    if (!alive || !playing) return; const wall = ctx.store.now(), dt = Math.min(0.1, (now - lastT) / 1000), t = now / 1000, paused = fishOpen || !!document.querySelector('.modal-wrap'); lastT = now;
+    if (!alive || !playing) return; const wall = ctx.store.now(), dt = Math.min(0.1, (now - lastT) / 1000), t = now / 1000, paused = fishOpen || !!battle || !!document.querySelector('.modal-wrap'); lastT = now;
     // 나: 화살표로 걷고, 화면이 따라온다
     const mx = paused ? 0 : (keys.has('R') ? 1 : 0) - (keys.has('L') ? 1 : 0), my = paused ? 0 : (keys.has('U') ? 1 : 0) - (keys.has('D') ? 1 : 0);
     if (me.kb) { const k = me.kb * Math.min(1, dt * 9); me.x = Math.max(40, Math.min(WIDTH - 40, me.x + k)); me.kb = Math.abs(me.kb - k) < 1 ? 0 : me.kb - k; }
     if ((mx || my) && me.ride) getOff();
     const wet = me.x > WATER_X && !me.ride;
     // 낚시터 문턱: 배가 없으면 못 넘고, 중급부터는 대포를 단 흰 배가 있어야 한다
-    const own = !!(me.boat && me.boat.own), lim = !own ? FISH_X - 14 : bag.wboat && bag.cannon ? WIDTH - 40 : FISH_X + TILE - 18;
+    const own = !!(me.boat && me.boat.own), lim = !own ? FISH_X - 14 : bag.wboat && bag.cannon && boatD() >= BOAT_MIN ? WIDTH - 40 : FISH_X + TILE - 18;
     if (own && me.boat.skin !== myBoatSkin()) { me.boat.skin = myBoatSkin(); boatEl.innerHTML = boatSvg(me.boat.skin); }
     if (mx) { me.f = mx; const nx = me.x + mx * ME_SP * (own ? (bag.wboat ? 1.7 : 1.1) : me.boat ? 1.1 : wet ? 0.7 : 1) * dt; me.x = Math.max(40, Math.min(Math.max(lim, Math.min(me.x, WIDTH - 40)), nx));
-      if (mx > 0 && nx > lim && now > hintAt) { hintAt = now + 3500; toast(!own ? '여기부터는 낚시터예요. 내 배(카피수퍼)를 타야 갈 수 있어요' : !bag.wboat ? '중급 낚시터부터는 흰 배(1,500코인)가 있어야 해요' : '중급 낚시터부터는 대포(500코인)를 달아야 해요. 갈매기 해적단이 나와요', 3000); } }
-    { const zm = own && !fishOpen ? zoneOf(me.x) : 0; if (zm !== fishMode && fishBtn) { fishMode = zm; fishBtn.firstChild.textContent = zm ? '🎣' : '👊'; fishBtn.lastChild.textContent = zm ? '낚시' : '때리기'; fishBtn.classList.toggle('fish', !!zm); } }
+      if (mx > 0 && nx > lim && now > hintAt) { hintAt = now + 3500; toast(!own ? '여기부터는 낚시터예요. 내 배(카피수퍼)를 타야 갈 수 있어요' : !bag.wboat ? '중급 낚시터부터는 흰 배(1,500코인)가 있어야 해요' : !bag.cannon ? '중급 낚시터부터는 대포(500코인)를 달아야 해요. 갈매기 해적단이 나와요' : '배가 너무 상했어요. 카피수퍼에서 배를 수리해야 중급 바다에 나갈 수 있어요', 3000); } }
+    { const hv = me.boat ? zoneOf(me.x) : 0; if (hv !== heave) { heave = hv; [meEl, boatEl].forEach(n => { n.classList.toggle('hv1', hv === 1); n.classList.toggle('hv2', hv === 2); n.classList.toggle('hv3', hv === 3); }); } }
+    { const zm = own && !fishOpen && !battle ? zoneOf(me.x) : 0; if (zm !== fishMode && fishBtn) { fishMode = zm; fishBtn.firstChild.textContent = zm ? '🎣' : '👊'; fishBtn.lastChild.textContent = zm ? '낚시' : '때리기'; fishBtn.classList.toggle('fish', !!zm); } }
     if (me.boat && me.x < WATER_X - 12) leaveBoat();
     if (now - calmChk > 20000) { calmChk = now; calm(wall); }
     if (now - savedAt > 4000) { savedAt = now; keepPos(); }
@@ -325,7 +331,7 @@ export function mount(el, ctx) {
       if (palBoatI >= 0) { if (palBoatDrawn !== palBoatI) { palBoatDrawn = palBoatI; palBoat.innerHTML = boatSvg(palBoatI); } palBoat.style.left = pal.dx + 'px'; palBoat.style.bottom = (pal.dy * 100).toFixed(2) + '%'; palBoat.style.transform = `scale(${pal.ds.toFixed(3)})`; palBoat.style.zIndex = +palEl.style.zIndex + 1; palEl.style.left = (pal.dx - (palBoatI >= MY_WBOAT_GUN ? 6 : 22) * pal.ds) + 'px'; }
       const pw = pv && palBoatI < 0 && pal.dx > WATER_X && !pal.spot; palTube.style.display = pw ? '' : 'none'; if (pw) { palTube.style.left = pal.dx + 'px'; palTube.style.bottom = (pal.dy * 100).toFixed(2) + '%'; palTube.style.transform = `scale(${pal.ds.toFixed(3)})`; palTube.style.zIndex = +palEl.style.zIndex + 1; } palEl.classList.toggle('swim', pw); }
     const ns = R || me.boat || offer ? null : nearSpot(), rs = R ? 'off' : me.boat ? 'boatoff' : offer ? 'boat' : wet && bag.boat ? 'mine' : wet ? 'buy' : ns ? (buddiesOf(ns).length ? 'with' : 'on') : ''; if (rs !== rideState) { rideState = rs; rideBtn.disabled = !rs; rideBtn.classList.toggle('ready', rs === 'on' || rs === 'with' || rs === 'boat'); rideBtn.firstChild.textContent = rs.startsWith('boat') || rs === 'mine' || rs === 'buy' ? '🚤' : '🎠'; rideBtn.lastChild.textContent = rs === 'off' || rs === 'boatoff' ? '내리기' : rs === 'mine' ? '내 보트' : rs === 'buy' ? '보트 사기' : rs === 'with' || rs === 'boat' ? '같이 타기' : '타기'; }
-    scroller.scrollLeft = Math.max(0, Math.min(WIDTH - scroller.clientWidth, me.x - scroller.clientWidth / 2));
+    scroller.scrollLeft = Math.max(0, Math.min(WIDTH - scroller.clientWidth, (camX == null ? me.x : camX) - scroller.clientWidth / 2));
     // 놀이기구: 누가 타면 크게, 아니면 살짝 흔들린다
     tiles.forEach(T => { T.sw.forEach(w => { w.a += ((w.on ? 17 : 3) - w.a) * Math.min(1, dt * 2); w.cur = w.a * Math.sin(t * 2.3 + w.ph); w.g.setAttribute('transform', `rotate(${w.cur.toFixed(2)} ${w.cx} 243)`); });
       const S = T.see; S.cur += ((S.on ? 11 * Math.sin(t * 2.6) : -11) - S.cur) * Math.min(1, dt * 6); S.g.setAttribute('transform', `rotate(${S.cur.toFixed(2)} 598.8 320)`); });
@@ -344,8 +350,8 @@ export function mount(el, ctx) {
         if (now > o.until) { o.st = 'idle'; o.until = now + 600; o.e.classList.remove('walk', 'chase'); } }
       else {
         if (!paused && A(i) <= CHASE_AT && Math.abs(me.x - o.x) < (o.rage ? 420 : 170) && (o.rage || wall - ((mine[i] || {}).chaseAt || 0) > TEN_MIN)) { o.rage = false; setRel(i, { chaseAt: wall }); leave(o); o.st = 'chase'; o.until = now + 7000; o.nextHit = now + 300; o.e.classList.add('walk', 'chase'); pop(o.e, toned(i, '거기 서!'), 'say'); quickSorry(i); }
-        else if (!paused && !me.boat && !offer && wet && ow && o.st !== 'ride' && A(i) >= 30 && Math.abs(me.x - o.x) < 120 && now > o.offerAt) { // 물에서 친한 동물이 보트를 내민다
-          offer = { i, until: now + 7000 }; o.offerAt = now + 45000; o.st = 'offer'; o.e.classList.remove('walk'); boatEl.innerHTML = boatSvg(i); pop(o.e, toned(i, '나랑 같이 탈래?'), 'say long'); sfx('point'); }
+        else if (!paused && wet && ow && o.st !== 'ride' && A(i) >= 30 && Math.abs(me.x - o.x) < 120 && now > o.offerAt) { // 물에서 친한 동물과 마주치면 걱정하고 챙겨 준다(배를 태워 주지는 않는다)
+          o.offerAt = now + 40000; pop(o.e, toned(i, CARE[Math.floor(Math.random() * CARE.length)]), 'say long'); animalVoice(i); }
         else if (o.st === 'walk') { const d = o.tx - o.x, step1 = o.sp * dt * (ow ? 0.7 : 1), dir = Math.sign(d);
           const blocked = o.wait < 1.5 && actors.some(q => q !== o && q.lane === o.lane && q.st !== 'ride' && (q.x - o.x) * dir > 0 && (q.x - o.x) * dir < 58 && !(o.spot && Math.abs(d) < 110));
           if (blocked) { o.wait += dt; if (!o.spot && o.wait > 0.5) { o.st = 'idle'; o.until = now + 500 + Math.random() * 1200; o.e.classList.remove('walk'); } }
@@ -474,6 +480,7 @@ export function mount(el, ctx) {
         R && row('🔧', '낚싯대 수리', `${won(R.fix)} · 내구도를 ${R.dur}로 다시 채워요`, () => buy(R.fix, () => ({ rodD: R.dur }), '낚싯대를 고쳤어요'), bag.rodD >= R.dur),
         row('🪱', '미끼 10개', `${won(BAIT * 10)} · 한 번 던질 때 1개`, () => buy(BAIT * 10, () => ({ bait: (bag.bait || 0) + 10 }), '미끼 10개 샀어요')),
         row('⛵', '흰 배', bag.wboat ? '가지고 있어요 · 더 빠르고 중급·고급 낚시터에 가요' : `${won(WBOAT)} · 더 빠르고 중급·고급 낚시터에 가요`, () => buy(WBOAT, () => ({ wboat: true, boat: true }), '흰 배를 샀어요'), bag.wboat),
+        bag.wboat && row('🛠️', '배 수리', `${won(BOAT_FIX)} · 배 내구도 ${boatD()}/100 → 100${boatD() < BOAT_MIN ? ' · 지금은 중급 바다에 못 나가요' : ''}`, () => buy(BOAT_FIX, () => ({ boatD: 100 }), '배를 고쳤어요'), boatD() >= 100),
         row('💥', '대포', bag.cannon ? '달았어요' : `${won(CANNON)} · 흰 배에 달아요. 갈매기 해적단과 싸워요`, () => buy(CANNON, () => ({ cannon: true }), '대포를 달았어요'), bag.cannon || !bag.wboat),
         row('⚫', '포탄 10개', `${won(BALL * 10)} · 한 발에 1개`, () => buy(BALL * 10, () => ({ balls: (bag.balls || 0) + 10 }), '포탄 10개 샀어요'), !bag.cannon)].filter(Boolean); }
     // 팔기: 증표와 전용 모자를 카피수퍼가 게임 3~5판 값(150~250코인)에 사 준다. 판 증표는 선물로 다시 못 받고, 판 모자는 다시 살 때 친구 할인이 없다
@@ -513,5 +520,5 @@ export function mount(el, ctx) {
     ctx.store.on('socialme/' + ctx.uid, v => { const first = vit === null; vit = v || {};
       if (first) { if (vit.deadAt && ctx.store.now() - vit.deadAt < TEN_MIN) lock(); else { if (vit.deadAt) saveVit({ hp: HP_MAX, deadAt: 0 }); scene(); } } else drawHp(); }),
   ];
-  return () => { keepPos(); alive = false; voice.destroy(); bgm.duck(false); window.removeEventListener('pointerdown', wakeVoice); leavePos(); me.boat = null; offer = null; endSorry(); clearInterval(lockT); cancelAnimationFrame(raf); offs.forEach(f => f()); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
+  return () => { keepPos(); alive = false; if (battle) { battle.stop(); battle = null; } voice.destroy(); bgm.duck(false); window.removeEventListener('pointerdown', wakeVoice); leavePos(); me.boat = null; offer = null; endSorry(); clearInterval(lockT); cancelAnimationFrame(raf); offs.forEach(f => f()); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
 }
