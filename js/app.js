@@ -197,9 +197,9 @@ function showRulesHelp() {
 
 function leave() { LS.del('room'); location.hash = ''; location.reload(); }
 
-// 패치 소식: 들어오면 한 번만 보여 준다(기기에 본 표시를 남긴다)
-const PATCH_ID = 'gold-rare-1';
-function patchNote() { try { if (localStorage.getItem('capy.patch') === PATCH_ID) return; localStorage.setItem('capy.patch', PATCH_ID); } catch { return; }
+// 패치 소식
+const PATCH_UNTIL = Date.parse('2026-11-17T15:00:00+09:00'); // 이 시각까지만, 들어올 때마다 보여 준다
+function patchNote() { if (Date.now() >= PATCH_UNTIL) return;
   const li = (ic, t, d) => h('li', null, h('span', null, ic), h('div', null, h('b', null, t), h('small', null, d)));
   modal({ title: '✨ 패치 소식 · 황금 레어 장신구', body: h('div', { class: 'patch' },
     h('div', { class: 'patch-capy', html: capyEl({ ...ctx.capyOf(ctx.uid), face: 'happy', rare: social.rareOf([10, 9, 19]) }).innerHTML }),
