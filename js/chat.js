@@ -16,7 +16,13 @@ export function mount(el, ctx) {
   let stick = 0; // 내가 보낸 직후 몇 초 동안은 사진이 늦게 떠도 맨 아래로 따라간다
   const toggleTray = on => { trayOpen = on ?? !trayOpen; tray.hidden = !trayOpen; toBottom(); };
 
-  const send = async m => { stick = Date.now() + 4000; toBottom(); try { await ctx.store.push('chat', { by: ctx.uid, ts: ctx.store.now(), ...m }); } catch {} };
+  // 답장: 길게 눌러 고른 말을 인용해서 보낸다. re = { id, by, t(인용 글 한 줄) }
+  let replyTo = null; const reBar = h('div', { class: 're-bar', hidden: true });
+  const snip = m => (m.t ? (m.t.length > 60 ? m.t.slice(0, 59) + '…' : m.t) : m.img ? '📷 사진' : m.st ? '🧡 스티커' : '');
+  const setReply = id => { const m = id && msgs[id]; replyTo = m ? { id, by: m.by, t: snip(m) } : null; reBar.hidden = !replyTo;
+    if (replyTo) { reBar.replaceChildren(h('div', null, h('b', null, `${ctx.nameOf(replyTo.by)}에게 답장`), h('small', null, replyTo.t)), h('button', { class: 'ic', 'aria-label': '답장 취소', onClick: () => setReply(null) }, '✕')); inp.focus(); } toBottom(); };
+  const jumpTo = id => { const r = list.querySelector(`.msg[data-id="${id}"]`); if (!r) return toast('너무 오래된 말이라 여기서는 안 보여요', 1800); r.scrollIntoView({ block: 'center', behavior: 'smooth' }); r.classList.remove('flash'); void r.offsetWidth; r.classList.add('flash'); };
+  const send = async m => { stick = Date.now() + 4000; const re = replyTo; if (re) setReply(null); toBottom(); try { await ctx.store.push('chat', { by: ctx.uid, ts: ctx.store.now(), ...(re ? { re } : {}), ...m }); } catch {} };
   const sendText = () => { const t = inp.value.trim(); if (!t) return; inp.value = ''; inp.style.height = ''; send({ t }); inp.focus(); };
   // 카메라는 한 장, 사진첩은 한꺼번에 최대 20장(한 묶음으로 간다)
   const sendPhoto = async camera => {
@@ -39,11 +45,10 @@ export function mount(el, ctx) {
     if (!await ask('이 사진만 지울까요?', '지우기', '취소')) return false;
     try { await ctx.store.update('chat/' + id, { img: rest[0], imgs: rest.length > 1 ? rest : null }); delBlob(ctx.store, key).catch(() => {}); toast('지웠어요'); return true; } catch { toast('지우지 못했어요'); return false; } };
   const copyText = async t => { try { await navigator.clipboard.writeText(t); } catch { const ta = h('textarea', { style: { position: 'fixed', opacity: 0 } }); ta.value = t; document.body.append(ta); ta.select(); try { document.execCommand('copy'); } catch {} ta.remove(); } toast('복사했어요', 1200); };
-  // 길게 누르면(또는 마우스 오른쪽 버튼) 메뉴: 글은 복사, 내가 보낸 것은 삭제
+  // 길게 누르면(또는 마우스 오른쪽 버튼) 메뉴: 답장, 글은 복사, 내가 보낸 것은 삭제
   const holdMenu = (id, row) => { const m = msgs[id]; if (!m) return; const mine = m.by === ctx.uid;
-    if (!m.t) { if (mine) delMsg(id); return; }
-    modal({ body: h('p', { class: 'hold-quote' }, m.t.length > 120 ? m.t.slice(0, 119) + '…' : m.t),
-      actions: [{ label: '📋 복사', primary: true, onClick: close => { close(); copyText(m.t); } }, mine && { label: '삭제', danger: true, onClick: close => { close(); delMsg(id); } }, { label: '닫기' }].filter(Boolean) }); };
+    modal({ body: h('p', { class: 'hold-quote' }, m.t ? (m.t.length > 120 ? m.t.slice(0, 119) + '…' : m.t) : snip(m)),
+      actions: [{ label: '↩ 답장', primary: true, onClick: close => { close(); setReply(id); } }, m.t && { label: '📋 복사', onClick: close => { close(); copyText(m.t); } }, mine && { label: '삭제', danger: true, onClick: close => { close(); delMsg(id); } }, { label: '닫기' }].filter(Boolean) }); };
   const holdToDelete = (row, id) => { let t = 0, sx = 0, sy = 0;
     const fire = () => { t = 0; row.dataset.held = '1'; setTimeout(() => { delete row.dataset.held; }, 700); holdMenu(id, row); };
     row.addEventListener('pointerdown', e => { sx = e.clientX; sy = e.clientY; clearTimeout(t); t = setTimeout(fire, 550); });
@@ -74,8 +79,9 @@ export function mount(el, ctx) {
       else body = h('div', { class: 'bubble' }, m.t);
       // 카톡처럼: 상대가 아직 안 읽은 내 말 옆에 노란 1, 읽으면 사라진다
       const unread = mine && ctx.partnerId && m.ts > theirRead;
+      if (m.re && m.re.t) body = h('div', { class: 're-wrap' }, h('button', { class: 're-q', onClick: () => jumpTo(m.re.id) }, h('b', null, ctx.nameOf(m.re.by)), h('span', null, m.re.t)), body);
       const row = h('div', { class: 'msg' + (mine ? ' mine' : ''), 'data-id': id }, !mine && capyEl(ctx.capyOf(m.by, { head: true }), 'mini'), body, h('span', { class: 'meta' }, unread && h('b', { class: 'unread', 'aria-label': '안 읽음' }, '1'), h('small', { class: 'time' }, hm(m.ts))));
-      if (mine || m.t) holdToDelete(row, id);
+      holdToDelete(row, id);
       out.push(row);
     }
     if (!ids.length) out.push(h('div', { class: 'empty-box' }, capyEl(ctx.capyOf(ctx.uid, { face: 'happy' }), 'bob'), h('p', null, '첫 마디를 건네 보세요')));
@@ -99,7 +105,7 @@ export function mount(el, ctx) {
     h('button', { class: 'att', 'aria-label': '사진첩에서 고르기', onClick: () => { closeAttach(); sendPhoto(false); } }, h('span', null, '🖼️'), '사진'),
     h('button', { class: 'att', 'aria-label': '스티커', onClick: () => { closeAttach(); toggleTray(); } }, h('span', null, '🧡'), '스티커'));
   inp.addEventListener('focus', () => { closeAttach(); toBottom(); });
-  el.append(list, tray, attach, h('div', { class: 'composer' }, plus, inp, h('button', { class: 'btn primary send', onClick: sendText }, '보내기')));
+  el.append(list, tray, attach, reBar, h('div', { class: 'composer' }, plus, inp, h('button', { class: 'btn primary send', onClick: sendText }, '보내기')));
 
   let first = true;
   offs.push(ctx.store.on('chat', v => { msgs = v || {}; draw(); if (first) { first = false; requestAnimationFrame(() => { list.scrollTop = list.scrollHeight; }); } }, { limit: 80 }));
