@@ -68,10 +68,20 @@ export const ANIMALS = [
 // full = true면 카피바라와 같은 2등신 몸까지 그린다
 // mood: 'angry'면 눈썹을 찌푸리고, 'mad'면 화난 표시까지 붙는다
 export function animalSvg(i, full, mood) {
-  const a = ANIMALS[i % ANIMALS.length], d = a.dark || shade(a.body, -0.38), ey = a.eyeY || 0;
+  const a = typeof i === 'object' ? i : ANIMALS[i % ANIMALS.length], d = a.dark || shade(a.body, -0.38), ey = a.eyeY || 0;
   const ear = EAR[a.ear](a.earC || a.body, a.inner, a.es || 1);
   const eyeCol = a.eye || INK, e = a.eye === '#fff' ? mir(`<circle cx="24" cy="41" r="4" fill="#fff"/><circle cx="24.6" cy="41.4" r="2.2" fill="${INK}"/>`) : eyes(eyeCol);
   const bc = a.earC && a.name === '판다' ? '#3B3B44' : a.body, bd = shade(bc, -0.3), belly = a.name === '펭귄' ? '#FFFDF7' : a.muz === 'beak' || a.muz === 'bill' ? shade(bc, a.body === '#FFFDF7' ? -0.06 : 0.45) : a.light;
   const body = full ? `<ellipse cx="45" cy="128" rx="12" ry="6.5" fill="${bd}"/><ellipse cx="75" cy="128" rx="12" ry="6.5" fill="${bd}"/><rect x="31" y="76" width="58" height="50" rx="24" fill="${bc}"/><ellipse cx="60" cy="105" rx="17" ry="15" fill="${belly}"/><ellipse cx="29" cy="99" rx="8" ry="12" fill="${bc}" transform="rotate(14 29 99)"/><ellipse cx="91" cy="99" rx="8" ry="12" fill="${bc}" transform="rotate(-14 91 99)"/>` : '';
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 ${full ? 158 : 112}">${a.back ? a.back(a.body) : ''}${body}${ear}${head(a.body)}${a.over ? a.over(a.body) : ''}${a.pre ? a.pre(a.body) : ''}${mood === 'angry' || mood === 'mad' ? `<rect x="9" y="15" width="102" height="69" rx="25" fill="#E5383B" opacity="${mood === 'mad' ? 0.46 : 0.24}"/>` : ''}${MUZ[a.muz](a.light, d, a.nose)}<g transform="translate(0 ${ey})">${e}${mood === 'angry' || mood === 'mad' ? `<path d="M14 30 L34 37M106 30 L86 37" stroke="${INK}" stroke-width="3.6" stroke-linecap="round"/>` : ''}</g>${mood === 'mad' ? '<g stroke="#E5484D" stroke-width="3" stroke-linecap="round" fill="none"><path d="M92 -2 q5 3 4 9M104 -4 q-3 5 2 9M96 14 q5 -3 9 1M108 12 q-5 -1 -6 -6"/></g>' : ''}${mood ? '' : blush}</svg>`;
+}
+
+// 갈매기 해적단: 친구들과 같은 그림체의 갈매기에 해적 모자(선장)나 두건(졸병), 안대, 찌푸린 눈썹을 얹는다
+const GULL = A('갈매기', '#FFFDF7', '#FFB52E', 'none', '', 'beak', { dark: '#C97F0E', over: () => mir('<path d="M9 52 q10 -6 16 4 q-2 14 -12 16 q-6 -6 -4 -20z" fill="#C9D3DE"/>') });
+export function gullSvg(boss) {
+  const top = boss ? '<path d="M14 20 Q60 -34 106 20 Q60 6 14 20z" fill="#2B2B33" stroke="#15151A" stroke-width="2" stroke-linejoin="round"/><path d="M6 22 Q60 2 114 22 Q60 14 6 22z" fill="#15151A"/><path d="M14 18 Q60 0 106 18" fill="none" stroke="#E2B33C" stroke-width="2.4"/><circle cx="60" cy="0" r="7" fill="#fff"/><circle cx="57.4" cy="-1" r="1.6" fill="#15151A"/><circle cx="62.6" cy="-1" r="1.6" fill="#15151A"/><path d="M52 8 l16 6M68 8 l-16 6" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>'
+    : '<path d="M11 30 Q14 8 60 8 Q106 8 109 30 Q60 16 11 30z" fill="#D0282F" stroke="#8A1218" stroke-width="2" stroke-linejoin="round"/><circle cx="34" cy="17" r="2.6" fill="#fff"/><circle cx="60" cy="13" r="2.6" fill="#fff"/><circle cx="86" cy="17" r="2.6" fill="#fff"/><path d="M107 26 q14 2 12 14 q-8 -2 -12 -6z" fill="#D0282F" stroke="#8A1218" stroke-width="1.6"/>';
+  const patch = boss ? '<path d="M10 30 L110 36" stroke="#15151A" stroke-width="2.6"/><ellipse cx="96" cy="42" rx="10" ry="9" fill="#15151A"/>' : '';
+  const brows = '<path d="M14 31 L34 38M106 31 L86 38" stroke="#3E2A1B" stroke-width="3.6" stroke-linecap="round"/>';
+  return animalSvg(GULL, true).replace('</svg>', brows + patch + top + '</svg>');
 }
