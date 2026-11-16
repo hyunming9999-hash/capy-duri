@@ -46,7 +46,8 @@ function face(f, c) {
     <ellipse cx="18.5" cy="54" rx="6" ry="4" fill="#FF8F8F" opacity=".55"/><ellipse cx="101.5" cy="54" rx="6" ry="4" fill="#FF8F8F" opacity=".55"/>${extra}`;
 }
 
-// opts: {color, acc, face, view:'front'|'back', head:true(머리만), top/bottom/hat: 옷·모자 id, pin: 친목회에서 받은 상징(그림 글자)}. 모자를 쓰면 머리 장식(acc) 대신 모자가 보인다
+// opts: {color, acc, face, view:'front'|'back', head:true(머리만), top/bottom/hat: 옷·모자 id, pin: 친목회에서 받은 상징(그림 글자), rare: 초레어 보물 {e: 그림 글자, c: 빛 색}}. 모자를 쓰면 머리 장식(acc) 대신 모자가 보인다
+let rareN = 0;
 // 가슴에 다는 상징(나머지는 손에 든다)
 export const PIN_CHEST = new Set(['👑', '🥇', '🌈', '🌕', '🌙', '⚓', '🧊', '🫧', '🐚', '🌼', '🪷', '🌻']);
 export function capy(o = {}) {
@@ -64,7 +65,12 @@ export function capy(o = {}) {
     <rect x="31" y="76" width="58" height="50" rx="24" fill="${c.body}"/>
     ${back ? `<ellipse cx="60" cy="118" rx="6" ry="5" fill="${c.dark}"/>` : `<ellipse cx="60" cy="105" rx="17" ry="15" fill="${c.light}"/>`}${cl.under}
     <ellipse cx="29" cy="99" rx="8" ry="12" fill="${c.body}" transform="rotate(14 29 99)"/><ellipse cx="91" cy="99" rx="8" ry="12" fill="${c.body}" transform="rotate(-14 91 99)"/>${cl.top}${cl.over}`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158">${body}${head}${pin}</svg>`;
+  // 초레어 보물(친목회 단짝 100점): 몸 뒤로 빛이 퍼지고 별이 반짝이며, 가슴에 금빛 메달이 걸린다. 얼굴에는 붙이지 않는다
+  let glow = '', gem = '';
+  if (o.rare && o.rare.e && !back) { const gid = 'rg' + (++rareN), c = o.rare.c || '#FFD75E';
+    glow = `<defs><radialGradient id="${gid}"><stop offset="0" stop-color="#FFF6C2" stop-opacity=".95"/><stop offset=".55" stop-color="${c}" stop-opacity=".5"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient></defs><circle cx="60" cy="74" r="72" fill="url(#${gid})"><animate attributeName="r" values="66;74;66" dur="2.4s" repeatCount="indefinite"/></circle><g stroke="#FFF3B0" stroke-width="3" stroke-linecap="round" opacity=".75">${Array.from({ length: 10 }, (_, k) => `<path d="M60 -6 V-18" transform="rotate(${k * 36} 60 74)"/>`).join('')}<animateTransform attributeName="transform" type="rotate" from="0 60 74" to="360 60 74" dur="14s" repeatCount="indefinite"/></g>`;
+    gem = `<path d="M40 84 Q60 104 80 84" fill="none" stroke="#E0A93B" stroke-width="2.6" stroke-linecap="round"/><circle cx="60" cy="100" r="11.5" fill="#FFE066" stroke="#C98A00" stroke-width="2.4"/><circle cx="60" cy="100" r="8" fill="#FFF8D6"/><text x="60" y="104.6" font-size="12" text-anchor="middle">${o.rare.e}</text>${[[14, 70, 0], [106, 62, .6], [20, 118, 1.1], [102, 112, 1.6], [60, -14, .3]].map(([x, y, d]) => `<path d="M${x} ${y - 7} l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z" fill="#FFFBE0" stroke="#F0C24A" stroke-width=".8"><animate attributeName="opacity" values="0.15;1;0.15" dur="1.6s" begin="${d}s" repeatCount="indefinite"/></path>`).join('')}`; }
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158" style="overflow:visible">${glow}${body}${head}${pin}${gem}</svg>`;
 }
 
 export function capyEl(o = {}, cls = '') {

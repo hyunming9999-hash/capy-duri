@@ -931,3 +931,11 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .so-pop.say { width: max-content; max-width: 190px; white-space: normal; text-align: center; line-height: 1.35; top: auto; bottom: calc(100% - 2px); word-break: keep-all; }
 .so-mepop .so-pop.say { bottom: 0; }
 .so-sellh { display: block; margin-top: 8px; padding-top: 10px; border-top: 2px dashed #E8DCC8; }
+
+/* 친목회: 간식 유지·초레어 보물 */
+.so-fed { margin: 0; font-size: 12px; color: #7A6A58; text-align: center; } .so-fed[hidden] { display: none; } .so-fed.due { color: #D9480F; font-weight: 800; }
+.so-row.rare { border-color: #E9C46A; background: linear-gradient(120deg, #FFFBEA, #FFF3C4); opacity: .7; }
+.so-row.rare.open { opacity: 1; box-shadow: 0 0 0 2px rgba(255, 215, 94, .45), 0 0 14px rgba(255, 200, 60, .55); }
+.so-row.rare:disabled { opacity: .5; box-shadow: none; }
+.so-row.rare .so-try { overflow: visible; }
+.so-me svg, .so-pal svg, .so-bagme svg { overflow: visible; }

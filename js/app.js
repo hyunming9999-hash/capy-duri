@@ -49,7 +49,7 @@ Object.defineProperties(ctx, {
 });
 ctx.go = r => { location.hash = r; };
 ctx.nameOf = uid => (ctx.members[uid] || {}).name || '카피';
-ctx.capyOf = (uid, extra = {}) => { const m = ctx.members[uid] || {}, d = ctx.dress[uid] || {}; return { color: m.color, acc: m.acc, top: d.top, bottom: d.bottom, hat: d.hat, pin: m.pin != null && social.PERSONA[m.pin] ? social.PERSONA[m.pin].pin : '', ...extra }; };
+ctx.capyOf = (uid, extra = {}) => { const m = ctx.members[uid] || {}, d = ctx.dress[uid] || {}; return { color: m.color, acc: m.acc, top: d.top, bottom: d.bottom, hat: d.hat, pin: m.pin != null && social.PERSONA[m.pin] ? social.PERSONA[m.pin].pin : '', rare: social.rareOf(m.rare), ...extra }; };
 const fullRoute = () => location.hash.slice(1) || 'home';
 const titleOf = r => { const [n, sub] = (r || '').split('-'); const g = n === 'game' && GAMES.find(x => x.id === sub); return g ? g.title : (MENU.find(x => x.id === n) || {}).title || '홈'; };
 

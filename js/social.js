@@ -43,6 +43,13 @@ const GREET = [n => `어, ${n}${bat(n) ? '이다' : '다'}! 이뿌니다~`, n =>
   n => `와, ${n}${bat(n) ? '이다' : '다'}! 반짝반짝해`, n => `${n}, 보고 싶었어`, n => `${n}${bat(n) ? '은' : '는'} 볼수록 매력 있어`, n => `${n} 지나간다~ 인기쟁이`, n => `${n}, 웃는 얼굴 최고야`, n => `우리 ${n}, 오늘도 힘내`, n => `${n}${bat(n) ? '이랑' : '랑'} 놀면 제일 재밌어`, n => `${n} 덕분에 놀이터가 환해`];
 const tubeSvg = (c = '#FF6B6B') => `<svg viewBox="0 0 100 44"><ellipse cx="50" cy="26" rx="48" ry="16" fill="#BFEFFF" opacity=".55"/><ellipse cx="50" cy="20" rx="40" ry="13" fill="none" stroke="${c}" stroke-width="12"/><ellipse cx="50" cy="20" rx="40" ry="13" fill="none" stroke="#fff" stroke-width="12" stroke-dasharray="14 28"/><ellipse cx="50" cy="20" rx="46" ry="19" fill="none" stroke="rgba(0,0,0,.18)" stroke-width="1.2"/></svg>`;
 // 동물마다 다른 보트: 몸 색 선체 + 뱃머리의 귀 + 상징이 그려진 돛
+// 초레어 보물: 단짝(100점)이 된 동물에게서만 1500코인에 산다. 걸치면 몸에서 빛이 나서 지나가는 동물이 모두 칭찬한다
+export const RARE_PRICE = 1500, RARE_AT = 100;
+export const rareName = i => `빛나는 ${ANIMALS[i].name} 보물`;
+export const rareOf = i => (i != null && ANIMALS[i] && PERSONA[i] ? { e: PERSONA[i].pin, c: ANIMALS[i].body } : null);
+const RAREGREET = [n => `우와, ${n} 몸에서 빛이 나!`, n => `${n}, 그 반짝이는 거 진짜 예쁘다`, n => `눈부셔! ${n} 오늘 주인공이네`, n => `그 보물 어디서 났어? 너무 멋져`, n => `${n} 지나가니까 놀이터가 환해졌어`, n => `반짝반짝! ${n}한테 딱 어울려`, n => `와… 나도 그런 거 갖고 싶다`, n => `${n}, 별이 걸어 다니는 줄 알았어`];
+// 간식: 50점 이상으로 친해진 동물은 하루에 한 번은 선물(사탕이면 충분)을 받아야 사이가 유지된다. 하루 거를 때마다 3점씩 식는다(50점 밑으로 내려가면 멈춘다)
+const KEEP_AT = 50, DAY_MS = 86400000, KEEP_DROP = 3;
 // 되팔 때 값: 게임 3~5판 번 것쯤(150~250코인). 물건마다 값이 정해져 있다
 const sellPin = i => 150 + (i * 37) % 101, sellHat = i => 150 + (i * 53 + 20) % 101;
 const MY_BOAT = 99, BOAT_PRICE = 1000; // 내 카피보트: 카피수퍼에서 1000코인
@@ -108,6 +115,7 @@ export function mount(el, ctx) {
       const target = mineMsg ? mePop : palPop; if (target && (mineMsg || (palEl && palEl.style.display !== 'none'))) pop(target, m.t, 'say chat'); if (!mineMsg) sfx('tock');
       const line = h('p', { class: mineMsg ? 'me' : '' }, h('b', null, ctx.nameOf(m.by)), ' ' + m.t); chatLog.append(line); while (chatLog.children.length > 3) chatLog.firstChild.remove(); setTimeout(() => line.remove(), 12000); }); }
   let waveBar = null; // 내 보트의 파도 세기
+  let calmed = false;
   let meTube = null, palTube = null, boatEl = null, palBoat = null, palBoatI = -1, palBoatDrawn = -1, offer = null, calmChk = 0; // 물놀이: 튜브·보트, 보트 제안
   const tiles = [], spots = []; let vit = null, hpEl, potEl, lockT = 0, playing = false;
   const HP_MAX = 100, HIT_DMG = 5, POTION = [10, 20], // 한 대 맞으면 -5, 포션은 10코인에 HP +20
@@ -127,6 +135,8 @@ export function mount(el, ctx) {
   async function wearPin(i) { await ctx.store.update('members/' + ctx.uid, { pin: i }).catch(() => {}); ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), pin: i }; scores(); }
   // 그 옷 한 벌만 내 카피바라가 입은 모습(거래·가방 목록에 실제 그림으로 보여 준다)
   const tryOn = id => h('span', { class: 'so-try', html: capy({ color: ctx.me.color, acc: 'none', face: 'happy', [SLOT[id[0]]]: id }) });
+  async function wearRare(i) { await ctx.store.update('members/' + ctx.uid, { rare: i }).catch(() => {}); ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), rare: i }; scores(); }
+  const myRare = () => { const r = (ctx.members[ctx.uid] || {}).rare; return r != null && ANIMALS[r] ? r : -1; };
   const wearing = id => (ctx.dress[ctx.uid] || {})[SLOT[id[0]]] === id;
   async function wearCloth(id, on = true) { const d = ctx.dress[ctx.uid] || {}, nx = { top: d.top || '', bottom: d.bottom || '', hat: d.hat || '', by: ctx.uid, ts: ctx.store.now() }; nx[SLOT[id[0]]] = on ? id : '';
     ctx.dress[ctx.uid] = nx; await ctx.store.set('dress/' + ctx.uid, nx).catch(() => {}); scores(); }
@@ -201,7 +211,9 @@ export function mount(el, ctx) {
   function leaveBoat() { if (!me.boat) return; const o = actors[me.boat.i]; if (o) { o.st = 'idle'; o.until = performance.now() + 800; } me.boat = null; boatEl.style.display = 'none'; }
   function boardBoat() { const i = offer.i, o = actors[i]; offer = null; me.boat = { i, t: 0, gain: 0 }; o.st = 'boat'; o.e.classList.remove('walk', 'left'); boatEl.innerHTML = boatSvg(i); sfx('jump'); pop(o.e, toned(i, '출발!'), 'say'); }
   // 화는 가만히 둬도 5분에 1점씩 풀린다(앱을 꺼 둔 시간도 친다)
-  function calm(wall) { let ch = false; Object.keys(mine).forEach(k => { const r = mine[k]; if (!r || !(r.a < 0) || !ANIMALS[k]) return; if (!r.calmAt) return void setRel(k, { calmAt: wall });
+  function calm(wall) { let ch = false; Object.keys(mine).forEach(k => { const r = mine[k]; if (!r || !ANIMALS[k]) return;
+      if (r.a >= KEEP_AT) { if (!r.fedAt) return void setRel(k, { fedAt: wall }); const d = Math.floor((wall - r.fedAt) / DAY_MS); if (d > 0) { setRel(k, { a: Math.max(KEEP_AT - 1, r.a - KEEP_DROP * d), fedAt: r.fedAt + d * DAY_MS }); ch = true; } return; }
+      if (!(r.a < 0)) return; if (!r.calmAt) return void setRel(k, { calmAt: wall });
     const n = Math.floor((wall - r.calmAt) / CALM_MS); if (n > 0) { setRel(k, { a: Math.min(0, r.a + n), calmAt: r.calmAt + n * CALM_MS }); ch = true; } }); if (ch) scores(); }
   // 물에서는 사이 나쁜 동물이 때리는 대신 머리를 눌러 물을 먹인다: 돈은 안 나가고 체력이 조금씩 계속 준다
   function gotDunk(o, now) { o.nextHit = now + 600; me.dunkUntil = now + 480; sfx('bad'); pop(mePop, pick(['꼬르륵', '어푸!', '켁켁']), 'lose'); const hp = Math.max(0, hpNow() - 1); if (hp <= 0) return die(); saveVit({ hp }); drawHp(); }
@@ -295,6 +307,7 @@ export function mount(el, ctx) {
     // 놀이기구: 누가 타면 크게, 아니면 살짝 흔들린다
     tiles.forEach(T => { T.sw.forEach(w => { w.a += ((w.on ? 17 : 3) - w.a) * Math.min(1, dt * 2); w.cur = w.a * Math.sin(t * 2.3 + w.ph); w.g.setAttribute('transform', `rotate(${w.cur.toFixed(2)} ${w.cx} 243)`); });
       const S = T.see; S.cur += ((S.on ? 11 * Math.sin(t * 2.6) : -11) - S.cur) * Math.min(1, dt * 6); S.g.setAttribute('transform', `rotate(${S.cur.toFixed(2)} 598.8 320)`); });
+    const shiny = myRare() >= 0;
     actors.forEach((o, i) => {
       const lane = LANES[o.lane]; let ty = lane[0], ts = lane[1]; const ow = o.x > WATER_X;
       o.e.classList.toggle('swim', ow && o.st !== 'boat' && o.st !== 'palboat'); o.e.classList.toggle('surf', now < (o.surfUntil || 0));
@@ -325,7 +338,7 @@ export function mount(el, ctx) {
           if (now > o.until) { leave(o); o.st = 'idle'; o.until = now + 500; } }
         else if (now > o.until) decide(o, i);
       }
-      if (!paused && i !== held && (o.st === 'idle' || o.st === 'walk') && (mx || my) && A(i) >= 30 && Math.abs(me.x - o.x) < 85 && now > o.greetAt) { o.greetAt = now + 14000 + Math.random() * 9000; pop(o.e, toned(i, pick(GREET)(ctx.me.name)), 'say long'); }
+      if (!paused && i !== held && (o.st === 'idle' || o.st === 'walk') && (mx || my) && (A(i) >= 30 || (shiny && A(i) >= 0)) && Math.abs(me.x - o.x) < (shiny ? 110 : 85) && now > o.greetAt) { o.greetAt = now + (shiny ? 9000 : 14000) + Math.random() * 9000; pop(o.e, toned(i, pick(shiny && (A(i) < 30 || Math.random() < 0.6) ? RAREGREET : GREET)(ctx.me.name)), 'say long'); }
       const k = Math.min(1, dt * 5); o.y += (ty - o.y) * k; o.s += (ts - o.s) * k;
       o.e.style.left = o.x + 'px'; o.e.style.bottom = (o.y * 100).toFixed(2) + '%'; o.e.style.transform = `scale(${o.s.toFixed(3)})`; });
     raf = requestAnimationFrame(step);
@@ -346,7 +359,8 @@ export function mount(el, ctx) {
     const faceEl = h('span', { html: animalSvg(i, true, moodOf(A(i))) }); let faceMood = moodOf(A(i));
     const bubble = h('p', { class: 'so-bubble' }), meter = h('div', { class: 'so-meter' }), quick = h('div', { class: 'so-quick' }), input = h('input', { class: 'so-input', maxLength: 60, placeholder: `${a.name}에게 하고 싶은 말`, enterKeyHint: 'send' });
     const say = (t, cls = '', raw = false) => { bubble.className = 'so-bubble ' + cls; bubble.textContent = raw || t === '…' ? t : toned(i, t); };
-    const drawMeter = () => { const v = A(i), lv = levelOf(v), nx = LEVELS.find(l => l[0] > v); if (moodOf(v) !== faceMood) { faceMood = moodOf(v); faceEl.innerHTML = animalSvg(i, true, faceMood); } meter.replaceChildren(h('b', null, `${lv[2]} ${lv[1]}`), h('i', null, h('u', { style: { width: (v + 100) / 2 + '%', background: v < 0 ? '#E5484D' : v >= PIN_AT ? '#FF7FA8' : '#57C26B' } })), h('span', null, `${v}점${nx ? ` · ${nx[1]}까지 ${nx[0] - v}` : ''}`)); scores(); };
+    const fedNote = h('p', { class: 'so-fed' });
+    const drawMeter = () => { const v = A(i), lv = levelOf(v), nx = LEVELS.find(l => l[0] > v); { const left = DAY_MS - (ctx.store.now() - ((mine[i] || {}).fedAt || ctx.store.now())); fedNote.hidden = v < KEEP_AT; fedNote.className = 'so-fed' + (left < 6 * 3600000 ? ' due' : ''); fedNote.textContent = left <= 0 ? '🍬 간식을 못 받아서 서운해해요. 선물을 주세요!' : `🍬 ${Math.floor(left / 3600000)}시간 ${Math.floor(left / 60000) % 60}분 안에 선물(사탕도 돼요)을 줘야 사이가 유지돼요`; } if (moodOf(v) !== faceMood) { faceMood = moodOf(v); faceEl.innerHTML = animalSvg(i, true, faceMood); } meter.replaceChildren(h('b', null, `${lv[2]} ${lv[1]}`), h('i', null, h('u', { style: { width: (v + 100) / 2 + '%', background: v < 0 ? '#E5484D' : v >= PIN_AT ? '#FF7FA8' : '#57C26B' } })), h('span', null, `${v}점${nx ? ` · ${nx[1]}까지 ${nx[0] - v}` : ''}`)); scores(); };
     const drawQuick = () => quick.replaceChildren(...[pick(QUICK.good), A(i) < 0 ? '미안해, 내가 잘못했어' : pick(QUICK.flat), pick(QUICK.bad)].map((t, k) => h('button', { class: 'so-q q' + k, onClick: () => talk(t) }, t)));
     // 친밀도가 바뀐 뒤: 선물로 받는 액세서리, 사이가 나쁠 때 삥 뜯기
     async function after(d, was) {
@@ -398,7 +412,7 @@ export function mount(el, ctx) {
       const have = Object.keys(GIFTS).filter(k => (bag[k] || 0) > 0);
       if (!have.length) return modal({ title: '🎁 줄 선물이 없어요', body: h('p', { class: 'center' }, '카피수퍼에서 선물을 살 수 있어요.'), actions: [{ label: '닫기' }, { label: '🏪 카피수퍼 가기', primary: true, onClick: c => { c(); openShop(); } }] });
       const cl = modal({ title: `🎁 ${a.name}에게 선물하기`, body: h('div', { class: 'so-list' }, have.map(k => { const [ic, nm, , up] = GIFTS[k]; return h('button', { class: 'so-row', onClick: async () => { cl(); const bonus = p.fav === k ? Math.ceil(up * 0.5) : 0, v = Math.min(100, A(i) + up + bonus);
-        await ctx.store.update('bag/' + ctx.uid, { [k]: (bag[k] || 0) - 1 }).catch(() => {}); bag = { ...bag, [k]: (bag[k] || 0) - 1 }; await setRel(i, { a: v });
+        await ctx.store.update('bag/' + ctx.uid, { [k]: (bag[k] || 0) - 1 }).catch(() => {}); bag = { ...bag, [k]: (bag[k] || 0) - 1 }; await setRel(i, { a: v, fedAt: ctx.store.now() });
         if (demand === 'gift') { demand = ''; drawQuick(); say(bonus ? `흥, ${nm}라… 내가 좋아하는 걸 아네. 이번엔 봐준다.` : `${nm}? 뭐, 받아는 줄게.`, 'glad'); } else say(bonus ? `우와, ${nm}! 내가 제일 좋아하는 거야! 고마워!` : `${nm} 주는 거야? 고마워, 잘 쓸게!`, 'glad'); after(up + bonus); } }, h('span', null, ic), h('b', null, nm), h('small', null, `${bag[k]}개 · 친밀도 +${up}`)); })), actions: [{ label: '닫기' }] });
     }
     function trade() {
@@ -407,12 +421,14 @@ export function mount(el, ctx) {
       const row = (ic, nm, sub, price, owned, fn) => h('button', { class: 'so-row' + (typeof ic === 'string' ? '' : ' big'), disabled: owned, onClick: fn }, typeof ic === 'string' ? h('span', null, ic) : ic, h('b', null, nm), h('small', null, owned ? '이미 갖고 있어요' : `${won(price)} · ${sub}`));
       const cl = modal({ title: `🤝 ${a.name}와 거래`, body: h('div', { class: 'so-list' },
         row(p.pin, `${a.name}의 상징 액세서리`, v >= 10 ? '친해지면(50점) 그냥 줘요' : '아는 사이(10점)부터 팔아요', 500, hasPin, async () => { if (v < 10) return toast('아직 그 정도로 친하지 않대요'); if (!(await ctx.spend(500))) return; await ctx.store.update('bag/' + ctx.uid + '/pins', { [i]: true }).catch(() => {}); bag = { ...bag, pins: { ...(bag.pins || {}), [i]: true } }; await setRel(i, { got: true }); await wearPin(i); cl(); say(`자, ${p.pin} 여기. 내가 달아 줬어, 잘 달고 다녀!`, 'glad'); }),
+        h('button', { class: 'so-row big rare' + (v >= RARE_AT ? ' open' : ''), disabled: !!(bag.rares || {})[i], onClick: async () => { if (v < RARE_AT) return toast(`단짝(${RARE_AT}점)이 되어야 열려요. 지금 ${v}점`); if (!(await ctx.spend(RARE_PRICE))) return; bag = { ...bag, rares: { ...(bag.rares || {}), [i]: true } }; await ctx.store.update('bag/' + ctx.uid + '/rares', { [i]: true }).catch(() => {}); await wearRare(i); cl(); gameFx('win', rareName(i)); say('이건 단짝한테만 주는 내 보물이야. 네가 걸치니까 눈이 부셔!', 'gift'); } },
+          h('span', { class: 'so-try', html: capy({ color: ctx.me.color, acc: 'none', face: 'happy', rare: rareOf(i) }) }), h('b', null, `✨ 초레어 · ${rareName(i)}`), h('small', null, (bag.rares || {})[i] ? '이미 갖고 있어요' : v >= RARE_AT ? `${won(RARE_PRICE)} · 걸치면 모두가 칭찬해요` : `🔒 단짝(${RARE_AT}점)이 되면 열려요 · ${won(RARE_PRICE)}`)),
         row(tryOn(ware.id), `${ware.name} (${a.name} 전용)`, disc < 1 ? `친구 할인 ${Math.round((1 - disc) * 100)}%` : '친해지면 깎아 줘요', wp, ctx.owns(ware.id), async () => { if (!(await ctx.spend(wp))) return; await ctx.store.set(`owned/${ctx.uid}/${ware.id}`, true).catch(() => {}); ctx.owned[ctx.uid] = { ...(ctx.owned[ctx.uid] || {}), [ware.id]: true }; await wearCloth(ware.id); cl(); say(`${ware.name}, 입혀 줬어. 잘 어울린다! (가방이나 옷놀이에서 갈아입을 수 있어)`, 'glad'); })), actions: [{ label: '닫기' }] });
     }
     const memBtn = () => { const mem = Array.isArray((mine[i] || {}).mem) ? mine[i].mem : Object.values((mine[i] || {}).mem || {}); modal({ title: `📜 ${a.name}가 기억하는 말`, body: mem.length ? h('div', { class: 'so-mem' }, mem.slice().reverse().map(m => h('p', null, h('b', null, `나: ${m.s}`), h('span', null, `${a.name}: ${m.r}`), h('em', { class: m.d > 0 ? 'up' : m.d < 0 ? 'down' : '' }, (m.d > 0 ? '+' : '') + m.d)))) : h('p', { class: 'center' }, '아직 나눈 말이 없어요.'), actions: [{ label: '닫기', primary: true }] }); };
     input.addEventListener('keydown', e => { if (e.key === 'Enter') talk(input.value); });
     close = modal({ title: `${a.name} · ${p.trait}`, body: h('div', { class: 'so-meet' },
-      h('div', { class: 'so-face' }, faceEl, bubble), meter, quick,
+      h('div', { class: 'so-face' }, faceEl, bubble), meter, fedNote, quick,
       h('div', { class: 'so-say' }, input, h('button', { class: 'btn primary', onClick: () => talk(input.value) }, '말하기')),
       h('div', { class: 'so-acts' }, h('button', { class: 'btn', onClick: give }, '🎁 선물'), h('button', { class: 'btn', onClick: trade }, '🤝 거래'), h('button', { class: 'btn', onClick: memBtn }, '📜 기억'))), actions: [{ label: '닫기' }], onClose: () => { if (demand && actors[i]) actors[i].rage = true; if (held === i) held = -1; const o = actors[i]; if (o && o.st === 'walk') o.e.classList.add('walk'); } });
     const v = A(i); say(v <= ROB_AT ? pick(LINES.cold) : v >= PIN_AT ? `${ctx.me.name}! 왔구나, 보고 싶었어!` : v >= 10 ? `안녕, ${ctx.me.name}! 또 만났네.` : `안녕? 난 ${a.name}야. ${p.likes[0]} 좋아해.`); drawMeter(); drawQuick();
@@ -444,6 +460,8 @@ export function mount(el, ctx) {
         h('p', { class: 'center' }, Object.entries(GIFTS).map(([k, [ic, nm]]) => `${ic} ${nm} ${bag[k] || 0}개`).join(' · ')),
         h('b', null, `동물에게 받은 액세서리 ${pins.length} / ${ANIMALS.length}`),
         pins.length ? h('div', { class: 'so-pins' }, pins.map(i => h('button', { class: 'so-pin' + (worn === i ? ' on' : ''), onClick: async () => { await wearPin(worn === i ? null : i); draw(); } }, h('span', null, PERSONA[i].pin), h('small', null, worn === i ? '착용 중' : ANIMALS[i].name), h('small', { class: 'dim' }, PIN_CHEST.has(PERSONA[i].pin) ? '가슴에' : '손에')))) : h('p', { class: 'dim center' }, `동물과 ${PIN_AT}점까지 친해지면 그 동물의 상징을 선물로 받아요.`),
+        h('b', null, `✨ 초레어 보물 ${Object.keys(bag.rares || {}).filter(k => bag.rares[k]).length} / ${ANIMALS.length}`),
+        Object.keys(bag.rares || {}).filter(k => bag.rares[k]).length ? h('div', { class: 'so-list' }, Object.keys(bag.rares).filter(k => bag.rares[k]).map(Number).map(i => { const on = myRare() === i; return h('button', { class: 'so-row big rare open' + (on ? ' on' : ''), onClick: async () => { await wearRare(on ? null : i); draw(); } }, h('span', { class: 'so-try', html: capy({ color: ctx.me.color, acc: 'none', face: 'happy', rare: rareOf(i) }) }), h('b', null, rareName(i)), h('small', null, on ? '걸치는 중 (누르면 벗기)' : '누르면 걸치기')); })) : h('p', { class: 'dim center' }, `동물과 단짝(${RARE_AT}점)이 되면 그 동물에게서 ${RARE_PRICE.toLocaleString('ko-KR')}코인에 살 수 있어요.`),
         h('b', null, `동물에게 산 전용 모자 ${wares.length} / ${ANIMALS.length}`),
         wares.length ? h('div', { class: 'so-list' }, wares.map(i => { const w = wareOf(i), on = wearing(w.id); return h('button', { class: 'so-row big' + (on ? ' on' : ''), onClick: async () => { await wearCloth(w.id, !on); draw(); } }, tryOn(w.id), h('b', null, w.name), h('small', null, `${ANIMALS[i].name}에게 삼 · ${on ? '입는 중 (누르면 벗기)' : '누르면 입기'}`)); })) : h('p', { class: 'dim center' }, '동물과 거래하면 그 동물만 파는 전용 모자를 살 수 있어요.'),
         h('p', { class: 'dim center' }, '눌러서 착용하거나 빼요. 액세서리는 가슴이나 손에만 보여요(얼굴만 나오는 곳에는 안 보여요).')); };
@@ -451,7 +469,7 @@ export function mount(el, ctx) {
   }
 
   const offs = [
-    ctx.store.on('social', v => { v = v || {}; mine = v[ctx.uid] || {}; theirs = (pid() && v[pid()]) || {}; scores(); }),
+    ctx.store.on('social', v => { v = v || {}; mine = v[ctx.uid] || {}; theirs = (pid() && v[pid()]) || {}; scores(); if (!calmed && Object.keys(mine).length) { calmed = true; setTimeout(() => alive && calm(ctx.store.now()), 600); } }), // 들어오자마자 그동안 식거나 풀린 만큼 반영
     ctx.store.on('bag/' + ctx.uid, v => { bag = v || {}; drawHp(); }),
     ctx.store.on('socialchat', onChat, { limit: 20 }),
     ctx.store.on('socialpos', v => { const q = pid() && v && v[pid()]; pal.on = !!q; if (q) { pal.x = q.x || 0; pal.y = q.y || 0; pal.f = q.f || 1; pal.ride = q.r == null ? -1 : q.r; pal.boat = q.b == null ? -1 : q.b; pal.t = q.t || 0; } }),
