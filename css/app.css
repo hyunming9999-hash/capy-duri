@@ -910,3 +910,5 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .so-an.surf .so-tube { transform-origin: 50% 50%; }
 .so-an.surf .so-tube { animation: soSurfT .85s ease-out; }
 @keyframes soSurfT { 0%, 100% { transform: translateX(-50%) translateY(0); } 40% { transform: translateX(-50%) translateY(-22px); } 70% { transform: translateX(-50%) translateY(-8px); } }
+
+.so-bg.so-sea { background-image: url(../img/social/sea.webp); -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 28px); mask-image: linear-gradient(90deg, transparent 0, #000 28px); }

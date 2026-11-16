@@ -83,7 +83,7 @@ async function askAI(room, body) {
 export function mount(el, ctx) {
   let alive = true, mine = {}, theirs = {}, bag = {}, scroller, meEl, mePop;
   const pid = () => ctx.partnerId, A = i => (mine[i] && mine[i].a) || 0;
-  const H = Math.round(Math.min(innerHeight * 0.48, 470)), TILE = Math.round(H * 1213 / 520), TILES = 3, PW = TILE * TILES, WIDTH = PW + TILE, WATER_X = PW + TILE * 0.275, // 놀이터 3장 + 오른쪽 바닷가 1장, WATER_X부터 물
+  const H = Math.round(Math.min(innerHeight * 0.48, 470)), TILE = Math.round(H * 1213 / 520), TILES = 3, PW = TILE * TILES, WIDTH = PW + TILE * 2, WATER_X = PW + TILE * 0.275, // 놀이터 3장 + 오른쪽 바닷가 1장 + 넓은 바다 1장, WATER_X부터 끝까지 물
      IW = 1344, IH = 576;
   // 놀이기구 자리: [종류, 그림 속 가로 위치(0~1), 바닥에서 높이(0~1), 그네 번호]
   const SPOT_DEFS = [['slide', 0.243, 0.385], ['slide', 0.243, 0.385, 0, 'late'], ['swing', 0.2943, 0.43, 0], ['swing', 0.3286, 0.43, 1], ['seeL', 0.3964, 0.45], ['seeR', 0.4947, 0.45], ['sand', 0.538, 0.41], ['sand', 0.574, 0.41], ['gym', 0.661, 0.4], ['gym', 0.691, 0.4, 0, 'late'], ['bench', 0.753, 0.435], ['bench', 0.784, 0.435]];
@@ -91,6 +91,7 @@ export function mount(el, ctx) {
   const LANES = [[0.07, 1], [0.13, 0.94], [0.19, 0.88], [0.25, 0.82]], RIDE_S = 0.62, ME_SP = 150, CHASE_SP = 118;
   // 같이 접속한 상대: 위치를 1초에 몇 번 주고받아 놀이터에 함께 보인다(동물들의 움직임은 각자 화면에서 따로 돈다)
   const pal = { on: false, x: 0, y: 0, f: 1, ride: -1, boat: -1, t: 0, dx: -1, dy: 0, ds: 1, spot: null }; let palEl = null, sentAt = 0, sentKey = '';
+  let savedPos = '', savedAt = 0; const keepPos = () => { if (!playing) return; const k = (me.x / WIDTH).toFixed(3) + '|' + me.y.toFixed(2); if (k === savedPos) return; savedPos = k; saveVit({ px: +(me.x / WIDTH).toFixed(4), py: +me.y.toFixed(3) }); };
   let waveBar = null; // 내 보트의 파도 세기
   let meTube = null, palTube = null, boatEl = null, palBoat = null, palBoatI = -1, palBoatDrawn = -1, offer = null, calmChk = 0; // 물놀이: 튜브·보트, 보트 제안
   const tiles = [], spots = []; let vit = null, hpEl, potEl, lockT = 0, playing = false;
@@ -118,6 +119,7 @@ export function mount(el, ctx) {
   function scene() {
     const top = h('div', { class: 'so-top' }, h('span', { class: 'coin-chip', 'data-coins': 1 }, won(ctx.coins())), h('span', { class: 'so-sp' }),
       h('button', { class: 'btn sm', onClick: openBag }, '🎒 가방'), h('button', { class: 'btn sm', onClick: openShop }, '🏪 카피수퍼'));
+    if (vit && vit.px > 0) { me.x = Math.max(40, Math.min(WIDTH - 40, vit.px * WIDTH)); me.y = me.dy = Math.max(0, Math.min(Y_MAX, vit.py || 0)); me.ds = 1 - me.y * 0.7; } // 다시 들어오면 마지막에 있던 자리에서 시작
     endSorry(); tiles.length = 0; spots.length = 0; me.ride = null; me.kb = 0; keys.clear(); rideState = ''; playing = true;
     hpEl = h('u'); potEl = h('button', { class: 'btn sm so-pot', onClick: drink }, '🧪 0');
     const hpRow = h('div', { class: 'so-hp' }, h('b', null, '❤️'), h('i', null, hpEl), h('span', { class: 'so-hpn' }), potEl);
@@ -126,7 +128,7 @@ export function mount(el, ctx) {
     const world = h('div', { class: 'so-world', style: { width: WIDTH + 'px', height: H + 'px', '--sx': Math.round(-0.05 * TILE) + 'px', '--sy': Math.round(-0.115 * H) + 'px', '--gy': Math.round(-0.13 * H) + 'px' } });
     for (let k = 0; k < TILES; k++) { const flip = k % 2 === 1, bg = h('i', { class: 'so-bg' + (flip ? ' flip' : ''), style: { left: k * TILE + 'px', width: TILE + 1 + 'px' }, html: EQ }); world.append(bg);
       const fx = f => (k + (flip ? 1 - f : f)) * TILE, t = { dir: flip ? -1 : 1, sw: [...bg.querySelectorAll('.eq-sw')].map((g, n) => ({ g, cx: [395.5, 441.6][n], a: 3, cur: 0, ph: n * 1.4 + k, on: 0 })), see: { g: bg.querySelector('.eq-see'), cur: -11, x: fx(SEE_X), on: 0 } };
-      if (k === TILES - 1) world.append(h('i', { class: 'so-bg so-beach', style: { left: PW + 'px', width: TILE + 1 + 'px' } }));
+      if (k === TILES - 1) world.append(h('i', { class: 'so-bg so-beach', style: { left: PW + 'px', width: TILE + 1 + 'px' } }), h('i', { class: 'so-bg so-sea', style: { left: PW + TILE - 28 + 'px', width: TILE + 29 + 'px' } }));
       tiles.push(t); SPOT_DEFS.forEach(([type, f, b, n, late]) => spots.push({ type, late: late ? ' late' : '', grp: k + type.slice(0, 3), x: fx(f), b, dir: t.dir, by: -1, eq: type === 'swing' ? t.sw[n] : type[0] === 's' && type[1] === 'e' ? t.see : null, t })); }
     actors = ANIMALS.map((a, i) => { const lane = i % LANES.length, x = 90 + (i + 0.5) * (WIDTH - 180) / ANIMALS.length;
       const e = h('button', { class: 'so-an', 'data-i': i, style: { left: x + 'px', zIndex: 10 - lane }, onClick: () => openAnimal(i) }, h('span', { class: 'so-score' }), h('span', { class: 'so-hearts' }), h('span', { class: 'so-body', html: animalSvg(i, true) }), h('small', null, a.name), h('span', { class: 'so-tube', html: tubeSvg(a.body) }));
@@ -234,6 +236,7 @@ export function mount(el, ctx) {
     if (mx) { me.f = mx; me.x = Math.max(40, Math.min(WIDTH - 40, me.x + mx * ME_SP * (me.boat ? 1.1 : wet ? 0.7 : 1) * dt)); }
     if (me.boat && me.x < WATER_X - 12) leaveBoat();
     if (now - calmChk > 20000) { calmChk = now; calm(wall); }
+    if (now - savedAt > 4000) { savedAt = now; keepPos(); }
     if (me.boat && me.boat.own && !paused) { const B = me.boat; B.wave = mx ? Math.min(100, B.wave + 26 * dt) : Math.max(0, B.wave - 24 * dt); B.pulse -= dt; if (mx && B.pulse <= 0) { B.pulse = 0.9; makeWave(now); } }
     { const own = !!(me.boat && me.boat.own); if (waveBar.hidden === own) waveBar.hidden = !own; if (own) { const v = me.boat.wave, u = waveBar.querySelector('u'); u.style.width = v + '%'; u.style.background = v >= 70 ? '#E5484D' : v >= 35 ? '#3BA7E5' : '#9AD0F5'; waveBar.lastChild.textContent = v >= 70 ? '너무 세요! 동물들이 밀려나요' : v >= 20 ? '신나는 파도' : '잔잔'; } }
     if (me.boat && !me.boat.own && !paused) { const B = me.boat; B.t += dt; if (B.t >= 4) { B.t = 0; if (A(B.i) < 100 && B.gain < 8) { B.gain++; setRel(B.i, { a: A(B.i) + 1 }); pop(actors[B.i].e, '+1 💗', 'up'); sfx('point'); scores(); } } }
@@ -422,5 +425,5 @@ export function mount(el, ctx) {
     ctx.store.on('socialme/' + ctx.uid, v => { const first = vit === null; vit = v || {};
       if (first) { if (vit.deadAt && ctx.store.now() - vit.deadAt < TEN_MIN) lock(); else { if (vit.deadAt) saveVit({ hp: HP_MAX, deadAt: 0 }); scene(); } } else drawHp(); }),
   ];
-  return () => { alive = false; leavePos(); me.boat = null; offer = null; endSorry(); clearInterval(lockT); cancelAnimationFrame(raf); offs.forEach(f => f()); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
+  return () => { keepPos(); alive = false; leavePos(); me.boat = null; offer = null; endSorry(); clearInterval(lockT); cancelAnimationFrame(raf); offs.forEach(f => f()); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
 }
