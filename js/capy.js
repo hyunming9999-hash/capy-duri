@@ -54,11 +54,11 @@ export function capy(o = {}) {
   const back = o.view === 'back';
   const ears = `<ellipse cx="22" cy="21" rx="8" ry="7.5" fill="${c.dark}"/><ellipse cx="98" cy="21" rx="8" ry="7.5" fill="${c.dark}"/>${back ? '' : `<ellipse cx="22.5" cy="22" rx="3.8" ry="3.4" fill="${c.light}"/><ellipse cx="97.5" cy="22" rx="3.8" ry="3.4" fill="${c.light}"/>`}`;
   const head = `${ears}<rect x="9" y="15" width="102" height="69" rx="25" fill="${c.body}"/>${back ? `<path d="M40 30 q20 -7 40 0" fill="none" stroke="${c.dark}" stroke-width="2" opacity=".35" stroke-linecap="round"/>` : face(o.face, c)}${(o.hat && hatSvg(o.hat)) || acc(o.acc)}`;
-  // 친목회 상징: 배지 같은 것은 가슴에 달고, 먹을 것·물건은 손에 든다. 머리만 그릴 때는 턱 옆에 작게 단다
-  const pin = !o.pin || back ? '' : o.head ? `<circle cx="99" cy="76" r="11" fill="#fff" stroke="#E9C46A" stroke-width="2.2"/><text x="99" y="81.5" font-size="14" text-anchor="middle">${o.pin}</text>`
+  // 친목회 상징: 배지 같은 것은 가슴에 달고, 먹을 것·물건은 손에 든다. 얼굴에는 절대 붙이지 않는다(머리만 그릴 때는 안 보인다)
+  const pin = !o.pin || back || o.head ? ''
     : PIN_CHEST.has(o.pin) ? `<circle cx="44" cy="93" r="9.5" fill="#fff" stroke="#E9C46A" stroke-width="2.2"/><text x="44" y="97.6" font-size="12.5" text-anchor="middle">${o.pin}</text>`
     : `<text x="98" y="115" font-size="23" text-anchor="middle" transform="rotate(-12 98 108)">${o.pin}</text><ellipse cx="92" cy="109" rx="5.5" ry="4.5" fill="${c.body}"/>`;
-  if (o.head) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 112">${head}${pin}</svg>`;
+  if (o.head) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 112">${head}</svg>`;
   const cl = o.top || o.bottom ? wearSvg(o.top, o.bottom) : { under: '', top: '', over: '' };
   const body = `<ellipse cx="45" cy="128" rx="12" ry="6.5" fill="${c.dark}"/><ellipse cx="75" cy="128" rx="12" ry="6.5" fill="${c.dark}"/>
     <rect x="31" y="76" width="58" height="50" rx="24" fill="${c.body}"/>
