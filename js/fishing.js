@@ -93,8 +93,8 @@ export function openFishing(o) {
   }
   function cast() {
     const b = o.bag(), n = (b.casts || 0) + 1, at = b.pearlAt || (1 + Math.floor(Math.random() * 100));
-    // 중급·고급에서는 10번마다 그 안의 어느 한 번에 갈매기 해적단이 나타난다
-    if (zone >= 2 && o.onPirate) { const pn = (b.pcasts || 0) + 1, pat = b.pirAt >= 1 && b.pirAt <= PIRATE_EVERY ? b.pirAt : 1 + Math.floor(Math.random() * PIRATE_EVERY); o.save({ pcasts: pn, pirAt: pn % PIRATE_EVERY === 0 ? 1 + Math.floor(Math.random() * PIRATE_EVERY) : pat }); if (((pn - 1) % PIRATE_EVERY) + 1 === pat) { close(); return o.onPirate(); } }
+    // 중급·고급에서는 한 번 나타난 뒤 15~20번 던지면 다시 갈매기 해적단이 나타난다
+    if (zone >= 2 && o.onPirate) { const gap = () => 15 + Math.floor(Math.random() * 6), pn = (b.pcasts || 0) + 1, at = b.pirNext > 0 ? b.pirNext : pn - 1 + gap(), hit = pn >= at; o.save({ pcasts: pn, pirNext: hit ? pn + gap() : at }); if (hit) { close(); return o.onPirate(); } }
     // 100번마다 그 안의 어느 한 번에 진주가 문다
     const isPearl = ((n - 1) % 100) + 1 === at; o.save({ bait: b.bait - 1, rodD: b.rodD - 1, casts: n, pearlAt: n % 100 === 0 ? 1 + Math.floor(Math.random() * 100) : at });
     cur = rollCatch(zone, rodT(), isPearl, power / 100); phase = 'cast'; c0 = performance.now(); castTo = 48 + power * 0.44; flew = false; shown = false; setBar(power, 'pow'); drawInfo();
