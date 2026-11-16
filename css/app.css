@@ -1144,3 +1144,7 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 /* 튜브 뒤쪽 반은 몸 뒤로 */
 .so-tube.back { z-index: -1; }
 .so-me.swim svg { clip-path: inset(-30% -30% 15% -30%); }
+
+/* 대왕 폐하께 절: 선 채로 허리를 깊이 숙였다가 일어난다(내가 있는 쪽으로) */
+.so-an.bow > :first-child { animation: none; } .so-an.bow .so-body { transform-origin: 50% 100%; animation: soBowB 2.4s ease-in-out; }
+@keyframes soBowB { 0%, 10% { rotate: 0deg; translate: 0 0; } 40%, 68% { rotate: calc(var(--bd, -1) * 42deg); translate: calc(var(--bd, -1) * 8px) 0; } 100% { rotate: 0deg; translate: 0 0; } }

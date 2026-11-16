@@ -162,8 +162,13 @@ export function mount(el, ctx) {
   async function wearPin(i) { await ctx.store.update('members/' + ctx.uid, { pin: i }).catch(() => {}); ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), pin: i }; scores(); }
   // 그 옷 한 벌만 내 카피바라가 입은 모습(거래·가방 목록에 실제 그림으로 보여 준다)
   const tryOn = id => h('span', { class: 'so-try', html: capy({ color: ctx.me.color, acc: 'none', face: 'happy', [SLOT[id[0]]]: id }) });
-  const myRares = () => rareList((ctx.members[ctx.uid] || {}).rare), myRare = () => (myRares().length ? myRares()[0] : -1);
-  async function saveRares(list) { const v = list.length ? list : null; await ctx.store.update('members/' + ctx.uid, { rare: v }).catch(() => {}); ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), rare: v }; scores(); }
+  // 대왕 체험: 1분 동안 황금 장신구 여섯 개를 걸친 것처럼 보이고, 동물들이 지나갈 때마다 절을 한다(저장하지 않고, 세금도 없다)
+  let kingTrial = 0; const KING_SET = [10, 7, 9, 13, 25, 19];
+  const myRares = () => (kingTrial ? KING_SET : rareList((ctx.members[ctx.uid] || {}).rare)), myRare = () => (myRares().length ? myRares()[0] : -1);
+  const refreshMe = () => { if (meEl) meEl.innerHTML = capy(ctx.capyOf(ctx.uid, { face: 'happy', rare: rareOf(myRares()) })); };
+  function startKing() { if (kingTrial) return; kingTrial = performance.now() + 60000; refreshMe(); toast('👑 대왕 체험 1분 시작! 동물들 곁을 지나가 보세요', 3200); }
+  function endKing() { if (!kingTrial) return; kingTrial = 0; refreshMe(); toast('대왕 체험이 끝났어요', 2600); }
+  async function saveRares(list) { const v = list.length ? list : null; await ctx.store.update('members/' + ctx.uid, { rare: v }).catch(() => {}); ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), rare: v }; refreshMe(); scores(); }
   // 보물 걸치기·벗기: 여섯 개까지. 같은 자리의 것은 바꿔 걸친다
   async function wearRare(i) { if (i == null) return saveRares([]); let list = myRares(); if (list.includes(i)) return saveRares(list.filter(x => x !== i));
     const out = list.filter(x => clash(x, i)); list = list.filter(x => !clash(x, i)); if (list.length >= RARE_MAX) return void toast('보물은 여섯 개까지 걸칠 수 있어요. 하나를 벗고 걸치세요');
@@ -351,6 +356,7 @@ export function mount(el, ctx) {
     if (mx) { me.f = mx; const nx = me.x + mx * ME_SP * (own ? (bag.wboat ? 1.7 : 1.1) : me.boat ? 1.1 : wet ? 0.7 : 1) * dt; me.x = Math.max(40, Math.min(Math.max(lim, Math.min(me.x, WIDTH - 40)), nx));
       if (mx > 0 && nx > lim && now > hintAt) { hintAt = now + 3500; toast(!own ? '여기부터는 낚시터예요. 내 배(카피수퍼)를 타야 갈 수 있어요' : !bag.wboat ? '중급 낚시터부터는 흰 배(2,000코인)가 있어야 해요' : !bag.cannon ? '중급 낚시터부터는 대포(500코인)를 달아야 해요. 갈매기 해적단이 나와요' : '배가 너무 상했어요. 카피수퍼에서 배를 수리해야 중급 바다에 나갈 수 있어요', 3000); } }
     if (trial && now > trial.until && !fishOpen && !battle) endTrial('낚싯배 체험 10분이 끝났어요');
+    if (kingTrial && now > kingTrial) endKing();
     if (me.boat && me.boat.pass) { if (palShip()) { me.x = Math.max(40, pal.dx - 30); me.y = Math.max(0, Math.min(Y_MAX, pal.y)); me.f = pal.f; me.boat.skin = pal.boat; }
       else { leaveBoat(); if (me.x > FISH_X - 40) { me.x = FISH_X - 60; toast('배가 떠나서 바닷가 쪽으로 돌아왔어요', 2600); } } }
     meEl.classList.toggle('onpal', !!(me.boat && me.boat.pass));
@@ -437,9 +443,9 @@ export function mount(el, ctx) {
         const near100 = A(i) >= 90 && A(i) < 100;
         if (near100 && now > (o.cakeAt || 0)) { o.cakeAt = now + 60000; pop(o.e, line(i, 'cake', toned(i, pick(CAKE_HINT))), 'say long'); } // 단짝 직전: 케이크가 필요하다고 알려 준다
         else if (shineN >= 6) { // 대왕 폐하: 10분에 한 번 절을 하고, 30분에 한 번 세금 1코인을 바친다
-          const r = mine[i] || {}, due = wall - (r.taxAt || 0) >= TAX_MS, bow = wall - (r.bowAt || 0) >= BOW_MS; pop(o.e, due ? '대왕 폐하! 세금 1코인 바치옵니다 🪙' : line(i, 'king', KING[(i + Math.floor(now / 9000)) % KING.length]), 'say long');
-          if (bow) { o.e.classList.add('bow'); setTimeout(() => o.e.classList.remove('bow'), 1500); }
-          if (due || bow) setRel(i, { ...(due ? { taxAt: wall } : {}), ...(bow ? { bowAt: wall } : {}) }); if (due) { addCoins(1); sfx('coin'); } }
+          const r = mine[i] || {}, due = !kingTrial && wall - (r.taxAt || 0) >= TAX_MS, bow = kingTrial ? now > (o.tbow || 0) : wall - (r.bowAt || 0) >= BOW_MS; if (kingTrial) o.tbow = now + 12000; pop(o.e, due ? '대왕 폐하! 세금 1코인 바치옵니다 🪙' : line(i, 'king', KING[(i + Math.floor(now / 9000)) % KING.length]), 'say long');
+          if (bow) { o.e.style.setProperty('--bd', me.x < o.x ? -1 : 1); o.e.classList.add('bow'); setTimeout(() => o.e.classList.remove('bow'), 2400); } // 선 채로 내 쪽을 향해 허리를 깊이 숙였다 일어난다
+          if (!kingTrial && (due || bow)) setRel(i, { ...(due ? { taxAt: wall } : {}), ...(bow ? { bowAt: wall } : {}) }); if (due) { addCoins(1); sfx('coin'); } }
         else if (shineN >= 4) { pop(o.e, line(i, 'hero', AWE2[i], shineN), 'say long'); o.e.classList.add('cry'); setTimeout(() => o.e.classList.remove('cry'), 2600); } // 눈물을 흘리며 영웅이라고
         else if (shineN >= 2) pop(o.e, line(i, 'awe', AWE1[i], shineN), 'say long');
         else { const sh = shiny && (A(i) < 30 || Math.random() < 0.6); pop(o.e, line(i, sh ? 'shine' : 'greet', toned(i, pick(sh ? RAREGREET : GREET)(ctx.me.name))), 'say long'); } }
@@ -583,6 +589,7 @@ export function mount(el, ctx) {
         h('b', null, `동물에게 받은 액세서리 ${pins.length} / ${ANIMALS.length}`),
         pins.length ? h('div', { class: 'so-pins' }, pins.map(i => h('button', { class: 'so-pin' + (worn === i ? ' on' : ''), onClick: async () => { await wearPin(worn === i ? null : i); draw(); } }, h('span', null, PERSONA[i].pin), h('small', null, worn === i ? '착용 중' : ANIMALS[i].name), h('small', { class: 'dim' }, PIN_CHEST.has(PERSONA[i].pin) ? '가슴에' : '손에')))) : h('p', { class: 'dim center' }, `동물과 ${PIN_AT}점까지 친해지면 그 동물의 상징을 선물로 받아요.`),
         h('b', null, `✨ 초레어 보물 ${Object.keys(bag.rares || {}).filter(k => bag.rares[k]).length} / ${ANIMALS.length}`),
+        h('button', { class: 'so-row big', disabled: !!kingTrial, onClick: () => { const x = [...document.querySelectorAll('.modal-wrap .modal-actions .btn')].pop(); if (x) x.click(); startKing(); } }, h('span', null, '👑'), h('b', null, '대왕 체험 (1분)'), h('small', null, '황금 장신구 여섯 개를 걸친 모습으로 1분 동안 다녀 봐요. 동물들이 절을 해요. 저장되지 않고 세금도 없어요')),
         Object.keys(bag.rares || {}).filter(k => bag.rares[k]).length ? h('div', { class: 'so-list' }, Object.keys(bag.rares).filter(k => bag.rares[k]).map(Number).map(i => { const on = myRares().includes(i); return h('button', { class: 'so-row big rare open' + (on ? ' on' : ''), onClick: async () => { await wearRare(i); draw(); } }, h('span', { class: 'so-try', html: capy({ color: ctx.me.color, acc: 'none', face: 'happy', rare: rareOf(i) }) }), h('b', null, rareName(i)), h('small', null, on ? '걸치는 중 (누르면 벗기)' : '누르면 걸치기')); })) : h('p', { class: 'dim center' }, `동물과 단짝(${RARE_AT}점)이 되면 그 동물에게서 ${RARE_PRICE.toLocaleString('ko-KR')}코인에 살 수 있어요.`),
         h('b', null, `🐟 물고기 도감 ${Object.keys(dex).length} / ${FISH.length}${dex.pearl ? ' · 진주 ' + dex.pearl.n + '개' : ''}`),
         Object.keys(dex).length ? h('div', { class: 'so-dex' }, FISH.filter(f => dex[f.id]).map(f => h('div', { class: 'so-dexi' + (f.king ? ' king' : f.rare ? ' rare' : '') }, h('span', { html: fishSvg(f) }), h('b', null, f.name), h('small', null, `${dex[f.id].n}마리 · 최대 ${dex[f.id].best}cm`)))) : h('p', { class: 'dim center' }, '바다 끝 낚시터에서 잡은 물고기가 여기에 모여요.'),
@@ -601,5 +608,5 @@ export function mount(el, ctx) {
     ctx.store.on('socialme/' + ctx.uid, v => { const first = vit === null; vit = v || {};
       if (first) { if (vit.deadAt && ctx.store.now() - vit.deadAt < TEN_MIN) lock(); else { if (vit.deadAt) saveVit({ hp: HP_MAX, deadAt: 0 }); scene(); } } else drawHp(); }),
   ];
-  return () => { trial = null; keepPos(); alive = false; if (battle) { battle.stop(); battle = null; } voice.destroy(); bgm.duck(false); window.removeEventListener('pointerdown', wakeVoice); leavePos(); me.boat = null; offer = null; endSorry(); clearInterval(lockT); cancelAnimationFrame(raf); offs.forEach(f => f()); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
+  return () => { trial = null; kingTrial = 0; keepPos(); alive = false; if (battle) { battle.stop(); battle = null; } voice.destroy(); bgm.duck(false); window.removeEventListener('pointerdown', wakeVoice); leavePos(); me.boat = null; offer = null; endSorry(); clearInterval(lockT); cancelAnimationFrame(raf); offs.forEach(f => f()); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
 }
