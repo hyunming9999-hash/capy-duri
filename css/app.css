@@ -1107,3 +1107,7 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .fs-fish.mad { animation: fsShake .07s linear infinite; filter: drop-shadow(0 0 8px #FF3B30) saturate(3) hue-rotate(-40deg) brightness(1.4); }
 .fs-fish.jump { animation: fsJump .5s cubic-bezier(.2, .8, .4, 1); } @keyframes fsJump { 0% { translate: 0 0; rotate: 0deg; } 45% { translate: 0 -150%; rotate: -35deg; } 100% { translate: 0 0; rotate: 0deg; } }
 .fs-deck .fs-bar.spike { animation: fsSpike .3s ease-out; } @keyframes fsSpike { 0% { box-shadow: 0 0 0 8px rgba(255, 60, 48, .9), inset 0 2px 4px rgba(0, 0, 0, .7); scale: 1.06 1.3; } }
+
+/* 주황 칸: 여기서 감아야 끌려온다(바다가 깊을수록 좁다) */
+.fs-deck .fs-bar.ten { --lo: 45%; background: linear-gradient(90deg, #111922 0 var(--lo), #E08A1A var(--lo) 80%, #C4281F 80%); }
+.fs-deck .fs-bar.ten u { background: linear-gradient(#7FA8C4, #4E7896); } .fs-deck .fs-bar.ten.hot u { background: linear-gradient(#FFE08A, #F59E0B); box-shadow: inset 0 3px 0 rgba(255, 255, 255, .5), 0 0 10px rgba(255, 190, 60, .8); }
