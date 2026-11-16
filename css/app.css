@@ -926,3 +926,8 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .so-mic { display: inline-flex; align-items: center; gap: 3px; } .so-mic small { font: 800 11px/1 var(--head); }
 .so-mic.on { background: #FFE3E3; border-color: #F08A8A; } .so-mic.live { background: #DDF7E3; border-color: #5DBB80; }
 .so-help { width: 34px; padding: 0 !important; }
+
+/* 친목회: 동물 말풍선이 글자를 다 감싸도록 */
+.so-pop.say { width: max-content; max-width: 190px; white-space: normal; text-align: center; line-height: 1.35; top: auto; bottom: calc(100% - 2px); word-break: keep-all; }
+.so-mepop .so-pop.say { bottom: 0; }
+.so-sellh { display: block; margin-top: 8px; padding-top: 10px; border-top: 2px dashed #E8DCC8; }
