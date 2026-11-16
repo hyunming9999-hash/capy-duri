@@ -1038,7 +1038,7 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 
 
 /* 상대 배에 같이 탄 카피바라: 배 안에 앉은 것처럼 다리를 가린다 */
-.so-me.onpal svg { clip-path: inset(-30% -30% 27% -30%); }
+.so-me.onpal svg { clip-path: inset(-80% -80% 27% -80%); }
 
 /* ===== 낚시 조작판: 게이지와 릴 ===== */
 .fs-deck { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; padding: 12px 12px 14px; border-radius: 24px; border: 3px solid #6B4A2F; background: repeating-linear-gradient(90deg, rgba(0, 0, 0, .05) 0 2px, transparent 2px 46px), linear-gradient(#C99A66, #A9774A); box-shadow: inset 0 3px 0 rgba(255, 255, 255, .35), 0 5px 0 #4E3420; }
@@ -1143,7 +1143,8 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 
 /* 튜브 뒤쪽 반은 몸 뒤로 */
 .so-tube.back { z-index: -1; }
-.so-me.swim svg { clip-path: inset(-30% -30% 15% -30%); }
+/* 물에 잠긴 발만 가린다. 날개·왕관처럼 몸 밖으로 크게 나가는 장신구는 자르지 않게 옆과 위는 넉넉히 */
+.so-me.swim svg { clip-path: inset(-80% -80% 15% -80%); }
 
 /* 대왕 폐하께 절: 발과 몸은 그대로 두고 머리만 내가 있는 쪽으로 깊이 숙였다가 든다 */
 .so-an.bow > :first-child { animation: none; } .so-an.bow .so-body, .so-an.bow.walk .so-body { animation: none; } .so-an.bow .an-head { transform-box: view-box; transform-origin: 60px 86px; animation: soBowB 2.4s ease-in-out; }
