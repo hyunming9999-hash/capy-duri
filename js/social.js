@@ -46,8 +46,9 @@ const tubeSvg = (c = '#FF6B6B') => `<svg viewBox="0 0 100 44"><ellipse cx="50" c
 // 동물마다 다른 보트: 몸 색 선체 + 뱃머리의 귀 + 상징이 그려진 돛
 // 초레어 보물: 단짝(100점)이 된 동물에게서만 1500코인에 산다. 걸치면 몸에서 빛이 나서 지나가는 동물이 모두 칭찬한다
 export const RARE_PRICE = 1500, RARE_AT = 100;
-export const rareName = i => `빛나는 ${ANIMALS[i].name} 보물`;
-export const rareOf = i => (i != null && ANIMALS[i] && PERSONA[i] ? { e: PERSONA[i].pin, c: ANIMALS[i].body } : null);
+const RARE_NAMES = ['황금 뼈다귀 왕홀', '황금 고양이귀 티아라', '황금 치즈 방패', '황금 하트 선글라스', '황금 당근 검', '황금 구미호 예복', '황금 꿀단지 왕관', '황금 대나무 선글라스', '황금 유칼립투스 갑옷', '황금 호피 갑옷', '황금 사자 갈기 왕관', '황금 뿔 투구', '황금 꿀꿀 바지', '황금 연잎 치마', '황금 여의봉', '황금 볏 투구', '황금 눈꽃 고글', '황금 병아리 날개', '황금 오리 튜브', '황금 부엉이 날개', '황금 늑대 털 조끼', '황금 엄니 투구', '황금 기마 재킷', '황금 유니콘 티아라', '황금 거북 등껍질 갑옷', '황금 문어 삼지창', '황금 세일러 상의', '황금 가시 망토', '황금 다람쥐 꼬리', '황금 너구리 가면'];
+export const rareName = i => RARE_NAMES[i] || `빛나는 ${ANIMALS[i].name} 보물`;
+export const rareOf = i => (i != null && ANIMALS[i] && PERSONA[i] ? { i: +i, e: PERSONA[i].pin, c: ANIMALS[i].body } : null);
 const RAREGREET = [n => `우와, ${n} 몸에서 빛이 나!`, n => `${n}, 그 반짝이는 거 진짜 예쁘다`, n => `눈부셔! ${n} 오늘 주인공이네`, n => `그 보물 어디서 났어? 너무 멋져`, n => `${n} 지나가니까 놀이터가 환해졌어`, n => `반짝반짝! ${n}한테 딱 어울려`, n => `와… 나도 그런 거 갖고 싶다`, n => `${n}, 별이 걸어 다니는 줄 알았어`];
 // 간식: 50점 이상으로 친해진 동물은 하루에 한 번은 선물(사탕이면 충분)을 받아야 사이가 유지된다. 하루 거를 때마다 3점씩 식는다(50점 밑으로 내려가면 멈춘다)
 const KEEP_AT = 50, DAY_MS = 86400000, KEEP_DROP = 3;

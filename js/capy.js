@@ -50,6 +50,9 @@ function face(f, c) {
 let rareN = 0;
 // 가슴에 다는 상징(나머지는 손에 든다)
 export const PIN_CHEST = new Set(['👑', '🥇', '🌈', '🌕', '🌙', '⚓', '🧊', '🫧', '🐚', '🌼', '🪷', '🌻']);
+const RARE_BACK = new Set([17, 19, 27, 28]); // 등 뒤에 그리는 것(날개·가시 망토·꼬리)
+const RARE_BODY = new Set([5, 8, 9, 12, 13, 18, 20, 22, 24, 26]); // 몸에 입는 것(상의·하의·한 벌): 몸 위, 얼굴 아래에 그려서 입은 것처럼 보이게 한다
+const RARE_FIT = { 5: [0, 38, 0.55], 7: [0, 0, 0.72], 10: [0, -25, 0.9], 11: [0, -17, 1], 15: [0, -8, 1], 21: [0, -14, 1], 18: [0, 5, 1], 20: [0, 6, 1], 26: [0, 6, 1] };
 export function capy(o = {}) {
   const c = COLORS[o.color] || COLORS.brown;
   const back = o.view === 'back';
@@ -65,12 +68,14 @@ export function capy(o = {}) {
     <rect x="31" y="76" width="58" height="50" rx="24" fill="${c.body}"/>
     ${back ? `<ellipse cx="60" cy="118" rx="6" ry="5" fill="${c.dark}"/>` : `<ellipse cx="60" cy="105" rx="17" ry="15" fill="${c.light}"/>`}${cl.under}
     <ellipse cx="29" cy="99" rx="8" ry="12" fill="${c.body}" transform="rotate(14 29 99)"/><ellipse cx="91" cy="99" rx="8" ry="12" fill="${c.body}" transform="rotate(-14 91 99)"/>${cl.top}${cl.over}`;
-  // 초레어 보물(친목회 단짝 100점): 몸 뒤로 빛이 퍼지고 별이 반짝이며, 가슴에 금빛 메달이 걸린다. 얼굴에는 붙이지 않는다
-  let glow = '', gem = '';
-  if (o.rare && o.rare.e && !back) { const gid = 'rg' + (++rareN), c = o.rare.c || '#FFD75E';
-    glow = `<defs><radialGradient id="${gid}"><stop offset="0" stop-color="#FFFBD6" stop-opacity="1"/><stop offset=".45" stop-color="#FFE066" stop-opacity=".85"/><stop offset=".75" stop-color="${c}" stop-opacity=".5"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient></defs><circle cx="60" cy="74" r="86" fill="url(#${gid})"><animate attributeName="r" values="78;92;78" dur="2s" repeatCount="indefinite"/></circle><g stroke="#FFF6B8" stroke-width="4.5" stroke-linecap="round" opacity=".95">${Array.from({ length: 12 }, (_, k) => `<path d="M60 ${k % 2 ? -14 : -8} V${k % 2 ? -30 : -40}" transform="rotate(${k * 30} 60 74)"/>`).join('')}<animateTransform attributeName="transform" type="rotate" from="0 60 74" to="360 60 74" dur="14s" repeatCount="indefinite"/></g>`;
-    gem = `<path d="M40 84 Q60 104 80 84" fill="none" stroke="#E0A93B" stroke-width="2.6" stroke-linecap="round"/><circle cx="60" cy="100" r="11.5" fill="#FFE066" stroke="#C98A00" stroke-width="2.4"/><circle cx="60" cy="100" r="8" fill="#FFF8D6"/><text x="60" y="104.6" font-size="12" text-anchor="middle">${o.rare.e}</text>${[[8, 70, 0], [112, 58, .6], [14, 122, 1.1], [108, 116, 1.6], [60, -20, .3], [-4, 30, .9], [124, 96, 1.3], [34, -10, .5]].map(([x, y, d]) => `<path d="M${x} ${y - 10} l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="#FFFDF0" stroke="#F0C24A" stroke-width="1"><animate attributeName="opacity" values="0.15;1;0.15" dur="1.6s" begin="${d}s" repeatCount="indefinite"/></path>`).join('')}`; }
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158" style="overflow:visible">${glow}${body}${head}${pin}${gem}</svg>`;
+  // 초레어 보물(친목회 단짝 100점): 동물마다 다른 금빛 장비(모자·안경·상의·하의·한 벌·도구·날개…)를 걸친다. 몸 뒤로 은은한 금빛이 퍼지고 별이 반짝인다
+  // 그림은 캐릭터 기준 틀(가로 1024 중 캐릭터 547×720)에 맞춰 그려져 있어 같은 자리에 겹치면 된다. RARE_FIT = 조금씩 어긋난 것만 [옆, 아래, 크기] 보정
+  let glow = '', gem = '', wearB = '', wearM = '';
+  if (o.rare && o.rare.i != null && !back) { const gid = 'rg' + (++rareN), k = o.rare.i, [dx, dy, sc] = RARE_FIT[k] || [0, 0, 1], S = 224.7 * sc, img = `<image href="img/rare/${k}.webp" x="${(60 + dx - S / 2).toFixed(1)}" y="${(57 + dy - S / 2).toFixed(1)}" width="${S.toFixed(1)}" height="${S.toFixed(1)}"/>`;
+    glow = `<defs><radialGradient id="${gid}"><stop offset="0" stop-color="#FFFBD6" stop-opacity=".95"/><stop offset=".5" stop-color="#FFE066" stop-opacity=".6"/><stop offset="1" stop-color="#FFC93C" stop-opacity="0"/></radialGradient></defs><circle cx="60" cy="74" r="80" fill="url(#${gid})"><animate attributeName="r" values="72;86;72" dur="2.2s" repeatCount="indefinite"/></circle>`;
+    const stars = [[4, 62, 0], [116, 50, .6], [10, 126, 1.1], [112, 120, 1.6], [60, -34, .3], [-10, 22, .9], [130, 92, 1.3], [30, -24, .5]].map(([x, y, d]) => `<path d="M${x} ${y - 10} l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="#FFFDF0" stroke="#F0C24A" stroke-width="1"><animate attributeName="opacity" values="0.15;1;0.15" dur="1.6s" begin="${d}s" repeatCount="indefinite"/></path>`).join('');
+    if (RARE_BACK.has(k)) wearB = img; else if (RARE_BODY.has(k)) wearM = img; else gem = img; gem += stars; }
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158" style="overflow:visible">${glow}${wearB}${body}${wearM}${head}${pin}${gem}</svg>`;
 }
 
 export function capyEl(o = {}, cls = '') {
