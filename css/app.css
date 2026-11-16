@@ -939,3 +939,5 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .so-row.rare:disabled { opacity: .5; box-shadow: none; }
 .so-row.rare .so-try { overflow: visible; }
 .so-me svg, .so-pal svg, .so-bagme svg { overflow: visible; }
+
+.so-me.shiny { filter: drop-shadow(0 0 8px #FFE89A) drop-shadow(0 0 20px rgba(255, 205, 70, .85)); }
