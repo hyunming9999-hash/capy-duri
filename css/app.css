@@ -1126,3 +1126,10 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .sb-mrow { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: stretch; } .sb-flee { height: auto; min-height: 30px; padding: 2px 10px; display: grid; place-content: center; line-height: 1.15; } .sb-flee span { font: 800 12px/1.2 var(--head); } .sb-flee small { font-size: 10px; color: #5A6675; }
 
 .so-rodic svg { width: 34px; height: 34px; display: block; }
+
+/* 보물 2개: 눈물을 흘린다 / 3개: 고개 숙여 인사한다 */
+.so-an.cry::before, .so-an.cry::after { content: '💧'; position: absolute; top: 34%; font-size: 13px; z-index: 3; animation: soTear .65s ease-in infinite; pointer-events: none; }
+.so-an.cry::before { left: 16%; } .so-an.cry::after { right: 16%; animation-delay: .3s; }
+@keyframes soTear { 0% { translate: 0 0; opacity: 0; scale: .5; } 25% { opacity: 1; scale: 1; } 100% { translate: 0 26px; opacity: 0; } }
+.so-an.cry > :first-child { animation: soSob .3s ease-in-out infinite; } @keyframes soSob { 50% { translate: 0 2px; } }
+.so-an.bow > :first-child { transform-origin: 50% 100%; animation: soBow 1.5s ease-in-out; } @keyframes soBow { 0%, 100% { rotate: 0deg; } 25%, 70% { rotate: 28deg; translate: 6px 0; } }

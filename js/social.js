@@ -48,7 +48,18 @@ const tubeSvg = (c = '#FF6B6B') => `<svg viewBox="0 0 100 44"><ellipse cx="50" c
 export const RARE_PRICE = 1500, RARE_AT = 100;
 const RARE_NAMES = ['황금 뼈다귀 왕홀', '황금 고양이귀 티아라', '황금 치즈 방패', '황금 하트 선글라스', '황금 당근 검', '황금 구미호 예복', '황금 꿀단지 왕관', '황금 대나무 선글라스', '황금 유칼립투스 갑옷', '황금 호피 갑옷', '황금 사자 갈기 왕관', '황금 뿔 투구', '황금 꿀꿀 바지', '황금 연잎 치마', '황금 여의봉', '황금 볏 투구', '황금 눈꽃 고글', '황금 병아리 날개', '황금 오리 튜브', '황금 부엉이 날개', '황금 늑대 털 조끼', '황금 엄니 투구', '황금 기마 재킷', '황금 유니콘 티아라', '황금 거북 등껍질 갑옷', '황금 문어 삼지창', '황금 세일러 상의', '황금 가시 망토', '황금 다람쥐 꼬리', '황금 너구리 가면'];
 export const rareName = i => RARE_NAMES[i] || `빛나는 ${ANIMALS[i].name} 보물`;
-export const rareOf = i => (i != null && ANIMALS[i] && PERSONA[i] ? { i: +i, e: PERSONA[i].pin, c: ANIMALS[i].body } : null);
+// 걸친 보물은 세 개까지. 저장 값은 예전처럼 숫자 하나일 수도, 목록일 수도 있다
+export const rareList = v => (v == null ? [] : Array.isArray(v) ? v : typeof v === 'object' ? Object.values(v) : [v]).map(Number).filter(i => ANIMALS[i] && PERSONA[i]).slice(0, 3);
+export const rareOf = v => { const list = rareList(v); return list.length ? { i: list[0], list, e: PERSONA[list[0]].pin, c: ANIMALS[list[0]].body } : null; };
+// 자리: 같은 자리에는 하나만(한 벌은 상의·하의와 같이 못 입는다)
+const RARE_SLOT = { hat: [1, 6, 10, 11, 15, 21, 23], eye: [3, 7, 16, 29], top: [9, 20, 22, 26], bottom: [12, 13, 18], suit: [5, 8, 24], hand: [0, 2, 4, 14, 25], back: [17, 19, 27, 28] };
+const slotOf = i => Object.keys(RARE_SLOT).find(k => RARE_SLOT[k].includes(i)), clash = (a, b) => { const x = slotOf(a), y = slotOf(b); return x === y || (x === 'suit' && (y === 'top' || y === 'bottom')) || (y === 'suit' && (x === 'top' || x === 'bottom')); };
+// 보물 1개: 멋지다·눈부시다·존경한다 (동물마다 다른 말)
+const AWE1 = ['주인님 같은 멋짐이야! 꼬리가 멈추질 않아', '흥, 인정할게. 오늘은 네가 제일 멋져', '찍… 눈이 부셔서 치즈도 안 보여', '볼이 터질 만큼 멋져! 존경해', '귀가 쫑긋 섰어. 너무 눈부셔', '여우인 내가 봐도 반할 만큼 멋져', '곰도 고개 숙일 멋짐이야. 존경해', '대나무보다 네가 더 좋아질 만큼 멋져', '졸다가 깼어… 너무 눈부셔서', '어흥! 이 호랑이가 인정하는 멋짐이야', '밀림의 왕인 나도 존경스러워', '음메… 들판 전체가 환해졌어. 멋져', '꿀꿀! 진흙 속 진주처럼 빛나', '개굴! 연못에 해가 뜬 줄 알았어', '우끼! 바나나보다 눈부셔! 존경해', '꼬끼오! 새벽 해보다 눈부셔', '뒤뚱… 빙하보다 반짝여. 멋져', '삐약! 커서 꼭 너처럼 될래. 존경해', '꽥! 연못 최고의 멋쟁이야', '부엉… 밤눈 밝은 내가 봐도 눈부셔', '아우우! 달보다 네가 더 빛나', '킁킁, 온 숲이 네 멋짐을 알아', '히힝! 달리다 멈춰 설 만큼 멋져', '무지개도 너만큼 빛나진 않아', '느릿느릿… 백 년 살아도 이런 멋짐은 처음이야', '다리 여덟 개로 다 박수 칠게. 멋져', '어흑어흑! 박수! 너무 눈부셔', '가시가 다 눕도록 감동했어. 존경해', '도토리 다 줘도 안 아까울 멋짐이야', '너굴! 훔치고 싶을 만큼 멋져… 농담이야, 존경해'];
+// 보물 2개: 눈물을 흘리며 영웅이라고 치켜세운다 (동물마다 다른 말)
+const AWE2 = ['흑흑… 너는 우리 세상의 영웅이야. 네 곁이라 자랑스러워', '훌쩍… 이 몸이 우는 건 영웅 앞에서뿐이야', '찍찍… 작은 우리한테 넌 제일 큰 영웅이야', '볼이 젖었어… 넌 뭐든 해낼 수 있는 영웅이야', '눈이 빨개졌어… 네가 있어서 세상이 든든해', '흑… 꾀 많은 나도 네 앞에선 그냥 팬이야, 영웅', '엉엉… 네가 걸어온 길이 다 옳았어, 영웅', '훌쩍… 넌 있는 그대로 충분히 대단한 영웅이야', '눈물이 유칼립투스에 떨어져… 넌 우리의 자랑이야', '어흥… 눈물이… 넌 누구보다 용감한 영웅이야', '갈기가 젖도록 울었어. 진짜 왕은 너야, 영웅', '음메… 네가 흘린 땀을 우리가 다 알아, 영웅', '꿀꿀… 넌 우리 마을의 보물이자 영웅이야', '개굴개굴… 네 덕분에 연못이 평화로워, 영웅', '우끼… 눈물이 나. 넌 못 하는 게 없는 영웅이야', '꼬끼오… 매일 아침 널 위해 울게, 영웅', '뒤뚱… 눈물이 얼겠어. 넌 따뜻한 영웅이야', '삐약삐약… 넌 내 평생의 영웅이야', '꽥… 눈물로 연못이 넘쳐. 넌 최고의 영웅이야', '부엉… 지혜로운 내가 보증해. 넌 진짜 영웅이야', '아우우… 외로운 늑대도 널 보면 든든해, 영웅', '킁… 눈물이. 넌 숲을 지키는 영웅이야', '히힝… 어디든 널 태우고 달리고 싶어, 영웅', '흑… 전설 속 영웅이 바로 너였구나', '느릿느릿 울게… 넌 오래오래 기억될 영웅이야', '먹물 대신 눈물이 나… 넌 바다의 영웅이야', '어흑… 물개 박수로도 모자라. 넌 영웅이야', '가시 끝까지 떨려… 넌 모두를 지키는 영웅이야', '도토리가 눈물에 젖었어… 넌 숲의 영웅이야', '너굴… 가면 뒤로 울고 있어. 넌 진짜 영웅이야'];
+// 보물 3개: 모두가 대왕 폐하라고 인사한다
+const KING = ['대왕 폐하! 문안 인사 올립니다', '대왕 폐하 납시오! 만수무강하소서', '대왕 폐하, 오늘도 성은이 망극하옵니다', '대왕 폐하! 분부만 내려 주소서', '대왕 폐하 만세! 만세! 만만세!'], TAX_MS = 1800000;
 const RAREGREET = [n => `우와, ${n} 몸에서 빛이 나!`, n => `${n}, 그 반짝이는 거 진짜 예쁘다`, n => `눈부셔! ${n} 오늘 주인공이네`, n => `그 보물 어디서 났어? 너무 멋져`, n => `${n} 지나가니까 놀이터가 환해졌어`, n => `반짝반짝! ${n}한테 딱 어울려`, n => `와… 나도 그런 거 갖고 싶다`, n => `${n}, 별이 걸어 다니는 줄 알았어`];
 // 간식: 50점 이상으로 친해진 동물은 하루에 한 번은 선물(사탕이면 충분)을 받아야 사이가 유지된다. 하루 거를 때마다 3점씩 식는다(50점 밑으로 내려가면 멈춘다)
 const KEEP_AT = 50, DAY_MS = 86400000, KEEP_DROP = 3;
@@ -141,8 +152,12 @@ export function mount(el, ctx) {
   async function wearPin(i) { await ctx.store.update('members/' + ctx.uid, { pin: i }).catch(() => {}); ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), pin: i }; scores(); }
   // 그 옷 한 벌만 내 카피바라가 입은 모습(거래·가방 목록에 실제 그림으로 보여 준다)
   const tryOn = id => h('span', { class: 'so-try', html: capy({ color: ctx.me.color, acc: 'none', face: 'happy', [SLOT[id[0]]]: id }) });
-  async function wearRare(i) { await ctx.store.update('members/' + ctx.uid, { rare: i }).catch(() => {}); ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), rare: i }; scores(); }
-  const myRare = () => { const r = (ctx.members[ctx.uid] || {}).rare; return r != null && ANIMALS[r] ? r : -1; };
+  const myRares = () => rareList((ctx.members[ctx.uid] || {}).rare), myRare = () => (myRares().length ? myRares()[0] : -1);
+  async function saveRares(list) { const v = list.length ? list : null; await ctx.store.update('members/' + ctx.uid, { rare: v }).catch(() => {}); ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), rare: v }; scores(); }
+  // 보물 걸치기·벗기: 세 개까지. 같은 자리의 것은 바꿔 걸친다
+  async function wearRare(i) { if (i == null) return saveRares([]); let list = myRares(); if (list.includes(i)) return saveRares(list.filter(x => x !== i));
+    const out = list.filter(x => clash(x, i)); list = list.filter(x => !clash(x, i)); if (list.length >= 3) return void toast('보물은 세 개까지 걸칠 수 있어요. 하나를 벗고 걸치세요');
+    if (out.length) toast(`같은 자리라서 ${out.map(rareName).join(', ')}을(를) 벗고 걸쳤어요`, 2600); return saveRares([...list, i]); }
   const wearing = id => (ctx.dress[ctx.uid] || {})[SLOT[id[0]]] === id;
   async function wearCloth(id, on = true) { const d = ctx.dress[ctx.uid] || {}, nx = { top: d.top || '', bottom: d.bottom || '', hat: d.hat || '', by: ctx.uid, ts: ctx.store.now() }; nx[SLOT[id[0]]] = on ? id : '';
     ctx.dress[ctx.uid] = nx; await ctx.store.set('dress/' + ctx.uid, nx).catch(() => {}); scores(); }
@@ -359,7 +374,7 @@ export function mount(el, ctx) {
     // 놀이기구: 누가 타면 크게, 아니면 살짝 흔들린다
     tiles.forEach(T => { T.sw.forEach(w => { w.a += ((w.on ? 17 : 3) - w.a) * Math.min(1, dt * 2); w.cur = w.a * Math.sin(t * 2.3 + w.ph); w.g.setAttribute('transform', `rotate(${w.cur.toFixed(2)} ${w.cx} 243)`); });
       const S = T.see; S.cur += ((S.on ? 11 * Math.sin(t * 2.6) : -11) - S.cur) * Math.min(1, dt * 6); S.g.setAttribute('transform', `rotate(${S.cur.toFixed(2)} 598.8 320)`); });
-    const shiny = myRare() >= 0; meEl.classList.toggle('shiny', shiny);
+    const shineN = myRares().length, shiny = shineN > 0; meEl.classList.toggle('shiny', shiny);
     actors.forEach((o, i) => {
       const lane = LANES[o.lane]; let ty = lane[0], ts = lane[1]; const ow = o.x > WATER_X;
       o.e.classList.toggle('swim', ow && o.st !== 'boat' && o.st !== 'palboat'); o.e.classList.toggle('surf', now < (o.surfUntil || 0));
@@ -390,7 +405,13 @@ export function mount(el, ctx) {
           if (now > o.until) { leave(o); o.st = 'idle'; o.until = now + 500; } }
         else if (now > o.until) decide(o, i);
       }
-      if (!paused && i !== held && (o.st === 'idle' || o.st === 'walk') && (mx || my) && (A(i) >= 30 || (shiny && A(i) >= 0)) && Math.abs(me.x - o.x) < (shiny ? 110 : 85) && now > o.greetAt) { o.greetAt = now + (shiny ? 9000 : 14000) + Math.random() * 9000; pop(o.e, toned(i, pick(shiny && (A(i) < 30 || Math.random() < 0.6) ? RAREGREET : GREET)(ctx.me.name)), 'say long'); }
+      if (!paused && i !== held && (o.st === 'idle' || o.st === 'walk') && (mx || my) && (A(i) >= 30 || (shiny && A(i) >= 0)) && Math.abs(me.x - o.x) < (shiny ? 110 : 85) && now > o.greetAt) { o.greetAt = now + (shiny ? 9000 : 14000) + Math.random() * 9000;
+        if (shineN >= 3) { // 대왕 폐하: 고개 숙여 인사하고, 30분에 한 번 세금 1코인을 바친다
+          const due = wall - ((mine[i] || {}).taxAt || 0) >= TAX_MS; pop(o.e, due ? '대왕 폐하! 세금 1코인 바치옵니다 🪙' : KING[(i + Math.floor(now / 9000)) % KING.length], 'say long'); o.e.classList.add('bow'); setTimeout(() => o.e.classList.remove('bow'), 1500);
+          if (due) { setRel(i, { taxAt: wall }); addCoins(1); sfx('coin'); } }
+        else if (shineN === 2) { pop(o.e, AWE2[i], 'say long'); o.e.classList.add('cry'); setTimeout(() => o.e.classList.remove('cry'), 2600); } // 눈물을 흘리며 영웅이라고
+        else if (shineN === 1) pop(o.e, AWE1[i], 'say long');
+        else pop(o.e, toned(i, pick(GREET)(ctx.me.name)), 'say long'); }
       const k = Math.min(1, dt * 5); o.y += (ty - o.y) * k; o.s += (ts - o.s) * k;
       o.e.style.left = o.x + 'px'; o.e.style.bottom = (o.y * 100).toFixed(2) + '%'; o.e.style.transform = `scale(${o.s.toFixed(3)})`; });
     raf = requestAnimationFrame(step);
@@ -529,7 +550,7 @@ export function mount(el, ctx) {
         h('b', null, `동물에게 받은 액세서리 ${pins.length} / ${ANIMALS.length}`),
         pins.length ? h('div', { class: 'so-pins' }, pins.map(i => h('button', { class: 'so-pin' + (worn === i ? ' on' : ''), onClick: async () => { await wearPin(worn === i ? null : i); draw(); } }, h('span', null, PERSONA[i].pin), h('small', null, worn === i ? '착용 중' : ANIMALS[i].name), h('small', { class: 'dim' }, PIN_CHEST.has(PERSONA[i].pin) ? '가슴에' : '손에')))) : h('p', { class: 'dim center' }, `동물과 ${PIN_AT}점까지 친해지면 그 동물의 상징을 선물로 받아요.`),
         h('b', null, `✨ 초레어 보물 ${Object.keys(bag.rares || {}).filter(k => bag.rares[k]).length} / ${ANIMALS.length}`),
-        Object.keys(bag.rares || {}).filter(k => bag.rares[k]).length ? h('div', { class: 'so-list' }, Object.keys(bag.rares).filter(k => bag.rares[k]).map(Number).map(i => { const on = myRare() === i; return h('button', { class: 'so-row big rare open' + (on ? ' on' : ''), onClick: async () => { await wearRare(on ? null : i); draw(); } }, h('span', { class: 'so-try', html: capy({ color: ctx.me.color, acc: 'none', face: 'happy', rare: rareOf(i) }) }), h('b', null, rareName(i)), h('small', null, on ? '걸치는 중 (누르면 벗기)' : '누르면 걸치기')); })) : h('p', { class: 'dim center' }, `동물과 단짝(${RARE_AT}점)이 되면 그 동물에게서 ${RARE_PRICE.toLocaleString('ko-KR')}코인에 살 수 있어요.`),
+        Object.keys(bag.rares || {}).filter(k => bag.rares[k]).length ? h('div', { class: 'so-list' }, Object.keys(bag.rares).filter(k => bag.rares[k]).map(Number).map(i => { const on = myRares().includes(i); return h('button', { class: 'so-row big rare open' + (on ? ' on' : ''), onClick: async () => { await wearRare(i); draw(); } }, h('span', { class: 'so-try', html: capy({ color: ctx.me.color, acc: 'none', face: 'happy', rare: rareOf(i) }) }), h('b', null, rareName(i)), h('small', null, on ? '걸치는 중 (누르면 벗기)' : '누르면 걸치기')); })) : h('p', { class: 'dim center' }, `동물과 단짝(${RARE_AT}점)이 되면 그 동물에게서 ${RARE_PRICE.toLocaleString('ko-KR')}코인에 살 수 있어요.`),
         h('b', null, `🐟 물고기 도감 ${Object.keys(dex).length} / ${FISH.length}${dex.pearl ? ' · 진주 ' + dex.pearl.n + '개' : ''}`),
         Object.keys(dex).length ? h('div', { class: 'so-dex' }, FISH.filter(f => dex[f.id]).map(f => h('div', { class: 'so-dexi' + (f.king ? ' king' : f.rare ? ' rare' : '') }, h('span', { html: fishSvg(f) }), h('b', null, f.name), h('small', null, `${dex[f.id].n}마리 · 최대 ${dex[f.id].best}cm`)))) : h('p', { class: 'dim center' }, '바다 끝 낚시터에서 잡은 물고기가 여기에 모여요.'),
         h('b', null, `동물에게 산 전용 모자 ${wares.length} / ${ANIMALS.length}`),
