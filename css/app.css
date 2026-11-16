@@ -878,3 +878,19 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .pv-hint[hidden] { display: none; }
 .pv-bar { display: flex; gap: 8px; padding: 10px 12px calc(12px + env(safe-area-inset-bottom)); justify-content: center; }
 .pv-bar .btn { flex: 1; max-width: 120px; padding-left: 6px; padding-right: 6px; white-space: nowrap; }
+
+/* 친목회: 바닷가·튜브·보트 */
+.so-bg.so-beach { background-image: url(../img/social/beach.webp); }
+.so-tube { display: none; position: absolute; left: 50%; bottom: 13px; width: 108%; transform: translateX(-50%); pointer-events: none; }
+.so-tube svg, .so-metube svg, .so-boat svg { width: 100%; display: block; }
+.so-an.swim .so-tube { display: block; }
+.so-an.swim .so-body, .so-an.swim.walk .so-body { animation: soSwim 1.7s ease-in-out infinite; }
+.so-an.swim small { position: relative; z-index: 2; }
+.so-metube { position: absolute; width: 80px; margin-left: -40px; margin-bottom: -3px; transform-origin: 50% 100%; pointer-events: none; transition: margin-bottom .15s; }
+.so-me.swim svg, .so-me.swim.walk svg, .so-pal.swim > span svg { animation: soSwim 1.7s ease-in-out infinite !important; }
+.so-me { transition: margin-bottom .15s, opacity .15s; }
+.so-me.dunk { margin-bottom: -30px; opacity: .7; } .so-metube.dunk { margin-bottom: -12px; }
+@keyframes soSwim { 0%, 100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(5px) rotate(3deg); } }
+.so-boat { position: absolute; width: 150px; margin-left: -72px; margin-bottom: -16px; transform-origin: 50% 100%; pointer-events: none; animation: soBoat 2.2s ease-in-out infinite; }
+@keyframes soBoat { 0%, 100% { rotate: -2deg; } 50% { rotate: 2deg; } }
+.so-pop.long { animation-duration: 2.6s; }
