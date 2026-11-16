@@ -1033,3 +1033,9 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .fs-splash.big::before, .fs-splash.big::after { content: ''; position: absolute; bottom: 2px; left: 50%; width: 5px; height: 5px; border-radius: 50%; background: #fff; animation: fsDrop .5s ease-out forwards; } .fs-splash.big::after { animation-name: fsDrop2; }
 @keyframes fsSplash { to { width: 54px; height: 16px; margin-left: -27px; opacity: 0; } } @keyframes fsSplashBig { to { width: 84px; height: 24px; margin-left: -42px; opacity: 0; } }
 @keyframes fsDrop { 50% { translate: -16px -22px; } 100% { translate: -24px 2px; opacity: 0; } } @keyframes fsDrop2 { 50% { translate: 12px -26px; } 100% { translate: 20px 2px; opacity: 0; } }
+
+/* 낚싯대 색: 초급 나무, 중급 흰색, 고급 파란색 */
+.fs-rod { width: 5px; background: linear-gradient(90deg, #9A6B40, #6B4526); border: 1px solid #4A2E16; box-sizing: border-box; }
+.fs-rod::after { content: ''; position: absolute; left: -2.5px; bottom: 0; width: 8px; height: 24%; border-radius: 3px; background: #3A2A1E; }
+.fs-rod[data-t="2"] { background: linear-gradient(90deg, #FFFFFF, #D9E2EC); border-color: #8FA0B2; } .fs-rod[data-t="2"]::after { background: #5A6B7C; }
+.fs-rod[data-t="3"] { background: linear-gradient(90deg, #5FB2FF, #1F6FD6); border-color: #0E3F8A; } .fs-rod[data-t="3"]::after { background: #F2C230; }
