@@ -226,7 +226,7 @@ export function mount(el, ctx) {
   let fishOpen = false, hintAt = 0, fishBtn = null, fishMode = -1, dex = {}, battle = null, camX = null, sbPanel = null, heave = 0;
   const boatD = () => (bag.boatD == null ? 100 : bag.boatD), BOAT_MIN = 20;
   // 낚시: 낚시터에서 내 배를 탄 채 🎣. 중급부터는 가끔 갈매기 해적단이 먼저 덤빈다
-  function goFish() { const zone = zoneOf(me.x); if (!zone || fishOpen || battle || !(me.boat && (me.boat.own || me.boat.pass))) return; const guest = !!me.boat.pass; fishOpen = true; keys.clear(); bgm.duck(true);
+  function goFish() { const zone = zoneOf(me.x); if (!zone || fishOpen || battle || !(me.boat && (me.boat.own || me.boat.pass))) return; const guest = !!me.boat.pass; fishOpen = true; keys.clear();
     const done = () => { fishOpen = false; if (!voice.on) bgm.duck(false); lastT = performance.now(); };
     openFishing({ ctx, zone, trial: !!trial, boat: boatSvg(me.boat.skin), bag: () => bag, save: saveBag, coins: addCoins, dex: (id, cm) => trial ? null : ctx.store.tx(`fishdex/${ctx.uid}/${id}`, c => ({ n: ((c && c.n) || 0) + 1, best: Math.max((c && c.best) || 0, cm) })).catch(() => {}), onClose: done, onPirate: guest ? null : () => pirates(zone) }); }
   // 갈매기 해적단: 낚시하던 그 바다에서, 멀찍이 떨어져 포를 주고받는다. 지면 배 내구도가 반으로 줄고 500코인을 뺏긴다
@@ -306,7 +306,7 @@ export function mount(el, ctx) {
     if (me.boat && me.boat.pass) { if (palShip()) { me.x = Math.max(40, pal.dx - 30); me.y = Math.max(0, Math.min(Y_MAX, pal.y)); me.f = pal.f; me.boat.skin = pal.boat; }
       else { leaveBoat(); if (me.x > FISH_X - 40) { me.x = FISH_X - 60; toast('배가 떠나서 바닷가 쪽으로 돌아왔어요', 2600); } } }
     meEl.classList.toggle('onpal', !!(me.boat && me.boat.pass));
-    { const hv = me.boat ? zoneOf(me.x) : 0; if (hv !== heave) { heave = hv; [meEl, boatEl].forEach(n => { n.classList.toggle('hv1', hv === 1); n.classList.toggle('hv2', hv === 2); n.classList.toggle('hv3', hv === 3); }); } }
+    { const hv = me.boat ? zoneOf(me.x) : 0; if (hv !== heave) { if (!hv !== !heave) bgm.start(hv ? 'sea' : 'social'); heave = hv; [meEl, boatEl].forEach(n => { n.classList.toggle('hv1', hv === 1); n.classList.toggle('hv2', hv === 2); n.classList.toggle('hv3', hv === 3); }); } }
     { const zm = (own || (me.boat && me.boat.pass)) && !fishOpen && !battle ? zoneOf(me.x) : 0; if (zm !== fishMode && fishBtn) { fishMode = zm; fishBtn.firstChild.textContent = zm ? '🎣' : '👊'; fishBtn.lastChild.textContent = zm ? '낚시' : '때리기'; fishBtn.classList.toggle('fish', !!zm); } }
     if (me.boat && me.x < WATER_X - 12) leaveBoat();
     if (now - calmChk > 20000) { calmChk = now; calm(wall); }
