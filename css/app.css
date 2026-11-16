@@ -1005,3 +1005,29 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 
 /* 상대 배에 같이 탄 카피바라: 배 안에 앉은 것처럼 다리를 가린다 */
 .so-me.onpal svg { clip-path: inset(-30% -30% 27% -30%); }
+
+/* ===== 낚시 조작판: 게이지와 릴 ===== */
+.fs-deck { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; padding: 12px 12px 14px; border-radius: 24px; border: 3px solid #6B4A2F; background: repeating-linear-gradient(90deg, rgba(0, 0, 0, .05) 0 2px, transparent 2px 46px), linear-gradient(#C99A66, #A9774A); box-shadow: inset 0 3px 0 rgba(255, 255, 255, .35), 0 5px 0 #4E3420; }
+.fs-gauge { min-width: 0; padding: 8px 10px 6px; border-radius: 16px; background: #2B3440; border: 2px solid #18202A; box-shadow: inset 0 3px 6px rgba(0, 0, 0, .5); }
+.fs-gl { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; } .fs-gl b { font: 800 13px/1 var(--head); color: #CFE6F5; letter-spacing: .5px; } .fs-gl span { font: 900 20px/1 var(--head); color: #FFE58A; font-variant-numeric: tabular-nums; min-height: 20px; }
+.fs-deck .fs-bar { position: relative; height: 26px; border-radius: 13px; border: 2px solid #0E141B; background: #111922; overflow: visible; box-shadow: inset 0 2px 4px rgba(0, 0, 0, .7); }
+.fs-deck .fs-bar u { position: relative; height: 100%; border-radius: 11px; background: linear-gradient(#8FE3A2, #3DAA5C); box-shadow: inset 0 3px 0 rgba(255, 255, 255, .45); }
+.fs-deck .fs-bar::after { content: ''; position: absolute; inset: 0; border-radius: 11px; background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 1.5px), rgba(255, 255, 255, .28) calc(10% - 1.5px) 10%); pointer-events: none; }
+.fs-deck .fs-bar i { position: absolute; top: -6px; bottom: -6px; width: 6px; margin-left: -3px; border-radius: 3px; background: #fff; border: 1.5px solid #18202A; box-shadow: 0 0 6px rgba(255, 255, 255, .8); z-index: 2; }
+.fs-deck .fs-bar.pow u { background: linear-gradient(90deg, #6EC6F5, #FFE066 65%, #FF8A3D 88%, #FF5A4D); }
+.fs-deck .fs-bar.ten { background: linear-gradient(90deg, #111922 0 80%, #5A1E22 80%); } .fs-deck .fs-bar.ten.hot u { background: linear-gradient(#FFD27A, #F08A24); } .fs-deck .fs-bar.ten.burst { border-color: #FF5A4D; box-shadow: 0 0 0 3px rgba(255, 90, 77, .45), inset 0 2px 4px rgba(0, 0, 0, .7); animation: fsShake .14s linear infinite; }
+.fs-ticks { display: flex; justify-content: space-between; margin-top: 5px; min-height: 12px; } .fs-ticks small { font: 700 10px/1 var(--head); color: #8FA6B8; } .fs-ticks small:last-child { color: #FFB86B; }
+.fs-deck .fs-btn { position: relative; width: 116px; height: 116px; border-radius: 50%; padding: 0 22px; border: 4px solid #3A4654; background: radial-gradient(circle at 50% 50%, #F7FBFF 0 50%, #9FB2C4 51% 54%, transparent 55%), conic-gradient(#C9D6E2 0 8%, #7F93A6 8% 17%, #C9D6E2 17% 33%, #7F93A6 33% 42%, #C9D6E2 42% 58%, #7F93A6 58% 67%, #C9D6E2 67% 83%, #7F93A6 83% 92%, #C9D6E2 92%); box-shadow: 0 7px 0 #232C36, inset 0 0 0 4px #E8F0F7, inset 0 0 0 6px #7F93A6; font: 900 15px/1.25 var(--head); color: #1F3A52; white-space: pre-line; }
+.fs-deck .fs-btn::before { content: ''; position: absolute; left: 50%; top: 50%; width: 26px; height: 26px; margin: -57px 0 0 -13px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #FF8A8E, #D0282F 60%, #9A1219); border: 2.5px solid #5A1014; transform-origin: 50% 57px; transform: rotate(45deg); box-shadow: 0 3px 3px rgba(0, 0, 0, .4); }
+.fs-deck .fs-btn:active { transform: translateY(6px); box-shadow: 0 1px 0 #232C36, inset 0 0 0 4px #E8F0F7, inset 0 0 0 6px #7F93A6; }
+.fs.fight .fs-deck .fs-btn { border-color: #8A5A00; color: #6B3A00; box-shadow: 0 7px 0 #5A3A00, inset 0 0 0 4px #FFF3C4, inset 0 0 0 6px #E2B33C; }
+.fs.reel .fs-deck .fs-btn::before { animation: fsCrank .45s linear infinite; } @keyframes fsCrank { from { transform: rotate(45deg); } to { transform: rotate(405deg); } }
+/* 던지기·입질 */
+.fs-rod { transition: transform .22s ease-out; } .fs-rod.back { transform: rotate(8deg); } .fs-rod.cast { transform: rotate(82deg); transition: transform .16s ease-in; }
+.fs-float.fly { animation: fsSpin .5s linear infinite; } @keyframes fsSpin { to { rotate: 360deg; } }
+.fs-float { transition: transform .18s ease-in, opacity .18s; } .fs-float.bite { transform: translateY(17px); opacity: .5; }
+.fs-hook { transition: height .9s ease-out; } .fs-hook.up { height: 0; transition: none; } .fs-hook.up::after { display: none; }
+.fs-splash { position: absolute; bottom: 7%; width: 14px; height: 6px; margin-left: -7px; border: 3px solid rgba(255, 255, 255, .95); border-radius: 50%; pointer-events: none; z-index: 3; animation: fsSplash .65s ease-out forwards; } .fs-splash.big { border-width: 4px; animation-name: fsSplashBig; }
+.fs-splash.big::before, .fs-splash.big::after { content: ''; position: absolute; bottom: 2px; left: 50%; width: 5px; height: 5px; border-radius: 50%; background: #fff; animation: fsDrop .5s ease-out forwards; } .fs-splash.big::after { animation-name: fsDrop2; }
+@keyframes fsSplash { to { width: 54px; height: 16px; margin-left: -27px; opacity: 0; } } @keyframes fsSplashBig { to { width: 84px; height: 24px; margin-left: -42px; opacity: 0; } }
+@keyframes fsDrop { 50% { translate: -16px -22px; } 100% { translate: -24px 2px; opacity: 0; } } @keyframes fsDrop2 { 50% { translate: 12px -26px; } 100% { translate: 20px 2px; opacity: 0; } }
