@@ -1102,3 +1102,8 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .fs-pat { position: absolute; left: 10px; right: 10px; bottom: 8px; height: 16px; border-radius: 9px; background: rgba(10, 20, 35, .55); border: 2px solid rgba(255, 255, 255, .85); overflow: hidden; z-index: 6; } .fs-pat[hidden] { display: none; }
 .fs-pat u { display: block; height: 100%; background: linear-gradient(90deg, #6EC6F5, #8FE3A2); transition: width .1s linear; } .fs-pat.low u { background: linear-gradient(90deg, #FF8A3D, #E5484D); }
 .fs-pat span { position: absolute; inset: 0; display: grid; place-content: center; font: 800 10px/1 var(--head); color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .7); }
+
+/* 물고기가 화내며 팔짝 뛴다 */
+.fs-fish.mad { animation: fsShake .07s linear infinite; filter: drop-shadow(0 0 8px #FF3B30) saturate(3) hue-rotate(-40deg) brightness(1.4); }
+.fs-fish.jump { animation: fsJump .5s cubic-bezier(.2, .8, .4, 1); } @keyframes fsJump { 0% { translate: 0 0; rotate: 0deg; } 45% { translate: 0 -150%; rotate: -35deg; } 100% { translate: 0 0; rotate: 0deg; } }
+.fs-deck .fs-bar.spike { animation: fsSpike .3s ease-out; } @keyframes fsSpike { 0% { box-shadow: 0 0 0 8px rgba(255, 60, 48, .9), inset 0 2px 4px rgba(0, 0, 0, .7); scale: 1.06 1.3; } }
