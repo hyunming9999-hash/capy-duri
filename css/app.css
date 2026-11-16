@@ -894,3 +894,19 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .so-boat { position: absolute; width: 150px; margin-left: -72px; margin-bottom: -16px; transform-origin: 50% 100%; pointer-events: none; animation: soBoat 2.2s ease-in-out infinite; }
 @keyframes soBoat { 0%, 100% { rotate: -2deg; } 50% { rotate: 2deg; } }
 .so-pop.long { animation-duration: 2.6s; }
+
+/* 친목회: 내 카피보트와 파도 */
+.so-wavebar { position: relative; z-index: 30; display: flex; align-items: center; gap: 6px; height: 26px; margin: 0 8px -32px; padding: 0 10px; top: 6px; background: rgba(255, 255, 255, .88); border: 2px solid #9CCBEA; border-radius: 14px; font-size: 12px; }
+.so-wavebar[hidden] { display: none; }
+.so-wavebar > i { flex: 1; height: 9px; background: #E3F1FA; border-radius: 6px; overflow: hidden; } .so-wavebar u { display: block; height: 100%; border-radius: 6px; }
+.so-wavebar span { white-space: nowrap; font-weight: 800; color: #2F6F9A; }
+.so-wave { position: absolute; width: 60px; height: 22px; margin-left: -30px; border: 4px solid rgba(255, 255, 255, .9); border-radius: 50%; pointer-events: none; z-index: 5; animation: soWave 1.3s ease-out forwards; }
+.so-wave.hard { border-width: 7px; border-color: #fff; animation-name: soWaveHard; }
+@keyframes soWave { from { transform: scale(.6); opacity: .95; } to { transform: scale(6.5, 3.2); opacity: 0; } }
+@keyframes soWaveHard { from { transform: scale(.8); opacity: 1; } to { transform: scale(9, 4.4); opacity: 0; } }
+.so-an.surf .so-body, .so-an.surf.swim .so-body, .so-an.surf.swim.walk .so-body { animation: soSurf .85s ease-out; }
+.so-an.surf .so-tube { animation: soSurf .85s ease-out; }
+@keyframes soSurf { 0%, 100% { transform: translateY(0) rotate(0); } 40% { transform: translateY(-22px) rotate(-10deg); } 70% { transform: translateY(-8px) rotate(8deg); } }
+.so-an.surf .so-tube { transform-origin: 50% 50%; }
+.so-an.surf .so-tube { animation: soSurfT .85s ease-out; }
+@keyframes soSurfT { 0%, 100% { transform: translateX(-50%) translateY(0); } 40% { transform: translateX(-50%) translateY(-22px); } 70% { transform: translateX(-50%) translateY(-8px); } }
