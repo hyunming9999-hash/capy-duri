@@ -1093,3 +1093,7 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 @keyframes sbLootIn { from { opacity: 0; } } @keyframes sbLootOut { to { opacity: 0; } } @keyframes sbRays { to { rotate: 360deg; } }
 @keyframes sbChest { from { scale: 0; opacity: 0; } } @keyframes sbLid { to { transform: rotate(-38deg) translateY(-6px); } }
 @keyframes sbCoin { 0% { opacity: 1; translate: 0 0; scale: .4; } 45% { opacity: 1; translate: calc(cos(var(--a)) * var(--d)) calc(sin(var(--a)) * var(--d) - 60px); scale: 1.2; rotate: 200deg; } 100% { opacity: 0; translate: calc(cos(var(--a)) * var(--d) * 1.3) calc(sin(var(--a)) * var(--d) + 150px); scale: 1; rotate: 540deg; } }
+
+/* 끊어짐 칸을 버틸 수 있는 횟수 */
+.fs-ticks { align-items: center; } .fs-pips { display: flex; gap: 4px; } .fs-pips i { width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #B8F5C4, #37B75A); border: 1.5px solid #0E3B1B; } .fs-pips i.off { background: #5A1E22; border-color: #2A0E10; }
+.fs.jolt .fs-deck { animation: fsShake .1s linear 3; } .fs.jolt .fs-view { animation: sbQuake .3s linear; }
