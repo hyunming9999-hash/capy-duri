@@ -1,14 +1,15 @@
 // 옷입히기 놀이하실? — 카피바라에게 상의 50벌·하의 50벌·모자 50개를 입혀 보고, 서로의 카피바라에게도 입혀 준다
 import { h, toast, josa } from './ui.js';
 import { capy } from './capy.js';
-import { TOPS, BOTTOMS, HATS, nameOf } from './clothes.js';
+import { TOPS, BOTTOMS, HATS, ZOO_HATS, nameOf } from './clothes.js';
 import { priceOf, won } from './money.js';
 const SETS = { top: TOPS, bottom: BOTTOMS, hat: HATS };
 
 export function mount(el, ctx) {
   let who = ctx.uid, tab = 'top', sex = 'all', sel = { top: '', bottom: '', hat: '', ...(ctx.dress[ctx.uid] || {}) }, saved = ctx.dress;
   const stage = h('div', { class: 'dress-stage' }), grid = h('div', { class: 'dress-grid' }), ctl = h('div', { class: 'dress-ctl' });
-  const list = () => SETS[tab].filter(x => sex === 'all' || x.sex === sex || x.sex === 'u');
+  // 친목회 전용 모자는 상점에서 팔지 않고, 동물에게 사서 가진 것만 맨 앞에 보인다
+  const list = () => [...(tab === 'hat' ? ZOO_HATS.filter(x => ctx.owns(x.id)) : []), ...SETS[tab].filter(x => sex === 'all' || x.sex === sex || x.sex === 'u')];
   const pickWho = u => { who = u; const s = saved[u] || {}; sel = { top: s.top || '', bottom: s.bottom || '', hat: s.hat || '' }; draw(); };
   const need = () => ['top', 'bottom', 'hat'].map(k => sel[k]).filter(id => id && !ctx.owns(id)), cost = () => need().reduce((a, id) => a + priceOf(id), 0);
   const save = async () => {
