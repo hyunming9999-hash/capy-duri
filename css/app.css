@@ -1097,3 +1097,8 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 /* 끊어짐 칸을 버틸 수 있는 횟수 */
 .fs-ticks { align-items: center; } .fs-pips { display: flex; gap: 4px; } .fs-pips i { width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #B8F5C4, #37B75A); border: 1.5px solid #0E3B1B; } .fs-pips i.off { background: #5A1E22; border-color: #2A0E10; }
 .fs.jolt .fs-deck { animation: fsShake .1s linear 3; } .fs.jolt .fs-view { animation: sbQuake .3s linear; }
+
+/* 물고기 인내심: 다 닳으면 떠난다 */
+.fs-pat { position: absolute; left: 10px; right: 10px; bottom: 8px; height: 16px; border-radius: 9px; background: rgba(10, 20, 35, .55); border: 2px solid rgba(255, 255, 255, .85); overflow: hidden; z-index: 6; } .fs-pat[hidden] { display: none; }
+.fs-pat u { display: block; height: 100%; background: linear-gradient(90deg, #6EC6F5, #8FE3A2); transition: width .1s linear; } .fs-pat.low u { background: linear-gradient(90deg, #FF8A3D, #E5484D); }
+.fs-pat span { position: absolute; inset: 0; display: grid; place-content: center; font: 800 10px/1 var(--head); color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, .7); }
