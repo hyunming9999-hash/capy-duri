@@ -1002,3 +1002,6 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .sb-dot { position: absolute; width: 6px; height: 6px; margin: 0 0 -3px -3px; border-radius: 50%; background: rgba(255, 255, 255, .9); z-index: 24; pointer-events: none; }
 .sb-boom { position: absolute; width: 20px; height: 20px; margin: 0 0 -10px -10px; border-radius: 50%; background: #fff; z-index: 27; pointer-events: none; animation: sbBoom .7s ease-out forwards; } .sb-boom.hit { background: #FF8A3D; }
 @keyframes sbBoom { to { scale: 5; opacity: 0; } } .sb-hit { animation: fsShake .12s linear 4 !important; }
+
+/* 상대 배에 같이 탄 카피바라: 배 안에 앉은 것처럼 다리를 가린다 */
+.so-me.onpal svg { clip-path: inset(-30% -30% 27% -30%); }
