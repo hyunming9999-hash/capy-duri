@@ -1072,3 +1072,12 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .fs-rod[data-t="2"] { background: linear-gradient(90deg, #FFFFFF, #D9E2EC); border-color: #8FA0B2; } .fs-rod[data-t="2"]::after { background: #5A6B7C; }
 .fs-rod[data-t="3"] { background: linear-gradient(90deg, #5FB2FF, #1F6FD6); border-color: #0E3F8A; } .fs-rod[data-t="3"]::after { background: #F2C230; }
 .sb-panel:not([hidden]) ~ .so-chatbar { display: none; }
+
+/* 배와 캐릭터가 한 몸처럼 흔들린다: 캐릭터도 배 바닥 가운데를 축으로 */
+.so-me.onboat { transform-origin: calc(50% + var(--bx, 9px)) calc(100% + 16px); }
+.so-me.hv0, .so-boat.hv0 { animation: soBoat 2.2s ease-in-out infinite; }
+.so-boat.sb-foe.hv2 { animation: soHeave2 1.7s ease-in-out infinite; } .so-boat.sb-foe.hv3 { animation: soHeave3 1.15s ease-in-out infinite; }
+.sb-move { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; } .sb-mvl { text-align: center; font-size: 11px; color: #A9BDD0; }
+.sb-mv { height: 30px; padding: 0 12px; border-radius: 10px; border: 2px solid #0E151D; background: linear-gradient(#4C9BD6, #2F6FA8); color: #fff; font: 800 13px/1 var(--head); box-shadow: 0 2px 0 #0E151D; } .sb-mv:active { transform: translateY(2px); box-shadow: none; } .sb-mv:disabled { filter: grayscale(.8) brightness(.75); }
+.sb-mid { display: grid; gap: 2px; text-align: center; min-width: 0; } .sb-mid .sb-info { text-align: center; font: 800 12px/1.2 var(--head); color: #FFD98A; } .sb-mid .sb-mvl { font-size: 10px; }
+.sb-panel { padding: 8px 10px 9px; gap: 5px; } .sb-msg { min-height: 30px; } .sb-ctl { gap: 5px; } .sb-row { padding: 5px 8px 5px; } .sb-fire { width: 96px; height: 96px; margin: 4px 8px 8px 6px; }

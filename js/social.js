@@ -223,7 +223,7 @@ export function mount(el, ctx) {
     if (me.boat && me.boat.own && !bag.boat) { leaveBoat(); if (me.x > FISH_X - 40) me.x = FISH_X - 60; } else if (me.boat && me.boat.own && me.x > FISH_X + TILE - 30 && !(bag.wboat && bag.cannon)) me.x = FISH_X + TILE - 60; toast(why || '낚싯배 체험이 끝났어요', 3000); drawHp(); }
   const saveBag = patch => { bag = { ...bag, ...patch }; drawHp(); if (trial) { const rest = {}; Object.keys(patch).forEach(k => { if (TRIAL_KEYS.includes(k)) trial.g[k] = patch[k]; else rest[k] = patch[k]; }); if (!Object.keys(rest).length) return Promise.resolve(); patch = rest; } return ctx.store.update('bag/' + ctx.uid, patch).catch(() => {}); };
   const addCoins = n => trial ? Promise.resolve() : ctx.store.tx('money/' + ctx.uid, c => ({ ...(c || {}), c: Math.max(0, ((c && c.c) || 0) + n), total: ((c && c.total) || 0) + Math.max(0, n) })).catch(() => {});
-  let fishOpen = false, hintAt = 0, fishBtn = null, fishMode = -1, dex = {}, battle = null, battleDir = 1, camX = null, sbPanel = null, heave = 0;
+  let fishOpen = false, hintAt = 0, fishBtn = null, fishMode = -1, dex = {}, rockKey = '', battle = null, battleDir = 1, camX = null, sbPanel = null, heave = 0;
   const boatD = () => (bag.boatD == null ? 100 : bag.boatD), BOAT_MIN = 20;
   // 낚시: 낚시터에서 내 배를 탄 채 🎣. 중급부터는 가끔 갈매기 해적단이 먼저 덤빈다
   function goFish() { const zone = zoneOf(me.x); if (!zone || fishOpen || battle || !(me.boat && (me.boat.own || me.boat.pass))) return; const guest = !!me.boat.pass; fishOpen = true; keys.clear();
@@ -231,7 +231,7 @@ export function mount(el, ctx) {
     openFishing({ ctx, zone, trial: !!trial, boat: boatSvg(me.boat.skin), bag: () => bag, save: saveBag, coins: addCoins, dex: (id, cm) => trial ? null : ctx.store.tx(`fishdex/${ctx.uid}/${id}`, c => ({ n: ((c && c.n) || 0) + 1, best: Math.max((c && c.best) || 0, cm) })).catch(() => {}), onClose: done, onPirate: guest ? null : () => pirates(zone) }); }
   // 갈매기 해적단: 낚시하던 그 바다에서, 멀찍이 떨어져 포를 주고받는다. 지면 배 내구도가 반으로 줄고 500코인을 뺏긴다
   function pirates(zone) { if (battle || !alive) return; keys.clear(); const D = Math.max(620, scroller.clientWidth * 1.9), foeX = me.x + D <= WIDTH - 90 ? me.x + D : me.x - D; me.f = foeX > me.x ? 1 : -1; sfx('bad');
-    battleDir = me.f; battle = seaBattle({ world: scroller.firstElementChild, stage: scroller.parentNode, panel: sbPanel, zone, meEl, boatEl, shout: t => pop(mePop, t, 'say long'), me: { x: me.x, y: me.dy * H, s: me.ds }, foeX, balls: () => bag.balls || 0, useBall: () => saveBag({ balls: Math.max(0, (bag.balls || 0) - 1) }), cam: x => { camX = x; },
+    battleDir = me.f; battle = seaBattle({ world: scroller.firstElementChild, stage: scroller.parentNode, panel: sbPanel, zone, meEl, boatEl, shout: t => pop(mePop, t, 'say long'), minX: FISH_X + 60, maxX: WIDTH - 70, move: x => { me.x = x; }, me: { x: me.x, y: me.dy * H, s: me.ds }, foeX, balls: () => bag.balls || 0, useBall: () => saveBag({ balls: Math.max(0, (bag.balls || 0) - 1) }), cam: x => { camX = x; },
       onEnd: win => { battle = null; camX = null; lastT = performance.now(); if (win) { const loot = PIRATE_LOOT; addCoins(loot); toast(`해적단의 보물 +${loot} 🪙`, 2800); }
         else { const d = Math.floor(boatD() / 2); saveBag({ boatD: d }); addCoins(-500); toast(`해적단에게 500 🪙 뺏기고 배 내구도가 ${d}로 줄었어요${d < BOAT_MIN ? '. 수리해야 중급 바다에 나갈 수 있어요' : ''}`, 4200); } } }); }
   function makeWave(now) { const B = me.boat, hard = B.wave >= 70, w = h('i', { class: 'so-wave' + (hard ? ' hard' : ''), style: { left: me.x + 'px', bottom: (me.dy * 100).toFixed(1) + '%' } }); meEl.parentNode.append(w); setTimeout(() => w.remove(), 1300); sfx(hard ? 'swing' : 'tock');
@@ -306,7 +306,11 @@ export function mount(el, ctx) {
     if (me.boat && me.boat.pass) { if (palShip()) { me.x = Math.max(40, pal.dx - 30); me.y = Math.max(0, Math.min(Y_MAX, pal.y)); me.f = pal.f; me.boat.skin = pal.boat; }
       else { leaveBoat(); if (me.x > FISH_X - 40) { me.x = FISH_X - 60; toast('배가 떠나서 바닷가 쪽으로 돌아왔어요', 2600); } } }
     meEl.classList.toggle('onpal', !!(me.boat && me.boat.pass));
-    { const hv = me.boat ? zoneOf(me.x) : 0; if (hv !== heave) { if (!hv !== !heave) bgm.start(hv ? 'sea' : 'social'); heave = hv; [meEl, boatEl].forEach(n => { n.classList.toggle('hv1', hv === 1); n.classList.toggle('hv2', hv === 2); n.classList.toggle('hv3', hv === 3); }); } }
+    { const hv = me.boat ? zoneOf(me.x) : 0; if (hv !== heave) { if (!hv !== !heave) bgm.start(hv ? 'sea' : 'social'); heave = hv; }
+      // 배와 캐릭터는 한 몸처럼: 같은 축(배 바닥 가운데)을 중심으로, 같은 박자로 흔들린다
+      const guest = !!(me.boat && me.boat.pass), key = me.boat ? `${hv}|${guest ? 'p' : me.boat.own ? 'o' : 'a'}` : '';
+      if (me.boat) meEl.style.setProperty('--bx', (guest ? 33 + 22 * me.ds : 3 + 6 * me.ds).toFixed(1) + 'px');
+      if (key !== rockKey) { rockKey = key; const all = [meEl, boatEl, palBoat], cls = ['hv0', 'hv1', 'hv2', 'hv3']; all.forEach(n => n.classList.remove(...cls)); meEl.classList.toggle('onboat', !!me.boat); void meEl.offsetWidth; if (me.boat) [meEl, guest ? palBoat : boatEl].forEach(n => n.classList.add('hv' + hv)); } }
     { const zm = (own || (me.boat && me.boat.pass)) && !fishOpen && !battle ? zoneOf(me.x) : 0; if (zm !== fishMode && fishBtn) { fishMode = zm; fishBtn.firstChild.textContent = zm ? '🎣' : '👊'; fishBtn.lastChild.textContent = zm ? '낚시' : '때리기'; fishBtn.classList.toggle('fish', !!zm); } }
     if (me.boat && me.x < WATER_X - 12) leaveBoat();
     if (now - calmChk > 20000) { calmChk = now; calm(wall); }
