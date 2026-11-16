@@ -1133,3 +1133,14 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 @keyframes soTear { 0% { translate: 0 0; opacity: 0; scale: .5; } 25% { opacity: 1; scale: 1; } 100% { translate: 0 26px; opacity: 0; } }
 .so-an.cry > :first-child { animation: soSob .3s ease-in-out infinite; } @keyframes soSob { 50% { translate: 0 2px; } }
 .so-an.bow > :first-child { transform-origin: 50% 100%; animation: soBow 1.5s ease-in-out; } @keyframes soBow { 0%, 100% { rotate: 0deg; } 25%, 70% { rotate: 28deg; translate: 6px 0; } }
+
+.so-rodic svg[viewBox='0 0 170 120'] { width: 46px; height: auto; margin: 0 -6px; } .so-rodic svg[viewBox='0 0 56 48'] { width: 40px; height: auto; margin: 0 -3px; }
+
+/* 패치 소식 */
+.patch-capy { width: 124px; margin: 46px auto 22px; } .patch-capy svg { width: 100%; display: block; overflow: visible; }
+.patch ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; } .patch li { display: grid; grid-template-columns: 30px 1fr; gap: 8px; align-items: start; padding: 9px 10px; border-radius: 14px; background: #FFF8E1; border: 2px solid #F2DFA8; }
+.patch li > span { font-size: 22px; line-height: 1.1; text-align: center; } .patch li b { display: block; font: 800 14px/1.3 var(--head); color: #5A3A12; } .patch li small { display: block; margin-top: 2px; font-size: 12px; line-height: 1.45; color: #6B5A48; word-break: keep-all; }
+
+/* 튜브 뒤쪽 반은 몸 뒤로 */
+.so-tube.back { z-index: -1; }
+.so-me.swim svg { clip-path: inset(-30% -30% 15% -30%); }

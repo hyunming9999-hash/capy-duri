@@ -8,7 +8,7 @@ import { gullSvg } from './animals.js';
 export const PIRATE_EVERY = 10, PIRATE_LOOT = 600, FLEE_FEE = 250, BOAT_FIX = 300;
 export const ZONES = ['', '초급 낚시터', '중급 낚시터', '고급 낚시터'];
 export const RODS = [null, { t: 1, name: '초급 낚싯대', price: 500, dur: 50, fix: 150 }, { t: 2, name: '중급 낚싯대', price: 1000, dur: 100, fix: 300 }, { t: 3, name: '고급 낚싯대', price: 2000, dur: 200, fix: 600 }];
-export const BAIT = 10, BALL = 10, CANNON = 500, WBOAT = 1500, PEARL_PRICE = 10000;
+export const BAIT = 10, BALL = 10, CANNON = 500, WBOAT = 2000, PEARL_PRICE = 10000;
 
 // 물고기 80종: [이름, 최소cm, 최대cm, 최소값, 최대값, 표시(r=귀한 것, k=대장)]
 // 값은 가게 시세에 맞췄다(옷 한 벌 200~310, 게임 한 판 50쯤, 한 번 던지는 데 미끼·낚싯대 값 13쯤): 초급 평균 85, 중급 165, 고급 300쯤

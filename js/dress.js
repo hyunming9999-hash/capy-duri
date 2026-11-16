@@ -11,11 +11,12 @@ export function mount(el, ctx) {
   // 친목회 전용 모자는 상점에서 팔지 않고, 동물에게 사서 가진 것만 맨 앞에 보인다
   const list = () => [...(tab === 'hat' ? ZOO_HATS.filter(x => ctx.owns(x.id)) : []), ...SETS[tab].filter(x => sex === 'all' || x.sex === sex || x.sex === 'u')];
   const pickWho = u => { who = u; const s = saved[u] || {}; sel = { top: s.top || '', bottom: s.bottom || '', hat: s.hat || '' }; draw(); };
-  const need = () => ['top', 'bottom', 'hat'].map(k => sel[k]).filter(id => id && !ctx.owns(id)), cost = () => need().reduce((a, id) => a + priceOf(id), 0);
+  const need = () => ['top', 'bottom', 'hat'].filter(k => sel[k] && !ctx.owns(sel[k]) && (saved[who] || {})[k] !== sel[k]).map(k => sel[k]), // 그 카피바라가 이미 입고 있는 옷은 다시 살 필요가 없다(하나만 벗기려 해도 옷값을 내라고 하던 문제)
+    bare = () => !sel.top && !sel.bottom && !sel.hat, cost = () => need().reduce((a, id) => a + priceOf(id), 0);
   const save = async () => {
     if (cost() > ctx.coins()) return toast(`돈이 모자라요 (${won(cost())} 필요, 지금 ${won(ctx.coins())}). 게임을 하면 돈을 벌어요`);
     for (const id of need()) if (!(await ctx.buy(id))) return; // 아직 없는 옷은 사서 입는다
-    try { await ctx.store.set('dress/' + who, { top: sel.top || '', bottom: sel.bottom || '', hat: sel.hat || '', by: ctx.uid, ts: ctx.store.now() }); toast(who === ctx.uid ? '갈아입었어요' : `${ctx.nameOf(who)}에게 입혀 줬어요`); } catch {}
+    try { await ctx.store.set('dress/' + who, { top: sel.top || '', bottom: sel.bottom || '', hat: sel.hat || '', by: ctx.uid, ts: ctx.store.now() }); toast(bare() ? (who === ctx.uid ? '다 벗었어요' : `${ctx.nameOf(who)}의 옷을 벗겼어요`) : who === ctx.uid ? '갈아입었어요' : `${ctx.nameOf(who)}에게 입혀 줬어요`); } catch { toast('저장하지 못했어요. 잠시 뒤 다시 해 보세요'); }
   };
   const random = () => { const r = a => a[Math.floor(Math.random() * a.length)].id; const f = k => SETS[k].filter(x => (sex === 'all' || x.sex === sex || x.sex === 'u') && ctx.owns(x.id)); sel = { top: r(f('top')), bottom: r(f('bottom')), hat: Math.random() < 0.7 ? r(f('hat')) : '' }; draw(); };
 
@@ -29,7 +30,7 @@ export function mount(el, ctx) {
     ctl.replaceChildren(
       h('button', { class: 'btn', onClick: random }, '🎲 아무거나'),
       h('button', { class: 'btn', onClick: () => { sel = { top: '', bottom: '', hat: '' }; draw(); } }, '다 벗기'),
-      h('button', { class: 'btn primary', disabled: same, onClick: save }, same ? '입고 있어요' : cost() ? `${won(cost())} 사서 ${who === ctx.uid ? '입기' : '입혀 주기'}` : who === ctx.uid ? '이 옷 입기' : '이 옷 입혀 주기'),
+      h('button', { class: 'btn primary', disabled: same, onClick: save }, same ? (bare() ? '벗고 있어요' : '입고 있어요') : bare() ? (who === ctx.uid ? '옷 벗기' : '옷 벗기기') : cost() ? `${won(cost())} 사서 ${who === ctx.uid ? '입기' : '입혀 주기'}` : who === ctx.uid ? '이 옷 입기' : '이 옷 입혀 주기'),
       h('small', { class: 'dress-wallet' }, '내 돈 ', h('b', { 'data-coins': 1 }, won(ctx.coins()))));
     const items = list();
     grid.replaceChildren(...items.map(it => h('button', { class: 'dress-item' + (sel[tab] === it.id ? ' on' : '') + (ctx.owns(it.id) ? '' : ' lock'), 'data-price': ctx.owns(it.id) ? '' : won(priceOf(it.id)), title: it.name, 'aria-label': it.name, onClick: () => { sel[tab] = sel[tab] === it.id ? '' : it.id; draw(); } },

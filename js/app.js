@@ -197,8 +197,21 @@ function showRulesHelp() {
 
 function leave() { LS.del('room'); location.hash = ''; location.reload(); }
 
+// 패치 소식: 들어오면 한 번만 보여 준다(기기에 본 표시를 남긴다)
+const PATCH_ID = 'gold-rare-1';
+function patchNote() { try { if (localStorage.getItem('capy.patch') === PATCH_ID) return; localStorage.setItem('capy.patch', PATCH_ID); } catch { return; }
+  const li = (ic, t, d) => h('li', null, h('span', null, ic), h('div', null, h('b', null, t), h('small', null, d)));
+  modal({ title: '✨ 패치 소식 · 황금 레어 장신구', body: h('div', { class: 'patch' },
+    h('div', { class: 'patch-capy', html: capyEl({ ...ctx.capyOf(ctx.uid), face: 'happy', rare: social.rareOf([10, 9, 19]) }).innerHTML }),
+    h('ul', null,
+      li('🎁', '동물마다 다른 황금 장신구 30종', '왕관·투구, 선글라스·가면, 갑옷·재킷, 바지·치마, 예복, 검·지팡이·방패, 날개·꼬리까지. 동물의 특징이 담겨 있어요.'),
+      li('💗', '단짝(친밀도 100)이 되면 열려요', '친목회에서 그 동물과 100점이 되면 1,500코인에 살 수 있어요.'),
+      li('🍰', '100점은 케이크로만', '99점까지는 대화·선물로 오르고, 마지막 100점은 케이크를 선물해야 채워져요.'),
+      li('👑', '여섯 개까지 함께 걸쳐요', '가방에서 눌러 걸치고 벗어요. 같은 자리(모자·안경·상의·하의·손·등)는 하나씩이고, 예복은 상의·하의와 같이 못 입어요.'),
+      li('🌟', '많이 걸칠수록 대접이 달라져요', '2개: 동물들이 멋지다고 감탄 · 4개: 눈물을 흘리며 영웅이라고 칭찬 · 6개: 대왕 폐하라고 절하고, 30분마다 세금 1코인을 바쳐요.'))),
+    actions: [{ label: '확인', primary: true }] }); }
 function enter() {
-  entered = true;
+  entered = true; setTimeout(patchNote, 900);
   ctx.store.presence(ctx.uid); shareBattery();
   ctx.store.on('battery', v => { ctx.battery = v || {}; document.querySelectorAll('[data-batt]').forEach(drawBatt); });
   const enterAt = Date.now() - 3000; let seenWhere, firstDress = true;
