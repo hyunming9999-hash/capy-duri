@@ -8,7 +8,7 @@ import { sfx, animalVoice, bgm } from './sound.js';
 import { makeVoice } from './walk.js';
 import { PUSH_URL } from './push.js';
 import { isMock } from './store.js';
-import { openFishing, seaBattle, PIRATE_LOOT, FISH, RODS, ZONES, BAIT, BALL, CANNON, WBOAT, BOAT_FIX, fishSvg } from './fishing.js';
+import { openFishing, seaBattle, PIRATE_LOOT, FLEE_FEE, FISH, RODS, ZONES, BAIT, BALL, CANNON, WBOAT, BOAT_FIX, fishSvg } from './fishing.js';
 
 // 동물마다: 성격, 좋아하는 것, 싫어하는 것, 상징 액세서리, 제일 좋아하는 선물
 const P = (trait, likes, hates, pin, fav) => ({ trait, likes, hates, pin, fav });
@@ -235,8 +235,8 @@ export function mount(el, ctx) {
     const box = h('div', { class: 'sb-loot', onClick: () => box.remove() }, h('i', { class: 'sb-rays' }), ...Array.from({ length: 22 }, (_, k) => h('i', { class: 'sb-coin', style: { '--a': (k / 22 * 360 + Math.random() * 14).toFixed(0) + 'deg', '--d': (70 + Math.random() * 90).toFixed(0) + 'px', '--t': (0.35 + Math.random() * 0.35).toFixed(2) + 's' } }, '🪙')), h('div', { class: 'sb-chest', html: CHEST }), h('b', null, '해적단의 보물!'), h('strong', null, `+${n.toLocaleString('ko-KR')} 🪙`));
     scroller.parentNode.append(box); sfx('bigfish'); setTimeout(() => sfx('coin'), 500); setTimeout(() => sfx('coin'), 700); setTimeout(() => box.remove(), 3400); }
   function pirates(zone) { if (battle || !alive) return; keys.clear(); const D = Math.max(620, scroller.clientWidth * 1.9), foeX = me.x + D <= WIDTH - 90 ? me.x + D : me.x - D; me.f = foeX > me.x ? 1 : -1; sfx('bad');
-    battleDir = me.f; battle = seaBattle({ world: scroller.firstElementChild, stage: scroller.parentNode, panel: sbPanel, zone, meEl, boatEl, shout: t => pop(mePop, t, 'say long'), minX: FISH_X + 60, maxX: WIDTH - 70, move: x => { me.x = x; }, me: { x: me.x, y: me.dy * H, s: me.ds }, foeX, balls: () => bag.balls || 0, useBall: () => saveBag({ balls: Math.max(0, (bag.balls || 0) - 1) }), cam: x => { camX = x; },
-      onEnd: win => { battle = null; camX = null; lastT = performance.now(); if (win) { const loot = PIRATE_LOOT; addCoins(loot); lootFx(loot); }
+    battleDir = me.f; battle = seaBattle({ world: scroller.firstElementChild, stage: scroller.parentNode, panel: sbPanel, zone, meEl, boatEl, shout: t => pop(mePop, t, 'say long'), flee: async () => (trial ? true : await ctx.spend(FLEE_FEE)), minX: FISH_X + 60, maxX: WIDTH - 70, move: x => { me.x = x; }, me: { x: me.x, y: me.dy * H, s: me.ds }, foeX, balls: () => bag.balls || 0, useBall: () => saveBag({ balls: Math.max(0, (bag.balls || 0) - 1) }), cam: x => { camX = x; },
+      onEnd: win => { battle = null; camX = null; lastT = performance.now(); if (win === 'flee') return void toast(trial ? '해적단에게서 도망쳤어요 (체험이라 돈은 안 나가요)' : `해적단에게 ${FLEE_FEE} 🪙 내고 도망쳤어요`, 3200); if (win) { const loot = PIRATE_LOOT; addCoins(loot); lootFx(loot); }
         else { const d = Math.floor(boatD() / 2); saveBag({ boatD: d }); addCoins(-500); toast(`해적단에게 500 🪙 뺏기고 배 내구도가 ${d}로 줄었어요${d < BOAT_MIN ? '. 수리해야 중급 바다에 나갈 수 있어요' : ''}`, 4200); } } }); }
   function makeWave(now) { const B = me.boat, hard = B.wave >= 70, w = h('i', { class: 'so-wave' + (hard ? ' hard' : ''), style: { left: me.x + 'px', bottom: (me.dy * 100).toFixed(1) + '%' } }); meEl.parentNode.append(w); setTimeout(() => w.remove(), 1300); sfx(hard ? 'swing' : 'tock');
     actors.forEach((o, i) => { if (i === held || o.x <= WATER_X || Math.abs(o.x - me.x) > 230 || ['chase', 'boat', 'palboat', 'offer', 'stun'].includes(o.st)) return;

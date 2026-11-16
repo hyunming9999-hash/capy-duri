@@ -5,7 +5,7 @@ import { capy } from './capy.js';
 import { sfx } from './sound.js';
 import { gullSvg } from './animals.js';
 
-export const PIRATE_EVERY = 10, PIRATE_LOOT = 600, BOAT_FIX = 300;
+export const PIRATE_EVERY = 10, PIRATE_LOOT = 600, FLEE_FEE = 250, BOAT_FIX = 300;
 export const ZONES = ['', '초급 낚시터', '중급 낚시터', '고급 낚시터'];
 export const RODS = [null, { t: 1, name: '초급 낚싯대', price: 500, dur: 50, fix: 150 }, { t: 2, name: '중급 낚싯대', price: 1000, dur: 100, fix: 300 }, { t: 3, name: '고급 낚싯대', price: 2000, dur: 200, fix: 600 }];
 export const BAIT = 10, BALL = 10, CANNON = 500, WBOAT = 1500, PEARL_PRICE = 10000;
@@ -75,8 +75,8 @@ export function openFishing(o) {
   const me = h('div', { class: 'fs-me', html: capy(o.ctx.capyOf(o.ctx.uid, { face: 'happy' })) }), rodEl = h('i', { class: 'fs-rod' });
   // 위: 타고 온 배가 그대로 물 위에 떠 있다. 아래: 물속(구역마다 그림이 다르다)
   const surf = h('div', { class: 'fs-surf' }, rl, h('div', { class: 'fs-boat' }, me, h('div', { class: 'fs-hull', html: o.boat || '' }), rodEl), float, mark), under = h('div', { class: 'fs-under z' + zone }, hook, fishEl), msg = h('p', { class: 'fs-msg' }), bar = h('div', { class: 'fs-bar' }, h('u'), h('i')), info = h('div', { class: 'fs-info' });
-  const patEl = h('div', { class: 'fs-pat', hidden: true }, h('u'), h('span', null, '🐟 물고기 인내심')), pipsEl = h('span', { class: 'fs-pips' }), gl = h('div', { class: 'fs-gl' }, h('b'), h('span')), btn = h('button', { class: 'fs-btn' }), quit = h('button', { class: 'btn sm fs-quit', onClick: () => close() }, '그만하기');
-  const wrap = h('div', { class: 'fs' }, h('div', { class: 'fs-top' }, h('b', null, `🎣 ${ZONES[zone]}`), info, quit), h('div', { class: 'fs-view z' + zone }, surf, under, patEl), msg, h('div', { class: 'fs-deck' }, h('div', { class: 'fs-gauge' }, gl, bar, h('div', { class: 'fs-ticks' }, h('small'), pipsEl, h('small'))), btn));
+  const pearlTxt = h('b', { class: 'fs-pearltxt', hidden: true }), sparks = h('div', { class: 'fs-sparks' }, ...Array.from({ length: 14 }, (_, k) => h('i', { style: { left: (6 + (k * 37) % 88) + '%', top: (8 + (k * 53) % 80) + '%', animationDelay: (k % 7) * 0.17 + 's' } }, '✦'))), patEl = h('div', { class: 'fs-pat', hidden: true }, h('u'), h('span', null, '🐟 물고기 인내심')), pipsEl = h('span', { class: 'fs-pips' }), gl = h('div', { class: 'fs-gl' }, h('b'), h('span')), btn = h('button', { class: 'fs-btn' }), quit = h('button', { class: 'btn sm fs-quit', onClick: () => close() }, '그만하기');
+  const wrap = h('div', { class: 'fs' }, h('div', { class: 'fs-top' }, h('b', null, `🎣 ${ZONES[zone]}`), info, quit), h('div', { class: 'fs-view z' + zone }, surf, under, sparks, pearlTxt, patEl), msg, h('div', { class: 'fs-deck' }, h('div', { class: 'fs-gauge' }, gl, bar, h('div', { class: 'fs-ticks' }, h('small'), pipsEl, h('small'))), btn));
   let fx = 60; const setFloat = (x, b = 10, taut = false) => { fx = x; float.style.left = hook.style.left = mark.style.left = x + '%'; float.style.bottom = b + '%'; const y = 92 - b, sag = taut ? 2 : 10 + (x - 34) * 0.22; rl.firstChild.firstChild.setAttribute('d', `M34 34 Q${(34 + x) / 2} ${(34 + y) / 2 + sag} ${x} ${y}`); };
   const shadow = () => `<svg viewBox="0 0 120 80"><ellipse cx="60" cy="40" rx="${cur.f.pearl ? 20 : 34 + Math.min(20, cur.d * 2)}" ry="${cur.f.pearl ? 16 : 14 + cur.d}" fill="${zone === 3 ? 'rgba(170,215,255,.42)' : 'rgba(20,40,80,.55)'}"/></svg>`;
   let strikes = 0; const lim = () => strikesOf(rodT(), zone), drawPips = on => { pipsEl.replaceChildren(...(on ? Array.from({ length: lim() }, (_, k) => h('i', { class: k < lim() - strikes ? '' : 'off' })) : [])); };
@@ -85,7 +85,7 @@ export function openFishing(o) {
   const setBar = (v, cls = '') => { v = Math.max(0, Math.min(100, v)); const pow = cls.startsWith('pow'), ten = cls.startsWith('ten'); bar.className = 'fs-bar ' + cls; bar.firstChild.style.width = v + '%'; bar.lastChild.style.left = v + '%'; gl.firstChild.textContent = pow ? '던지는 힘' : ten ? '줄 팽팽함' : '낚싯대'; gl.lastChild.textContent = pow || ten ? Math.round(v) : ''; const tk = bar.nextSibling; tk.firstChild.textContent = pow ? '가까이' : ten ? '느슨(안 끌려옴)' : ''; tk.lastChild.textContent = pow ? '멀리 ★' : ten ? '끊어짐!' : ''; };
   function close() { if (!alive) return; alive = false; cancelAnimationFrame(raf); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); wrap.remove(); o.onClose && o.onClose(); }
   function ready(text) {
-    phase = 'ready'; hold = false; strikes = 0; patEl.hidden = true; tele = 0; wrap.classList.remove('reel'); rodEl.className = 'fs-rod'; rodEl.dataset.t = rodT(); hook.classList.remove('up'); fishEl.className = 'fs-fish'; fishEl.innerHTML = ''; mark.textContent = ''; float.style.display = rl.style.display = hook.style.display = 'none'; setBar(0); wrap.classList.remove('fight'); drawInfo();
+    phase = 'ready'; hold = false; strikes = 0; patEl.hidden = true; tele = 0; wrap.classList.remove('pearl'); pearlTxt.hidden = true; wrap.classList.remove('reel'); rodEl.className = 'fs-rod'; rodEl.dataset.t = rodT(); hook.classList.remove('up'); fishEl.className = 'fs-fish'; fishEl.innerHTML = ''; mark.textContent = ''; float.style.display = rl.style.display = hook.style.display = 'none'; setBar(0); wrap.classList.remove('fight'); drawInfo();
     const b = o.bag(), r = rod();
     if (!r) { say('낚싯대가 없어요. 카피수퍼에서 사 오세요.', 'warn'); btn.textContent = '닫기'; btn.onclick = close; return; }
     if (!(b.rodD > 0)) { say('낚싯대가 다 닳았어요. 카피수퍼에서 수리하세요.', 'warn'); btn.textContent = '닫기'; btn.onclick = close; return; }
@@ -105,6 +105,7 @@ export function openFishing(o) {
   function splash(x, big) { const r = h('i', { class: 'fs-splash' + (big ? ' big' : ''), style: { left: x + '%' } }); surf.append(r); setTimeout(() => r.remove(), 700); }
   function touch() {
     const p = cur.p; phase = 'wait'; t0 = performance.now(); biteAt = t0 + rnd(1400, 4200) * (1 - p * 0.35); nibAt = Math.random() < 0.6 ? t0 + rnd(400, Math.max(450, biteAt - t0 - 450)) : 0;
+    if (cur.f.pearl) { wrap.classList.add('pearl'); sfx('bigfish'); pearlTxt.hidden = false; pearlTxt.textContent = '✨ 물속에서 뭔가 반짝여요! ✨'; }
     setFloat(castTo); float.className = 'fs-float'; hook.style.display = ''; hook.classList.remove('up'); rodEl.className = 'fs-rod'; splash(castTo, true); sfx('splash');
     fishEl.className = 'fs-fish on far'; fishEl.innerHTML = shadow(); fishEl.style.left = '125%'; setBar(0);
     say('찌가 쑥 들어가면 바로 챔질!'); btn.textContent = '챔질!'; btn.onclick = strike;
@@ -115,12 +116,13 @@ export function openFishing(o) {
     if (now < biteAt) { sfx('miss'); return ready('너무 빨랐어요. 물고기가 놀라 달아났어요. (미끼 1개 사용)'); }
     if (shown && now > biteEnd) return;
     pat0 = pat = cur.f.icon ? 99 : PATIENCE[zone] + (cur.f.king || cur.f.pearl ? 4 : 0); bar.style.setProperty('--lo', BAND_LO[zone] + '%'); tele = 0; nextSpike = cur.f.icon ? Infinity : now + rnd(...SPIKE_GAP[zone]) * 1000; taps = 0; patEl.hidden = !!cur.f.icon;
+    if (cur.f.pearl) { pearlTxt.textContent = '✨ 바다 진주다! ✨'; sfx('bigfish'); }
     sfx('hookset'); strikes = 0; drawPips(true); phase = 'fight'; dist = 100; ten = 35; burst = 0; slack = 0; nextBurst = now + rnd(900, 1800); wrap.classList.add('fight'); fishEl.className = 'fs-fish on'; fishEl.innerHTML = shadow();
     say(cur.f.icon ? '누르고 있으면 감아요.' : '줄을 주황 칸에 맞춰야 끌려와요! 빨간 칸은 2번 닿으면 끝이에요.'); btn.textContent = '꾹 눌러\n감기'; btn.onclick = null;
   }
   function fail(text) { sfx(/끊어/.test(text) ? 'snap' : 'bad'); ready(text); }
   function landed() {
-    const { f, cm, price } = cur; sfx(price <= 0 ? 'bad' : f.king || f.rare || f.pearl ? 'bigfish' : 'coin'); if (price > 0) splash(34, true); phase = 'done'; patEl.hidden = true; wrap.classList.remove('fight', 'reel'); float.style.display = rl.style.display = hook.style.display = 'none'; fishEl.className = 'fs-fish';
+    const { f, cm, price } = cur; sfx(price <= 0 ? 'bad' : f.king || f.rare || f.pearl ? 'bigfish' : 'coin'); if (price > 0) splash(34, true); phase = 'done'; patEl.hidden = true; pearlTxt.hidden = true; if (!f.pearl) wrap.classList.remove('pearl'); wrap.classList.remove('fight', 'reel'); float.style.display = rl.style.display = hook.style.display = 'none'; fishEl.className = 'fs-fish';
     o.coins(price); if (!f.icon) o.dex(f.id, cm);
     const w = weightOf(f, cm), card = h('div', { class: 'fs-card' + (f.pearl ? ' pearl' : f.king ? ' king' : f.rare ? ' rare' : f.icon ? ' trash' : '') }, h('div', { class: 'fs-pic', html: fishSvg(f, true) }),
       h('b', null, f.pearl ? '✨ 바다 진주! ✨' : f.king ? `👑 ${f.name}` : f.name), !f.icon && !f.pearl && h('p', null, `${cm}cm · ${kg(w)}`), h('p', { class: 'fs-won' }, price > 0 ? `+${price.toLocaleString('ko-KR')} 🪙` : `${price} 🪙`), o.trial && h('small', null, '체험 중이라 돈과 도감은 저장되지 않아요.'),
@@ -196,10 +198,11 @@ export function seaBattle(e) {
   const place = () => { foeEl.style.left = fHp.style.left = foeX + 'px'; mHp.style.left = me.x + 'px'; };
   const myGun = () => e.boatEl.querySelector('.gun-b'), foeGun = foeEl.querySelector('.gun-b'), setGun = (g, deg, sgn = 1) => { if (g) g.style.transform = `rotate(${-deg * sgn}deg)`; }; // 해적 포신은 왼쪽을 보고 있어서 반대로 돌린다
   const ang = h('input', { type: 'range', min: 10, max: 80, value: A0 }), pow = h('input', { type: 'range', min: 20, max: 100, value: P0 }), aV = h('b'), pV = h('b'), msg = h('p', { class: 'sb-msg' }), info = h('span', { class: 'sb-info' }), fire = h('button', { class: 'sb-fire', onClick: shoot }, h('span', null, '💣'), h('b', null, '발사'));
+  const fleeB = h('button', { class: 'sb-flee', onClick: async () => { if (!alive || fled) return; fled = true; fleeB.disabled = true; if (!(await e.flee())) { fled = false; fleeB.disabled = false; return; } alive = false; clean(); e.onEnd('flee'); } }, h('span', null, '🏳️ 도망'), h('small', null, `${FLEE_FEE}코인`)); let fled = false;
   const nudge = (inp, d) => h('button', { class: 'sb-nd', onClick: () => { inp.value = +inp.value + d; lab(); } }, d < 0 ? '−' : '+');
   const row = (ic, nm, inp, val, cls) => h('div', { class: 'sb-row ' + cls }, h('div', { class: 'sb-rl' }, h('span', null, ic + ' ' + nm), val), h('div', { class: 'sb-sl' }, nudge(inp, -1), inp, nudge(inp, 1)));
   const mvL = h('span', { class: 'sb-mvl' }), mvB = h('button', { class: 'sb-mv' }, '◀ 뒤로'), mvF = h('button', { class: 'sb-mv' }, '앞으로 ▶'); holdBtn(mvB, () => { sailing = -1; }, () => { sailing = 0; }); holdBtn(mvF, () => { sailing = 1; }, () => { sailing = 0; });
-  e.panel.replaceChildren(h('div', { class: 'sb-move' }, mvB, h('div', { class: 'sb-mid' }, info, mvL), mvF), msg, h('div', { class: 'sb-deck' }, h('div', { class: 'sb-ctl' }, row('📐', '각도', ang, aV, 'ang'), row('💪', '힘', pow, pV, 'pow')), fire)); e.panel.hidden = false;
+  e.panel.replaceChildren(h('div', { class: 'sb-move' }, mvB, h('div', { class: 'sb-mid' }, info, mvL), mvF), h('div', { class: 'sb-mrow' }, msg, fleeB), h('div', { class: 'sb-deck' }, h('div', { class: 'sb-ctl' }, row('📐', '각도', ang, aV, 'ang'), row('💪', '힘', pow, pV, 'pow')), fire)); e.panel.hidden = false;
   // 명중률: 차례가 거듭될수록 조금씩 오른다. 중급은 낮게, 고급은 조금 높게, 너무 높아지지 않게 위를 막는다
   const acc = () => (e.zone === 3 ? Math.min(0.55, 0.12 + round * 0.06) : Math.min(0.4, 0.06 + round * 0.05));
   const windTxt = () => (wind ? `바람 ${wind * dir > 0 ? '뒤에서' : '앞에서'} ${Math.abs(wind)}` : '바람 없음');
@@ -216,7 +219,7 @@ export function seaBattle(e) {
   function myTurn() { turn = 'me'; moved = 0; ang.value = A0; pow.value = P0; wind = Math.round(rnd(-60, 60)); camTo = me.x + dir * 90; lab(); if (e.balls() <= 0) return end(false, '포탄이 떨어졌어요! 해적단에게 당했어요.'); msg.textContent = still >= 1 ? '⚠️ 가만히 있으면 해적단의 다음 포는 반드시 맞아요! 배를 움직이세요.' : '내 차례! 각도와 힘을 맞춰 쏘세요.'; fire.disabled = false; }
   function puff(x, y) { const f = h('i', { class: 'sb-fx sb-puff', style: { left: x + 'px', bottom: me.y + y + 'px' } }); e.world.append(f); setTimeout(() => f.remove(), 500); }
   const kick = (...els) => { els.forEach(n => n.classList.add('sb-kick')); setTimeout(() => els.forEach(n => n.classList.remove('sb-kick')), 260); };
-  function shoot() { if (turn !== 'me' || shot || !alive) return; e.useBall(); sfx('cannon'); const v = pow.value / 100 * VMAX, m = muzzle(e.boatEl, me.x + 3, dir, ang.value * Math.PI / 180); shot = { x: m.x, y: m.y, vx: dir * Math.cos(m.a) * v, vy: Math.sin(m.a) * v, by: 'me' }; puff(m.x, m.y); kick(e.boatEl, e.meEl); fire.disabled = true; turn = 'fly'; lab(); aim(); msg.textContent = '날아갑니다…'; }
+  function shoot() { if (turn !== 'me' || shot || !alive || fled) return; fleeB.hidden = true; e.useBall(); sfx('cannon'); const v = pow.value / 100 * VMAX, m = muzzle(e.boatEl, me.x + 3, dir, ang.value * Math.PI / 180); shot = { x: m.x, y: m.y, vx: dir * Math.cos(m.a) * v, vy: Math.sin(m.a) * v, by: 'me' }; puff(m.x, m.y); kick(e.boatEl, e.meEl); fire.disabled = true; turn = 'fly'; lab(); aim(); msg.textContent = '날아갑니다…'; }
   function foeShoot() { turn = 'foe'; wind = Math.round(rnd(-60, 60)); lab(); camTo = foeX - dir * 90;
     // 맞힐지 빗나갈지 먼저 정하고, 그 자리에 떨어지는 각도와 힘을 찾는다 빗나갈 때는 내 앞에 떨어지거나 머리 위로 넉넉히 넘어간다(배에 스치면 맞은 것이 되므로)
     still++; const sure = still >= 2, hitNow = sure || Math.random() < acc(), want = me.x + (hitNow ? rnd(-14, 14) : Math.random() < 0.5 ? dir * rnd(HITR + 25, HITR + 150) : -dir * rnd(HITR + 120, HITR + 240)); if (sure) still = 0; round++;
