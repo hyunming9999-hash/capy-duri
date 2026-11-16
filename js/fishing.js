@@ -59,7 +59,7 @@ const SPIKE = [0, 14, 20, 26], SPIKE_GAP = [[0, 0], [5, 8], [4, 6.5], [3, 5]], T
 // 난이도 맞춤(가상 플레이로 맞춘 값): 보통 솜씨로 초급 낚싯대 기준 초급 35%·중급 25%·고급 15%쯤 잡히고, 낚싯대가 한 단계 좋아질 때마다 10%p쯤 오른다
 // BAND_LO = 이 값부터 끊어짐 칸(80) 전까지가 '주황 칸'. 줄이 주황 칸에 있을 때 감아야 끌려온다(깊은 바다일수록 좁다)
 // ZONE_TEN = 바다별로 줄이 팽팽해지는 빠르기, ZONE_REEL = 감기는 빠르기, PATIENCE = 물고기 인내심(초, 깊을수록 짧다), ROD_TEN = 좋은 낚싯대일수록 줄이 덜 팽팽해진다
-const BAND_LO = [0, 45, 56, 65], ZONE_TEN = [0, 1.18, 0.9, 0.79], ZONE_REEL = [0, 1, 1.4, 2.3], PATIENCE = [0, 18, 16, 14], ROD_TEN = [1, 1, 0.91, 0.84];
+const BAND_LO = [0, 55, 64, 68], ZONE_TEN = [0, 1.18, 0.9, 0.79], ZONE_REEL = [0, 1, 1.4, 2.3], PATIENCE = [0, 18, 16, 14], ROD_TEN = [1, 1, 0.91, 0.84];
 export const strikesOf = () => 2;
 export const weightOf = (f, cm) => (f.pearl || f.icon ? 0 : Math.max(0.01, Math.pow(cm, 3) * (f.name === '고래킹' ? 0.00003 : 0.000013)));
 const kg = w => (w >= 1000 ? (w / 1000).toFixed(2) + 't' : w >= 1 ? w.toFixed(1) + 'kg' : Math.round(w * 1000) + 'g');
@@ -177,10 +177,12 @@ export function openFishing(o) {
 // e = { world, stage, panel, zone, meEl, boatEl, shout(t), me:{x, y(바닥에서 px), s}, foeX, balls(), useBall(), cam(x), onEnd(win) }
 const SHIP_SVG = `<svg viewBox="0 0 170 130"><path d="M96 74 V8" stroke="#5A3B22" stroke-width="5" stroke-linecap="round"/><path d="M93 12 L44 38 L93 62z" fill="#3A3A44" stroke="#1F1F26" stroke-width="2" stroke-linejoin="round"/><circle cx="74" cy="36" r="7" fill="#fff"/><circle cx="71.6" cy="35" r="1.6" fill="#1F1F26"/><circle cx="76.4" cy="35" r="1.6" fill="#1F1F26"/><path d="M66 43 l16 5M82 43 l-16 5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><path d="M96 8 h20 q-4 6 0 12 h-20z" fill="#1F1F26"/><path d="M6 72 H164 Q160 112 132 116 H40 Q12 112 6 72z" fill="#6B4A32" stroke="#2E1E12" stroke-width="2.4" stroke-linejoin="round"/><path d="M9 86 H161" stroke="#C0392B" stroke-width="7"/><circle cx="60" cy="100" r="5" fill="#2E1E12"/><circle cx="90" cy="100" r="5" fill="#2E1E12"/><circle cx="120" cy="100" r="5" fill="#2E1E12"/><g class="gun-b" style="transform-origin:42px 56px"><rect x="2" y="45" width="52" height="21" rx="9" fill="#3E3E48" stroke="#1F1F26" stroke-width="2"/><rect x="1" y="42" width="9" height="27" rx="4" fill="#2A2A33" stroke="#1F1F26" stroke-width="1.5"/></g><circle cx="40" cy="67" r="11" fill="#3A2A1E" stroke="#1F140C" stroke-width="2"/><path d="M-2 118 q14 -9 28 0 t28 0 t28 0 t28 0 t28 0 t28 0 t28 0" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".8"/></svg>`;
 export function seaBattle(e) {
-  const G = 520, me = e.me, dir = e.foeX > me.x ? 1 : -1, D0 = Math.abs(e.foeX - me.x), VMAX = Math.sqrt(1.3 * D0 * G), HITR = 68 * me.s, HITH = 80 * me.s, HITS = 4, // 배 반 너비와 높이: 포탄이 배나 캐릭터에 닿으면 무조건 맞은 것이다
+  const G = 520, me = e.me, dir = e.foeX > me.x ? 1 : -1, D0 = Math.abs(e.foeX - me.x), VMAX = Math.sqrt((D0 + 400) * G), // 서로 멀어져도 힘 100이면 닿는다
+     HITR = 68 * me.s, HITH = 80 * me.s, HITS = 4, // 배 반 너비와 높이: 포탄이 배나 캐릭터에 닿으면 무조건 맞은 것이다
      BALL_PX = Math.round(20 * me.s), A0 = 45, P0 = 60;
   const PX = 41 * me.s, PY = 46 * me.s, BL = 36 * me.s, DROP = 16 * me.s; // 포신 축(배 가운데에서)과 포신 길이, 배 바닥이 기준선보다 내려간 만큼
-  const my0 = me.x, foe0 = e.foeX, STEP = 16, BUDGET = 80; let foeX = e.foeX, foeTo = foeX, moved = 0;
+  const my0 = me.x, foe0 = e.foeX, BUDGET = 160, RANGE = 240, NEAR = 320; let foeX = e.foeX, foeTo = foeX, moved = 0;
+  // 배 움직이기: 한 차례에 40m, 처음 자리에서 앞뒤 60m까지, 해적선과 80m보다 가까이는 못 간다
   const dist = () => Math.abs(foeX - me.x);
   // 배가 파도에 흔들리는 만큼(기울기·높이) 포구와 쏘는 각도도 같이 움직인다
   const sway = el => { const cs = getComputedStyle(el), r = parseFloat(cs.rotate) || 0, t = cs.translate && cs.translate !== 'none' ? parseFloat(cs.translate.split(' ')[1]) || 0 : 0; return { r, up: -t }; };
@@ -205,8 +207,8 @@ export function seaBattle(e) {
   const hp = () => { [...fHp.children].forEach((n, k) => n.classList.toggle('off', k >= foeHp)); [...mHp.children].forEach((n, k) => n.classList.toggle('off', k >= myHp)); };
   const fly = (x, y, vx, vy, t) => { for (let k = 0; k < t / 0.016; k++) { vx += wind * 0.016; vy -= G * 0.016; x += vx * 0.016; y += vy * 0.016; if (y <= 0) break; } return { x, y }; };
   function aim() { const on = turn === 'me' && alive && !shot; if (!on) return dots.forEach(d => { d.style.display = 'none'; }); const v = pow.value / 100 * VMAX, m = muzzle(e.boatEl, me.x + 3, dir, ang.value * Math.PI / 180); dots.forEach((d, k) => { d.style.display = ''; const q = fly(m.x, m.y, dir * Math.cos(m.a) * v, Math.sin(m.a) * v, 0.07 * (k + 1)); d.style.left = q.x + 'px'; d.style.bottom = me.y + q.y + 'px'; }); } // 조준 도움선은 앞부분만, 배가 흔들리면 같이 흔들린다
-  // 내 차례에는 버튼을 누르고 있는 동안 배가 앞뒤로 미끄러지듯 움직인다(한 차례에 20m까지). 5m 넘게 움직이면 해적단이 재던 거리가 흐트러진다
-  function sail(sgn, dt) { if (turn !== 'me' || shot || !alive || moved >= BUDGET) return; const lo = Math.max(e.minX, my0 - BUDGET), hi = Math.min(e.maxX, my0 + BUDGET), nx = Math.max(lo, Math.min(hi, me.x + sgn * dir * Math.min(64 * dt, BUDGET - moved))); if (nx === me.x) return;
+  // 내 차례에는 버튼을 누르고 있는 동안 배가 앞뒤로 미끄러지듯 움직인다(한 차례에 40m까지). 5m 넘게 움직이면 해적단이 재던 거리가 흐트러진다
+  function sail(sgn, dt) { if (turn !== 'me' || shot || !alive || moved >= BUDGET) return; const lo = Math.max(e.minX, my0 - RANGE), hi = Math.min(e.maxX, my0 + RANGE); let nx = Math.max(lo, Math.min(hi, me.x + sgn * dir * Math.min(95 * dt, BUDGET - moved))); if (Math.abs(foeX - nx) < NEAR) nx = foeX - dir * NEAR; if (nx === me.x || (nx - me.x) * sgn * dir < 0) return;
     const was = moved; moved += Math.abs(nx - me.x); me.x = nx; e.move(nx); place(); camTo = me.x + dir * 90; if (was < 20 && moved >= 20) { if (still) msg.textContent = '배를 움직였어요! 해적단이 거리를 다시 재야 해요.'; still = 0; sfx('point'); } lab(); }
   const clean = () => { cancelAnimationFrame(raf); [foeEl, fHp, mHp, ball, ...dots].forEach(n => n.remove()); e.world.querySelectorAll('.sb-fx').forEach(n => n.remove()); setGun(myGun(), 0); e.panel.hidden = true; e.panel.replaceChildren(); e.cam(null); };
   function end(win, text) { if (!alive) return; alive = false; aim(); lab(); msg.textContent = text; fire.lastChild.textContent = '확인'; fire.firstChild.textContent = win ? '🏆' : '🏳️'; fire.disabled = false; fire.classList.add('done'); camTo = me.x; fire.onclick = () => { clean(); e.onEnd(win); }; }
@@ -222,7 +224,7 @@ export function seaBattle(e) {
     setGun(foeGun, best.a * 180 / Math.PI, -1);
     timer = 1.2; next = () => { sfx('cannon'); const mx = foeX - dir * (PX + BL * Math.cos(best.a)), my = PY + BL * Math.sin(best.a); shot = { x: mx, y: my, vx: -dir * Math.cos(best.a) * best.v, vy: Math.sin(best.a) * best.v, by: 'foe' }; puff(mx, my); kick(foeEl); turn = 'fly'; }; }
   // 한 발 쏘고 난 틈에 해적선이 앞뒤로 조금 움직일 수 있다. 움직이면 화면이 해적선을 비춘다
-  function foeDrift(then) { if (Math.random() > 0.55) return then(); const to = Math.max(Math.min(foe0 - 100, foe0 + 100), Math.min(Math.max(foe0 - 100, foe0 + 100), Math.max(e.minX, Math.min(e.maxX, foeX + (Math.random() < 0.5 ? -1 : 1) * rnd(36, 96))))); if (Math.abs(to - foeX) < 20 || Math.abs(to - me.x) < 380) return then();
+  function foeDrift(then) { if (Math.random() > 0.55) return then(); const to = Math.max(Math.min(foe0 - 140, foe0 + 140), Math.min(Math.max(foe0 - 140, foe0 + 140), Math.max(e.minX, Math.min(e.maxX, foeX + (Math.random() < 0.5 ? -1 : 1) * rnd(50, 130))))); if (Math.abs(to - foeX) < 20 || Math.abs(to - me.x) < NEAR + 40) return then();
     const closer = Math.abs(to - me.x) < dist(); foeTo = to; turn = 'drift'; camTo = to - dir * 60; setGun(foeGun, 0, -1); msg.textContent = `해적선이 ${closer ? '다가와요' : '물러나요'}! (${Math.round(Math.abs(to - foeX) / 4)}m)`; next = then; timer = 0; }
   function fx(cls, x, n, y = 0) { const f = h('div', { class: 'sb-fx ' + cls, style: { left: x + 'px', bottom: me.y + y + 'px' } }, ...Array.from({ length: n }, (_, k) => h('i', { style: { '--a': (k / n * 360 + rnd(-12, 12)).toFixed(0) + 'deg', '--d': rnd(26, 62).toFixed(0) + 'px', '--t': rnd(0, 0.12).toFixed(2) + 's' } }))); e.world.append(f); setTimeout(() => f.remove(), 1100); }
   function land(s, touched) { const mine = s.by === 'me', tx = mine ? foeX : me.x, d = Math.abs(s.x - tx), hit = !!touched || d < HITR; ball.style.display = 'none'; const ix = s.x;
