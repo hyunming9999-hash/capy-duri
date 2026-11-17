@@ -539,8 +539,8 @@ export function mount(el, ctx) {
   const CROW_N = 2, CROW_MS = 25000, CROW_STAY = 300000, PICK_MS = 10000; // 하루 2번: 첫 번째는 친목회 5분째, 두 번째는 그 뒤 아무 때나(2~25분 더 놀다 보면)
   let crow = null, crowStay = 0, crowLast = 0, worldEl = null, stageEl = null, charmSnooze = 0;
   if (isMock) window.capyDebug = { crow: () => { crowStay = 1e9; }, charm: () => { charmSnooze = 0; window.capyDebug.charmNow = true; }, fx: n => charmFx(n) }; // 연습 모드에서만: 시험용으로 바로 부르기
-  // 화·수요일은 예전처럼(하루 2번: 5분째 + 그 뒤 2~25분, 한 번에 둘을 이간질), 다른 날은 접속 2분째에 1번만, 한 마리만
-  const crowBig = () => [2, 3].includes(new Date().getDay()), crowMax = () => (crowBig() ? CROW_N : 1), crowWho = () => (crowBig() ? 2 : 1);
+  // 화·수요일은 하루 2번(5분째 + 그 뒤 2~25분), 다른 날은 접속 2분째에 1번. 어느 날이든 한 번 나올 때 한 마리만 이간질
+  const crowBig = () => [2, 3].includes(new Date().getDay()), crowMax = () => (crowBig() ? CROW_N : 1), crowWho = () => 1; // 나올 때마다 한 마리만
   const crowUsed = () => (bag.crowDay === ymd() ? bag.crowN || 0 : 0);
   let srNext = 0, srAt = 0, srUntil = 0; const srSaid = new Set();
   function sRumorTick(now, paused, wet) {
