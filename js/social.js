@@ -60,9 +60,13 @@ const RARE_SLOT = { hat: [1, 6, 10, 11, 15, 21, 23], eye: [3, 7, 16, 29], top: [
 // ⚔️ 장비창(옷놀이 피팅룸·가방에서 같이 쓴다): 가운데 캐릭터, 양옆에 자리 칸. 자리마다 황금 장비 하나씩, 최대 여섯 개
 const EQ_L = [['hat', '머리'], ['eye', '눈'], ['back', '등'], ['shield', '왼손 방패']], EQ_R = [['hand', '오른손 무기'], ['top', '상의'], ['bottom', '하의'], ['suit', '한벌'], ['feet', '신발']];
 const EQ_NAME = Object.fromEntries([...EQ_L, ...EQ_R]);
-export function eqBoard(ctx, { worn, center, wear, readOnly }) {
+export function eqBoard(ctx, { worn, center, wear, readOnly, cloth = {}, unCloth }) {
   const at = k => worn.find(i => slotOf(i) === k), suitOn = at('suit') != null;
-  const slot = ([k, label]) => { const i = at(k), off = i == null && suitOn && (k === 'top' || k === 'bottom');
+  const CK = { hat: 'hat', top: 'top', bottom: 'bottom', feet: 'shoe' };
+  const clothIc = (ck, id) => ck === 'hat' ? capy({ color: '#B98A5E', hat: id, head: true }).replace('viewBox="0 -22 120 112"', 'viewBox="0 -24 120 76"') : ck === 'shoe' ? capy({ color: '#B98A5E', shoe: id }).replace('viewBox="0 -22 120 158"', 'viewBox="24 108 72 30"') : capy({ color: '#B98A5E', [ck]: id }).replace('viewBox="0 -22 120 158"', 'viewBox="16 80 88 56"');
+  const slot = ([k, label]) => { const i = at(k), ck = CK[k], cid = i == null && ck && !(suitOn && (k === 'top' || k === 'bottom')) ? cloth[ck] : '';
+    if (cid) return h('button', { class: 'eq-slot on cloth', title: clothName(cid), onClick: () => { if (readOnly) return toast(clothName(cid), 1600); unCloth && unCloth(ck); } }, h('span', { html: clothIc(ck, cid) }), h('small', null, label));
+    const off = i == null && suitOn && (k === 'top' || k === 'bottom');
     return h('button', { class: 'eq-slot' + (i != null ? ' on' : '') + (off ? ' off' : ''), title: i != null ? rareName(i) : label, onClick: () => { if (i == null) return toast(off ? '한벌 장비를 입고 있어서 비어 있어요' : readOnly ? `${label} 자리가 비어 있어요` : `${label} 자리에 걸칠 황금 장비를 아래 '가진 황금 장비'에서 골라요`, 2200); if (readOnly) return toast(rareName(i), 1600); wear(i); } },
       i != null ? h('img', { src: `img/rare/ic/${i}.webp`, alt: '' }) : h('i', null, off ? '한벌' : label), i != null && h('small', null, label)); };
   return h('div', { class: 'eq' },
@@ -84,6 +88,11 @@ export async function wearGold(ctx, i) {
     if (out.length) toast(`같은 자리라서 ${out.map(rareName).join(', ')}을(를) 벗고 걸쳤어요`, 2600); list = [...list, i]; }
   const v = list.length ? list : null; ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), rare: v }; await ctx.store.update('members/' + ctx.uid, { rare: v }).catch(() => {});
 }
+// 같은 자리에는 황금이든 일반이든 하나만: 황금 장비가 차지한 자리의 일반 옷은 벗긴다(한벌은 상의·하의 둘 다)
+const GOLD_TO_CLOTH = { hat: ['hat'], top: ['top'], bottom: ['bottom'], suit: ['top', 'bottom'], feet: ['shoe'] };
+export const CLOTH_TO_GOLD = { hat: ['hat'], top: ['top', 'suit'], bottom: ['bottom', 'suit'], shoe: ['feet'] };
+export const goldBlocks = list => new Set((list || []).flatMap(i => GOLD_TO_CLOTH[slotOf(i)] || []));
+export const goldIn = (list, clothKey) => (list || []).filter(i => (CLOTH_TO_GOLD[clothKey] || []).includes(slotOf(i)));
 const slotOf = i => Object.keys(RARE_SLOT).find(k => RARE_SLOT[k].includes(i)), clash = (a, b) => { const x = slotOf(a), y = slotOf(b); return x === y || (x === 'suit' && (y === 'top' || y === 'bottom')) || (y === 'suit' && (x === 'top' || x === 'bottom')); };
 // 보물 2~3개: 멋지다·눈부시다·존경한다 (동물마다 다른 말)
 const AWE1 = ['주인님 같은 멋짐이야! 꼬리가 멈추질 않아', '흥, 인정할게. 오늘은 네가 제일 멋져', '찍… 눈이 부셔서 치즈도 안 보여', '볼이 터질 만큼 멋져! 존경해', '귀가 쫑긋 섰어. 너무 눈부셔', '여우인 내가 봐도 반할 만큼 멋져', '곰도 고개 숙일 멋짐이야. 존경해', '대나무보다 네가 더 좋아질 만큼 멋져', '졸다가 깼어… 너무 눈부셔서', '어흥! 이 호랑이가 인정하는 멋짐이야', '밀림의 왕인 나도 존경스러워', '음메… 들판 전체가 환해졌어. 멋져', '꿀꿀! 진흙 속 진주처럼 빛나', '개굴! 연못에 해가 뜬 줄 알았어', '우끼! 바나나보다 눈부셔! 존경해', '꼬끼오! 새벽 해보다 눈부셔', '뒤뚱… 빙하보다 반짝여. 멋져', '삐약! 커서 꼭 너처럼 될래. 존경해', '꽥! 연못 최고의 멋쟁이야', '부엉… 밤눈 밝은 내가 봐도 눈부셔', '아우우! 달보다 네가 더 빛나', '킁킁, 온 숲이 네 멋짐을 알아', '히힝! 달리다 멈춰 설 만큼 멋져', '무지개도 너만큼 빛나진 않아', '느릿느릿… 백 년 살아도 이런 멋짐은 처음이야', '다리 여덟 개로 다 박수 칠게. 멋져', '어흑어흑! 박수! 너무 눈부셔', '가시가 다 눕도록 감동했어. 존경해', '도토리 다 줘도 안 아까울 멋짐이야', '너굴! 훔치고 싶을 만큼 멋져… 농담이야, 존경해'];

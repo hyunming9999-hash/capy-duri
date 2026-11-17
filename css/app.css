@@ -1544,3 +1544,5 @@ body.vb-on .modal-wrap { z-index: 4600; }
 .inv-tabs button.on { background: #FFD23F; color: #3A2A00; }
 .inv-tabs + .eq { border-radius: 0 0 16px 16px; margin-top: 0; }
 .eq-item.cloth span { display: block; width: 52px; } .eq-item.cloth svg { display: block; width: 100%; }
+
+.eq-slot.cloth { background: radial-gradient(circle at 50% 40%, #FFFFFF, #D9E4EE); border-color: #7FA7C9; box-shadow: none; } .eq-slot.cloth span { display: block; width: 100%; } .eq-slot.cloth svg { display: block; width: 100%; height: auto; }
