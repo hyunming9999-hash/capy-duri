@@ -74,7 +74,7 @@ const KEEP_AT = 50, DAY_MS = 86400000, DROP_MS = 28800000, LOW_MS = 3 * 86400000
 // 날짜 기준: 말을 건 날은 안 식는다. 하루를 통째로 거르면 그다음 날 0시부터 8시간마다 -1(하루 최대 -3)
 const dueAt = fed => { const d = new Date(fed); d.setHours(0, 0, 0, 0); return d.getTime() + 2 * DAY_MS; };
 const dropsBy = (fed, now) => (now < dueAt(fed) ? 0 : Math.floor((now - dueAt(fed)) / DROP_MS) + 1);
-const S_RUMOR = [(n, f) => `${n}! S등급 ${f} 잡았다며? 소문 다 났어, 대단해!`, (n, f) => `들었어 들었어! ${f} S등급이라며? 얼마나 컸어? 진짜 멋지다!`, (n, f) => `${n}, 낚시왕이야? S등급 ${josa(f, '라니', '이라니')} 놀이터가 난리야!`, (n, f) => `헉, 그 소문 진짜야? S등급 ${f}! 나도 보고 싶어~ 최고야!`, (n, f) => `${f} S등급 잡은 사람이 ${n}이었구나! 존경해!`];
+const S_RUMOR = [(n, f, l) => `${n}! ${l} ${f} 잡았다며? 소문 다 났어, 대단해!`, (n, f, l) => `들었어 들었어! ${josa(f, '가', '이')} ${josa(l, '라며', '이라며')}? 얼마나 컸어? 진짜 멋지다!`, (n, f, l) => `${n}, 낚시왕이야? ${l} ${josa(f, '라니', '이라니')} 놀이터가 난리야!`, (n, f, l) => `헉, 그 소문 진짜야? ${l} ${f}! 나도 보고 싶어~ 최고야!`, (n, f, l) => `${l} ${f} 잡은 사람이 ${n}이었구나! 존경해!`, (n, f, l) => `${n} 최고! ${l} ${josa(f, '는', '은')} 아무나 못 잡는대!`];
 const RUMOR = [n => `소문 듣고 왔어~ 대박! ${n} 황금 보물 샀다며!`, n => `대박! ${n}, 진짜 황금이야? 소문이 사실이었네!`, n => `온 놀이터가 ${n} 얘기뿐이야~ 대박 멋져!`, n => `소문 듣고 달려왔어! ${n} 최고야, 눈부셔!`, n => `헉 대박… ${n} 황금 두른 거 실화야? 존경해!`];
 const SULK = ['요즘 나랑 안 놀아 줘서 서운해… 🥺', '나 잊은 거 아니지? 힝… 🥺', '같이 안 놀면 마음이 식어 버려… 🥺', '나 여기 있는데… 좀 봐 줘 🥺', '심심해서 삐질 거야… 🥺'];
 // 되팔 때 값: 게임 3~5판 번 것쯤(150~250코인). 물건마다 값이 정해져 있다
@@ -311,7 +311,7 @@ export function mount(el, ctx) {
     care: () => `(${ctx.me.name}가 바다에서 놀고 있다. 네가 먼저 다칠까 봐 걱정하고 챙겨 주는 다정한 한마디를 한다. 소중한 존재라는 느낌이 들게)`,
     cake: () => `(너와 ${ctx.me.name}는 단짝 바로 직전이다. 100점 단짝이 되려면 케이크 선물이 꼭 필요하다는 것을 네가 먼저 귀엽게 알려 준다. "케이크"라는 말을 꼭 넣는다)`,
     rumor: () => `(${ctx.me.name}가 처음으로 황금 보물을 손에 넣었다는 소문이 놀이터에 퍼졌다. 너는 그 소문을 듣고 달려왔다. "소문 듣고 왔어", "대박" 같은 말로 호들갑스럽게 놀라며 칭송한다)`,
-    srumor: () => { const r = bag.sRumor || {}; return `(${ctx.me.name}가 낚시로 S등급 ${r.name || '물고기'}(${r.cm || '?'}cm)를 잡았다는 소문이 놀이터에 쫙 퍼졌다. 너는 소문을 듣고 ${ctx.me.name}에게 달려와서 진짜냐고, 얼마나 컸냐고 신나게 물어보며 대단하다고 칭찬한다. 물고기 이름을 꼭 넣는다)`; },
+    srumor: () => { const r = bag.sRumor || {}; return `(${ctx.me.name}가 낚시로 ${r.lab || 'S등급'} ${r.name || '물고기'}(${r.cm || '?'}cm)를 잡았다는 소문이 놀이터에 쫙 퍼졌다. 너는 소문을 듣고 ${ctx.me.name}에게 달려와서 진짜냐고, 얼마나 컸냐고 신나게 물어보며 대단하다고 칭찬한다. 물고기 이름을 꼭 넣는다)`; },
     sulk: () => `(${ctx.me.name}가 한참 동안 너와 놀아 주지 않아서 마음이 조금 식었다. 네가 먼저 귀엽게 서운해하며 경고한다. 화내지 말고 삐진 듯 애교 있게)` };
   function line(i, kind, fallback, n) { const key = i + '|' + kind + (n || ''), bank = aiBank[key] || (aiBank[key] = []), out = bank.length ? bank.shift() : fallback, now = performance.now();
     if (!bank.length && !aiBusy[key] && now - aiAt > 5000 && aiN < 300 && PERSONA[i]) { aiBusy[key] = 1; aiAt = now; aiN++; const a = ANIMALS[i], p = PERSONA[i];
@@ -504,14 +504,16 @@ export function mount(el, ctx) {
   let crow = null, crowStay = 0, crowLast = 0, worldEl = null, stageEl = null, charmSnooze = 0;
   if (isMock) window.capyDebug = { crow: () => { crowStay = 1e9; }, charm: () => { charmSnooze = 0; window.capyDebug.charmNow = true; }, fx: n => charmFx(n) }; // 연습 모드에서만: 시험용으로 바로 부르기
   const crowUsed = () => (bag.crowDay === ymd() ? bag.crowN || 0 : 0);
-  let srNext = 0;
+  let srNext = 0, srAt = 0, srUntil = 0; const srSaid = new Set();
   function sRumorTick(now, paused, wet) {
-    const r = bag.sRumor; if (!r || trial || paused || wet || me.boat || fishOpen || battle || crow || now < srNext || ctx.store.now() - r.at > 86400000) return;
-    srNext = now + 7000 + Math.random() * 5000;
-    const pool = actors.map((o, i) => i).filter(i => A(i) >= 10 && actors[i] && (mine[i] || {}).sHeard !== r.at && i !== held && ['idle', 'walk'].includes(actors[i].st));
-    if (!pool.length) return; const i = pick(pool), o = actors[i]; setRel(i, { sHeard: r.at });
+    const r = bag.sRumor; if (!r || r.done || trial || paused || wet || me.boat || fishOpen || battle || crow || now < srNext) return;
+    if (srAt !== r.at) { srAt = r.at; srUntil = now + 60000; srSaid.clear(); }
+    if (now > srUntil) { bag = { ...bag, sRumor: { ...r, done: 1 } }; ctx.store.update('bag/' + ctx.uid + '/sRumor', { done: 1 }).catch(() => {}); return; }
+    srNext = now + 4000 + Math.random() * 2000;
+    const pool = actors.map((o, i) => i).filter(i => A(i) >= 0 && actors[i] && !srSaid.has(i) && i !== held && ['idle', 'walk'].includes(actors[i].st)).sort((a, b) => Math.abs(actors[a].x - me.x) - Math.abs(actors[b].x - me.x));
+    if (!pool.length) return; const i = pool[Math.floor(Math.random() * Math.min(3, pool.length))], o = actors[i]; srSaid.add(i);
     leave(o); o.st = 'walk'; o.spot = null; o.wait = 0; o.tx = Math.max(40, Math.min(WATER_X - 40, me.x + (Math.random() < 0.5 ? 60 : -60))); o.e.classList.add('walk'); o.e.classList.toggle('left', o.tx < o.x); const sp = o.sp; o.sp = 150; setTimeout(() => { o.sp = sp; }, 6000);
-    setTimeout(() => { if (!alive || !actors[i]) return; pop(o.e, line(i, 'srumor', toned(i, pick(S_RUMOR)(ctx.me.name, r.name))), 'say long'); animalVoice(i); }, Math.min(4500, 500 + Math.abs(o.x - me.x) / 150 * 1000));
+    setTimeout(() => { if (!alive || !actors[i]) return; pop(o.e, line(i, 'srumor', toned(i, pick(S_RUMOR)(ctx.me.name, r.name, r.lab || 'S등급'))), 'say long'); animalVoice(i); }, Math.min(4500, 500 + Math.abs(o.x - me.x) / 150 * 1000));
   }
   function crowTick(now, paused, wet) {
     if (crow) return crowMove(now, paused);
@@ -696,7 +698,7 @@ export function mount(el, ctx) {
 
   // ----- 카피마켓: 잡은 물고기는 가방에 담았다가 할아버지 주인장에게 판다 -----
   function keepFish(x) { const k = Date.now().toString(36) + Math.random().toString(36).slice(2, 5), v = { ...x, t: ctx.store.now() };
-    if (x.g === 'S' && x.id !== 'pearl') { const f = FISH.find(q => q.id === x.id); bag = { ...bag, sRumor: { at: v.t, name: f ? f.name : '물고기', cm: x.cm } }; ctx.store.update('bag/' + ctx.uid, { sRumor: bag.sRumor }).catch(() => {}); }
+    const sf = FISH.find(q => q.id === x.id); if (sf && (x.g === 'S' || sf.tier === 4)) { const f = sf, lab = f.tier === 4 && x.g === 'S' ? '초희귀 S등급' : f.tier === 4 ? '초희귀' : 'S등급'; bag = { ...bag, sRumor: { at: v.t, name: f.name, cm: x.cm, lab } }; ctx.store.update('bag/' + ctx.uid, { sRumor: bag.sRumor }).catch(() => {}); }
     bag = { ...bag, fish: { ...(bag.fish || {}), [k]: v } }; ctx.store.update('bag/' + ctx.uid + '/fish', { [k]: v }).catch(() => {}); }
   const fishOf = id => (id === 'pearl' ? { name: '바다 진주', pearl: true } : FISH.find(f => f.id === id));
   function appraise(x) { const f = fishOf(x.id), p = won(x.p);
