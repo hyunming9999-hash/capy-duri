@@ -1330,3 +1330,7 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .patch-pearl img { position: relative; height: 150px; filter: drop-shadow(0 0 16px #CFF6FF); animation: cfFloat 2.2s ease-in-out infinite; }
 .patch-pearl b { position: relative; margin-top: 6px; color: #fff; font-size: 18px; font-weight: 900; text-shadow: 0 0 8px #2B8FD6, 0 2px 0 #1C5C9C; }
 .patch-dots { display: flex; justify-content: center; gap: 6px; margin-top: 10px; } .patch-dots i { width: 8px; height: 8px; border-radius: 50%; background: #E3D5C0; } .patch-dots i.on { background: #F2A33A; width: 20px; border-radius: 4px; }
+.tal-time { position: relative; height: 18px; margin: -4px 0 12px; border-radius: 9px; background: #F1E6D6; overflow: hidden; }
+.tal-time i { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #7B4FB5, #B07FE8); transition: width .1s linear; }
+.tal-time b { position: relative; display: block; text-align: center; font-size: 12px; line-height: 18px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.4); }
+.tal-time.hurry i { background: linear-gradient(90deg, #E5484D, #FF8787); } .tal-time.hurry { animation: crowShake .3s ease-in-out infinite; }

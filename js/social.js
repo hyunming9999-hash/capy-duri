@@ -490,19 +490,20 @@ export function mount(el, ctx) {
     const face = h('div', { html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) }); if (meEl) meEl.innerHTML = face.innerHTML; drawPal();
   }
 
-  // ----- 까마귀 악당: 친목회에 있을 때만, 하루 두 번, 육지에서 내 근처에 나타나 친한 동물(50~100점) 둘에게 이간질한다 -----
-  // 퇴치 버튼 → 악귀퇴치부적 3장 중 진짜 1장(1/3)을 고르면 퇴치. 못 고르거나 시간이 다 되면 두 동물이 각각 -15~-20
-  const CROW_N = 2, CROW_MS = 25000;
-  let crow = null, crowNext = 0, worldEl = null, stageEl = null, charmSnooze = 0;
-  if (isMock) window.capyDebug = { crow: () => { crowNext = 1; }, charm: () => { charmSnooze = 0; window.capyDebug.charmNow = true; }, fx: n => charmFx(n) }; // 연습 모드에서만: 시험용으로 바로 부르기
+  // ----- 까마귀 악당: 친목회에 있을 때만, 하루 한 번(3분 넘게 머무르면 반드시), 육지에서 내 근처에 나타나 친한 동물(50~100점) 둘에게 이간질한다 -----
+  // 퇴치 버튼 → 악귀퇴치부적 3장 중 진짜 1장(1/3)을 10초 안에 고르면 퇴치. 못 고르거나 시간이 다 되면 두 동물이 각각 -15~-20
+  const CROW_N = 1, CROW_MS = 25000, CROW_STAY = 180000, PICK_MS = 10000;
+  let crow = null, crowStay = 0, crowLast = 0, worldEl = null, stageEl = null, charmSnooze = 0;
+  if (isMock) window.capyDebug = { crow: () => { crowStay = CROW_STAY; }, charm: () => { charmSnooze = 0; window.capyDebug.charmNow = true; }, fx: n => charmFx(n) }; // 연습 모드에서만: 시험용으로 바로 부르기
   const crowUsed = () => (bag.crowDay === ymd() ? bag.crowN || 0 : 0);
   function crowTick(now, paused, wet) {
     if (crow) return crowMove(now, paused);
-    if (trial || !worldEl || paused || wet || me.boat || crowUsed() >= CROW_N) return;
-    if (!crowNext) { crowNext = now + (90 + Math.random() * 330) * 1000; return; } // 친목회에서 1.5~7분 놀다 보면 나타난다
-    if (now < crowNext) return;
+    const dt = crowLast ? Math.min(1000, now - crowLast) : 0; crowLast = now;
+    if (trial || !worldEl || crowUsed() >= CROW_N) return;
+    if (!paused) crowStay += dt; // 친목회에 머문 시간(창이 떠 있는 동안은 빼고). 3분이 넘으면 땅 위로 나오는 순간 반드시 나타난다
+    if (crowStay < CROW_STAY || paused || wet || me.boat) return;
     const pool = actors.map((o, i) => i).filter(i => A(i) >= 50 && A(i) <= 100 && actors[i].st !== 'chase');
-    if (!pool.length) { crowNext = now + 60000; return; }
+    if (!pool.length) return;
     // 화면에서 보이도록 내 근처 넷 중에서 무작위로 둘을 고른다
     crowSpawn(now, pool.sort((a, b) => Math.abs(actors[a].x - me.x) - Math.abs(actors[b].x - me.x)).slice(0, 4).sort(() => Math.random() - 0.5).slice(0, 2));
   }
@@ -529,19 +530,24 @@ export function mount(el, ctx) {
     if (!left) crowEnd(false, '시간 안에 퇴치하지 못했어요');
   }
   // 뒷면이 같은 카드 n장 중 진짜 한 장 고르기(까마귀 퇴치부적·진주부적 공용)
-  function pickCards({ title, tip, n, back, win, lose, okText, noText, onPick, onCancel }) {
-    const right = Math.floor(Math.random() * n); let picked = false, close;
+  function pickCards({ title, tip, n, back, win, lose, okText, noText, onPick, onCancel, limit, lateText }) {
+    const right = Math.floor(Math.random() * n); let picked = false, close, timer = 0;
     const msg = h('p', { class: 'tal-msg' }, tip), show = (c, ok) => { c.classList.add('flip'); setTimeout(() => { c.firstChild.src = ok ? win : lose; c.classList.add(ok ? 'win' : 'lose'); }, 230); };
-    const cards = Array.from({ length: n }, (_, k) => h('button', { class: 'tal-card', onClick: () => { if (picked) return; picked = true; const ok = k === right;
+    const cards = Array.from({ length: n }, (_, k) => h('button', { class: 'tal-card', onClick: () => { if (picked) return; picked = true; clearInterval(timer); const ok = k === right;
       cards.forEach(c => { c.disabled = true; }); show(cards[k], ok); sfx(ok ? 'point' : 'bad'); setTimeout(() => { msg.textContent = ok ? okText : noText; msg.className = 'tal-msg ' + (ok ? 'ok' : 'no'); }, 300);
       setTimeout(() => cards.forEach((c, j) => j !== k && (c.classList.add('dim'), show(c, j === right))), 1000);
       setTimeout(() => { close(); onPick(ok); }, 2600); } }, h('img', { src: back, alt: '뒷면' })));
-    close = modal({ title, body: h('div', { class: 'tal' }, msg, h('div', { class: 'tal-row n' + n }, cards)), onClose: () => { if (!picked && onCancel) onCancel(); } });
+    const bar = limit ? h('div', { class: 'tal-time' }, h('i'), h('b')) : null;
+    close = modal({ title, body: h('div', { class: 'tal' }, msg, bar, h('div', { class: 'tal-row n' + n }, cards)), onClose: () => { clearInterval(timer); if (!picked && onCancel) onCancel(); } });
+    // 제한 시간: 다 지나면 못 고른 것(실패)으로 끝난다
+    if (limit) { const t0 = Date.now(), tick = () => { if (picked) return; const left = Math.max(0, limit - (Date.now() - t0)); bar.firstChild.style.width = left / limit * 100 + '%'; bar.lastChild.textContent = Math.ceil(left / 1000) + '초'; bar.classList.toggle('hurry', left < 3500);
+        if (!left) { picked = true; clearInterval(timer); cards.forEach((c, j) => { c.disabled = true; show(c, j === right); }); sfx('bad'); msg.textContent = lateText || '시간 초과!'; msg.className = 'tal-msg no'; setTimeout(() => { close(); onPick(false); }, 1800); } };
+      tick(); timer = setInterval(tick, 100); }
   }
   function crowCharm() {
     if (!crow || crow.done || crow.picking) return; crow.picking = true;
-    pickCards({ title: '🧿 악귀퇴치부적', tip: '세 장 중 한 장만 진짜 퇴치부적이에요. 딱 한 번만 고를 수 있어요!', n: 3, back: 'img/crow/tal-back.webp', win: 'img/crow/tal-win.webp', lose: 'img/crow/tal-fail.webp',
-      okText: '✨ 진짜 퇴치부적! 까마귀가 도망가요!', noText: '꽝… 가짜 부적이었어요. 이간질이 먹혀 버렸어요.', onPick: ok => crowEnd(ok), onCancel: () => { if (crow) crow.picking = false; } });
+    pickCards({ title: '🧿 악귀퇴치부적', tip: '세 장 중 한 장만 진짜 퇴치부적이에요. 10초 안에 딱 한 번만 고를 수 있어요!', n: 3, limit: PICK_MS, lateText: '⏰ 10초 안에 고르지 못했어요… 퇴치 실패!', back: 'img/crow/tal-back.webp', win: 'img/crow/tal-win.webp', lose: 'img/crow/tal-fail.webp',
+      okText: '✨ 진짜 퇴치부적! 까마귀가 도망가요!', noText: '꽝… 가짜 부적이었어요. 이간질이 먹혀 버렸어요.', onPick: ok => crowEnd(ok), onCancel: () => crowEnd(false, '부적을 고르지 않아서 퇴치에 실패했어요') });
   }
   function crowEnd(ok, why) {
     const c = crow; if (!c || c.done) return; c.done = true; c.btn.remove();
@@ -552,7 +558,7 @@ export function mount(el, ctx) {
         setTimeout(() => { if (!alive || !actors[i]) return; const o = actors[i]; pop(o.e, toned(i, '어떻게 나한테 그럴 수 있어') + ` (친밀도 -${lost})`, 'say long'); o.e.classList.add('ouch'); setTimeout(() => o.e.classList.remove('ouch'), 600); }, 1000 + n * 900); });
       setTimeout(() => alive && toast('삐진 동물에게 말을 걸어 해명하면 조금(최대 +5) 풀려요', 4000), 3200); scores(); }
     setTimeout(() => c.e.classList.add('flee'), 900);
-    setTimeout(() => { c.e.remove(); if (crow === c) crow = null; crowNext = 0; }, 2400);
+    setTimeout(() => { c.e.remove(); if (crow === c) crow = null; }, 2400);
   }
   // ----- 진주 낚시 부적: 만렙(100점) 단짝이 셋 이상이면, 화·금요일 하루 한 번 정해진 시각 뒤에 마주친 단짝이 건네준다(2장 중 진짜 1장) -----
   const charmFrom = () => { const d = new Date(), s = [...(ymd() + ctx.uid)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7); d.setHours(9 + s % 13, (s >>> 5) % 60, 0, 0); return d.getTime(); };

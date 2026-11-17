@@ -205,8 +205,8 @@ function patchNote() { if (Date.now() >= PATCH_UNTIL) return;
   const pages = [
     () => [h('div', { class: 'patch-crow' }, h('i', { class: 'pc-fog' }), h('i', { class: 'pc-fog f2' }), h('img', { src: 'img/crow/crow.webp', alt: '까마귀 악당' })),
       h('ul', null,
-        li('🐦‍⬛', '까마귀 악당 등장!', '친목회에 있을 때 하루 2번, 내 근처 땅 위에 나타나 친한 동물 둘에게 "OO이 너 바보래" 하고 이간질해요. 경고가 뜨면 바로 퇴치하세요.'),
-        li('🧿', '퇴치부적 3장 중 진짜 1장', '퇴치 버튼을 누르고 부적을 한 장 고르세요. 진짜면 퇴치! 꽝이거나 시간이 지나면 두 동물의 친밀도가 15~20 깎여요.'),
+        li('🐦‍⬛', '까마귀 악당 등장!', '친목회에 3분 넘게 머무르면 하루 한 번 반드시 내 근처 땅 위에 나타나, 친한 동물 둘에게 "OO이 너 바보래" 하고 이간질해요. 경고가 뜨면 바로 퇴치하세요.'),
+        li('🧿', '퇴치부적 3장 중 진짜 1장', '퇴치 버튼을 누르고 10초 안에 부적을 한 장 고르세요. 진짜면 퇴치! 꽝이거나 10초가 지나면 두 동물의 친밀도가 15~20 깎여요.'),
         li('🙅', '억울하면 해명하기', '삐진 동물에게 말을 걸어 "까마귀가 꾸민 거짓말이야"를 누르면 최대 5점 풀려요.')),
       h('button', { class: 'patch-next', onClick: () => go(1) }, h('img', { src: 'img/crow/pearl-back.webp', alt: '' }), h('span', null, h('b', null, '다음 장에 전설의 진주부적이!'), h('small', null, '눌러서 넘겨 보세요 👉')))],
     () => [h('div', { class: 'patch-pearl' }, h('i', { class: 'pp-rays' }), ...Array.from({ length: 10 }, (_, k) => h('em', { style: { left: (6 + (k * 37) % 88) + '%', top: (8 + (k * 53) % 80) + '%', animationDelay: (k % 5) * 0.2 + 's' } }, k % 2 ? '✦' : '🫧')), h('img', { src: 'img/crow/pearl-win.webp', alt: '진주부적' }), h('b', null, '전설의 진주부적')),
