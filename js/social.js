@@ -187,7 +187,7 @@ export function mount(el, ctx) {
 
   function scene() {
     const top = h('div', { class: 'so-top' }, h('span', { class: 'coin-chip', 'data-coins': 1 }, won(ctx.coins())), h('span', { class: 'so-sp' }),
-      h('button', { class: 'btn sm', onClick: openBag }, '🎒 가방'), h('button', { class: 'btn sm', onClick: () => openShop() }, '🏪 카피수퍼'));
+      h('button', { class: 'btn sm', onClick: openBag }, '🎒 가방'));
     if (vit && vit.px > 0) { me.x = Math.max(40, Math.min(FISH_X - 40, vit.px * WIDTH)); me.y = me.dy = Math.max(0, Math.min(Y_MAX, vit.py || 0)); me.ds = 1 - me.y * 0.7; } // 다시 들어오면 마지막에 있던 자리에서 시작
     endSorry(); tiles.length = 0; spots.length = 0; me.ride = null; me.kb = 0; keys.clear(); rideState = ''; playing = true;
     hpEl = h('u'); potEl = h('button', { class: 'btn sm so-pot', onClick: drink }, '🧪 0');
@@ -209,6 +209,10 @@ export function mount(el, ctx) {
     meEl = h('div', { class: 'so-me', html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) }); mePop = h('div', { class: 'so-mepop' }); world.append(meEl, mePop);
     meTube = h('div', { class: 'so-metube', html: tubeSvg('#FF6B6B'), style: { display: 'none' } }); palTube = h('div', { class: 'so-metube', html: tubeSvg('#FF9DB8'), style: { display: 'none' } }); meTubeB = h('div', { class: 'so-metube', html: tubeSvg('#FF6B6B', 'back'), style: { display: 'none' } }); palTubeB = h('div', { class: 'so-metube', html: tubeSvg('#FF9DB8', 'back'), style: { display: 'none' } }); world.append(meTubeB, palTubeB); boatEl = h('div', { class: 'so-boat', style: { display: 'none' } }); palBoat = h('div', { class: 'so-boat', style: { display: 'none' } }); palBoatI = palBoatDrawn = -1; world.append(meTube, palTube, boatEl, palBoat, palPop); me.boat = null; offer = null;
     palEl = h('div', { class: 'so-me so-pal', style: { display: 'none' } }); pal.spot = null; pal.dx = -1; world.append(palEl); drawPal();
+    // 카피수퍼: 바닷가 그림 속 매점 건물. 이 건물을 눌러야 들어간다(간판에 카피바라 얼굴, 아래에 '수퍼')
+    const bx = (x, y) => [PW + x / 1213 * TILE, y / 520 * H], [mx0, my0] = bx(218, 176), [mx1, my1] = bx(392, 316);
+    world.append(h('button', { class: 'so-mart', 'aria-label': '카피수퍼 들어가기', style: { left: mx0 + 'px', top: my0 + 'px', width: mx1 - mx0 + 'px', height: my1 - my0 + 'px' }, onClick: () => openShop() },
+      h('span', { class: 'so-mart-face', html: capy({ color: 'brown', face: 'happy', head: true }) }), h('b', { class: 'so-mart-t', style: { fontSize: Math.round((mx1 - mx0) * 0.25) + 'px' } }, '수퍼')));
     scroller.append(world); worldEl = world;
     rideBtn = h('button', { class: 'dp so-dp so-ride', disabled: true, onClick: toggleRide }, '🎠', h('small', null, '타기'));
     const pad = h('div', { class: 'so-pad' }, h('div', { class: 'dpad so-dpad' }, [['U', '▲'], ['L', '◀'], ['D', '▼'], ['R', '▶']].map(([k, t]) => { const b = h('button', { class: 'dp so-dp dp-' + k, 'aria-label': k }, t); holdBtn(b, () => keys.add(k), () => keys.delete(k)); return b; })),
