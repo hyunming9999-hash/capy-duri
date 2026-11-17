@@ -23,29 +23,44 @@ export function setupMoney(ctx, onChange) {
   ctx.coins = (u = ctx.uid) => ((ctx.money[u] || {}).c) || 0;
   ctx.owns = id => !id || FREE.has(id) || !!((ctx.owned[ctx.uid] || {})[id]);
   // 게임이 끝나면: 점수가 얼마로 환산됐고 얼마가 쌓였는지 카드로 보여 준다. lines = 환산 내역(글 줄들)
-  ctx.earn = (n, why, lines = [], opt = {}) => { n = Math.max(0, Math.round(n)); const lose = Math.max(0, Math.round(opt.lose || 0)), before = ctx.coins();
+  ctx.earn = (n, why, lines = [], opt = {}) => { n = Math.max(0, Math.round(n)); const lose = Math.max(0, Math.round(opt.lose || 0)), bonus = Math.max(0, Math.round(opt.bonus || 0)), before = ctx.coins();
     const show = after => { document.querySelectorAll('.earn-card').forEach(e => e.remove());
-      const sum = n > 0 || lose ? [n > 0 && `+${n.toLocaleString('ko-KR')}코인`, lose && `-${lose.toLocaleString('ko-KR')}코인`].filter(Boolean).join(' ') : '이번 판은 적립 없음';
+      const sum = n > 0 || lose || bonus ? [n > 0 && `+${n.toLocaleString('ko-KR')}코인`, bonus && `내기 +${bonus.toLocaleString('ko-KR')}코인`, lose && `-${lose.toLocaleString('ko-KR')}코인`].filter(Boolean).join(' ') : '이번 판은 적립 없음';
       const stop = opt.stop && h('button', { class: 'btn sm primary', onClick: e => { e.stopPropagation(); ctx.stopStreak(opt.stop); card.remove(); } }, '💰 연승 그만하고 챙기기');
       const card = h('div', { class: 'earn-card' + (lose ? ' lost' : opt.stop ? ' hot' : ''), onClick: () => card.remove() }, h('b', null, `🪙 ${why || '게임'} 정산`), ...lines.map(t => h('p', null, t)), h('p', { class: 'sum' }, sum), stop, h('small', null, `내 돈 ${before.toLocaleString('ko-KR')} → ${after.toLocaleString('ko-KR')}코인 · 누르면 닫혀요`));
       document.body.append(card); setTimeout(() => card.remove(), opt.stop || lose ? 11000 : 7000); };
-    if (!(n > 0) && !lose) { show(before); return Promise.resolve(0); }
+    if (!(n > 0) && !lose && !bonus) { show(before); return Promise.resolve(0); }
     let after = before;
-    return ctx.store.tx('money/' + ctx.uid, c => { const have = (c && c.c) || 0; after = Math.max(0, have + n - lose); return { ...(c || {}), c: after, total: ((c && c.total) || 0) + n }; }).then(() => { show(after); return n - lose; }).catch(() => 0); };
+    return ctx.store.tx('money/' + ctx.uid, c => { const have = (c && c.c) || 0; after = Math.max(0, have + n + bonus - lose); return { ...(c || {}), c: after, total: ((c && c.total) || 0) + n }; }).then(() => { show(after); return n - lose; }).catch(() => 0); };
   // 연승: 컴퓨터전·경쟁전에서 이기면 1승 ×1, 2연승 ×1.5, 3연승 ×1.8, 4연승 ×2.3(4연승에서 끝, 확정). 연승 중에 지면 연승으로 번 돈의 2/3를 잃는다. 비기면 그대로
   ctx.streak = {};
   ctx.streakOf = g => ({ n: 0, won: 0, ...((ctx.streak || {})[g] || {}) });
   ctx.streakLv = g => ctx.streakOf(g).n; // 컴퓨터가 강해지는 단계(0~3)
   const setStreak = (g, v) => { ctx.streak = { ...ctx.streak, [g]: v }; return ctx.store.set(`streak/${ctx.uid}/${g}`, v).catch(() => {}); };
   ctx.stopStreak = g => { const s = ctx.streakOf(g); setStreak(g, null); if (s.n) toast(`${s.n}연승에서 멈췄어요. 번 돈 ${s.won.toLocaleString('ko-KR')}코인은 안전해요`, 2600); };
-  ctx.earnMatch = (base, why, lines, res, g) => { base = Math.max(0, Math.round(base)); const s = ctx.streakOf(g);
+  // 내기(사람끼리 경쟁할 때만, 선택): 둘이 같은 돈을 걸고(1:1) 다음 경쟁 판의 승자가 모두 가져간다. 비기면 각자 돌려받는다
+  // bets/<게임> = { id, amount, by, state: offer(신청) | on(성사) | off(취소) | done(끝), at, paid: {uid: 건 돈}, back: {uid: 환불함}, res: {uid: 내 결과} }
+  ctx.bets = {};
+  const give = n => (n > 0 ? ctx.store.tx('money/' + ctx.uid, c => ({ ...(c || {}), c: ((c && c.c) || 0) + n })).catch(() => {}) : Promise.resolve());
+  const refundCheck = () => Object.entries(ctx.bets || {}).forEach(([g, b]) => { if (b && b.state === 'off' && (b.paid || {})[ctx.uid] && !(b.back || {})[ctx.uid]) { ctx.store.update(`bets/${g}/back`, { [ctx.uid]: true }).catch(() => {}); give(b.paid[ctx.uid]); toast(`💰 내기가 취소돼서 ${b.paid[ctx.uid]}코인을 돌려받았어요`, 2600); } });
+  ctx.betOf = g => { const b = (ctx.bets || {})[g]; return b && (b.state === 'offer' || b.state === 'on') ? b : null; };
+  ctx.offerBet = async (g, amount) => { amount = Math.round(amount); if (!(amount > 0)) return false; if (ctx.betOf(g)) { toast('이미 걸린 내기가 있어요'); return false; } if (!ctx.partnerId) { toast('상대가 없어요'); return false; }
+    if (!(await ctx.spend(amount))) return false; await ctx.store.set(`bets/${g}`, { id: Math.random().toString(36).slice(2, 9), amount, by: ctx.uid, state: 'offer', at: ctx.store.now(), paid: { [ctx.uid]: amount } }).catch(() => {}); return true; };
+  ctx.acceptBet = async g => { const b = ctx.betOf(g); if (!b || b.state !== 'offer' || b.by === ctx.uid) return false; if (!(await ctx.spend(b.amount))) return false;
+    await ctx.store.update(`bets/${g}`, { state: 'on', at: ctx.store.now(), [`paid/${ctx.uid}`]: b.amount }).catch(() => {}); return true; };
+  ctx.cancelBet = g => { const b = ctx.betOf(g); if (b) return ctx.store.update(`bets/${g}`, { state: 'off' }).catch(() => {}); };
+  ctx.settleBet = (g, res) => { const b = (ctx.bets || {})[g]; if (!b || (b.state !== 'on' && b.state !== 'done') || (b.res || {})[ctx.uid] || !(b.paid || {})[ctx.uid]) return null;
+    const pot = b.amount * 2, got = res === 'win' ? pot : res === 'draw' ? b.amount : 0; ctx.bets = { ...ctx.bets, [g]: { ...b, res: { ...(b.res || {}), [ctx.uid]: res } } };
+    ctx.store.update(`bets/${g}`, { state: 'done', [`res/${ctx.uid}`]: res }).catch(() => {});
+    return { got, line: res === 'win' ? `💰 내기 승리! 판돈 +${pot}코인` : res === 'draw' ? `💰 무승부라 건 돈 ${b.amount}코인을 돌려받았어요` : `💸 내기에서 졌어요. 건 돈 ${b.amount}코인은 상대에게` }; };
+  ctx.earnMatch = (base, why, lines, res, g, pvp) => { base = Math.max(0, Math.round(base)); const s = ctx.streakOf(g); const bet = pvp ? ctx.settleBet(g, res) : null; if (bet) lines = [...lines, bet.line]; const bonus = bet ? bet.got : 0; // 내기 판돈은 연승 배율 없이 그대로 더한다
     if (res === 'win') { const n = s.n + 1, x = STREAK_X[n - 1], pay = Math.round(base * x), won = s.won + pay, done = n >= STREAK_X.length;
       setStreak(g, done ? null : { n, won });
       return ctx.earn(pay, why, [...lines, n > 1 ? `🔥 ${n}연승! ×${x} = ${pay}코인` : '🔥 1승! 다음 판부터 연승 보너스 ×1.5 → ×1.8 → ×2.3',
-        done ? '🏆 4연승 달성! 번 돈이 모두 확정됐어요. 다음 판부터 새로 시작해요' : `연승으로 번 돈 ${won}코인 · 다음 판에 지면 ${Math.round(won * 2 / 3)}코인을 잃어요${g === 'mahjong' || g === 'volley' || g === 'burger' ? ' · 컴퓨터도 더 강해져요' : ''}`], done ? {} : { stop: g }); }
+        done ? '🏆 4연승 달성! 번 돈이 모두 확정됐어요. 다음 판부터 새로 시작해요' : `연승으로 번 돈 ${won}코인 · 다음 판에 지면 ${Math.round(won * 2 / 3)}코인을 잃어요${g === 'mahjong' || g === 'volley' || g === 'burger' ? ' · 컴퓨터도 더 강해져요' : ''}`], done ? { bonus } : { stop: g, bonus }); }
     if (res === 'lose' && s.n > 0) { const lose = Math.round(s.won * 2 / 3); setStreak(g, null);
-      return ctx.earn(base, why, [...lines, `💥 ${s.n}연승 끝! 연승으로 번 ${s.won}코인의 2/3를 잃었어요`], { lose }); }
-    return ctx.earn(base, why, lines); };
+      return ctx.earn(base, why, [...lines, `💥 ${s.n}연승 끝! 연승으로 번 ${s.won}코인의 2/3를 잃었어요`], { lose, bonus }); }
+    return ctx.earn(base, why, lines, { bonus }); };
   // 돈이 모자라면 false. 쓴 뒤에 무엇을 얻는지는 부르는 쪽에서 적는다
   ctx.spend = async n => { n = Math.round(n); if (n <= 0) return true; let ok = false;
     try { await ctx.store.tx('money/' + ctx.uid, c => { const have = (c && c.c) || 0; if (have < n) { ok = false; return undefined; } ok = true; return { ...(c || {}), c: have - n }; }); } catch { ok = false; }
@@ -53,6 +68,7 @@ export function setupMoney(ctx, onChange) {
   ctx.buy = async id => { if (ctx.owns(id)) return true; if (!(await ctx.spend(priceOf(id)))) return false; await ctx.store.set(`owned/${ctx.uid}/${id}`, true).catch(() => {}); ctx.owned[ctx.uid] = { ...(ctx.owned[ctx.uid] || {}), [id]: true }; return true; };
   const offs = [
     ctx.store.on('streak/' + ctx.uid, v => { ctx.streak = v || {}; }),
+    ctx.store.on('bets', v => { ctx.bets = v || {}; refundCheck(); (ctx.betWatch || []).forEach(f => f()); }),
     ctx.store.on('money', v => { ctx.money = v || {}; document.querySelectorAll('[data-coins]').forEach(e => { e.textContent = won(ctx.coins()); }); onChange && onChange(); }),
     ctx.store.on('owned', v => { ctx.owned = v || {};
       const me = ctx.owned[ctx.uid] || {}; if (!me._init) { const d = ctx.dress[ctx.uid] || {}, keep = { _init: true }; [d.top, d.bottom, d.hat].forEach(id => { if (id) keep[id] = true; }); ctx.store.update('owned/' + ctx.uid, keep).catch(() => {}); } // 돈이 생기기 전에 입고 있던 옷은 그대로 내 것

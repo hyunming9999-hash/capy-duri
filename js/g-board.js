@@ -32,7 +32,7 @@ function frame(el, ctx, path, fresh, drawBoard, legend) {
     const was = s; // 방금 승부가 났을 때만 효과를 띄운다(끝난 판을 다시 열 때는 안 띄움)
     if (!v) { s = s && !s.n && s.win < 0 ? s : fresh(0); ctx.store.tx(path, c => c || s); } else s = v;
     if (was && s.n > was.n) sfx(path.includes('match') ? (s.got !== was.got ? 'pair' : 'flip') : 'tock'); // 돌 놓는 소리 / 카드 뒤집는 소리
-    if (was && was.win < 0 && s.win >= 0 && s.n > 0) { const r = solo() ? 'solo' : s.win === 2 ? 'draw' : s.win === ctx.idx ? 'win' : 'lose'; const bl = [`${{ solo: '혼자 하기', draw: '무승부', win: '승리', lose: '패배' }[r]} = ${PAY.board(r)}코인`, '(승 50 · 무 25 · 패 15 · 혼자 10)']; if (r === 'solo') ctx.earn(PAY.board(r), '보드게임', bl); else ctx.earnMatch(PAY.board(r), '보드게임', bl, r, path.split('/').pop()); }
+    if (was && was.win < 0 && s.win >= 0 && s.n > 0) { const r = solo() ? 'solo' : s.win === 2 ? 'draw' : s.win === ctx.idx ? 'win' : 'lose'; const bl = [`${{ solo: '혼자 하기', draw: '무승부', win: '승리', lose: '패배' }[r]} = ${PAY.board(r)}코인`, '(승 50 · 무 25 · 패 15 · 혼자 10)']; if (r === 'solo') ctx.earn(PAY.board(r), '보드게임', bl); else ctx.earnMatch(PAY.board(r), '보드게임', bl, r, path.split('/').pop(), true); }
     if (was && was.win < 0 && s.win >= 0 && s.n > 0) gameFx(s.win === 2 ? 'draw' : solo() || s.win === ctx.idx ? 'win' : 'lose', s.win === 2 ? '' : solo() ? '' : s.win === ctx.idx ? '내가 이겼다' : `${who(ctx, s.win)} 승리`);
     // 옷 입은 카피바라로 누가 두는 차례인지 보여 준다
     players.replaceChildren(...ctx.order.slice(0, 2).map((u, i) => h('div', { class: 'gp' + (s.win < 0 && s.turn === i ? ' on' : '') + (s.win === i ? ' win' : '') },

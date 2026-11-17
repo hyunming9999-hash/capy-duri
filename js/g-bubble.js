@@ -215,7 +215,7 @@ export function mount(el, ctx) {
       if (st) { if (clr) { const pay = PAY.bubbleStage(S.stage); ctx.earn(pay, '카피 버블', [`${S.stage}단계 클리어 보상 ${pay}코인${S.stage >= 15 ? ' (고난도)' : ''}`]); if (S.stage > cleared()) ctx.store.set(`games/bubbleStage/${ctx.uid}`, S.stage).catch(() => {}); gameFx('win', `${S.stage}단계 클리어!`); }
         else gameFx('lose', `${S.stage}단계 실패`); }
       else { const pay = PAY.bubble(my, S.diff), bl = [`${LEVELS[S.diff].name} 단계: 내 점수 ${my}점 → ${pay}코인`];
-        if (vs && o) { ctx.earnMatch(pay + (won ? 30 : 0), '카피 버블', won ? [...bl, '승리 보너스 +30코인'] : bl, won ? 'win' : 'lose', 'bubble'); gameFx(won ? 'win' : 'lose', `${my.toLocaleString()} : ${(o.s || 0).toLocaleString()}`); }
+        if (vs && o) { ctx.earnMatch(pay + (won ? 30 : 0), '카피 버블', won ? [...bl, '승리 보너스 +30코인'] : bl, won ? 'win' : 'lose', 'bubble', true); gameFx(won ? 'win' : 'lose', `${my.toLocaleString()} : ${(o.s || 0).toLocaleString()}`); }
         else { ctx.earn(pay, '카피 버블', bl); if (my > 0) gameFx('win', `${my.toLocaleString()}점${prev && my > prev.s ? ' 신기록' : ''}`); }
         if (!vs && my > 0 && (!prev || my > prev.s)) ctx.store.tx('games/bubbleBest/' + key, c => (c && c.s >= my ? undefined : { s: my, at: now() })).catch(() => {}); } }
     const again = () => { dismissed = S.id; if (mine && mine.id === S.id) mine = null; G = null; pickS(); };

@@ -167,7 +167,7 @@ export function mount(el, ctx) {
   let lastPh = '';
   function result() {
     const o = them(), vs = S.kind === 'vs', key = `${S.diff}-${ctx.uid}`, my = G ? G.score : ((S.sc || {})[ctx.uid] || {}).s || 0, prev = best[key], won = vs && o ? (meDead() ? false : true) : null;
-    if (fxDone !== S.id) { fxDone = S.id; sfx(won === false ? 'lose' : 'win'); const pay = PAY.tetris(my, S.diff), T = TETRIS_PAY[S.diff] || TETRIS_PAY.e; const tl = [`${LEVELS[S.diff].name} 단계: 기본 ${T.base} + 내 점수 ${my}점 ÷ ${T.per} = ${pay}코인${pay >= T.max ? ' (최대)' : ''}`, ...(won ? ['승리 보너스 +30코인'] : [])]; if (won == null) ctx.earn(pay, '테트리스', tl); else ctx.earnMatch(pay + (won ? 30 : 0), '테트리스', tl, won ? 'win' : 'lose', 'tetris');
+    if (fxDone !== S.id) { fxDone = S.id; sfx(won === false ? 'lose' : 'win'); const pay = PAY.tetris(my, S.diff), T = TETRIS_PAY[S.diff] || TETRIS_PAY.e; const tl = [`${LEVELS[S.diff].name} 단계: 기본 ${T.base} + 내 점수 ${my}점 ÷ ${T.per} = ${pay}코인${pay >= T.max ? ' (최대)' : ''}`, ...(won ? ['승리 보너스 +30코인'] : [])]; if (won == null) ctx.earn(pay, '테트리스', tl); else ctx.earnMatch(pay + (won ? 30 : 0), '테트리스', tl, won ? 'win' : 'lose', 'tetris', true);
       if (my > 0 && (!prev || my > prev.s)) ctx.store.tx('games/tetrisBest/' + key, c => (c && c.s >= my ? undefined : { s: my, at: now() })).catch(() => {});
       if (vs && o) gameFx(won ? 'win' : 'lose', `${my.toLocaleString()} : ${(o.s || 0).toLocaleString()}`); else if (my > 0) gameFx('win', `${my.toLocaleString()}점${prev && my > prev.s ? ' 신기록' : ''}`); }
     box.replaceChildren(h('div', { class: 'bg-end' }, ...[h('span', null, '🧱'), h('b', null, vs && o ? (won ? '이겼어요!' : '졌어요…') : '끝!'),

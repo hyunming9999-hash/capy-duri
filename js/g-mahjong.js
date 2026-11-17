@@ -114,7 +114,7 @@ export function mount(el, ctx) {
   function giveUp() { modal({ title: '🏳️ 여기서 그만할까요?', body: h('p', { class: 'center' }, '이 판을 끝내고 나가요.'), actions: [{ label: '계속하기' }, { label: '그만하기', danger: true, onClick: c => { c(); dismissed = S.id; if (mine && mine.id === S.id) mine = null; else if (S.kind === 'vs') ctx.store.update(PATH, { quit: ctx.uid, cells: null }).catch(() => {}); pickS(); paint(); } }] }); }
   function result() {
     const sc = S.sc || [0, 0], me = myI(), my = sc[me] || 0, op = sc[1 - me] || 0, key = `${S.diff}-${ctx.uid}`, prev = best[key], nm = names();
-    if (fxDone !== S.id) { fxDone = S.id; ctx.earnMatch(PAY.mahjong(my) + (my > op ? 20 : 0), '동물 마작', [`내 점수 ${my}점 ÷ 3 = ${PAY.mahjong(my)}코인`, ...(my > op ? ['승리 보너스 +20코인'] : [])], my > op ? 'win' : my < op ? 'lose' : 'draw', 'mahjong'); gameFx(my > op ? 'win' : my < op ? 'lose' : 'draw', `${my} : ${op}`);
+    if (fxDone !== S.id) { fxDone = S.id; ctx.earnMatch(PAY.mahjong(my) + (my > op ? 20 : 0), '동물 마작', [`내 점수 ${my}점 ÷ 3 = ${PAY.mahjong(my)}코인`, ...(my > op ? ['승리 보너스 +20코인'] : [])], my > op ? 'win' : my < op ? 'lose' : 'draw', 'mahjong', S.kind === 'vs'); gameFx(my > op ? 'win' : my < op ? 'lose' : 'draw', `${my} : ${op}`);
       if (my > 0 && (!prev || my > prev.s)) ctx.store.tx('games/mahjongBest/' + key, c => (c && c.s >= my ? undefined : { s: my, at: now() })).catch(() => {}); }
     box.replaceChildren(h('div', { class: 'bg-end' }, h('span', { class: 'mj-hero', html: animalSvg(4) }), h('b', null, my > op ? '이겼어요!' : my < op ? '졌어요…' : '비겼어요'),
       h('p', { class: 'bg-big' }, `${my} : ${op}`), h('p', { class: 'dim' }, `${nm[me]} ${my}점 · ${nm[1 - me] || '상대'} ${op}점 · ${LEVELS[S.diff].name}`),

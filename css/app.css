@@ -1234,3 +1234,12 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .bb-key.fire b { font: 900 20px/1 var(--head); letter-spacing: 1px; text-shadow: 0 2px 0 rgba(150,20,70,.45); } .bb-key.fire .bb-ic { width: 28px; height: 28px; }
 .bb-key.on, .bb-key:active { transform: translateY(5px); box-shadow: 0 0 0 transparent, inset 0 3px 6px rgba(0,0,0,.2); }
 .bb .tt-top { margin-bottom: 0; }
+
+/* 💰 내기 막대 */
+.bet-bar:empty { display: none; }
+.bet-bar { display: grid; grid-template-columns: 1fr auto; column-gap: 8px; align-items: center; margin-bottom: 8px; padding: 8px 12px; border-radius: 16px; background: #FFF8E1; border: 2px solid #F2C94C; }
+.bet-bar span { font: 800 14px/1.3 var(--head); color: #8A5A00; } .bet-bar span.hot { color: #D9480F; }
+.bet-bar small { grid-column: 1; font-size: 11.5px; color: #7A6A58; line-height: 1.35; }
+.bet-bar > .btn, .bet-bar .bet-acts { grid-column: 2; grid-row: 1 / span 2; } .bet-acts { display: flex; gap: 6px; }
+.bet-pick { display: flex; flex-direction: column; gap: 8px; text-align: center; } .bet-pick p { margin: 0; font-size: 13.5px; }
+.bet-amt { font: 900 30px var(--head); color: #C98A00; } .bet-chips { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
