@@ -119,12 +119,15 @@ export function openFishing(o) {
   let stormAt = 0, alive = true, raf = 0, last = 0, phase = 'ready', power = 0, pdir = 1, t0 = 0, biteAt = 0, biteEnd = 0, nibAt = 0, cur = null, dist = 100, ten = 30, hold = false, burst = 0, nextBurst = 0, slack = 0, shown = false;
   const zone = o.zone, rodT = () => o.bag().rod || 0, rod = () => RODS[rodT()], ez = () => Math.max(0, Math.min(2, rodT() - zone));
   const float = h('i', { class: 'fs-float' }), hook = h('i', { class: 'fs-hook' }), rl = h('div', { class: 'fs-rl', html: '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="" fill="none" stroke="#fff" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>' }), fishEl = h('div', { class: 'fs-fish' }), mark = h('b', { class: 'fs-mark' });
-  const me = h('div', { class: 'fs-me', html: capy(o.ctx.capyOf(o.ctx.uid, { face: 'happy' })) }), rodEl = h('i', { class: 'fs-rod' });
+  const me = h('div', { class: 'fs-me', html: capy(o.ctx.capyOf(o.ctx.uid, { face: 'happy' })) }), rodTip = h('b', { class: 'fs-tip' }), rodEl = h('i', { class: 'fs-rod' }, rodTip);
   // 위: 타고 온 배가 그대로 물 위에 떠 있다. 아래: 물속(구역마다 그림이 다르다)
   const surf = h('div', { class: 'fs-surf' }, rl, h('div', { class: 'fs-boat' }, me, h('div', { class: 'fs-hull', html: o.boat || '' }), rodEl), float, mark), under = h('div', { class: 'fs-under z' + zone }, hook, fishEl), msg = h('p', { class: 'fs-msg' }), bar = h('div', { class: 'fs-bar' }, h('u'), h('i')), info = h('div', { class: 'fs-info' });
   const pearlTxt = h('b', { class: 'fs-pearltxt', hidden: true }), sparks = h('div', { class: 'fs-sparks' }, ...Array.from({ length: 14 }, (_, k) => h('i', { style: { left: (6 + (k * 37) % 88) + '%', top: (8 + (k * 53) % 80) + '%', animationDelay: (k % 7) * 0.17 + 's' } }, '✦'))), patEl = h('div', { class: 'fs-pat', hidden: true }, h('u'), h('span', null, '🐟 물고기 인내심')), pipsEl = h('span', { class: 'fs-pips' }), gl = h('div', { class: 'fs-gl' }, h('b'), h('span')), btn = h('button', { class: 'fs-btn' }), quit = h('button', { class: 'btn sm fs-quit', onClick: () => close() }, '그만하기');
   const wrap = h('div', { class: 'fs' }, h('div', { class: 'fs-top' }, h('b', null, `🎣 ${ZONES[zone]}`), info, quit), h('div', { class: 'fs-view z' + zone }, surf, under, sparks, pearlTxt, patEl), msg, h('div', { class: 'fs-deck' }, h('div', { class: 'fs-gauge' }, gl, bar, h('div', { class: 'fs-ticks' }, h('small'), pipsEl, h('small'))), btn));
-  let fx = 60; const setFloat = (x, b = 10, taut = false) => { fx = x; float.style.left = hook.style.left = mark.style.left = x + '%'; float.style.bottom = b + '%'; const y = 92 - b, sag = taut ? 2 : 10 + (x - 34) * 0.22; rl.firstChild.firstChild.setAttribute('d', `M34 34 Q${(34 + x) / 2} ${(34 + y) / 2 + sag} ${x} ${y}`); };
+  // 낚싯줄은 매 프레임 낚싯대 끝(배가 흔들리고 낚싯대가 휘둘려도 그 끝)에서 찌까지 이어 그린다 → 낚싯대와 줄이 한 몸처럼 움직인다
+  const tipAt = () => { const r = rl.getBoundingClientRect(), t = rodTip.getBoundingClientRect(); return r.width ? [(t.left - r.left) / r.width * 100, (t.top - r.top) / r.height * 100] : [34, 34]; };
+  let fx = 60, fb = 10, ftaut = false; const drawLine = () => { if (rl.style.display === 'none') return; const [sx, sy] = tipAt(), x = fx, y = 92 - fb, sag = ftaut ? 2 : 10 + Math.abs(x - sx) * 0.22; rl.firstChild.firstChild.setAttribute('d', `M${sx.toFixed(2)} ${sy.toFixed(2)} Q${((sx + x) / 2).toFixed(2)} ${((sy + y) / 2 + sag).toFixed(2)} ${x} ${y}`); };
+  const setFloat = (x, b = 10, taut = false) => { fx = x; fb = b; ftaut = taut; float.style.left = hook.style.left = mark.style.left = x + '%'; float.style.bottom = b + '%'; drawLine(); };
   const shadow = () => `<svg viewBox="0 0 120 80"><ellipse cx="60" cy="40" rx="${cur.f.pearl ? 20 : 34 + Math.min(20, cur.d * 2)}" ry="${cur.f.pearl ? 16 : 14 + cur.d}" fill="${zone === 3 ? 'rgba(170,215,255,.42)' : 'rgba(20,40,80,.55)'}"/></svg>`;
   let strikes = 0; const lim = () => strikesOf(rodT(), zone), drawPips = on => { pipsEl.replaceChildren(...(on ? Array.from({ length: lim() }, (_, k) => h('i', { class: k < lim() - strikes ? '' : 'off' })) : [])); };
   const say = (t, cls = '') => { msg.className = 'fs-msg ' + cls; msg.textContent = t; };
@@ -213,10 +216,10 @@ export function openFishing(o) {
   const kd = e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (phase === 'fight') { if (!e.repeat) down(); } else if (!e.repeat && btn.onclick) btn.onclick(); } }, ku = e => { if (e.key === ' ' || e.key === 'Enter') up(); };
   window.addEventListener('keydown', kd); window.addEventListener('keyup', ku);
   function step(now) {
-    if (!alive) return; const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!alive) return; const dt = Math.min(0.05, (now - last) / 1000); last = now; drawLine();
     if (phase === 'cast') { const u = (now - c0) / 1000; // 낚싯대를 뒤로 젖혔다가(0.25초) 휘두르면 찌가 포물선으로 날아간다(0.6초)
       if (u >= 0.25 && !flew) { flew = true; rodEl.className = 'fs-rod cast'; sfx('cast'); float.style.display = rl.style.display = ''; hook.style.display = 'none'; }
-      if (flew) { const k = Math.min(1, (u - 0.25) / 0.6), e = k * (2 - k) * 0.35 + k * 0.65; setFloat(34 + (castTo - 34) * e, 58 * (1 - e) + 10 * e + 34 * Math.sin(Math.PI * k) * (0.5 + power / 200), true); if (k >= 1) touch(); } }
+      if (flew) { const k = Math.min(1, (u - 0.25) / 0.6), e = k * (2 - k) * 0.35 + k * 0.65, [tx, ty] = tipAt(), tb = 92 - ty; setFloat(tx + (castTo - tx) * e, tb * (1 - e) + 10 * e + 34 * Math.sin(Math.PI * k) * (0.5 + power / 200), true); if (k >= 1) touch(); } }
     else if (phase === 'power') { power += pdir * dt * (150 + zone * 25); if (power >= 100) { power = 100; pdir = -1; } if (power <= 0) { power = 0; pdir = 1; } setBar(power, 'pow'); }
     else if (phase === 'wait') {
       float.classList.toggle('nib', !!nibAt && now > nibAt && now < nibAt + 350);

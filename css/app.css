@@ -1549,3 +1549,5 @@ body.vb-on .modal-wrap { z-index: 4600; }
 
 .vb-net { flex: none; font-size: 11px; font-weight: 900; color: #fff; padding: 3px 9px; border-radius: 12px; white-space: nowrap; pointer-events: none; background: rgba(0,0,0,.35); }
 .vb-net[data-s="on"] { background: linear-gradient(135deg, #2EC4B6, #118AB2); box-shadow: 0 0 8px rgba(46,196,182,.8); } .vb-net[data-s="try"] { background: rgba(255,183,3,.85); color: #4A3000; } .vb-net[data-s="srv"] { background: rgba(90,100,110,.8); }
+
+.fs-tip { position: absolute; left: 50%; top: 0; width: 1px; height: 1px; pointer-events: none; }
