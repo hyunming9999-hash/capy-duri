@@ -44,11 +44,47 @@ function betBar(ctx, g) {
   return { el, stop: () => { ctx.betWatch = (ctx.betWatch || []).filter(f => f !== draw); } };
 }
 
+// 👀 관전: 내가 게임을 하는 동안 상대가 보고 있으면(관전 신호가 5초 안에 왔으면) 게임 화면을 0.7초마다 찍어 보낸다
+// 그림판(canvas)은 작은 사진으로 바꾸고, 나머지 화면은 그대로 글(HTML)로 보낸다. 상대 화면에서는 같은 모양으로만 보이고 누를 수 없다
+function caster(el, ctx, g, eye) {
+  let last = '', watched = 0;
+  const offW = ctx.store.on('watchers/' + ctx.uid, v => { watched = v && v.at ? v.at : 0; });
+  const snap = () => {
+    const on = ctx.partnerId && ctx.store.now() - watched < 6000; eye.hidden = !on; if (!on) return;
+    const live = [...el.querySelectorAll('canvas')], c = el.cloneNode(true); c.querySelectorAll('.bet-bar, .spect-eye, .earn-card, .modal-wrap').forEach(n => n.remove());
+    c.querySelectorAll('canvas').forEach((cv, i) => { const src = live[i]; if (!src || !src.width) return cv.remove(); try { const w = Math.min(360, src.width), t = document.createElement('canvas'); t.width = w; t.height = Math.round(src.height * w / src.width); t.getContext('2d').drawImage(src, 0, 0, t.width, t.height);
+      const im = document.createElement('img'); im.src = t.toDataURL('image/jpeg', 0.6); im.className = cv.className; im.style.cssText = cv.style.cssText; im.style.width = (src.getBoundingClientRect().width || t.width) + 'px'; cv.replaceWith(im); } catch { cv.remove(); } });
+    const html = c.innerHTML; if (html === last || html.length > 600000) return; last = html;
+    ctx.store.set('spect/' + ctx.uid, { g: g.id, title: g.title, html, at: ctx.store.now() }).catch(() => {}); };
+  const iv = setInterval(snap, 700);
+  return () => { clearInterval(iv); offW(); ctx.store.set('spect/' + ctx.uid, null).catch(() => {}); };
+}
+function watchView(el, ctx) {
+  const pid = ctx.partnerId; ctx.setTitle(`👀 ${ctx.nameOf(pid)} 관전`);
+  const info = h('p', { class: 'spect-info' }, '연결하는 중…'), view = h('div', { class: 'spect-view' }); el.append(info, view);
+  const beat = () => pid && ctx.store.set('watchers/' + pid, { by: ctx.uid, at: ctx.store.now() }).catch(() => {}); beat(); const iv = setInterval(beat, 2000);
+  let at = 0; const tick = setInterval(() => { const w = ctx.partnerWhere || ''; if (!w.startsWith('game-') || w === 'game-watch') info.textContent = `${josa(ctx.nameOf(pid), '가', '이')} 지금 게임을 하고 있지 않아요`; else if (ctx.store.now() - at > 5000) info.textContent = `${titleOfGame(w)} 화면을 기다리는 중…`; }, 1000);
+  const off = ctx.store.on('spect/' + pid, v => { if (!v || !v.html) return; at = v.at || ctx.store.now(); info.textContent = `🎮 ${ctx.nameOf(pid)}의 「${v.title}」 실시간 관전 중`; view.className = 'spect-view game-' + v.g; view.innerHTML = v.html; });
+  return () => { clearInterval(iv); clearInterval(tick); off(); if (pid) ctx.store.set('watchers/' + pid, null).catch(() => {}); };
+}
+const titleOfGame = w => (GAMES.find(x => 'game-' + x.id === w) || { title: '게임' }).title;
+// 게임 목록 맨 위: 상대가 지금 무슨 게임을 하는지
+function partnerPlaying(ctx) {
+  const el = h('div', { class: 'p-playing', hidden: true }), draw = () => { const pid = ctx.partnerId, w = (pid && ctx.presence[pid] && ctx.partnerWhere) || '';
+    if (!w.startsWith('game-') || w === 'game-watch') { el.hidden = true; return; } el.hidden = false;
+    el.replaceChildren(h('span', null, `🎮 ${josa(ctx.nameOf(pid), '는', '은')} 지금 「${titleOfGame(w)}」 하는 중`), h('button', { class: 'btn sm primary', onClick: () => ctx.go('game-watch') }, '👀 관전하기')); };
+  draw(); const iv = setInterval(draw, 1500); return { el, stop: () => clearInterval(iv) };
+}
+
 export function mount(el, ctx, sub) {
   const g = GAMES.find(x => x.id === sub);
-  if (g) { ctx.setTitle(g.title); el.classList.add('game-' + g.id); const bar = PVP.has(g.id) ? betBar(ctx, g) : null; if (bar) el.append(bar.el); const off = g.mod.mount(el, ctx); return () => { bar && bar.stop(); off && off(); }; }
+  if (sub === 'watch') return watchView(el, ctx);
+  if (g) { ctx.setTitle(g.title); el.classList.add('game-' + g.id); const bar = PVP.has(g.id) ? betBar(ctx, g) : null; if (bar) el.append(bar.el); const eye = h('div', { class: 'spect-eye', hidden: true }, `👀 ${ctx.nameOf(ctx.partnerId)} 관전 중`); el.append(eye);
+    const off = g.mod.mount(el, ctx), cast = caster(el, ctx, g, eye); return () => { cast(); bar && bar.stop(); off && off(); }; }
+  const pp = partnerPlaying(ctx); el.append(pp.el);
   el.append(h('div', { class: 'g-streak' }, h('b', null, '🔥 연승 보너스'), h('small', null, '컴퓨터전·경쟁전에서 이기면 1승 ×1 → 2연승 ×1.5 → 3연승 ×1.8 → 4연승 ×2.3 (4연승에서 확정). 연승 중에 지면 연승으로 번 돈의 2/3를 잃어요. 이길 때마다 그만두고 챙길 수 있고, 컴퓨터는 연승할수록 강해져요. 기록 모드는 해당 없어요.')));
   el.append(h('div', { class: 'game-list' }, GAMES.map((x, i) => h('button', { class: 'game-card', style: { animationDelay: i * 50 + 'ms' }, onClick: () => ctx.go('game-' + x.id) },
     capyEl({ color: ['brown', 'cream', 'choco', 'peach'][i % 4], acc: x.acc, face: x.face, head: true }), h('div', null, h('b', null, x.title), h('small', null, x.sub), RATE[x.id] && h('small', { class: 'g-rate' }, '🪙 ' + RATE[x.id])), h('span', { class: 'go' }, '›'))),
     h('a', { class: 'game-card ext', href: HOTTEOK, target: '_blank', rel: 'noopener', style: { animationDelay: '300ms' } }, h('span', { class: 'ext-ic' }, '🥊'), h('div', null, h('b', null, '호떡 철권'), h('small', null, '따로 만든 게임 · 새 창에서 열려요')), h('span', { class: 'go' }, '↗'))));
+  return () => pp.stop();
 }

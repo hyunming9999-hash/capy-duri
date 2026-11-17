@@ -1252,3 +1252,11 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .bet-bar span { font-size: 12.5px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bet-bar small { display: none; }
 .bet-bar .btn.sm, .bet-bar .bet-acts .btn { padding: 3px 10px; font-size: 12px; min-height: 0; height: 24px; }
+
+/* 🎮 상대가 하는 게임 · 👀 관전 */
+.p-playing { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding: 8px 10px 8px 12px; border-radius: 16px; background: #EAF6FF; border: 2px solid #8EC5F0; }
+.p-playing span { flex: 1; font: 800 13.5px/1.35 var(--head); color: #1F5A85; }
+.spect-eye { position: fixed; right: 12px; bottom: 14px; z-index: 50; padding: 4px 10px; border-radius: 999px; background: rgba(31,90,133,.85); color: #fff; font: 800 12px var(--head); pointer-events: none; }
+.spect-info { margin: 0 0 8px; padding: 8px 12px; border-radius: 14px; background: #EAF6FF; border: 2px solid #8EC5F0; font: 800 13.5px var(--head); color: #1F5A85; text-align: center; }
+.spect-view { pointer-events: none; user-select: none; }
+.spect-view img { max-width: 100%; height: auto; }
