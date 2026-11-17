@@ -1155,3 +1155,4 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .dress-item svg { overflow: hidden !important; }
 /* 값 딱지는 그림을 가리지 않게 이름 아래로 */
 .dress-item.lock::after { position: static; transform: none; margin-top: 3px; }
+.so-pop.long { animation-name: soPopLong; } @keyframes soPopLong { 0% { opacity: 0; margin-top: 8px; } 6% { opacity: 1; margin-top: 0; } 90% { opacity: 1; margin-top: 0; } 100% { opacity: 0; margin-top: -14px; } }

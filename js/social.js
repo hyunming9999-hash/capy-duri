@@ -232,7 +232,7 @@ export function mount(el, ctx) {
   const kd = e => { if (fishOpen || document.querySelector('.modal-wrap') || (e.target && e.target.tagName === 'INPUT')) return; if (SORRY_UI.btn.el && e.key === 'Enter') { e.preventDefault(); return forgive('btn'); } if (KEY[e.key]) { keys.add(KEY[e.key]); e.preventDefault(); } else if (e.key === ' ' && !e.repeat) { e.preventDefault(); fishMode > 0 ? goFish() : punch(); } };
   const ku = e => { if (KEY[e.key]) keys.delete(KEY[e.key]); };
   window.addEventListener('keydown', kd); window.addEventListener('keyup', ku);
-  const pop = (parent, text, cls = '') => { const f = h('em', { class: 'so-pop ' + cls }, text); parent.append(f); setTimeout(() => f.remove(), cls.includes('chat') ? 4500 : cls.includes('long') ? 2600 : 1000); };
+  const pop = (parent, text, cls = '') => { const f = h('em', { class: 'so-pop ' + cls }, text), ms = cls.includes('chat') ? 4500 : cls.includes('long') ? Math.min(8000, Math.max(2600, 1400 + String(text).length * 120)) : 1000; if (cls.includes('long')) f.style.animationDuration = ms + 'ms'; parent.append(f); setTimeout(() => f.remove(), ms); }; // 긴 말은 글자 수만큼 더 오래 띄운다(20자 3.8초, 40자 6.2초, 최대 8초)
 
   // 나도 놀이기구를 탄다: 빈 놀이기구 앞에서 🎠, 다시 누르거나 방향키를 누르면 내린다
   const buddiesOf = q => actors.map((o, i) => (o.st === 'ride' && o.spot && o.spot.grp === q.grp ? i : -1)).filter(i => i >= 0);
