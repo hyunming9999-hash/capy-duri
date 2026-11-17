@@ -55,7 +55,7 @@ export function mount(el, ctx) {
   let alive = true, raf = 0, acc = 0, lastT = 0;
   const canvas = h('canvas', { class: 'volley vb-cv', width: W, height: H }), g = canvas.getContext('2d');
   const info = h('div', { class: 'vb-info' }, '불러오는 중…');
-  const modeBtn = h('button', { class: 'vb-tb' }), newBtn = h('button', { class: 'vb-tb primary' }, '새 게임');
+  const modeBtn = h('button', { class: 'vb-tb' }), newBtn = h('button', { class: 'vb-start' }, h('b', null, '▶ 시작'), h('small', null, '7점 먼저 내면 승리'));
   const inp = { l: false, r: false, j: false, s: false };
   // 스파이크 충전: [나, 상대] 기본 공격 횟수(0~3). 3이면 스파이크 준비 완료
   const chg = [0, 0], armAt = [0, 0]; let flash = 0, shake = 0, spikeTxt = 0, lastHit = -1, camZ = 1, camTop = 0, ghost = null;
@@ -65,9 +65,9 @@ export function mount(el, ctx) {
   const right = h('div', { class: 'vb-pad r' }, spkBtn, btn('j', 'jmp', '점프'));
   const exit = h('button', { class: 'vb-tb x', onClick: () => ctx.go('game') }, '✕ 나가기');
   const bar = el.querySelector('.bet-bar');
-  const top = h('div', { class: 'vb-top' }, exit, info, bar || '', modeBtn, newBtn);
+  const top = h('div', { class: 'vb-top' }, exit, info, bar || '', modeBtn);
   const spk = h('div', { class: 'vb-spk' }, pips);
-  const rot = h('div', { class: 'vb-rot' }, canvas, top, spk, left, right), wrap = h('div', { class: 'vb' }, rot);
+  const rot = h('div', { class: 'vb-rot' }, canvas, top, spk, left, right, newBtn), wrap = h('div', { class: 'vb' }, rot);
   let VK = 1, VX = 0, VY = 0; // 화면 전체를 쓰는 캔버스 안에서 코트(800×450)를 그릴 배율과 위치
   el.append(wrap); document.body.classList.add('vb-on');
   // 세로로 들고 있으면 화면을 90도 돌려 가로로 보여 준다. 조작 버튼은 코트를 가리지 않게 양옆에 둔다
@@ -205,7 +205,7 @@ export function mount(el, ctx) {
     [[game.sc0, NETX - 70, '#E8453C'], [game.sc1, NETX + 70, '#2B8FD6']].forEach(([v, x, c]) => { g.strokeText(v, x, 50); g.fillStyle = c; g.fillText(v, x, 50); });
     if (spikeTxt) { const k = Math.min(1, (50 - spikeTxt) / 8); g.save(); g.translate(NETX, 140); g.scale(.6 + k * .5, .6 + k * .5); g.font = '900 56px Jua, sans-serif'; g.lineWidth = 10; g.strokeStyle = '#7A2E00'; g.strokeText('스파이크!!', 0, 0); g.fillStyle = '#FFD23F'; g.fillText('스파이크!!', 0, 0); g.restore(); }
     let msg = '';
-    if (game.phase === 'idle') msg = '새 게임을 눌러 시작';
+    if (game.phase === 'idle') msg = '';
     else if (game.phase === 'over') msg = (game.sc0 > game.sc1 ? 0 : 1) === my() ? '이겼다!' : mode === 'cpu' ? '컴퓨터 승리' : '졌다…';
     else if (!live() && !dead) msg = game.serve === my() ? '내 서브' : '상대 서브';
     if (msg) { g.font = '700 32px Jua, sans-serif'; g.fillStyle = 'rgba(255,255,255,.88)'; const w = g.measureText(msg).width + 48; g.beginPath(); g.roundRect(NETX - w / 2, 80, w, 56, 28); g.fill(); g.fillStyle = '#5F3F2B'; g.fillText(msg, NETX, 119); }
@@ -215,6 +215,7 @@ export function mount(el, ctx) {
     acc += Math.min(100, t - (lastT || t)); lastT = t;
     while (acc >= 16.67) { tick(); acc -= 16.67; }
     send(t); draw();
+    const showStart = game.phase !== 'serve'; if (newBtn.hidden === showStart) { newBtn.hidden = !showStart; newBtn.firstChild.textContent = game.phase === 'over' ? '▶ 한 판 더' : '▶ 시작'; }
     const pm = ps[my()], go = chg[my()] >= SPK_N && pm.y < standY - 40 && live(); if (go !== spkBtn.classList.contains('now')) spkBtn.classList.toggle('now', go); // 스파이크 준비된 채 점프하면 '눌러!'
     const here = mode !== 'online' || Date.now() - oppSeen < 3000;
     const txt = mode === 'cpu' ? '컴퓨터와 연습 중' : here ? `${josa(ctx.nameOf(ctx.order[1 - ctx.idx]), '와', '과')} 대결 · 나는 ${ctx.idx ? '오른쪽' : '왼쪽'}` : `${josa(ctx.nameOf(ctx.order[1 - ctx.idx]), '가', '이')} 들어오길 기다리는 중…`;
