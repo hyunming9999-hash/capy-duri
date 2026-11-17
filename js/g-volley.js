@@ -54,7 +54,7 @@ export function stepPlayer(p, i, inp, speed = SPEED) {
   p.x = Math.max(lo, Math.min(hi, p.x));
 }
 
-const SPK_N = 3, ARM_MS = 850, DSH_MAX = 2; // 상대 진영으로 3번 넘기기 → 스파이크 1번 / 스파이크 버튼을 누르고 이 시간 안에 공에 닿으면 발동
+const SPK_N = 3, ARM_MS = 1100, DSH_MAX = 2; // 상대 진영으로 3번 넘기기 → 스파이크 1번 / 스파이크 버튼을 누르고 이 시간 안에 공에 닿으면 발동
 export function mount(el, ctx) {
   let alive = true, raf = 0, acc = 0, lastT = 0;
   const canvas = h('canvas', { class: 'vb-cv', width: W, height: H }), g = canvas.getContext('2d');
@@ -104,7 +104,7 @@ export function mount(el, ctx) {
   const fit = () => { const pw = innerWidth, ph = innerHeight, port = ph > pw, w = port ? ph : pw, hh = port ? pw : ph, dpr = Math.min(2, devicePixelRatio || 1);
     rot.style.width = w + 'px'; rot.style.height = hh + 'px'; rot.style.transform = `translate(-50%, -50%)${port ? ' rotate(90deg)' : ''}`;
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(hh * dpr); canvas.style.width = w + 'px'; canvas.style.height = hh + 'px';
-    PADB = LAY === 'A' ? Math.round(hh * 0.24 * dpr) : 0; rot.dataset.lay = LAY;
+    PADB = LAY === 'A' ? Math.round(hh * 0.24 * dpr) : 0; rot.dataset.lay = LAY; try { rot.dataset.skin = new URLSearchParams(location.search).get('vbskin') || localStorage.getItem('capy.vbSkin') || ''; } catch {}
     VK = Math.min(w / W, (hh - PADB / dpr) / H) * dpr; VX = (canvas.width - W * VK) / 2; VY = canvas.height - PADB - H * VK; spk.style.top = (VY + 64 * VK) / dpr + 'px'; };
   // 처음 화면을 누르면 진짜 전체화면(주소창까지 숨김)으로 바꾼다. 지원 안 하는 폰은 그대로
   const goFull = () => { const d = document.documentElement; if (!document.fullscreenElement && d.requestFullscreen) d.requestFullscreen({ navigationUI: 'hide' }).then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch {} setTimeout(fit, 200); }).catch(() => {}); };
@@ -133,8 +133,8 @@ export function mount(el, ctx) {
 
   // 공을 쳤을 때: 스파이크 준비 + 버튼을 막 눌렀고 + 공중이면 스파이크, 아니면 기본 공격 1번 충전
   // 스파이크 가능한 위치: 공이 머리와 같은 높이이거나 머리보다 조금 위, 머리 앞쪽 가까이
-  const spikeOk = p => ball.y < p.y + 22 && ball.y > p.y - 150;
-  function trySpike(i) { const p = ps[i]; if (chg[i] < SPK_N || !live() || (ball.x < NETX ? 0 : 1) !== i || Math.abs(ball.x - p.x) > 95 || !spikeOk(p)) return false;
+  const spikeOk = p => ball.y < p.y + 45 && ball.y > p.y - 230;
+  function trySpike(i) { const p = ps[i]; if (chg[i] < SPK_N || !live() || (ball.x < NETX ? 0 : 1) !== i || Math.abs(ball.x - p.x) > 140 || !spikeOk(p)) return false;
     chg[i] = 0; armAt[i] = 0; lastTouch = i; lastHit = i; flash = 12; shake = 34; try { navigator.vibrate && navigator.vibrate([60, 30, 120]); } catch {} spikeTxt = 50; sfx('hit'); setTimeout(() => sfx('pop'), 60); spikeBall(ball, i); drawPips(); return true; }
   function onHit(i, p) {
     lastTouch = i;
@@ -251,11 +251,12 @@ export function mount(el, ctx) {
     if (wallL.complete && wallL.naturalWidth && wallR.complete && wallR.naturalWidth) { const ww = 110, topW = -OY / K - 20, viewL = -OX / K - 10, viewR = (canvas.width - OX) / K + 10;
       // 흰 벽돌 벽(왼쪽: 레트로 포스터, 오른쪽: 하이파이브 포스터). 위로는 맨 위 '벽돌만 있는 부분'을 이어 붙이고, 벽 바깥은 화면 끝까지 벽돌로 채운다
       // 벽 바깥은 먼저 흰 벽 색으로 화면 끝까지 칠해 빈틈이 보이지 않게 한다
-      g.fillStyle = '#F3EFE7'; g.fillRect(viewL - 200, topW - 200, WALL_L - 30 - viewL + 200, GROUND + 60 - topW + 200); g.fillRect(WALL_R + 30, topW - 200, viewR - WALL_R + 200, GROUND + 60 - topW + 200);
+      g.fillStyle = '#F3EFE7'; g.fillRect(viewL - 200, topW - 200, WALL_L - 30 - viewL + 200, GROUND + 14 - topW + 200); g.fillRect(WALL_R + 30, topW - 200, viewR - WALL_R + 200, GROUND + 14 - topW + 200);
       for (const [img, wx, side] of [[wallL, WALL_L, -1], [wallR, WALL_R, 1]]) { const iw = img.naturalWidth, ih = img.naturalHeight, wh = ww * ih / iw, x0 = side < 0 ? wx - ww + 16 : wx - 16, y0 = GROUND + 16 - wh, sl = ih * 0.28, slH = ww * sl / iw;
         for (let cx = x0 + side * (ww - 2); side < 0 ? cx + ww > viewL : cx < viewR; cx += side * (ww - 2)) for (let y = GROUND + 16 - slH; y + slH > topW - slH; y -= slH - 1) g.drawImage(img, 0, 0, iw, sl, cx, y, ww, slH);
         for (let y = y0 - slH + 1; y + slH > topW - slH; y -= slH - 1) g.drawImage(img, 0, 0, iw, sl, x0, y, ww, slH);
-        g.drawImage(img, x0, y0, ww, wh); } }
+        g.drawImage(img, x0, y0, ww, wh); }
+      for (const [a0, a1] of [[viewL - 200, WALL_L + 20], [WALL_R - 20, viewR + 200]]) { const gr = g.createLinearGradient(0, GROUND + 6, 0, GROUND + 30); gr.addColorStop(0, 'rgba(120,85,40,.28)'); gr.addColorStop(1, 'rgba(120,85,40,0)'); g.fillStyle = gr; g.fillRect(a0, GROUND + 8, a1 - a0, 24); } } // 벽 밑 모래 그림자
     else { g.fillStyle = '#F4F1EA'; g.fillRect(WALL_L - 60, -SKY - 400, 60, GROUND + SKY + 420); g.fillRect(WALL_R, -SKY - 400, 60, GROUND + SKY + 420); }
     // 네트: 기둥 + 그물 + 흰 띠
     g.fillStyle = '#8A5E3B'; g.fillRect(NETX - 4, NETTOP - 6, 8, GROUND - NETTOP + 6);
@@ -291,7 +292,7 @@ export function mount(el, ctx) {
     send(t); draw();
     const showLv = game.phase !== 'serve' && mode === 'cpu'; if (lvRow.hidden === showLv) { lvRow.hidden = !showLv; if (showLv) drawLv(); }
     const showStart = game.phase !== 'serve'; if (newBtn.hidden === showStart) { newBtn.hidden = !showStart; newBtn.firstChild.textContent = game.phase === 'over' ? '▶ 한 판 더' : '▶ 시작'; }
-    const pm = ps[my()], go = chg[my()] >= SPK_N && live() && Math.abs(ball.x - pm.x) < 110 && ball.y < pm.y + 20 && ball.y > pm.y - 160; if (go !== spkBtn.classList.contains('now')) spkBtn.classList.toggle('now', go); // 스파이크 준비된 채 점프하면 '눌러!'
+    const pm = ps[my()], go = chg[my()] >= SPK_N && live() && (ball.x < NETX ? 0 : 1) === my() && Math.abs(ball.x - pm.x) < 140 && spikeOk(pm); if (go !== spkBtn.classList.contains('now')) spkBtn.classList.toggle('now', go); // 스파이크 준비된 채 점프하면 '눌러!'
     const here = mode !== 'online' || Date.now() - oppSeen < 3000;
     const txt = mode === 'cpu' ? '컴퓨터와 연습 중' : here ? `${josa(ctx.nameOf(ctx.order[1 - ctx.idx]), '와', '과')} 대결 · 나는 ${ctx.idx ? '오른쪽' : '왼쪽'}` : `${josa(ctx.nameOf(ctx.order[1 - ctx.idx]), '가', '이')} 들어오길 기다리는 중…`;
     if (info.textContent !== txt) info.textContent = txt;
