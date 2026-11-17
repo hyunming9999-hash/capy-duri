@@ -74,7 +74,15 @@ export function mount(el, ctx) {
   const spk = h('div', { class: 'vb-spk' }, pips);
   const rot = h('div', { class: 'vb-rot' }, canvas, top, spk, left, right, newBtn, lvRow), wrap = h('div', { class: 'vb' }, rot);
   let VK = 1, VX = 0, VY = 0; // 화면 전체를 쓰는 캔버스 안에서 코트(800×450)를 그릴 배율과 위치
-  document.body.append(wrap); document.body.classList.add('vb-on'); // 화면 전체(게임 카드 안에 넣으면 둥근 모서리에 잘린다)
+  document.body.append(wrap); document.body.classList.add('vb-on');
+  // 들어올 때 큰 안내 화면: 박진감 넘치는 썸네일 + 스파이크 쓰는 법. 누르면 닫힌다
+  const intro = h('div', { class: 'vb-intro', onClick: () => intro.remove() }, h('div', { class: 'vb-intro-c' },
+    h('img', { src: 'img/volley/intro.webp', alt: '' }),
+    h('b', null, '🔥 스파이크 꿀팁'),
+    h('p', null, '스파이크를 쓰려면 점프해서 ', h('em', null, '카피바라 얼굴과 공의 높이가 비슷할 때'), ' 눌러야 해요!'),
+    h('small', null, '공을 상대 진영으로 3번 넘기면 스파이크 1번 · 넘길 때마다 대쉬도 1번씩(최대 2번) 쌓여요'),
+    h('span', { class: 'vb-intro-go' }, '알겠어요! (화면을 누르면 닫혀요)')));
+  rot.append(intro); // 화면 전체(게임 카드 안에 넣으면 둥근 모서리에 잘린다)
   // 세로로 들고 있으면 화면을 90도 돌려 가로로 보여 준다. 조작 버튼은 코트를 가리지 않게 양옆에 둔다
   // 가로 풀화면: 화면 전체가 캔버스. 코트는 높이에 꽉 맞추고, 남는 양옆은 배경을 이어 그린다
   const fit = () => { const pw = innerWidth, ph = innerHeight, port = ph > pw, w = port ? ph : pw, hh = port ? pw : ph, dpr = Math.min(2, devicePixelRatio || 1);
