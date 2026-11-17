@@ -1495,9 +1495,12 @@ body.vb-on .modal-wrap { z-index: 4600; }
 .so-dexz { display: block; margin: 8px 0 4px; font-weight: 800; color: #7A5A3A; }
 
 /* 물고기 희귀도 4단계 */
-.gi-tier { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: -4px 0 12px; } .gi-tier > b { font-size: 12px; color: #8A7563; margin-right: 2px; }
-.gi-tc { font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 10px; background: #F3ECE1; color: #B3A390; }
-.gi-tc.on { color: #fff; transform: scale(1.08); box-shadow: 0 2px 0 rgba(0,0,0,.18); } .gi-tc.t1.on { background: #8A9A7B; } .gi-tc.t2.on { background: #2B8FD6; } .gi-tc.t3.on { background: #9B5DE5; } .gi-tc.t4.on { background: linear-gradient(135deg, #FFB703, #FF6B00); }
+.gi-tier { margin: -2px 0 14px; padding: 10px; border-radius: 14px; background: #FBF6EE; border: 1.5px solid #F0E4D2; }
+.gi-th { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; } .gi-th span { font-size: 12px; font-weight: 700; color: #8A7563; }
+.gi-th b { font-size: 14px; } .gi-th b.t1 { color: #6B7B5C; } .gi-th b.t2 { color: #1F78BC; } .gi-th b.t3 { color: #7E3FCB; } .gi-th b.t4 { color: #E06A00; }
+.gi-seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.gi-tc { display: flex; align-items: center; justify-content: center; height: 30px; font-size: 12px; font-weight: 700; border-radius: 9px; background: #EFE6D8; color: #B3A390; white-space: nowrap; }
+.gi-tc.on { color: #fff; box-shadow: 0 2px 0 rgba(0,0,0,.18); } .gi-tc.t1.on { background: #8A9A7B; } .gi-tc.t2.on { background: #2B8FD6; } .gi-tc.t3.on { background: #9B5DE5; } .gi-tc.t4.on { background: linear-gradient(135deg, #FFB703, #FF6B00); }
 .so-dext { display: table !important; font-weight: 800; padding: 0 6px; border-radius: 8px; color: #fff !important; margin: 2px auto; } .so-dext.t1 { background: #8A9A7B; } .so-dext.t2 { background: #2B8FD6; } .so-dext.t3 { background: #9B5DE5; } .so-dext.t4 { background: linear-gradient(135deg, #FFB703, #FF6B00); }
 .fs-wow.new b { background: linear-gradient(135deg, #2EC4B6, #118AB2); box-shadow: 0 4px 0 #0B5E78, 0 0 22px rgba(46,196,182,.9); font-size: 24px; }
 .fs-wow .fs-spark { position: absolute; left: 50%; top: 22px; font-style: normal; font-size: 16px; animation: fsSpark .9s ease-out forwards; }

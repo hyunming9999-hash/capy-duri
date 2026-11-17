@@ -88,7 +88,7 @@ export function gradeInfo(f, cm, g) {
   const L = { S: '전설의 대물!', A: '엄청 큰 녀석!', B: '꽤 큼직해요', C: '보통 크기', D: '아담한 녀석' }, cmOf = t => Math.round((f.cm[0] + (f.cm[1] - f.cm[0]) * t) * 10) / 10;
   modal({ title: '등급 확인', body: h('div', { class: 'gi' },
     h('div', { class: 'gi-top' }, h('span', { class: 'fs-grade big g' + g }, g), h('div', null, h('b', null, `${f.name} · ${cm}cm`), h('small', null, `${L[g]} 이 물고기는 ${f.cm[0]}~${f.cm[1]}cm까지 자라요`))),
-    f.tier && h('div', { class: 'gi-tier' }, h('b', null, '분류'), ...[1, 2, 3, 4].map(k => h('span', { class: 'gi-tc t' + k + (k === f.tier ? ' on' : '') }, TIERS[k].n))),
+    f.tier && h('div', { class: 'gi-tier' }, h('div', { class: 'gi-th' }, h('span', null, '분류'), h('b', { class: 't' + f.tier }, TIERS[f.tier].n)), h('div', { class: 'gi-seg' }, ...[1, 2, 3, 4].map(k => h('span', { class: 'gi-tc t' + k + (k === f.tier ? ' on' : '') }, TIERS[k].s)))),
     h('table', { class: 'gi-t' }, h('tr', null, h('th', null, '등급'), h('th', null, '나올 확률'), h('th', null, '크기'), h('th', null, '값')),
       ...Object.entries(GRADE).map(([k, v]) => h('tr', { class: k === g ? 'on' : '' }, h('td', null, h('span', { class: 'fs-grade g' + k }, k)), h('td', null, v.p + '%'), h('td', null, `${cmOf(v.band[0])}~${cmOf(v.band[1])}cm`), h('td', null, v.x === 1 ? '기본' : `×${v.x}`)))),
     h('p', { class: 'dim center' }, 'S에 가까울수록 드물고, 크고, 비싸요. 멀리 던질수록 S·A가 조금 더 잘 물어요.')),
