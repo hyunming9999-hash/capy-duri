@@ -1150,3 +1150,8 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .so-an.bow > :first-child { animation: none; } .so-an.bow .so-body, .so-an.bow.walk .so-body { animation: none; } .so-an.bow .an-head { transform-box: view-box; transform-origin: 60px 86px; animation: soBowB 2.4s ease-in-out; }
 @keyframes soBowB { 0%, 10% { rotate: 0deg; translate: 0 0; } 40%, 68% { rotate: calc(var(--bd, -1) * 38deg); translate: calc(var(--bd, -1) * 5px) 9px; } 100% { rotate: 0deg; translate: 0 0; } }
 .so-an .so-body svg { overflow: visible; }
+
+/* 옷 고르기 칸의 작은 그림은 잘라서 보여 준다(몸 전체가 삐져나와 옷을 가리던 문제) */
+.dress-item svg { overflow: hidden !important; }
+/* 값 딱지는 그림을 가리지 않게 이름 아래로 */
+.dress-item.lock::after { position: static; transform: none; margin-top: 3px; }

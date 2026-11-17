@@ -77,7 +77,7 @@ export function capy(o = {}) {
     list.forEach(k => { const [dx, dy, sc] = RARE_FIT[k] || [0, 0, 1], S = 224.7 * sc, img = `<image href="img/rare/${k}.webp" x="${(60 + dx - S / 2).toFixed(1)}" y="${(57 + dy - S / 2).toFixed(1)}" width="${S.toFixed(1)}" height="${S.toFixed(1)}"/>`;
       if (RARE_BACK.has(k)) wearB += img; else if (RARE_BODY.has(k)) wearM += img; else gem += img + (RARE_HOLD.has(k) ? `<ellipse cx="${96 + dx * 0.6}" cy="104" rx="7.5" ry="6.5" fill="${c.body}"/><path d="M${91 + dx * 0.6} 101 q5 -3 10 0" fill="none" stroke="${c.dark}" stroke-width="1.4" stroke-linecap="round" opacity=".6"/>` : ''); });
     gem += [[4, 62, 0], [116, 50, .6], [10, 126, 1.1], [112, 120, 1.6], [60, -34, .3], [-10, 22, .9], [130, 92, 1.3], [30, -24, .5]].map(([x, y, d]) => `<path d="M${x} ${y - 10} l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="#FFFDF0" stroke="#F0C24A" stroke-width="1"><animate attributeName="opacity" values="0.15;1;0.15" dur="1.6s" begin="${d}s" repeatCount="indefinite"/></path>`).join(''); }
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158" style="overflow:visible">${glow}${wearB}${body}${wearM}${head}${pin}${gem}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158"${glow ? ' style="overflow:visible"' : ''}>${glow}${wearB}${body}${wearM}${head}${pin}${gem}</svg>`;
 }
 
 export function capyEl(o = {}, cls = '') {
