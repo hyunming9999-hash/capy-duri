@@ -8,7 +8,7 @@ import { capyUrl, yuzuUrl } from './capy.js';
 
 const W = 800, H = 450, GROUND = 400, NETX = 400, NETW = 12, NETTOP = 268, PR = 40, FOOT = 71, BR = 28, WIN = 7;
 // HIT: 공이 맞는 범위(그림보다 넉넉하게), GB: 공 중력(작을수록 천천히 떨어짐), FALL: 공이 떨어지는 최고 속도
-const EXT = 240, DASH = 15; // 코트 뒤로 더 갈 수 있는 거리, 대쉬 속도
+const EXT = 240, DASH = 15, WALL_L = -EXT - 24, WALL_R = 800 + EXT + 24; // 코트 뒤로 더 갈 수 있는 거리, 대쉬 속도
 const HIT = 50, GB = 0.24, FALL = 8, GP = 0.9, SPEED = 6.8, CPU_SPEED = 4.2, JUMP = -15.5;
 const standY = GROUND - FOOT;
 const SKY = 210; // 공이 이만큼 화면 위로 나갔다가 돌아올 수 있다(가로 화면에서는 화살표로 위치를 알려 준다)
@@ -19,7 +19,9 @@ export function stepBall(b, ps, onHit) {
   if (b.cd) b.cd = b.cd.map(v => Math.max(0, v - 1)); else b.cd = [0, 0];
   if (b.spike) b.spike--;
   b.vy = Math.min(FALL, b.vy + GB); b.x += b.vx; b.y += b.vy; b.rot += b.vx * 0.03;
-  // 옆 벽은 없다: 공이 뒤로 가면 그대로 흘러가고, 카메라가 줌 아웃해서 따라 보여 준다
+  // 코트 양 끝(넓힌 코트 바깥)에 벽: 공이 맞으면 튕겨 나온다
+  if (b.x < WALL_L + BR) { b.x = WALL_L + BR; b.vx = Math.abs(b.vx) * 0.85; }
+  if (b.x > WALL_R - BR) { b.x = WALL_R - BR; b.vx = -Math.abs(b.vx) * 0.85; }
   if (b.y < BR - SKY) { b.y = BR - SKY; b.vy = Math.abs(b.vy) * 0.9; }
   const nx = Math.max(NETX - NETW / 2, Math.min(b.x, NETX + NETW / 2)), ny = Math.max(NETTOP, Math.min(b.y, GROUND));
   let dx = b.x - nx, dy = b.y - ny, d = Math.hypot(dx, dy);
@@ -99,7 +101,7 @@ export function mount(el, ctx) {
   // 서브 공은 서브하는 카피바라 머리 위에서 나온다(지금 서 있는 자리 그대로)
   const serveX = () => { const p = ps[game.serve ? 1 : 0], lo = game.serve ? NETX + 60 : -EXT + 40, hi = game.serve ? W + EXT - 40 : NETX - 60; return Math.max(lo, Math.min(hi, p && isFinite(p.x) ? p.x : (game.serve ? 600 : 200))); };
   const placeBall = () => { lastHit = -1; prevSide = game.serve ? 1 : 0; lastTouch = game.serve; Object.assign(ball, { x: serveX(), y: 150, vx: 0, vy: 0, rot: 0, spike: 0 }); trail.length = 0; dead = false; deadMine = false; };
-  const sprites = [null, null], yz = new Image(), bg = new Image(); yz.src = 'img/volley/ball.webp'; bg.src = 'img/volley/bg.webp';
+  const sprites = [null, null], yz = new Image(), bg = new Image(), wallImg = new Image(); wallImg.src = 'img/volley/wall.webp'; yz.src = 'img/volley/ball.webp'; bg.src = 'img/volley/bg.webp';
   const yz0 = new Image(); yz0.src = yuzuUrl;
   const loadSprites = () => [0, 1].forEach(i => { const uid = mode === 'online' ? ctx.order[i] : (i ? null : ctx.uid); loadImg(capyUrl(uid ? ctx.capyOf(uid, { face: 'happy', rare: null, pin: '', hat: '', acc: 'none' }) : { color: 'choco', acc: 'towel', face: 'wink' })).then(im => { sprites[i] = im; }); });
   const drawPips = () => { const dn = dsh[my()]; dshBtn.classList.toggle('ready', dn > 0); dshBtn.querySelector('small').textContent = `${dn}/${DSH_MAX}`; const n = chg[my()], ready = n >= SPK_N; pips.replaceChildren(h('small', null, ready ? '스파이크 준비 완료!' : `상대 진영으로 ${SPK_N - n}번 더 넘기면`), ...Array.from({ length: SPK_N }, (_, k) => h('i', { class: k < n ? 'on' : '' }))); spkBtn.classList.toggle('ready', ready); spkBtn.querySelector('small').textContent = ready ? '점프!' : `${n}/${SPK_N}`; };
@@ -164,7 +166,7 @@ export function mount(el, ctx) {
     if (now > aiPT) { aiPT = now + 90; aiPred = predict(); }
     const coming = ball.x > NETX - 30 || (ball.vx > 0 && aiPred > NETX);
     // 공 떨어질 자리보다 살짝 뒤(오른쪽)에 서야 공이 네트 쪽으로 튄다
-    const outBall = aiPred > W + EXT + 20; // 깃발 밖으로 나갈 공은 그냥 둔다(아웃)
+    const outBall = false;
     const tx = coming && !outBall ? Math.max(NETX + 50, aiPred + 35 + aiErr) : 610, o = { l: p.x > tx + 6, r: p.x < tx - 6, j: false };
     const dx = ball.x - p.x;
     if (coming && !outBall && Math.abs(dx) < 70 && ball.vy > 0 && ball.y > p.y - 150 && Math.random() < L[3] + 0.2) { o.l = true; o.r = false; } // 닿기 직전 네트 쪽으로 밀어 쳐서 넘긴다
@@ -193,9 +195,8 @@ export function mount(el, ctx) {
     if (Math.abs(ball.vx - bvx) > 1.2 || ball.vy - bvy < -2) sfx('pop'); // 공이 튕길 때
     if (landed) {
       ball.y = GROUND - BR; ball.vy = 0; ball.vx *= 0.5; if (ball.spike) { shake = 26; try { navigator.vibrate && navigator.vibrate(150); } catch {} }
-      const side = ball.x < NETX ? 0 : 1, out = ball.x < -EXT || ball.x > W + EXT; // 코트 끝(깃발) 밖에 떨어지면 아웃: 마지막에 친 쪽 실점
-      if (out) outTxt = 60;
-      if (mode === 'cpu' || side === ctx.idx) point(out ? lastTouch : side); else dead = true;
+      const side = ball.x < NETX ? 0 : 1;
+      if (mode === 'cpu' || side === ctx.idx) point(side); else dead = true;
     }
   }
   function draw() {
@@ -204,14 +205,21 @@ export function mount(el, ctx) {
     // 카메라: 공이 높이 뜨면 부드럽게 줌 아웃해서 공과 카피바라가 한 화면에 다 보이게, 내려오면 다시 줌 인
     if (ball.vy < 0 || !live()) camTop = Math.min(0, (ball.vy < 0 ? ball.y - ball.vy * ball.vy / (2 * GB) : ball.y) - BR - 50); // 올라가는 중이면 꼭대기 높이를 미리 계산
     // 가로: 공·카피바라가 코트 뒤로 가면 그만큼 넓게 보여 준다(네트가 가운데)
-    const half = Math.max(...[ball.x, ps[0].x, ps[1].x].map(x => Math.abs(x - NETX))) + 230, wantW = Math.min(1, canvas.width / (2 * half) / VK);
+    const half = Math.max(...[ball.x, ps[0].x, ps[1].x].map(x => Math.abs(x - NETX))) + 230, wantW0 = 0, wantW = Math.min(1, canvas.width / (2 * Math.min(half, WALL_R - NETX + 70)) / VK);
     const want = Math.min(H / (H - Math.max(-SKY - 60, camTop)), wantW); camZ += (want - camZ) * 0.06;
     const K = VK * camZ, OX = canvas.width / 2 - NETX * K, OY = canvas.height - H * K;
     g.setTransform(K, 0, 0, K, OX + sx * K, OY + sy * K);
     // 배경은 화면 가로에 꽉 맞게 키우고, 그림 속 모래선(높이의 400/450)이 코트 바닥에 오도록 맞춘다(위아래는 잘려도 된다)
     if (bg.complete && bg.naturalWidth) { const bw = canvas.width / K + 12, bh = bw * H / W, bx = -OX / K - 6, by = GROUND - bh * GROUND / H; if (by > -OY / K) { g.fillStyle = '#5DB9EE'; g.fillRect(bx, -OY / K - 4, bw, by - (-OY / K) + 8); } g.drawImage(bg, bx, by, bw, bh); } else { g.fillStyle = '#9DD6F0'; g.fillRect(0, 0, W, H); g.fillStyle = '#E8C98F'; g.fillRect(0, GROUND, W, H - GROUND); }
-    // 코트 끝 표시(이 밖에 떨어지면 아웃)
-    for (const fx of [-EXT, W + EXT]) { g.fillStyle = '#fff'; g.fillRect(fx - 2, GROUND - 2, 4, 10); g.fillStyle = '#8A5E3B'; g.fillRect(fx - 2, GROUND - 70, 4, 70); g.fillStyle = '#E8453C'; g.beginPath(); g.moveTo(fx + 2, GROUND - 70); g.lineTo(fx + 30 * (fx < 0 ? 1 : -1) + 2, GROUND - 60); g.lineTo(fx + 2, GROUND - 50); g.fill(); }
+    // 양 끝 벽(대나무 기둥): 화면 위쪽 끝까지 이어 그린다
+    if (wallImg.complete && wallImg.naturalWidth) { const iw = wallImg.naturalWidth, ih = wallImg.naturalHeight, ww = 96, sc = ww / iw, topW = -OY / K - 30;
+      // 아래(모래 받침+대나무)는 그림 그대로, 위로는 가운데 대나무 마디를 이어 붙이고, 맨 위에는 잎사귀 머리를 얹는다
+      const capH = ih * 0.24, midA = ih * 0.3, midH = ih * 0.4, baseA = ih * 0.24, baseH = ih - baseA;
+      for (const [wx, fl] of [[WALL_L, 1], [WALL_R, -1]]) { g.save(); g.translate(wx, 0); g.scale(fl, 1); const x0 = -ww + 14;
+        let y = GROUND + 16 - baseH * sc; g.drawImage(wallImg, 0, baseA, iw, baseH, x0, y, ww, baseH * sc);
+        while (y > topW + capH * sc) { const hh = Math.min(midH * sc, y - (topW + capH * sc)) + 1; y -= hh - 1; g.drawImage(wallImg, 0, midA + midH - hh / sc, iw, hh / sc, x0, y, ww, hh); }
+        g.drawImage(wallImg, 0, 0, iw, capH, x0, y - capH * sc + 2, ww, capH * sc); g.restore(); } }
+    else { g.fillStyle = '#8DBF4A'; g.fillRect(WALL_L - 60, -SKY - 400, 60, GROUND + SKY + 420); g.fillRect(WALL_R, -SKY - 400, 60, GROUND + SKY + 420); }
     // 네트: 기둥 + 그물 + 흰 띠
     g.fillStyle = '#8A5E3B'; g.fillRect(NETX - 4, NETTOP - 6, 8, GROUND - NETTOP + 6);
     g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 1.2; for (let y = NETTOP + 10; y < GROUND - 6; y += 12) { g.beginPath(); g.moveTo(NETX - NETW / 2, y); g.lineTo(NETX + NETW / 2, y); g.stroke(); }
