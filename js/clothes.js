@@ -1,4 +1,4 @@
-// 카피바라 옷장: 상의 50벌 + 하의 50벌 + 모자 50개 (종류 10가지 × 색 5가지씩). 전부 직접 그린 SVG 조각.
+// 카피바라 옷장: 상의 50벌 + 하의 50벌 + 모자 50개 + 신발 9켤레 (종류 10가지 × 색 5가지씩). 전부 직접 그린 SVG 조각.
 // 좌표는 capy.js 의 전신 그림(viewBox 0 -22 120 158) 기준: 몸통 x31~89 / y76~126, 머리 아랫선 y84.
 const shade = (hex, f) => '#' + [1, 3, 5].map(i => Math.max(0, Math.min(255, Math.round(parseInt(hex.slice(i, i + 2), 16) * f))).toString(16).padStart(2, '0')).join('');
 let uid = 0;
@@ -144,12 +144,30 @@ const ZOO_NAMES = ['강아지 귀 머리띠', '고양이 귀 머리띠', '생쥐
 // i번 동물이 파는 전용 모자
 export const ZOO_HATS = ZOO_NAMES.map((name, i) => ({ id: `h-zoo-${i + 1}`, kind: 'zoo', sex: 'u', name, zoo: i, c: '#fff', a: '#fff' }));
 HAT_DRAW.zoo = () => '';
+/* ---------- 신발 (운동화·구두·신발 각 3종, 전부 유료) ----------
+   왼발(가운데 x45, 바닥 y135) 한 짝만 그린다. 오른발은 capy.js 가 좌우로 뒤집어 신긴다 */
+const SHOE_DRAW = {
+  sneaker: (c, a) => { const d = shade(c, 0.78); return `<path d="M33 133 Q32 124 40 121.2 Q45 119.6 50 121.2 Q58 124 57 133z" fill="${c}" stroke="${d}" stroke-width="1.1" stroke-linejoin="round"/><path d="M35.5 128.5 Q43 124 54 127" fill="none" stroke="${a}" stroke-width="2.2" stroke-linecap="round"/><path d="M41.5 123 h7 M41 125.3 h8" stroke="${a === '#FFFDF7' ? d : '#FFFDF7'}" stroke-width="1.1" stroke-linecap="round"/><rect x="31.5" y="130.5" width="27" height="5" rx="2.5" fill="#FFFDF7" stroke="#C9C2B5" stroke-width="1"/><path d="M33 133 h24" stroke="#E2DCD0" stroke-width=".9"/>`; },
+  loafer: (c, a) => { const d = shade(c, 0.7); return `<path d="M32.5 133.5 Q32.5 125.5 45 124.3 Q57.5 125.5 57.5 133.5z" fill="${c}" stroke="${d}" stroke-width="1.1" stroke-linejoin="round"/><path d="M37 127.6 Q45 125.4 53 127.6" fill="none" stroke="${d}" stroke-width="2.4" stroke-linecap="round"/><rect x="42.3" y="126.2" width="5.4" height="2" rx="1" fill="${a}"/><ellipse cx="40" cy="128.6" rx="3" ry="1.2" fill="#fff" opacity=".35"/><rect x="32" y="132.8" width="26" height="2.8" rx="1.4" fill="${d}"/>`; },
+  oxford: (c, a) => { const d = shade(c, 0.7); return `<path d="M32.5 133.5 Q32 124.5 45 123.5 Q58 124.5 57.5 133.5z" fill="${c}" stroke="${d}" stroke-width="1.1" stroke-linejoin="round"/><path d="M41 124.5 L45 128.5 L49 124.5" fill="none" stroke="${d}" stroke-width="1"/><path d="M42 125.4 h6 M43 126.8 h4" stroke="${a}" stroke-width=".9" stroke-linecap="round"/><path d="M33.5 130.4 Q45 128 56.5 130.4" fill="none" stroke="${d}" stroke-width=".9"/><ellipse cx="39.5" cy="127.6" rx="3" ry="1.1" fill="#fff" opacity=".45"/><rect x="32" y="132.8" width="26" height="2.8" rx="1.4" fill="${d}"/>`; },
+  maryjane: (c, a) => { const d = shade(c, 0.72); return `<path d="M32.5 133.5 Q32.5 126 45 125 Q57.5 126 57.5 133.5z" fill="${c}" stroke="${d}" stroke-width="1.1" stroke-linejoin="round"/><path d="M36 124.6 Q45 122.6 54 124.6" fill="none" stroke="${c}" stroke-width="2.6" stroke-linecap="round"/><circle cx="50.5" cy="124.2" r="1.5" fill="${a}" stroke="${d}" stroke-width=".6"/><path d="M40.5 129 l2.2 -1.4 l2.3 1.4 l2.3 -1.4 l2.2 1.4" fill="none" stroke="${a}" stroke-width="1" stroke-linejoin="round"/><ellipse cx="39.5" cy="128.6" rx="2.6" ry="1" fill="#fff" opacity=".4"/><rect x="32" y="132.8" width="26" height="2.8" rx="1.4" fill="${d}"/>`; },
+  rain: (c, a) => { const d = shade(c, 0.75); return `<path d="M34.5 135 V115.5 Q34.5 113 37 113 H53 Q55.5 113 55.5 115.5 V126 Q58.5 128 58 133 V135z" fill="${c}" stroke="${d}" stroke-width="1.1" stroke-linejoin="round"/><rect x="33.8" y="112" width="22.4" height="4" rx="2" fill="${a}" stroke="${d}" stroke-width=".9"/><path d="M38 118 V130" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".5"/><rect x="33.5" y="132.6" width="25" height="3" rx="1.5" fill="${d}"/>`; },
+  gomusin: (c, a) => { const d = shade(c, 0.82); return `<path d="M31.5 130.5 Q31 126.5 35.5 126.8 Q45 128.8 53 126.6 Q56 125.6 58.2 123.2 Q60 126.5 58 131.5 Q56.5 135.4 45 135.4 Q32.5 135.4 31.5 130.5z" fill="${c}" stroke="${d}" stroke-width="1.1" stroke-linejoin="round"/><path d="M35.5 127.5 Q45 130.3 54 127.2" fill="none" stroke="${a}" stroke-width="1.3" stroke-linecap="round"/><ellipse cx="44" cy="131" rx="5" ry="1.4" fill="#fff" opacity=".6"/>`; },
+  slipper: (c, a) => { const d = shade(c, 0.8); return `<ellipse cx="45" cy="132" rx="13.5" ry="4" fill="${d}"/><path d="M33 131.5 Q32.5 123.5 45 122.5 Q57.5 123.5 57 131.5z" fill="${c}"/>${[[34, 128], [36.5, 124.8], [40.5, 123], [45, 122.4], [49.5, 123], [53.5, 124.8], [56, 128]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.6" fill="${c}"/>`).join('')}<circle cx="41.5" cy="127" r="1.1" fill="#3B2A20"/><circle cx="48.5" cy="127" r="1.1" fill="#3B2A20"/><ellipse cx="45" cy="129.4" rx="2.6" ry="1.6" fill="${a}"/>`; },
+};
+export const SHOES = [
+  ['sneaker', '흰 운동화', 'u', '#FFFDF7', '#E5484D'], ['sneaker', '검정 운동화', 'u', '#3A3A44', '#FFFDF7'], ['sneaker', '분홍 운동화', 'f', '#FFB3C7', '#7FB7E8'],
+  ['loafer', '갈색 로퍼 구두', 'u', '#8A5A3B', '#E8C35A'], ['oxford', '검정 정장 구두', 'm', '#2E2E36', '#8E93A3'], ['maryjane', '빨강 메리제인 구두', 'f', '#D9363E', '#FFE7A3'],
+  ['rain', '노랑 장화', 'u', '#FFD23F', '#FFFDF7'], ['gomusin', '흰 고무신', 'u', '#FFFDF7', '#7FA7D9'], ['slipper', '카피 털 슬리퍼', 'u', '#F7D9B8', '#8A5A3B'],
+].map(([kind, name, sex, c, a], i) => ({ id: `s-${kind}-${i + 1}`, kind, sex, name, c, a }));
 export const TOPS = build(TOP_SETS, 't');
 export const BOTTOMS = build(BOTTOM_SETS, 'b');
 export const HATS = build(HAT_SETS, 'h');
-const byId = Object.fromEntries([...TOPS, ...BOTTOMS, ...HATS, ...ZOO_HATS].map(x => [x.id, x]));
+const byId = Object.fromEntries([...TOPS, ...BOTTOMS, ...HATS, ...ZOO_HATS, ...SHOES].map(x => [x.id, x]));
 // 머리 위에 씌울 모자 그림(없는 id면 빈 문자열)
 export const hatSvg = id => { const x = byId[id]; return !x || x.id[0] !== 'h' ? '' : x.kind === 'zoo' ? ZOO_DRAW[x.zoo]() : HAT_DRAW[x.kind](x.c, x.a); };
+// 왼발 한 짝 신발 그림(없는 id면 빈 문자열)
+export const shoeSvg = id => { const x = byId[id]; return !x || x.id[0] !== 's' ? '' : SHOE_DRAW[x.kind](x.c, x.a); };
 export const nameOf = id => (byId[id] || {}).name || '';
 
 // 몸통과 팔 사이/위에 끼워 넣을 조각들. under: 팔 아래에 깔리는 하의, top: 상의, over: 상의 위에 올라오는 멜빵 등

@@ -1,5 +1,5 @@
 // 2등신 카피바라 캐릭터 (직접 그린 SVG)
-import { wearSvg, hatSvg } from './clothes.js';
+import { wearSvg, hatSvg, shoeSvg } from './clothes.js';
 export const COLORS = {
   brown: { name: '밤색', body: '#BC8C60', dark: '#85593A', light: '#E6C7A1' },
   cream: { name: '크림', body: '#E3C79C', dark: '#AC8656', light: '#F7EBD3' },
@@ -66,11 +66,12 @@ export function capy(o = {}) {
     : `<text x="98" y="115" font-size="23" text-anchor="middle" transform="rotate(-12 98 108)">${o.pin}</text><ellipse cx="92" cy="109" rx="5.5" ry="4.5" fill="${c.body}"/>`;
   if (o.head) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 112">${head}</svg>`;
   const cl = o.top || o.bottom ? wearSvg(o.top, o.bottom) : { under: '', top: '', over: '' };
-  // 황금 구두: 한 짝 그림을 왼발에, 뒤집어서 오른발에 신긴다. 발과 같은 무리(cf-l·cf-r)라 걸을 때 발과 함께 움직이고, 옷보다 아래에 그려서 옷을 덮지 않는다
+  // 신발: 왼발 한 짝을 그리고 오른발엔 좌우로 뒤집어 신긴다. 발과 같은 무리(cf-l·cf-r)라 걸을 때 발과 함께 움직인다.
+  // 신발 전체는 옷 아래에 그리고, 앞코(아래쪽)만 옷 위에 한 번 더 그려서 옷 밑으로 살짝 나오게 한다. 황금 구두가 있으면 일반 신발 대신 황금 구두를 신는다
   const shoeK = o.rare && o.rare.i != null && !back ? (o.rare.list || [o.rare.i]).slice(0, 6).find(k => RARE_SHOE.has(k)) : undefined;
-  // 옷 밑으로 앞코가 살짝 나오도록: 구두 전체는 옷 아래에 그리고, 앞코(아래쪽)만 옷 위에 한 번 더 그린다
-  const shoeImg = (y0) => `<g class="cf-l"><image href="img/rare/${shoeK}f.webp" x="32" y="117" width="26" height="22" preserveAspectRatio="none"${y0 ? ` clip-path="url(#${y0})"` : ''}/></g><g class="cf-r"><image href="img/rare/${shoeK}f.webp" x="62" y="117" width="26" height="22" preserveAspectRatio="none" transform="matrix(-1 0 0 1 150 0)"${y0 ? ` clip-path="url(#${y0})"` : ''}/></g>`;
-  const toeId = shoeK == null ? '' : 'st' + (++rareN), shoe = shoeK == null ? '' : shoeImg(''), shoeToe = shoeK == null ? '' : `<defs><clipPath id="${toeId}" clipPathUnits="userSpaceOnUse"><rect x="-20" y="130.5" width="200" height="20"/></clipPath></defs>${shoeImg(toeId)}`;
+  const oneShoe = shoeK != null ? `<image href="img/rare/${shoeK}f.webp" x="32" y="117" width="26" height="22" preserveAspectRatio="none"/>` : shoeSvg(o.shoe);
+  const pair = oneShoe ? `<g class="cf-l">${oneShoe}</g><g class="cf-r"><g transform="matrix(-1 0 0 1 120 0)">${oneShoe}</g></g>` : '';
+  const toeId = pair ? 'st' + (++rareN) : '', shoe = pair, shoeToe = pair ? `<defs><clipPath id="${toeId}" clipPathUnits="userSpaceOnUse"><rect x="-20" y="130.5" width="200" height="20"/></clipPath></defs><g clip-path="url(#${toeId})">${pair}</g>` : '';
   const body = `<g class="cf-l"><ellipse cx="45" cy="128" rx="12" ry="6.5" fill="${c.dark}"/></g><g class="cf-r"><ellipse cx="75" cy="128" rx="12" ry="6.5" fill="${c.dark}"/></g>
     <rect x="31" y="76" width="58" height="50" rx="24" fill="${c.body}"/>
     ${back ? `<ellipse cx="60" cy="118" rx="6" ry="5" fill="${c.dark}"/>` : `<ellipse cx="60" cy="105" rx="17" ry="15" fill="${c.light}"/>`}${shoe}${cl.under}

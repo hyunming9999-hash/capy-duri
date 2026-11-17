@@ -1,12 +1,13 @@
 // 돈(🪙): 게임에서 번 점수가 돈이 되고, 옷·선물을 사는 데 쓴다. 지갑과 산 물건은 사람마다 따로다
 import { toast, h } from './ui.js';
-import { TOPS, BOTTOMS, HATS, ZOO_HATS } from './clothes.js';
+import { TOPS, BOTTOMS, HATS, ZOO_HATS, SHOES } from './clothes.js';
 import { sfx } from './sound.js';
 
 const FREE_N = 10; // 종류마다 앞의 10벌은 처음부터 갖고 있다
 const FREE = new Set([TOPS, BOTTOMS, HATS].flatMap(a => a.slice(0, FREE_N).map(x => x.id)));
 const PRICES = {}; // 게임 한 판에 50쯤 벌어서, 다섯 판쯤 하면 한 벌
 [[TOPS, 250], [BOTTOMS, 250], [HATS, 200]].forEach(([a, p]) => a.forEach((x, i) => { PRICES[x.id] = p + (i % 3) * 30; }));
+SHOES.forEach((x, i) => { PRICES[x.id] = [320, 320, 320, 380, 380, 380, 300, 280, 300][i]; }); // 신발 9켤레: 처음부터 주는 건 없고 전부 사야 한다
 ZOO_HATS.forEach(x => { PRICES[x.id] = 300; }); // 친목회 전용 모자: 동물에게서만 산다
 export const priceOf = id => (FREE.has(id) ? 0 : PRICES[id] || 0);
 // 게임별 환산 규칙(게임 목록과 적립 카드에 그대로 보여 준다)
@@ -71,7 +72,7 @@ export function setupMoney(ctx, onChange) {
     ctx.store.on('bets', v => { ctx.bets = v || {}; refundCheck(); (ctx.betWatch || []).forEach(f => f()); }),
     ctx.store.on('money', v => { ctx.money = v || {}; document.querySelectorAll('[data-coins]').forEach(e => { e.textContent = won(ctx.coins()); }); onChange && onChange(); }),
     ctx.store.on('owned', v => { ctx.owned = v || {};
-      const me = ctx.owned[ctx.uid] || {}; if (!me._init) { const d = ctx.dress[ctx.uid] || {}, keep = { _init: true }; [d.top, d.bottom, d.hat].forEach(id => { if (id) keep[id] = true; }); ctx.store.update('owned/' + ctx.uid, keep).catch(() => {}); } // 돈이 생기기 전에 입고 있던 옷은 그대로 내 것
+      const me = ctx.owned[ctx.uid] || {}; if (!me._init) { const d = ctx.dress[ctx.uid] || {}, keep = { _init: true }; [d.top, d.bottom, d.hat, d.shoe].forEach(id => { if (id) keep[id] = true; }); ctx.store.update('owned/' + ctx.uid, keep).catch(() => {}); } // 돈이 생기기 전에 입고 있던 옷은 그대로 내 것
       onChange && onChange(); }),
   ];
   return () => offs.forEach(f => f());

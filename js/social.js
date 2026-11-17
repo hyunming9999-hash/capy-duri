@@ -164,7 +164,7 @@ export function mount(el, ctx) {
   const setRel = (i, patch, cake) => { if (patch.a != null) patch = { ...patch, a: capA(i, patch.a, cake) }; if ((patch.a != null && patch.a > A(i)) || (patch.mem && !String((patch.mem[patch.mem.length - 1] || {}).s || '').startsWith('(')) || patch.fedAt) patch = { ...patch, fedAt: ctx.store.now(), dropN: 0, dropL: 0, lowAt: 0 }; mine = { ...mine, [i]: { ...(mine[i] || {}), ...patch } }; return ctx.store.update(`social/${ctx.uid}/${i}`, patch).catch(() => {}); };
   const pinOf = u => (ctx.members[u] || {}).pin;
   // 받은 액세서리 달기, 산 옷 입기(다시 누르면 벗는다). 내 카피바라에 바로 보인다
-  const SLOT = { t: 'top', b: 'bottom', h: 'hat' };
+  const SLOT = { t: 'top', b: 'bottom', h: 'hat', s: 'shoe' };
   async function wearPin(i) { await ctx.store.update('members/' + ctx.uid, { pin: i }).catch(() => {}); ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), pin: i }; scores(); }
   // 그 옷 한 벌만 내 카피바라가 입은 모습(거래·가방 목록에 실제 그림으로 보여 준다)
   const tryOn = id => h('span', { class: 'so-try', html: capy({ color: ctx.me.color, acc: 'none', face: 'happy', [SLOT[id[0]]]: id }) });
@@ -180,7 +180,7 @@ export function mount(el, ctx) {
     const out = list.filter(x => clash(x, i)); list = list.filter(x => !clash(x, i)); if (list.length >= RARE_MAX) return void toast('보물은 여섯 개까지 걸칠 수 있어요. 하나를 벗고 걸치세요');
     if (out.length) toast(`같은 자리라서 ${out.map(rareName).join(', ')}을(를) 벗고 걸쳤어요`, 2600); return saveRares([...list, i]); }
   const wearing = id => (ctx.dress[ctx.uid] || {})[SLOT[id[0]]] === id;
-  async function wearCloth(id, on = true) { const d = ctx.dress[ctx.uid] || {}, nx = { top: d.top || '', bottom: d.bottom || '', hat: d.hat || '', by: ctx.uid, ts: ctx.store.now() }; nx[SLOT[id[0]]] = on ? id : '';
+  async function wearCloth(id, on = true) { const d = ctx.dress[ctx.uid] || {}, nx = { top: d.top || '', bottom: d.bottom || '', hat: d.hat || '', shoe: d.shoe || '', by: ctx.uid, ts: ctx.store.now() }; nx[SLOT[id[0]]] = on ? id : '';
     ctx.dress[ctx.uid] = nx; await ctx.store.set('dress/' + ctx.uid, nx).catch(() => {}); scores(); }
 
   function scene() {
