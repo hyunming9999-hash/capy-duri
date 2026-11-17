@@ -496,25 +496,25 @@ export function mount(el, ctx) {
     const face = h('div', { html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) }); if (meEl) meEl.innerHTML = face.innerHTML; drawPal();
   }
 
-  // ----- 까마귀 악당: 친목회에 있을 때만, 하루 한 번(3분 넘게 머무르면 반드시), 육지에서 내 근처에 나타나 친한 동물(50~100점) 둘에게 이간질한다 -----
+  // ----- 까마귀 악당: 친목회에 있을 때만, 하루 두 번(5분째 한 번, 그 뒤 랜덤 한 번), 나타날 때마다 육지에서 내 근처에 나타나 친한 동물(50~100점) 둘에게 이간질한다 -----
   // 퇴치 버튼 → 악귀퇴치부적 3장 중 진짜 1장(1/3)을 10초 안에 고르면 퇴치. 못 고르거나 시간이 다 되면 두 동물이 각각 -15~-20
-  const CROW_N = 1, CROW_MS = 25000, CROW_STAY = 180000, PICK_MS = 10000;
+  const CROW_N = 2, CROW_MS = 25000, CROW_STAY = 300000, PICK_MS = 10000; // 하루 2번: 첫 번째는 친목회 5분째, 두 번째는 그 뒤 아무 때나(2~25분 더 놀다 보면)
   let crow = null, crowStay = 0, crowLast = 0, worldEl = null, stageEl = null, charmSnooze = 0;
-  if (isMock) window.capyDebug = { crow: () => { crowStay = CROW_STAY; }, charm: () => { charmSnooze = 0; window.capyDebug.charmNow = true; }, fx: n => charmFx(n) }; // 연습 모드에서만: 시험용으로 바로 부르기
+  if (isMock) window.capyDebug = { crow: () => { crowStay = 1e9; }, charm: () => { charmSnooze = 0; window.capyDebug.charmNow = true; }, fx: n => charmFx(n) }; // 연습 모드에서만: 시험용으로 바로 부르기
   const crowUsed = () => (bag.crowDay === ymd() ? bag.crowN || 0 : 0);
   function crowTick(now, paused, wet) {
     if (crow) return crowMove(now, paused);
     const dt = crowLast ? Math.min(1000, now - crowLast) : 0; crowLast = now;
     if (trial || !worldEl || crowUsed() >= CROW_N) return;
-    if (!paused) crowStay += dt; // 친목회에 머문 시간(창이 떠 있는 동안은 빼고). 3분이 넘으면 땅 위로 나오는 순간 반드시 나타난다
-    if (crowStay < CROW_STAY || paused || wet || me.boat) return;
+    if (!paused) crowStay += dt; // 친목회에 머문 시간(창이 떠 있는 동안은 빼고). 정해진 시간이 넘으면 땅 위로 나오는 순간 반드시 나타난다
+    const need = crowUsed() ? (bag.crow2At || 600000) : CROW_STAY; if (crowStay < need || paused || wet || me.boat) return;
     const pool = actors.map((o, i) => i).filter(i => A(i) >= 50 && A(i) <= 100 && actors[i].st !== 'chase');
     if (!pool.length) return;
     // 화면에서 보이도록 내 근처 넷 중에서 무작위로 둘을 고른다
     crowSpawn(now, pool.sort((a, b) => Math.abs(actors[a].x - me.x) - Math.abs(actors[b].x - me.x)).slice(0, 4).sort(() => Math.random() - 0.5).slice(0, 2));
   }
   function crowSpawn(now, targets) {
-    saveBag({ crowDay: ymd(), crowN: crowUsed() + 1 });
+    const first = !crowUsed(); saveBag({ crowDay: ymd(), crowN: crowUsed() + 1, ...(first ? { crow2At: Math.round((120 + Math.random() * 1380) * 1000) } : {}) }); crowStay = 0; // 두 번째는 첫 번째 뒤로 2~25분 더 놀아야(정말 랜덤)
     const x = Math.max(60, Math.min(WATER_X - 60, me.x + (Math.random() < 0.5 ? -1 : 1) * (90 + Math.random() * 60)));
     const e = h('div', { class: 'so-crow', style: { left: x + 'px', bottom: (me.dy * 100).toFixed(1) + '%' } }, h('img', { src: 'img/crow/crow.webp', alt: '까마귀 악당' }));
     worldEl.append(e);
