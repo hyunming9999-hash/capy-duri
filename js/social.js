@@ -539,7 +539,7 @@ export function mount(el, ctx) {
   const CROW_N = 2, CROW_MS = 25000, CROW_STAY = 300000, PICK_MS = 10000; // 하루 2번: 첫 번째는 친목회 5분째, 두 번째는 그 뒤 아무 때나(2~25분 더 놀다 보면)
   let crow = null, crowStay = 0, crowLast = 0, worldEl = null, stageEl = null, charmSnooze = 0;
   if (isMock) window.capyDebug = { crow: () => { crowStay = 1e9; }, charm: () => { charmSnooze = 0; window.capyDebug.charmNow = true; }, fx: n => charmFx(n) }; // 연습 모드에서만: 시험용으로 바로 부르기
-  // 화·수요일은 하루 2번(5분째 + 그 뒤 2~25분), 다른 날은 접속 2분째에 1번. 어느 날이든 한 번 나올 때 한 마리만 이간질
+  // 화·수요일은 하루 2번(2분째 + 그 뒤 2~25분), 다른 날은 접속 2분째에 1번. 어느 날이든 한 번 나올 때 한 마리만 이간질
   const crowBig = () => [2, 3].includes(new Date().getDay()), crowMax = () => (crowBig() ? CROW_N : 1), crowWho = () => 1; // 나올 때마다 한 마리만
   const crowUsed = () => (bag.crowDay === ymd() ? bag.crowN || 0 : 0);
   let srNext = 0, srAt = 0, srUntil = 0; const srSaid = new Set();
@@ -558,7 +558,7 @@ export function mount(el, ctx) {
     const dt = crowLast ? Math.min(1000, now - crowLast) : 0; crowLast = now;
     if (trial || !worldEl || crowUsed() >= crowMax()) return;
     if (!paused) crowStay += dt; // 친목회에 머문 시간(창이 떠 있는 동안은 빼고). 정해진 시간이 넘으면 땅 위로 나오는 순간 반드시 나타난다
-    const need = crowUsed() ? (bag.crow2At || 600000) : crowBig() ? CROW_STAY : 120000; if (crowStay < need || paused || wet || me.boat) return;
+    const need = crowUsed() ? (bag.crow2At || 600000) : 120000; // 첫 번째는 어느 요일이든 육지에 2분 머물면 if (crowStay < need || paused || wet || me.boat) return;
     const pool = actors.map((o, i) => i).filter(i => A(i) >= 50 && A(i) <= 100 && actors[i].st !== 'chase' && ctx.store.now() - Math.max((mine[i] || {}).crowHit || 0, ((mine[i] || {}).crowLie || {}).t || 0) > 3 * 86400000); // 한 번 당한 동물은 3일 동안 안 당한다
     if (!pool.length) return;
     // 화면에서 보이도록 내 근처 넷 중에서 무작위로 둘을 고른다
