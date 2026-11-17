@@ -10,7 +10,7 @@ const COLS = 8, R = 20, ROWH = R * Math.sqrt(3), LIMIT = 12, W = COLS * R * 2, L
 const PATH = 'games/bubble', STAGES = 30;
 // 구슬 색과 그 안의 동물 얼굴(색으로도, 얼굴로도 구별된다)
 const COLORS = [['#FF6B6B', 4], ['#FFD43B', 17], ['#4DABF7', 16], ['#69DB7C', 13], ['#B197FC', 25], ['#FFA94D', 5], ['#F783AC', 12], ['#CED4DA', 7]];
-const LEVELS = { e: { name: '하', sub: '느긋하게', colors: 5, ms: 12000, guide: 1 }, m: { name: '중', sub: '보통', colors: 6, ms: 9000, guide: 0.6 }, h: { name: '상', sub: '빠르게', colors: 7, ms: 6500, guide: 0.35 } };
+const LEVELS = { e: { name: '하', sub: '느긋하게', colors: 5, ms: 15000, guide: 1 }, m: { name: '중', sub: '보통', colors: 6, ms: 11500, guide: 0.6 }, h: { name: '상', sub: '빠르게', colors: 7, ms: 8500, guide: 0.35 } };
 function rng(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
 // 스테이지 설계: 단계가 오를수록 색이 늘고, 줄이 많아지고, 같은 색끼리 덜 뭉치고, 천장이 더 자주 내려온다. 15단계부터 확 어려워진다
@@ -188,7 +188,7 @@ export function mount(el, ctx) {
     topEl.replaceChildren(h('b', null, `${G.score.toLocaleString()}점`), h('span', null, S.kind === 'vs' ? (o ? `${ctx.nameOf(pid())} ${(o.s || 0).toLocaleString()}점` : '상대를 기다리는 중…') : S.kind === 'stage' ? `${S.stage}단계 · 남은 구슬 ${G.count()}` : `${LEVELS[S.diff].name} · 기록`),
       h('button', { class: 'bg-book', 'aria-label': '멈춤', onClick: () => { if (S.kind === 'vs') return toast('경쟁 중에는 멈출 수 없어요'); paused = !paused; drawBoard(); } }, paused ? '▶' : '⏸'),
       h('button', { class: 'bg-book quit', 'aria-label': '그만하기', onClick: giveUp }, '🏳️')); }
-  const pushMs = () => Math.max(2600, LEVELS[S.diff || 'm'].ms * Math.pow(0.965, G.pushes));
+  const pushMs = () => Math.max(3500, LEVELS[S.diff || 'm'].ms * Math.pow(0.975, G.pushes));
   function report(force) { if (!S || S.kind !== 'vs' || !G) return; const v = `${G.score}|${G.over}`; if (v === lastSc && !force) return; lastSc = v; ctx.store.update(`${PATH}/sc/${ctx.uid}`, { s: G.score, dead: G.over || null }).catch(() => {}); }
   function giveUp() { if (!G || G.over) return; modal({ title: '🏳️ 여기서 그만할까요?', body: h('p', { class: 'center' }, S.kind === 'vs' ? '그만하면 이 판은 져요.' : '지금 점수로 끝나요.'), actions: [{ label: '계속하기' }, { label: '그만하기', danger: true, onClick: c => { c(); if (G) { G.over = true; report(true); paint(); } } }] }); }
   function loop(ts) {
