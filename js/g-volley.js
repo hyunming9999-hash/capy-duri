@@ -101,7 +101,7 @@ export function mount(el, ctx) {
   // 서브 공은 서브하는 카피바라 머리 위에서 나온다(지금 서 있는 자리 그대로)
   const serveX = () => { const p = ps[game.serve ? 1 : 0], lo = game.serve ? NETX + 60 : -EXT + 40, hi = game.serve ? W + EXT - 40 : NETX - 60; return Math.max(lo, Math.min(hi, p && isFinite(p.x) ? p.x : (game.serve ? 600 : 200))); };
   const placeBall = () => { lastHit = -1; prevSide = game.serve ? 1 : 0; lastTouch = game.serve; Object.assign(ball, { x: serveX(), y: 150, vx: 0, vy: 0, rot: 0, spike: 0 }); trail.length = 0; dead = false; deadMine = false; };
-  const sprites = [null, null], yz = new Image(), bg = new Image(), wallImg = new Image(); wallImg.src = 'img/volley/wall.webp'; yz.src = 'img/volley/ball.webp'; bg.src = 'img/volley/bg.webp';
+  const sprites = [null, null], yz = new Image(), bg = new Image(), wallL = new Image(), wallR = new Image(); wallL.src = 'img/volley/wallL.webp'; wallR.src = 'img/volley/wallR.webp'; yz.src = 'img/volley/ball.webp'; bg.src = 'img/volley/bg.webp';
   const yz0 = new Image(); yz0.src = yuzuUrl;
   const loadSprites = () => [0, 1].forEach(i => { const uid = mode === 'online' ? ctx.order[i] : (i ? null : ctx.uid); loadImg(capyUrl(uid ? ctx.capyOf(uid, { face: 'happy', rare: null, pin: '', hat: '', acc: 'none' }) : { color: 'choco', acc: 'towel', face: 'wink' })).then(im => { sprites[i] = im; }); });
   const drawPips = () => { const dn = dsh[my()]; dshBtn.classList.toggle('ready', dn > 0); dshBtn.querySelector('small').textContent = `${dn}/${DSH_MAX}`; const n = chg[my()], ready = n >= SPK_N; pips.replaceChildren(h('small', null, ready ? '스파이크 준비 완료!' : `상대 진영으로 ${SPK_N - n}번 더 넘기면`), ...Array.from({ length: SPK_N }, (_, k) => h('i', { class: k < n ? 'on' : '' }))); spkBtn.classList.toggle('ready', ready); spkBtn.querySelector('small').textContent = ready ? '점프!' : `${n}/${SPK_N}`; };
@@ -212,15 +212,12 @@ export function mount(el, ctx) {
     // 배경은 화면 가로에 꽉 맞게 키우고, 그림 속 모래선(높이의 400/450)이 코트 바닥에 오도록 맞춘다(위아래는 잘려도 된다)
     if (bg.complete && bg.naturalWidth) { const bw = canvas.width / K + 12, bh = bw * H / W, bx = -OX / K - 6, by = GROUND - bh * GROUND / H; if (by > -OY / K) { g.fillStyle = '#5DB9EE'; g.fillRect(bx, -OY / K - 4, bw, by - (-OY / K) + 8); } g.drawImage(bg, bx, by, bw, bh); } else { g.fillStyle = '#9DD6F0'; g.fillRect(0, 0, W, H); g.fillStyle = '#E8C98F'; g.fillRect(0, GROUND, W, H - GROUND); }
     // 양 끝 벽(대나무 기둥): 화면 위쪽 끝까지 이어 그린다
-    if (wallImg.complete && wallImg.naturalWidth) { const ww = 120, wh = ww * wallImg.naturalHeight / wallImg.naturalWidth, topW = -OY / K - 20;
-      // 서핑보드 벽: 바닥부터 보드 묶음을 화면 위까지 차곡차곡 쌓는다(맨 아래만 모래 받침이 보이게)
-      for (const [wx, fl] of [[WALL_L, 1], [WALL_R, -1]]) { g.save(); g.translate(wx, 0); g.scale(fl, 1); const x0 = -ww + 18;
-        const ih = wallImg.naturalHeight, iw = wallImg.naturalWidth, cut = 0.88; let y = GROUND + 14 - wh; const ys = [];
-        for (let n = 1; n < 8 && y > topW; n++) { y -= wh * cut * 0.9; ys.push(y); } // 위 칸들은 모래 받침을 빼고 보드만
-        ys.reverse().forEach(yy => g.drawImage(wallImg, 0, 0, iw, ih * cut, x0, yy, ww, wh * cut));
-        g.drawImage(wallImg, x0, GROUND + 14 - wh, ww, wh);
-        g.restore(); } }
-    else { g.fillStyle = '#7FD8C8'; g.fillRect(WALL_L - 60, -SKY - 400, 60, GROUND + SKY + 420); g.fillRect(WALL_R, -SKY - 400, 60, GROUND + SKY + 420); }
+    if (wallL.complete && wallL.naturalWidth && wallR.complete && wallR.naturalWidth) { const ww = 110, topW = -OY / K - 20;
+      // 흰 벽돌 벽(왼쪽: 레트로 포스터, 오른쪽: 하이파이브 포스터). 위로는 맨 위 '벽돌만 있는 부분'을 이어 붙인다
+      for (const [img, wx, side] of [[wallL, WALL_L, -1], [wallR, WALL_R, 1]]) { const iw = img.naturalWidth, ih = img.naturalHeight, wh = ww * ih / iw, x0 = side < 0 ? wx - ww + 16 : wx - 16, y0 = GROUND + 16 - wh, sl = ih * 0.28, slH = ww * sl / iw;
+        for (let y = y0 - slH + 1; y + slH > topW; y -= slH - 1) g.drawImage(img, 0, 0, iw, sl, x0, y, ww, slH);
+        g.drawImage(img, x0, y0, ww, wh); } }
+    else { g.fillStyle = '#F4F1EA'; g.fillRect(WALL_L - 60, -SKY - 400, 60, GROUND + SKY + 420); g.fillRect(WALL_R, -SKY - 400, 60, GROUND + SKY + 420); }
     // 네트: 기둥 + 그물 + 흰 띠
     g.fillStyle = '#8A5E3B'; g.fillRect(NETX - 4, NETTOP - 6, 8, GROUND - NETTOP + 6);
     g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 1.2; for (let y = NETTOP + 10; y < GROUND - 6; y += 12) { g.beginPath(); g.moveTo(NETX - NETW / 2, y); g.lineTo(NETX + NETW / 2, y); g.stroke(); }
