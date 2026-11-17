@@ -74,10 +74,14 @@ export function mount(el, ctx) {
     const dirAt = e => { const r = slide.getBoundingClientRect(), port = innerHeight > innerWidth;
       if (joy) { const dx = port ? e.clientY - x0 : e.clientX - x0; return Math.abs(dx) < 10 ? 0 : Math.sign(dx); }
       const p = port ? (e.clientY - r.top) / r.height : (e.clientX - r.left) / r.width; return p < 0.5 ? -1 : 1; };
-    slide.addEventListener('pointerdown', e => { e.preventDefault(); id = e.pointerId; slide.setPointerCapture(id); joy = LAY === 'C'; const port = innerHeight > innerWidth; x0 = port ? e.clientY : e.clientX;
+    slide.addEventListener('pointerdown', e => { if (e.pointerType === 'touch') return; e.preventDefault(); id = e.pointerId; slide.setPointerCapture(id); joy = LAY === 'C'; const port = innerHeight > innerWidth; x0 = port ? e.clientY : e.clientX;
       if (joy) { const r = slide.getBoundingClientRect(); knob.style.left = (port ? e.clientY - r.top : e.clientX - r.left) + 'px'; knob.style.top = (port ? r.right - e.clientX : e.clientY - r.top) + 'px'; slide.append(knob); } setDir(dirAt(e)); });
     slide.addEventListener('pointermove', e => { if (e.pointerId !== id) return; setDir(dirAt(e)); });
-    const up = e => { if (e.pointerId !== id) return; id = null; setDir(0); knob.remove(); }; ['pointerup', 'pointercancel'].forEach(n => slide.addEventListener(n, up)); }
+    const up = e => { if (e.pointerId !== id) return; id = null; setDir(0); knob.remove(); }; ['pointerup', 'pointercancel'].forEach(n => slide.addEventListener(n, up));
+    // 터치: 패드 위에 지금 닿아 있는 손가락(가장 최근 것)으로 방향을 정한다. 놓치거나 취소돼도 남은 손가락이 있으면 그대로 이어 간다
+    let tid = null; const tdir = t => { const r = slide.getBoundingClientRect(), port = innerHeight > innerWidth; if (joy) { const dx = port ? t.clientY - x0 : t.clientX - x0; return Math.abs(dx) < 10 ? 0 : Math.sign(dx); } const q = port ? (t.clientY - r.top) / r.height : (t.clientX - r.left) / r.width; return q < 0.5 ? -1 : 1; };
+    const tsync = e => { e.preventDefault(); const ts = [...e.targetTouches]; if (!ts.length) { tid = null; setDir(0); knob.remove(); return; } let t = ts.find(x => x.identifier === tid); if (!t) { t = ts[ts.length - 1]; tid = t.identifier; joy = LAY === 'C'; const port = innerHeight > innerWidth; x0 = port ? t.clientY : t.clientX; } setDir(tdir(t)); };
+    ['touchstart', 'touchmove', 'touchend', 'touchcancel'].forEach(n => slide.addEventListener(n, tsync, { passive: false })); }
   const left = h('div', { class: 'vb-pad l' }, slide);
   const dshBtn = btn('d', 'dsh', '대쉬', '0/2');
   const right = h('div', { class: 'vb-pad r' }, dshBtn, spkBtn, btn('j', 'jmp', '점프'));
@@ -138,13 +142,13 @@ export function mount(el, ctx) {
   // 스파이크 가능한 위치: 공이 머리와 같은 높이이거나 머리보다 조금 위, 머리 앞쪽 가까이
   const spikeOk = p => p.y < standY - 18 && ball.y < p.y + 60 && ball.y > p.y - 260; // 점프해서 공중에 있을 때만, 공이 머리 언저리면
   function trySpike(i) { const p = ps[i]; if (chg[i] < SPK_N || !live() || (ball.x < NETX ? 0 : 1) !== i || Math.abs(ball.x - p.x) > 165 || !spikeOk(p)) return false;
-    chg[i] = 0; armAt[i] = 0; lastTouch = i; lastHit = i; if (i === my() && mode === 'online') setTimeout(sendHit, 0); flash = 12; shake = 34; try { navigator.vibrate && navigator.vibrate([60, 30, 120]); } catch {} spikeTxt = 50; sfx('hit'); setTimeout(() => sfx('pop'), 60); spikeBall(ball, i); drawPips(); return true; }
+    chg[i] = 0; armAt[i] = 0; lastTouch = i; lastHit = i; if (i === my() && mode === 'online') setTimeout(sendHit, 0); flash = 10; shake = 20; try { navigator.vibrate && navigator.vibrate(150); } catch {} spikeTxt = 50; sfx('hit'); setTimeout(() => sfx('pop'), 60); spikeBall(ball, i); drawPips(); return true; }
   function onHit(i, p) {
     lastTouch = i;
     const mine = i === my(), cpu = mode === 'cpu' && i === 1;
     if (!mine && !cpu) return; // 온라인에서 상대가 친 건 상대 화면이 계산한다
     const armed = performance.now() - armAt[i] < ARM_MS || (mine && inp.s), air = spikeOk(p);
-    if (chg[i] >= SPK_N && armed && air) { if (mine) hitNow = true; chg[i] = 0; armAt[i] = 0; flash = 12; shake = 34; try { navigator.vibrate && navigator.vibrate([60, 30, 120]); } catch {} spikeTxt = 50; sfx('hit'); setTimeout(() => sfx('pop'), 60); drawPips(); return 'spike'; }
+    if (chg[i] >= SPK_N && armed && air) { if (mine) hitNow = true; chg[i] = 0; armAt[i] = 0; flash = 10; shake = 20; try { navigator.vibrate && navigator.vibrate(150); } catch {} spikeTxt = 50; sfx('hit'); setTimeout(() => sfx('pop'), 60); drawPips(); return 'spike'; }
     lastHit = i; if (mine) hitNow = true; // 충전은 공이 내 손을 떠나 상대 진영으로 넘어갔을 때 1회(tick에서 센다)
   }
 
@@ -180,7 +184,7 @@ export function mount(el, ctx) {
   function onHitMsg(v) {
       if (!v || v.side === ctx.idx || v.n !== game.n || seenQ.has(v.q) || deadMine) return; seenQ.add(v.q); if (seenQ.size > 60) seenQ.delete(seenQ.values().next().value);
       dead = false; const ox = ball.x, oy = ball.y;
-      if (v.sp && !ball.spike) { flash = 10; shake = 30; try { navigator.vibrate && navigator.vibrate(80); } catch {} spikeTxt = 50; sfx('hit'); } else sfx('pop');
+      if (v.sp && !ball.spike) { flash = 10; shake = 20; try { navigator.vibrate && navigator.vibrate(80); } catch {} spikeTxt = 50; sfx('hit'); } else sfx('pop');
       Object.assign(ball, { x: v.x, y: v.y, vx: v.vx, vy: v.vy, spike: v.sp || 0, cd: [14, 14] }); lastHit = v.side; lastTouch = v.side;
       const k = Math.max(0, Math.min(30, Math.round((ctx.store.now() - v.t) / 16.7)));
       for (let i = 0; i < k; i++) if (stepBall(ball, [])) { ball.y = GROUND - BR; break; }
@@ -266,7 +270,7 @@ export function mount(el, ctx) {
     if (ball.spike) { trail.push([ball.x, ball.y]); if (trail.length > 10) trail.shift(); } else if (trail.length) trail.shift();
     if (Math.abs(ball.vx - bvx) > 1.2 || ball.vy - bvy < -2) sfx('pop'); // 공이 튕길 때
     if (landed) {
-      ball.y = GROUND - BR; ball.vy = 0; ball.vx *= 0.5; if (ball.spike) { shake = 26; try { navigator.vibrate && navigator.vibrate(150); } catch {} }
+      ball.y = GROUND - BR; ball.vy = 0; ball.vx *= 0.5; if (ball.spike) { shake = 16; try { navigator.vibrate && navigator.vibrate(100); } catch {} }
       const side = ball.x < NETX ? 0 : 1;
       if (mode === 'cpu' || side === ctx.idx) point(side); else dead = true;
     }
@@ -358,7 +362,7 @@ export function mount(el, ctx) {
   function loop(t) {
     if (!alive) return; raf = requestAnimationFrame(loop);
     const fdt = t - (lastT || t); acc += Math.min(100, fdt); lastT = t;
-    if (dprCap > 1 && fdt > 0) { frN++; if (fdt > 24) slowN++; if (frN >= 90) { if (slowN > 25) { dprCap = dprCap > 1.5 ? 1.5 : 1; fit(); } frN = slowN = 0; } }
+    if (dprCap > 1 && fdt > 0 && !shake && !flash && !spikeTxt) { frN++; if (fdt > 24) slowN++; if (frN >= 90) { if (slowN > 25) { dprCap = dprCap > 1.5 ? 1.5 : 1; fit(); } frN = slowN = 0; } }
     while (acc >= 16.67) { tick(); acc -= 16.67; }
     send(t); draw();
     const showLv = game.phase !== 'serve' && mode === 'cpu'; if (lvRow.hidden === showLv) { lvRow.hidden = !showLv; if (showLv) drawLv(); }
