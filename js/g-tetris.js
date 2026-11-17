@@ -1,7 +1,7 @@
 // 카피 테트리스 — 기록(혼자 최고 점수) · 경쟁(같은 블록, 여러 줄을 지우면 상대에게 방해 줄)
 import { h, toast, modal, gameFx } from './ui.js';
 import { sfx } from './sound.js';
-import { PAY } from './money.js';
+import { PAY, TETRIS_PAY } from './money.js';
 
 const W = 10, H = 20, PATH = 'games/tetris';
 // 블록 모양(정사각 행렬)과 색. 색은 동물 손님들 털색에서 가져왔다
@@ -28,7 +28,8 @@ export function makeGame(seed, diff) {
   while (g.next.length < 3) g.next.push(draw7());
   const take = () => { const k = g.next.shift(); g.next.push(draw7()); return k; };
   spawn(take());
-  g.speed = () => Math.max(70, LV.ms * Math.pow(0.86, g.level - 1));
+  // 진행될수록 조금씩 빨라진다: 지운 줄 수만큼(10줄에 14%) + 버틴 시간만큼(30초에 4%)
+  g.t = 0; g.speed = () => Math.max(70, LV.ms * Math.pow(0.86, g.lines / 10) * Math.pow(0.96, g.t / 30000));
   g.move = dx => { if (g.over || !fits(g.cur.m, g.cur.x + dx, g.cur.y)) return false; g.cur.x += dx; return true; };
   g.rotate = () => { if (g.over) return false; const m = rot(g.cur.m); for (const [dx, dy] of [[0, 0], [-1, 0], [1, 0], [-2, 0], [2, 0], [0, -1]]) if (fits(m, g.cur.x + dx, g.cur.y + dy)) { g.cur.m = m; g.cur.x += dx; g.cur.y += dy; return true; } return false; };
   g.ghostY = () => { let y = g.cur.y; while (fits(g.cur.m, g.cur.x, y + 1)) y++; return y; };
@@ -142,13 +143,13 @@ export function mount(el, ctx) {
     const ph = phase(); if (ph !== 'play' || !G) { lastT = 0; if (ph === 'ready' && box.querySelector('.bg-count')) { const n = String(Math.max(1, Math.ceil((S.startAt - now()) / 1000))), e = box.querySelector('.bg-count'); if (e.firstChild.textContent !== n) e.firstChild.textContent = n; } if (ph !== lastPh) paint(); return; }
     if (ph !== lastPh) return paint();
     const dt = lastT ? Math.min(120, ts - lastT) : 0; lastT = ts; if (paused || document.hidden) return;
-    acc += dt; const sp = G.speed();
+    acc += dt; G.t += dt; const sp = G.speed();
     if (acc >= sp) { acc = 0; const n = G.step(); landed(n); drawBoard(); if (G.over) { report(true); paint(); } }
   }
   let lastPh = '';
   function result() {
     const o = them(), vs = S.kind === 'vs', key = `${S.diff}-${ctx.uid}`, my = G ? G.score : ((S.sc || {})[ctx.uid] || {}).s || 0, prev = best[key], won = vs && o ? (meDead() ? false : true) : null;
-    if (fxDone !== S.id) { fxDone = S.id; sfx(won === false ? 'lose' : 'win'); ctx.earn(PAY.tetris(my) + (won ? 30 : 0), '테트리스', [`기본 5 + 내 점수 ${my}점 ÷ 25 = ${PAY.tetris(my)}코인${PAY.tetris(my) >= 150 ? ' (최대)' : ''}`, ...(won ? ['승리 보너스 +30코인'] : [])]);
+    if (fxDone !== S.id) { fxDone = S.id; sfx(won === false ? 'lose' : 'win'); const pay = PAY.tetris(my, S.diff), T = TETRIS_PAY[S.diff] || TETRIS_PAY.e; ctx.earn(pay + (won ? 30 : 0), '테트리스', [`${LEVELS[S.diff].name} 단계: 기본 ${T.base} + 내 점수 ${my}점 ÷ ${T.per} = ${pay}코인${pay >= T.max ? ' (최대)' : ''}`, ...(won ? ['승리 보너스 +30코인'] : [])]);
       if (my > 0 && (!prev || my > prev.s)) ctx.store.tx('games/tetrisBest/' + key, c => (c && c.s >= my ? undefined : { s: my, at: now() })).catch(() => {});
       if (vs && o) gameFx(won ? 'win' : 'lose', `${my.toLocaleString()} : ${(o.s || 0).toLocaleString()}`); else if (my > 0) gameFx('win', `${my.toLocaleString()}점${prev && my > prev.s ? ' 신기록' : ''}`); }
     box.replaceChildren(h('div', { class: 'bg-end' }, ...[h('span', null, '🧱'), h('b', null, vs && o ? (won ? '이겼어요!' : '졌어요…') : '끝!'),
