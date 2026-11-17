@@ -1480,3 +1480,4 @@ body.vb-on .earn-card p { font-size: 12px; } body.vb-on .earn-card p.sum { font-
 .vb-rot[data-skin="k3"] .vb-slide[data-d="l"] { background: linear-gradient(90deg, #555B67 50%, #2B2E35 50%); } .vb-rot[data-skin="k3"] .vb-slide[data-d="r"] { background: linear-gradient(90deg, #2B2E35 50%, #555B67 50%); }
 .vb-rot[data-skin="k3"] .vb-btn { border: 3px solid #101114; box-shadow: 0 5px 0 #0A0B0D, inset 0 3px 0 rgba(255,255,255,.35); }
 .vb-rot[data-skin="k3"] .vb-btn.jmp { background: linear-gradient(#4C8DFF, #2A62D8) !important; } .vb-rot[data-skin="k3"] .vb-btn.spk { background: linear-gradient(#8A8F99, #5E636C) !important; } .vb-rot[data-skin="k3"] .vb-btn.spk.ready { background: linear-gradient(#FF6B5B, #E0352B) !important; } .vb-rot[data-skin="k3"] .vb-btn.dsh { background: linear-gradient(#8A8F99, #5E636C) !important; } .vb-rot[data-skin="k3"] .vb-btn.dsh.ready { background: linear-gradient(#48D68A, #22A862) !important; }
+.fs-grade.gF { background: #5B5F66; }
