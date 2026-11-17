@@ -270,6 +270,14 @@ export function mount(el, ctx) {
       // 양쪽 벽: 위에는 테라스(난간 뒤에서 카피바라 둘이 응원), 아래에는 문
       { const t = performance.now() / 1000, TY = GROUND - 300;
         for (const [side, base] of [[-1, 0], [1, 2]]) { const inner = side < 0 ? WALL_L + 18 : WALL_R - 18, outer = inner + side * 250, xa = Math.min(inner, outer), xb = Math.max(inner, outer);
+          // 테라스 뒤 통유리 창: 하늘빛 유리 + 흰 창틀 + 비스듬한 반사광, 안쪽에 은은한 실내 조명
+          { const gx = xa + 8, gw = xb - xa - 16, gy = TY - 210, gh = 210;
+            g.fillStyle = '#FFFFFF'; g.fillRect(gx - 8, gy - 10, gw + 16, gh + 10);
+            const gg = g.createLinearGradient(0, gy, 0, gy + gh); gg.addColorStop(0, '#BFE6F7'); gg.addColorStop(.6, '#9ED3EE'); gg.addColorStop(1, '#F6E7C8'); g.fillStyle = gg; g.fillRect(gx, gy, gw, gh);
+            g.fillStyle = 'rgba(255,240,200,.55)'; for (const lx of [gx + gw * .25, gx + gw * .75]) { g.beginPath(); g.ellipse(lx, gy + 22, 16, 8, 0, 0, 7); g.fill(); g.fillStyle = 'rgba(255,240,200,.22)'; g.beginPath(); g.moveTo(lx - 14, gy + 24); g.lineTo(lx + 14, gy + 24); g.lineTo(lx + 40, gy + 130); g.lineTo(lx - 40, gy + 130); g.fill(); g.fillStyle = 'rgba(255,240,200,.55)'; }
+            g.save(); g.beginPath(); g.rect(gx, gy, gw, gh); g.clip(); g.fillStyle = 'rgba(255,255,255,.45)'; for (const ox of [20, 70, 150]) { g.beginPath(); g.moveTo(gx + ox, gy + gh); g.lineTo(gx + ox + 26, gy + gh); g.lineTo(gx + ox + 26 + gh * .6, gy); g.lineTo(gx + ox + gh * .6, gy); g.fill(); } g.restore();
+            g.fillStyle = '#FFFFFF'; for (let k = 1; k < 3; k++) g.fillRect(gx + gw * k / 3 - 3, gy, 6, gh); g.fillRect(gx, gy + gh * .42, gw, 5);
+            g.strokeStyle = 'rgba(120,150,170,.5)'; g.lineWidth = 2; g.strokeRect(gx, gy, gw, gh); }
           // 응원하는 카피바라(난간 뒤라 아랫몸은 가려진다): 번갈아 폴짝, 깃발 흔들기
           [0, 1].forEach(n => { const im = fanIm[base + n]; if (!im) return; const cx = inner + side * (62 + n * 112), hop = Math.max(0, Math.sin(t * 5 + n * Math.PI)) * 14, sw = Math.sin(t * 5 + n * Math.PI) * 0.12;
             g.save(); g.translate(cx, TY - 22 - hop); g.rotate(sw); g.drawImage(im, -52, -104, 104, 137); 
