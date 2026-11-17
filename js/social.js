@@ -554,12 +554,12 @@ export function mount(el, ctx) {
     setTimeout(() => c.e.classList.add('flee'), 900);
     setTimeout(() => { c.e.remove(); if (crow === c) crow = null; crowNext = 0; }, 2400);
   }
-  // ----- 진주 낚시 부적: 95점 이상 단짝이 셋 이상이면, 화·금요일 하루 한 번 정해진 시각 뒤에 마주친 단짝이 건네준다(2장 중 진짜 1장) -----
+  // ----- 진주 낚시 부적: 만렙(100점) 단짝이 셋 이상이면, 화·금요일 하루 한 번 정해진 시각 뒤에 마주친 단짝이 건네준다(2장 중 진짜 1장) -----
   const charmFrom = () => { const d = new Date(), s = [...(ymd() + ctx.uid)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7); d.setHours(9 + s % 13, (s >>> 5) % 60, 0, 0); return d.getTime(); };
   function charmTick(now, paused, wet) {
     if (trial || paused || wet || me.boat || crow || now < charmSnooze || bag.charmDay === ymd()) return; const wd = new Date().getDay(); if (wd !== 2 && wd !== 5) return;
     if (Date.now() < charmFrom() && !(isMock && window.capyDebug && window.capyDebug.charmNow)) return;
-    const best = actors.map((o, i) => i).filter(i => A(i) >= 95); if (best.length < 3) return;
+    const best = actors.map((o, i) => i).filter(i => A(i) >= 100); if (best.length < 3) return; // 만렙(100) 단짝을 셋 이상 유지하고 있어야 한다
     const i = best.find(k => Math.abs(actors[k].x - me.x) < 90 && actors[k].st !== 'chase'); if (i == null) return;
     charmSnooze = now + 90000; pop(actors[i].e, toned(i, '잠깐! 너한테 줄 게 있어. 진주 낚시 부적이야!'), 'say long'); animalVoice(i);
     setTimeout(() => { if (!alive || document.querySelector('.modal-wrap')) return;
