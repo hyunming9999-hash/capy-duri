@@ -1489,3 +1489,7 @@ body.vb-on .earn-card p { font-size: 12px; } body.vb-on .earn-card p.sum { font-
 /* 배구: 내기 창이 배구 화면 뒤에 숨지 않게. 경기 중에는 내기 버튼 잠금 */
 body.vb-on .modal-wrap { z-index: 4600; }
 .vb-top .bet-bar.lock { opacity: .45; pointer-events: none; filter: grayscale(.6); }
+
+/* 물고기 도감: 못 잡은 종은 그림자(실루엣) */
+.so-dexi.shadow { background: #F4EFE6; border-style: dashed; } .so-dexi.shadow svg { filter: brightness(0) opacity(.28); } .so-dexi.shadow b { color: #A99A86; }
+.so-dexz { display: block; margin: 8px 0 4px; font-weight: 800; color: #7A5A3A; }
