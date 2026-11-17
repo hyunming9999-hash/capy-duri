@@ -1355,3 +1355,8 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .gi-t tr.on td { background: #FFF4CC; font-weight: 800; } .gi-t .fs-grade { margin: 0; }
 /* 낚시 화면 위에 뜨는 창(진주부적 사용 묻기·등급 확인)이 낚시 화면 뒤로 숨지 않게 */
 .fs ~ .modal-wrap { z-index: 4600; }
+.fs-card .fs-won.kept { font: 700 13px/1.45 inherit !important; font-size: 13px !important; font-weight: 700 !important; color: #8A6A3A; margin: 4px 0 2px; }
+.fs-grade.hide { background: #C9CED6; letter-spacing: .5px; }
+.fs-grade.pop { animation: gradeIn .55s cubic-bezier(.2,1.6,.4,1); }
+.fs-gbtn { display: inline-flex !important; align-items: center; gap: 5px; margin: 6px auto 2px; } .fs-card .fs-gbtn { width: auto; }
+.fs-gico { display: inline-flex; width: 15px; height: 15px; } .fs-gico svg { width: 100%; height: 100%; }
