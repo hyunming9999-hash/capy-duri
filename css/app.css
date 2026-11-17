@@ -1206,3 +1206,5 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .fs-shiny { display: block; margin: 2px 0 4px; font: 900 13px/1.3 var(--head); font-style: normal; color: #B0308A; animation: fsShiny 1.2s ease-in-out infinite alternate; }
 @keyframes fsShiny { to { color: #3A7BE0; } }
 .fs-card.shiny { box-shadow: 0 0 0 3px #FFB3E6, 0 0 22px rgba(255, 140, 220, .7); }
+
+.tt-ab .tt-key.rot.one { grid-column: 1 / -1; border-radius: 22px; height: 60px; flex-direction: row; gap: 8px; } .tt-ab .tt-key.rot.one .tt-ic { width: 34px; height: 34px; } .tt-ab .tt-key.rot.one small { font-size: 14px; }

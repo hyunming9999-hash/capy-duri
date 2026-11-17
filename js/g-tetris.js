@@ -105,10 +105,10 @@ export function mount(el, ctx) {
     box.replaceChildren(top, h('div', { class: 'tt-play' }, cv, side),
       h('div', { class: 'tt-keys2' },
         h('div', { class: 'tt-pad' }, hold(() => act('drop'), '뚝!', 'drop wide', 0, 'drop'), hold(() => act('l'), '왼쪽', 'mv', 50, 'l'), hold(() => act('down'), '내리기', 'dn', 40, 'down'), hold(() => act('r'), '오른쪽', 'mv', 50, 'r')),
-        h('div', { class: 'tt-ab' }, hold(() => act('hold'), '보관', 'hd wide', 0, 'hold'), hold(() => act('ccw'), '왼쪽 돌기', 'rot b', 0, 'ccw'), hold(() => act('rot'), '오른쪽 돌기', 'rot a', 0, 'rot'))));
+        h('div', { class: 'tt-ab' }, hold(() => act('hold'), '보관', 'hd wide', 0, 'hold'), hold(() => act('rot'), '돌리기', 'rot one', 0, 'rot'))));
     gestures(cv);
   }
-  // 판 위 손가락 조작(모바일 테트리스처럼): 톡 = 돌리기(왼쪽 반은 반대로), 좌우로 끌기 = 한 칸씩 따라 이동, 천천히 아래로 끌기 = 내리기, 아래로 휙 = 뚝!, 위로 휙 = 보관
+  // 판 위 손가락 조작(모바일 테트리스처럼): 톡 = 돌리기, 좌우로 끌기 = 한 칸씩 따라 이동, 천천히 아래로 끌기 = 내리기, 아래로 휙 = 뚝!, 위로 휙 = 보관
   function gestures(c) { let p = null;
     c.addEventListener('pointerdown', e => { e.preventDefault(); try { c.setPointerCapture(e.pointerId); } catch {} p = { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t: performance.now(), moved: false, soft: 0, cur: G && G.cur }; });
     // 블록이 굳고 다음 블록이 나오면 그 손짓은 끝
@@ -116,7 +116,7 @@ export function mount(el, ctx) {
       while (Math.abs(dx) >= step) { act(dx > 0 ? 'r' : 'l'); p.x += dx > 0 ? step : -step; dx = e.clientX - p.x; p.moved = true; }
       const dy = e.clientY - p.y0, dxa = Math.abs(e.clientX - p.x0); if (dy > cell * 1.2 && dy > dxa) { const n = Math.floor((dy - cell * 0.6) / cell); while (p.soft < n) { act('down'); p.soft++; } p.moved = true; } });
     const end = e => { if (!p || !G || G.cur !== p.cur) { p = null; return; } const dt = performance.now() - p.t, dy = e.clientY - p.y0, dx = e.clientX - p.x0, v = dy / Math.max(1, dt);
-      if (!p.moved && Math.abs(dx) < cell * 0.6 && Math.abs(dy) < cell * 0.6 && dt < 300) { const r = c.getBoundingClientRect(); act(e.clientX < r.left + r.width / 3 ? 'ccw' : 'rot'); }
+      if (!p.moved && Math.abs(dx) < cell * 0.6 && Math.abs(dy) < cell * 0.6 && dt < 300) { act('rot'); }
       else if (dy > cell * 2 && v > 0.9 && dt < 260) act('drop');
       else if (-dy > cell * 2 && -dy > Math.abs(dx) && dt < 320) act('hold');
       p = null; };
