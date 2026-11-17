@@ -96,7 +96,9 @@ export function mount(el, ctx) {
   let game = { sc0: 0, sc1: 0, serve: 0, phase: 'idle', at: 0, n: 0 }, dead = false, deadMine = false, oppSeen = 0, sendT = 0, lastP = '', lastPT = 0, aiErr = 0, aiT = 0;
   const now = () => mode === 'online' ? ctx.store.now() : Date.now();
   const live = () => game.phase === 'serve' && now() >= game.at + 1000 && !dead;
-  const placeBall = () => { lastHit = -1; prevSide = game.serve ? 1 : 0; lastTouch = game.serve; Object.assign(ball, { x: game.serve ? 600 : 200, y: 150, vx: 0, vy: 0, rot: 0, spike: 0 }); trail.length = 0; dead = false; deadMine = false; };
+  // 서브 공은 서브하는 카피바라 머리 위에서 나온다(지금 서 있는 자리 그대로)
+  const serveX = () => { const p = ps[game.serve ? 1 : 0], lo = game.serve ? NETX + 60 : -EXT + 40, hi = game.serve ? W + EXT - 40 : NETX - 60; return Math.max(lo, Math.min(hi, p && isFinite(p.x) ? p.x : (game.serve ? 600 : 200))); };
+  const placeBall = () => { lastHit = -1; prevSide = game.serve ? 1 : 0; lastTouch = game.serve; Object.assign(ball, { x: serveX(), y: 150, vx: 0, vy: 0, rot: 0, spike: 0 }); trail.length = 0; dead = false; deadMine = false; };
   const sprites = [null, null], yz = new Image(), bg = new Image(); yz.src = 'img/volley/ball.webp'; bg.src = 'img/volley/bg.webp';
   const yz0 = new Image(); yz0.src = yuzuUrl;
   const loadSprites = () => [0, 1].forEach(i => { const uid = mode === 'online' ? ctx.order[i] : (i ? null : ctx.uid); loadImg(capyUrl(uid ? ctx.capyOf(uid, { face: 'happy', rare: null, pin: '', hat: '', acc: 'none' }) : { color: 'choco', acc: 'towel', face: 'wink' })).then(im => { sprites[i] = im; }); });
@@ -116,7 +118,7 @@ export function mount(el, ctx) {
     if (v && v.phase === 'over' && game.phase === 'serve') { const won = (v.sc0 > v.sc1 ? 0 : 1) === my(); const cx = { e: 0.4, m: 0.6, h: 0.8 }[lvKey] || 0.6, ln = { e: '하', m: '중', h: '상' }[lvKey] || '중'; ctx.earnMatch(PAY.volley(won) * (mode === 'online' ? 1 : cx), '배구', [`${won ? '승리' : '패배'} = ${PAY.volley(won)}코인`, ...(mode === 'online' ? [] : [`컴퓨터전(${ln}) ${Math.round(cx * 100)}% = ${Math.round(PAY.volley(won) * cx)}코인`])], won ? 'win' : 'lose', 'volley', mode === 'online'); gameFx(won ? 'win' : 'lose', `${v.sc0} : ${v.sc1}`); } // 방금 끝났을 때만
     if (v && v.n === 1 && v.phase === 'serve' && game.n !== 1) { chg[0] = chg[1] = dsh[0] = dsh[1] = 0; drawPips(); }
     game = v || { sc0: 0, sc1: 0, serve: 0, phase: 'idle', at: 0, n: 0 }; if (fresh) placeBall(); }
-  function newGame() { const v = { sc0: 0, sc1: 0, serve: 0, phase: 'serve', at: now(), n: (game.n || 0) + 1 }; chg[0] = chg[1] = dsh[0] = dsh[1] = 0; drawPips(); mode === 'online' ? ctx.store.set('games/volley', v) : setGame(v); ps[0].x = 200; ps[1].x = 600; }
+  function newGame() { const v = { sc0: 0, sc1: 0, serve: 0, phase: 'serve', at: now(), n: (game.n || 0) + 1 }; chg[0] = chg[1] = dsh[0] = dsh[1] = 0; drawPips(); ps[0].x = 200; ps[1].x = 600; mode === 'online' ? ctx.store.set('games/volley', v) : setGame(v); }
   function point(loser) {
     sfx('point');
     dead = true; deadMine = true;
