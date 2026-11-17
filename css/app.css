@@ -1260,3 +1260,7 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .spect-info { margin: 0 0 8px; padding: 8px 12px; border-radius: 14px; background: #EAF6FF; border: 2px solid #8EC5F0; font: 800 13.5px var(--head); color: #1F5A85; text-align: center; }
 .spect-view { pointer-events: none; user-select: none; }
 .spect-view img { max-width: 100%; height: auto; }
+/* 걸을 때 두 발이 번갈아 들린다. 황금 구두도 같은 무리라 함께 움직인다 */
+.walk .cf-l, .walk .cf-r { animation: cfStep .32s ease-in-out infinite; }
+.walk .cf-r { animation-delay: -.16s; }
+@keyframes cfStep { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }

@@ -51,8 +51,9 @@ let rareN = 0;
 // 가슴에 다는 상징(나머지는 손에 든다)
 export const PIN_CHEST = new Set(['👑', '🥇', '🌈', '🌕', '🌙', '⚓', '🧊', '🫧', '🐚', '🌼', '🪷', '🌻']);
 const RARE_BACK = new Set([17, 19, 27, 28]); // 등 뒤에 그리는 것(날개·가시 망토·꼬리)
-const RARE_BODY = new Set([5, 8, 9, 12, 13, 18, 20, 22, 24, 26]); // 몸에 입는 것(상의·하의·한 벌): 몸 위, 얼굴 아래에 그려서 입은 것처럼 보이게 한다
-const RARE_FIT = { 0: [5, 0, 1], 4: [3, 0, 1], 14: [7, 0, 1], 25: [5, 0, 1], 5: [0, 30, 0.72], 7: [0, 0, 0.72], 10: [0, -25, 0.9], 11: [0, -17, 1], 13: [0, -7, 0.86], 15: [0, -8, 1], 17: [0, -10, 1], 21: [0, -14, 1], 18: [0, -2, 0.95], 20: [0, 6, 1], 26: [0, 6, 1] };
+const RARE_SHOE = new Set([12, 13]); // 발에 신는 것(구두): 발 위에 따로 그린다
+const RARE_BODY = new Set([5, 8, 9, 18, 20, 22, 24, 26]); // 몸에 입는 것(상의·하의·한 벌): 몸 위, 얼굴 아래에 그려서 입은 것처럼 보이게 한다
+const RARE_FIT = { 0: [5, 0, 1], 4: [3, 0, 1], 14: [7, 0, 1], 25: [5, 0, 1], 5: [0, 30, 0.72], 7: [0, 0, 0.72], 10: [0, -25, 0.9], 11: [0, -17, 1], 15: [0, -8, 1], 17: [0, -10, 1], 21: [0, -14, 1], 18: [0, -2, 0.95], 20: [0, 6, 1], 26: [0, 6, 1] };
 const RARE_HOLD = new Set([0, 4, 14, 25]); // 손에 쥐는 것: 자루 위에 손을 한 번 더 그려서 쥔 것처럼 보이게 한다
 export function capy(o = {}) {
   const c = COLORS[o.color] || COLORS.brown;
@@ -65,9 +66,14 @@ export function capy(o = {}) {
     : `<text x="98" y="115" font-size="23" text-anchor="middle" transform="rotate(-12 98 108)">${o.pin}</text><ellipse cx="92" cy="109" rx="5.5" ry="4.5" fill="${c.body}"/>`;
   if (o.head) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 112">${head}</svg>`;
   const cl = o.top || o.bottom ? wearSvg(o.top, o.bottom) : { under: '', top: '', over: '' };
-  const body = `<ellipse cx="45" cy="128" rx="12" ry="6.5" fill="${c.dark}"/><ellipse cx="75" cy="128" rx="12" ry="6.5" fill="${c.dark}"/>
+  // 황금 구두: 한 짝 그림을 왼발에, 뒤집어서 오른발에 신긴다. 발과 같은 무리(cf-l·cf-r)라 걸을 때 발과 함께 움직이고, 옷보다 아래에 그려서 옷을 덮지 않는다
+  const shoeK = o.rare && o.rare.i != null && !back ? (o.rare.list || [o.rare.i]).slice(0, 6).find(k => RARE_SHOE.has(k)) : undefined;
+  // 옷 밑으로 앞코가 살짝 나오도록: 구두 전체는 옷 아래에 그리고, 앞코(아래쪽)만 옷 위에 한 번 더 그린다
+  const shoeImg = (y0) => `<g class="cf-l"><image href="img/rare/${shoeK}f.webp" x="32" y="117" width="26" height="22" preserveAspectRatio="none"${y0 ? ` clip-path="url(#${y0})"` : ''}/></g><g class="cf-r"><image href="img/rare/${shoeK}f.webp" x="62" y="117" width="26" height="22" preserveAspectRatio="none" transform="matrix(-1 0 0 1 150 0)"${y0 ? ` clip-path="url(#${y0})"` : ''}/></g>`;
+  const toeId = shoeK == null ? '' : 'st' + (++rareN), shoe = shoeK == null ? '' : shoeImg(''), shoeToe = shoeK == null ? '' : `<defs><clipPath id="${toeId}" clipPathUnits="userSpaceOnUse"><rect x="-20" y="130.5" width="200" height="20"/></clipPath></defs>${shoeImg(toeId)}`;
+  const body = `<g class="cf-l"><ellipse cx="45" cy="128" rx="12" ry="6.5" fill="${c.dark}"/></g><g class="cf-r"><ellipse cx="75" cy="128" rx="12" ry="6.5" fill="${c.dark}"/></g>
     <rect x="31" y="76" width="58" height="50" rx="24" fill="${c.body}"/>
-    ${back ? `<ellipse cx="60" cy="118" rx="6" ry="5" fill="${c.dark}"/>` : `<ellipse cx="60" cy="105" rx="17" ry="15" fill="${c.light}"/>`}${cl.under}
+    ${back ? `<ellipse cx="60" cy="118" rx="6" ry="5" fill="${c.dark}"/>` : `<ellipse cx="60" cy="105" rx="17" ry="15" fill="${c.light}"/>`}${shoe}${cl.under}
     <ellipse cx="29" cy="99" rx="8" ry="12" fill="${c.body}" transform="rotate(14 29 99)"/><ellipse cx="91" cy="99" rx="8" ry="12" fill="${c.body}" transform="rotate(-14 91 99)"/>${cl.top}${cl.over}`;
   // 초레어 보물(친목회 단짝 100점): 동물마다 다른 금빛 장비(모자·안경·상의·하의·한 벌·도구·날개…)를 걸친다. 몸 뒤로 은은한 금빛이 퍼지고 별이 반짝인다
   // 그림은 캐릭터 기준 틀(가로 1024 중 캐릭터 547×720)에 맞춰 그려져 있어 같은 자리에 겹치면 된다. RARE_FIT = 조금씩 어긋난 것만 [옆, 아래, 크기] 보정
@@ -75,9 +81,9 @@ export function capy(o = {}) {
   if (o.rare && o.rare.i != null && !back) { const gid = 'rg' + (++rareN), list = (o.rare.list || [o.rare.i]).slice(0, 6), n = list.length; // 여섯 개까지 함께 걸친다. 많이 걸칠수록 빛이 커진다
     glow = `<defs><radialGradient id="${gid}"><stop offset="0" stop-color="#FFFBD6" stop-opacity=".95"/><stop offset=".5" stop-color="#FFE066" stop-opacity="${Math.min(0.95, 0.5 + n * 0.08)}"/><stop offset="1" stop-color="#FFC93C" stop-opacity="0"/></radialGradient></defs><circle cx="60" cy="74" r="${72 + n * 4}" fill="url(#${gid})"><animate attributeName="r" values="${64 + n * 4};${78 + n * 4};${64 + n * 4}" dur="2.2s" repeatCount="indefinite"/></circle>`;
     list.forEach(k => { const [dx, dy, sc] = RARE_FIT[k] || [0, 0, 1], S = 224.7 * sc, img = `<image href="img/rare/${k}.webp" x="${(60 + dx - S / 2).toFixed(1)}" y="${(57 + dy - S / 2).toFixed(1)}" width="${S.toFixed(1)}" height="${S.toFixed(1)}"/>`;
-      if (RARE_BACK.has(k)) wearB += img; else if (RARE_BODY.has(k)) wearM += img; else gem += img + (RARE_HOLD.has(k) ? `<ellipse cx="${96 + dx * 0.6}" cy="104" rx="7.5" ry="6.5" fill="${c.body}"/><path d="M${91 + dx * 0.6} 101 q5 -3 10 0" fill="none" stroke="${c.dark}" stroke-width="1.4" stroke-linecap="round" opacity=".6"/>` : ''); });
+      if (RARE_SHOE.has(k)) return; if (RARE_BACK.has(k)) wearB += img; else if (RARE_BODY.has(k)) wearM += img; else gem += img + (RARE_HOLD.has(k) ? `<ellipse cx="${96 + dx * 0.6}" cy="104" rx="7.5" ry="6.5" fill="${c.body}"/><path d="M${91 + dx * 0.6} 101 q5 -3 10 0" fill="none" stroke="${c.dark}" stroke-width="1.4" stroke-linecap="round" opacity=".6"/>` : ''); });
     gem += [[4, 62, 0], [116, 50, .6], [10, 126, 1.1], [112, 120, 1.6], [60, -34, .3], [-10, 22, .9], [130, 92, 1.3], [30, -24, .5]].map(([x, y, d]) => `<path d="M${x} ${y - 10} l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="#FFFDF0" stroke="#F0C24A" stroke-width="1"><animate attributeName="opacity" values="0.15;1;0.15" dur="1.6s" begin="${d}s" repeatCount="indefinite"/></path>`).join(''); }
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158"${glow ? ' style="overflow:visible"' : ''}>${glow}${wearB}${body}${wearM}${head}${pin}${gem}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158"${glow ? ' style="overflow:visible"' : ''}>${glow}${wearB}${body}${wearM}${shoeToe}${head}${pin}${gem}</svg>`;
 }
 
 export function capyEl(o = {}, cls = '') {
