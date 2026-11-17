@@ -216,7 +216,7 @@ export function mount(el, ctx) {
     if (game.phase === 'idle') msg = '';
     else if (game.phase === 'over') msg = (game.sc0 > game.sc1 ? 0 : 1) === my() ? '이겼다!' : mode === 'cpu' ? '컴퓨터 승리' : '졌다…';
     else if (!live() && !dead) msg = game.serve === my() ? '내 서브' : '상대 서브';
-    if (msg) { g.font = '700 32px Jua, sans-serif'; g.fillStyle = 'rgba(255,255,255,.88)'; const w = g.measureText(msg).width + 48; g.beginPath(); g.roundRect(NETX - w / 2, 80, w, 56, 28); g.fill(); g.fillStyle = '#5F3F2B'; g.fillText(msg, NETX, 119); }
+    if (msg) { g.font = '700 32px Jua, sans-serif'; g.fillStyle = 'rgba(255,255,255,.88)'; const w = g.measureText(msg).width + 48; g.beginPath(); g.roundRect(NETX - w / 2, 150, w, 56, 28); g.fill(); g.fillStyle = "#5F3F2B"; g.fillText(msg, NETX, 189); }
   }
   function loop(t) {
     if (!alive) return; raf = requestAnimationFrame(loop);
