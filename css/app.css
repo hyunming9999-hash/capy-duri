@@ -1485,3 +1485,7 @@ body.vb-on .earn-card p { font-size: 12px; } body.vb-on .earn-card p.sum { font-
 .storm-pic { position: relative; font-size: 60px; line-height: 1; margin: 4px auto 26px; animation: crowShake .5s ease-in-out infinite; } .storm-pic span { position: absolute; left: 50%; bottom: -10px; font-size: 40px; transform: translateX(-10%); }
 .fs-card.storm-card b { color: #2E4A66; } .fs-card.storm-card p { font-size: 14px; color: #4A5A6A; margin: 6px 4px 2px; } .fs-card.storm-card small { color: #7A8896; display: block; margin-bottom: 4px; }
 .fs-card.wait .fs-acts .btn { opacity: .55; pointer-events: none; }
+
+/* 배구: 내기 창이 배구 화면 뒤에 숨지 않게. 경기 중에는 내기 버튼 잠금 */
+body.vb-on .modal-wrap { z-index: 4600; }
+.vb-top .bet-bar.lock { opacity: .45; pointer-events: none; filter: grayscale(.6); }
