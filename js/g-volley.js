@@ -87,7 +87,8 @@ export function mount(el, ctx) {
   const right = h('div', { class: 'vb-pad r' }, dshBtn, spkBtn, btn('j', 'jmp', '점프'));
   const exit = h('button', { class: 'vb-tb x', onClick: () => ctx.go('game') }, '✕ 나가기');
   const bar = el.querySelector('.bet-bar');
-  const top = h('div', { class: 'vb-top' }, exit, info, bar || '', modeBtn);
+  const netEl = h('span', { class: 'vb-net', hidden: true });
+  const top = h('div', { class: 'vb-top' }, exit, netEl, info, bar || '', modeBtn);
   const lvRow = h('div', { class: 'vb-lv', hidden: true }), drawLv = () => lvRow.replaceChildren(h('span', null, '컴퓨터'), ...[['e', '하'], ['m', '중'], ['h', '상']].map(([k, t]) => h('button', { class: k === lvKey ? 'on' : '', onClick: () => { lvKey = k; try { localStorage.setItem('capy.volleyLv', k); } catch {} drawLv(); } }, t)));
   const spk = h('div', { class: 'vb-spk' }, pips);
   const rot = h('div', { class: 'vb-rot' }, canvas, top, spk, left, right, newBtn, lvRow), wrap = h('div', { class: 'vb' }, rot);
@@ -196,7 +197,8 @@ export function mount(el, ctx) {
   let peer = null, conn = null, oppPid = null, linkT = 0;
   const p2pOn = () => !!(conn && conn.open);
   const loadPeer = () => window.Peer ? Promise.resolve() : new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = 'js/vendor/peerjs.min.js'; sc.onload = ok; sc.onerror = no; document.head.append(sc); });
-  function p2pStart() {
+  let p2pAt = 0;
+  function p2pStart() { p2pAt = Date.now();
     loadPeer().then(() => { if (!alive || mode !== 'online' || peer) return; let me; try { const o = { config: ICE, debug: 0 }, m = location.search.match(/peerhost=([^&]+)/); if (m) { const [hh, pp] = m[1].split(':'); Object.assign(o, { host: hh, port: +pp || 9000, secure: false, path: '/' }); } me = new window.Peer(o); } catch { return; } peer = me;
       me.on('open', id => { if (peer !== me) return; ctx.store.set('rt/volley/pid' + ctx.idx, { id, at: ctx.store.now() }).catch(() => {}); tryLink(); });
       me.on('connection', c => { if (peer === me) wire(c); });
@@ -369,8 +371,11 @@ export function mount(el, ctx) {
     const showStart = game.phase !== 'serve'; if (newBtn.hidden === showStart) { newBtn.hidden = !showStart; newBtn.firstChild.textContent = game.phase === 'over' ? '▶ 한 판 더' : '▶ 시작';  if (bar) bar.classList.toggle('lock', !showStart); }
     const pm = ps[my()], go = chg[my()] >= SPK_N && live() && (ball.x < NETX ? 0 : 1) === my() && Math.abs(ball.x - pm.x) < 165 && spikeOk(pm); if (go !== spkBtn.classList.contains('now')) spkBtn.classList.toggle('now', go); // 스파이크 준비된 채 점프하면 '눌러!'
     const here = mode !== 'online' || Date.now() - oppSeen < 3000;
-    const txt = mode === 'cpu' ? '컴퓨터와 연습 중' : here ? `${josa(ctx.nameOf(ctx.order[1 - ctx.idx]), '와', '과')} 대결 · 나는 ${ctx.idx ? '오른쪽' : '왼쪽'}${p2pOn() ? ' · ⚡직접 연결' : ''}` : `${josa(ctx.nameOf(ctx.order[1 - ctx.idx]), '가', '이')} 들어오길 기다리는 중…`;
+    const txt = mode === 'cpu' ? '컴퓨터와 연습 중' : here ? `${josa(ctx.nameOf(ctx.order[1 - ctx.idx]), '와', '과')} 대결 · 나는 ${ctx.idx ? '오른쪽' : '왼쪽'}` : `${josa(ctx.nameOf(ctx.order[1 - ctx.idx]), '가', '이')} 들어오길 기다리는 중…`;
     if (info.textContent !== txt) info.textContent = txt;
+    // 연결 상태 표시(둘이 하기에서만): ⚡직접 연결 / 연결 중 / 서버 연결(직접 연결이 안 되는 망이면 지금처럼 Firebase로)
+    const ns = mode !== 'online' ? '' : p2pOn() ? 'on' : Date.now() - p2pAt < 15000 ? 'try' : 'srv';
+    if (netEl.dataset.s !== ns) { netEl.dataset.s = ns; netEl.hidden = !ns; netEl.textContent = ns === 'on' ? '⚡ 직접 연결' : ns === 'try' ? '🔄 직접 연결 시도 중' : '🌐 서버 연결'; }
   }
   function setMode(m) {
     mode = m; modeBtn.textContent = m === 'online' ? '컴퓨터와 연습' : '둘이 하기'; modeBtn.hidden = ctx.order.length < 2;
