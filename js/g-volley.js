@@ -189,7 +189,7 @@ export function mount(el, ctx) {
     if (live() && (ball.x < NETX ? 0 : 1) === ctx.idx) ctx.store.set('rt/volley/ball', { x: r(ball.x), y: r(ball.y), vx: r(ball.vx), vy: r(ball.vy), sp: ball.spike || 0, side: ctx.idx, n: game.n, t: ctx.store.now() }).catch(() => {});
   }
   // 컴퓨터 난이도: 하·중·상 [이동 속도, 판단 오차(px), 다시 판단하는 간격(ms), 받으러 뛰는 확률, 스파이크 쓰는 확률, 대쉬 쓰는 확률]
-  const LV = { e: [4.6, 120, 650, 0.25, 0.25, 0.02], m: [5.8, 60, 420, 0.5, 0.5, 0.05], h: [6.8, 22, 240, 0.8, 0.8, 0.1] };
+  const LV = { e: [3.9, 170, 800, 0.15, 0.12, 0.01], m: [4.9, 110, 600, 0.3, 0.3, 0.03], h: [5.8, 60, 420, 0.5, 0.5, 0.05] }; // 상 = 예전 중
   let lvKey = (() => { try { return localStorage.getItem('capy.volleyLv') || 'm'; } catch { return 'm'; } })(), aiPred = 610, aiPT = 0;
   // 공이 내 쪽으로 오면, 받을 높이까지 내려오는 자리를 미리 계산해 둔다(벽이 없어 코트 뒤로 흐르는 공도 쫓아간다)
   function predict() { const b = { ...ball, cd: [9, 9] }; for (let k = 0; k < 260; k++) { if (stepBall(b, [])) break; if (b.vy > 0 && b.y >= standY - 50) break; } return b.x; }
