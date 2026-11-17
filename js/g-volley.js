@@ -58,9 +58,9 @@ export function mount(el, ctx) {
   const modeBtn = h('button', { class: 'vb-tb' }), newBtn = h('button', { class: 'vb-tb primary' }, '새 게임');
   const inp = { l: false, r: false, j: false, s: false };
   // 스파이크 충전: [나, 상대] 기본 공격 횟수(0~3). 3이면 스파이크 준비 완료
-  const chg = [0, 0], armAt = [0, 0]; let flash = 0, shake = 0, spikeTxt = 0, lastHit = -1, camZ = 1;
+  const chg = [0, 0], armAt = [0, 0]; let flash = 0, shake = 0, spikeTxt = 0, lastHit = -1, camZ = 1, camTop = 0, ghost = null;
   const btn = (k, cls, label, sub) => { const b = h('button', { class: 'vb-btn ' + cls }, h('b', null, label), sub && h('small', null, sub)); holdBtn(b, () => { inp[k] = true; if (k === 's') armAt[my()] = performance.now(); }, () => { inp[k] = false; }); return b; };
-  const spkBtn = btn('s', 'spk', '스파이크', ''), pips = h('div', { class: 'vb-pips' });
+  const spkBtn = btn('s', 'spk', '스파이크', '0/3'); spkBtn.append(h('em', { class: 'vb-now' }, '눌러!')); const pips = h('div', { class: 'vb-pips' });
   const left = h('div', { class: 'vb-pad l' }, btn('l', 'mv', '◀'), btn('r', 'mv', '▶'));
   const right = h('div', { class: 'vb-pad r' }, spkBtn, btn('j', 'jmp', '점프'));
   const exit = h('button', { class: 'vb-tb x', onClick: () => ctx.go('game') }, '✕ 나가기');
@@ -97,7 +97,7 @@ export function mount(el, ctx) {
   const sprites = [null, null], yz = new Image(), bg = new Image(); yz.src = 'img/volley/ball.webp'; bg.src = 'img/volley/bg.webp';
   const yz0 = new Image(); yz0.src = yuzuUrl;
   const loadSprites = () => [0, 1].forEach(i => { const uid = mode === 'online' ? ctx.order[i] : (i ? null : ctx.uid); loadImg(capyUrl(uid ? ctx.capyOf(uid, { face: 'happy' }) : { color: 'choco', acc: 'towel', face: 'wink' })).then(im => { sprites[i] = im; }); });
-  const drawPips = () => { const n = chg[my()], ready = n >= SPK_N; pips.replaceChildren(h('small', null, ready ? '스파이크 준비 완료!' : `상대 진영으로 ${SPK_N - n}번 더 넘기면`), ...Array.from({ length: SPK_N }, (_, k) => h('i', { class: k < n ? 'on' : '' }))); spkBtn.classList.toggle('ready', ready); spkBtn.lastChild.textContent = ready ? '점프해서 공에!' : `${n}/${SPK_N}`; };
+  const drawPips = () => { const n = chg[my()], ready = n >= SPK_N; pips.replaceChildren(h('small', null, ready ? '스파이크 준비 완료!' : `상대 진영으로 ${SPK_N - n}번 더 넘기면`), ...Array.from({ length: SPK_N }, (_, k) => h('i', { class: k < n ? 'on' : '' }))); spkBtn.classList.toggle('ready', ready); spkBtn.querySelector('small').textContent = ready ? '점프!' : `${n}/${SPK_N}`; };
 
   // 공을 쳤을 때: 스파이크 준비 + 버튼을 막 눌렀고 + 공중이면 스파이크, 아니면 기본 공격 1번 충전
   function onHit(i, p) {
@@ -127,7 +127,7 @@ export function mount(el, ctx) {
     if (mode !== 'online') return;
     const opp = 1 - ctx.idx;
     offs.push(ctx.store.on('games/volley', setGame));
-    offs.push(ctx.store.on('rt/volley/p' + opp, v => { if (!v) return; oppSeen = Date.now(); Object.assign(ps[opp], { x: v.x, y: v.y, vx: v.vx, vy: v.vy }); chg[opp] = v.c || 0; }));
+    offs.push(ctx.store.on('rt/volley/p' + opp, v => { if (!v) return; const lag = oppSeen ? 0 : 1; oppSeen = Date.now(); ghost = { x: v.x, y: v.y, vx: v.vx, vy: v.vy }; if (lag) Object.assign(ps[opp], ghost); chg[opp] = v.c || 0; }));
     offs.push(ctx.store.on('rt/volley/ball', v => {
       if (!v || v.side === ctx.idx || v.n !== game.n) return;
       const senderSide = (v.x < NETX ? 0 : 1) === v.side, mine = (ball.x < NETX ? 0 : 1) === ctx.idx;
@@ -140,7 +140,7 @@ export function mount(el, ctx) {
     }));
   }
   function send(t) {
-    if (mode !== 'online' || t - sendT < 50) return; sendT = t;
+    if (mode !== 'online' || t - sendT < 40) return; sendT = t;
     const p = ps[ctx.idx], r = n => Math.round(n * 10) / 10;
     const pv = { x: r(p.x), y: r(p.y), vx: r(p.vx), vy: r(p.vy), c: chg[ctx.idx] }, key = JSON.stringify(pv);
     if (key !== lastP || t - lastPT > 1000) { lastP = key; lastPT = t; ctx.store.set('rt/volley/p' + ctx.idx, { ...pv, k: Math.round(t) }).catch(() => {}); }
@@ -158,8 +158,9 @@ export function mount(el, ctx) {
   function tick() {
     const me = my();
     stepPlayer(ps[me], me, inp);
-    if (mode === 'online' && Date.now() - oppSeen > 300) ps[1 - me].vx = 0;
-    stepPlayer(ps[1 - me], 1 - me, mode === 'cpu' ? ai(ps[1]) : null, CPU_SPEED * (mode === 'cpu' ? 1 + ctx.streakLv('volley') * 0.1 : 1));
+    if (mode === 'online') { // 상대: 마지막으로 받은 상태를 물리로 계속 진행시킨 '유령'을 부드럽게 따라간다(받을 때마다 순간이동하면 뚝뚝 끊겨 보인다)
+      const o = ps[1 - me]; if (ghost) { if (Date.now() - oppSeen > 300) ghost.vx = 0; stepPlayer(ghost, 1 - me, null); o.x += (ghost.x - o.x) * 0.3; o.y += (ghost.y - o.y) * 0.35; o.vx = ghost.vx; o.vy = ghost.vy; } }
+    else stepPlayer(ps[1], 1, ai(ps[1]), CPU_SPEED * (1 + ctx.streakLv('volley') * 0.1));
     if (inp.j && ps[me].y >= standY - 1 && ps[me].vy < 0 && !ps[me].jf) sfx('jump'); ps[me].jf = ps[me].vy < 0;
     if (flash) flash--; if (shake) shake--; if (spikeTxt) spikeTxt--;
     if (!live()) return;
@@ -178,7 +179,8 @@ export function mount(el, ctx) {
     const sx = shake ? (Math.random() - 0.5) * shake : 0, sy = shake ? (Math.random() - 0.5) * shake : 0;
     g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#5DB9EE'; g.fillRect(0, 0, canvas.width, canvas.height);
     // 카메라: 공이 높이 뜨면 부드럽게 줌 아웃해서 공과 카피바라가 한 화면에 다 보이게, 내려오면 다시 줌 인
-    const topY = Math.min(0, ball.y - BR - 50), want = H / (H - topY); camZ += (want - camZ) * (want < camZ ? 0.18 : 0.07);
+    if (ball.vy < 0 || !live()) camTop = Math.min(0, (ball.vy < 0 ? ball.y - ball.vy * ball.vy / (2 * GB) : ball.y) - BR - 50); // 올라가는 중이면 꼭대기 높이를 미리 계산
+    const want = H / (H - Math.max(-SKY - 60, camTop)); camZ += (want - camZ) * 0.06;
     const K = VK * camZ, OX = canvas.width / 2 - NETX * K, OY = canvas.height - H * K;
     g.setTransform(K, 0, 0, K, OX + sx * K, OY + sy * K);
     // 배경은 화면 가로에 꽉 맞게 키우고, 그림 속 모래선(높이의 400/450)이 코트 바닥에 오도록 맞춘다(위아래는 잘려도 된다)
@@ -213,13 +215,14 @@ export function mount(el, ctx) {
     acc += Math.min(100, t - (lastT || t)); lastT = t;
     while (acc >= 16.67) { tick(); acc -= 16.67; }
     send(t); draw();
+    const pm = ps[my()], go = chg[my()] >= SPK_N && pm.y < standY - 40 && live(); if (go !== spkBtn.classList.contains('now')) spkBtn.classList.toggle('now', go); // 스파이크 준비된 채 점프하면 '눌러!'
     const here = mode !== 'online' || Date.now() - oppSeen < 3000;
     const txt = mode === 'cpu' ? '컴퓨터와 연습 중' : here ? `${josa(ctx.nameOf(ctx.order[1 - ctx.idx]), '와', '과')} 대결 · 나는 ${ctx.idx ? '오른쪽' : '왼쪽'}` : `${josa(ctx.nameOf(ctx.order[1 - ctx.idx]), '가', '이')} 들어오길 기다리는 중…`;
     if (info.textContent !== txt) info.textContent = txt;
   }
   function setMode(m) {
     mode = m; modeBtn.textContent = m === 'online' ? '컴퓨터와 연습' : '둘이 하기'; modeBtn.hidden = ctx.order.length < 2;
-    ps[0].x = 200; ps[1].x = 600; chg[0] = chg[1] = 0; drawPips(); setGame(null); loadSprites(); connect();
+    ps[0].x = 200; ps[1].x = 600; chg[0] = chg[1] = 0; ghost = null; oppSeen = 0; drawPips(); setGame(null); loadSprites(); connect();
   }
   modeBtn.onclick = () => setMode(mode === 'online' ? 'cpu' : 'online');
   newBtn.onclick = newGame;
