@@ -1505,3 +1505,5 @@ body.vb-on .modal-wrap { z-index: 4600; }
 .fs-wow.new b { background: linear-gradient(135deg, #2EC4B6, #118AB2); box-shadow: 0 4px 0 #0B5E78, 0 0 22px rgba(46,196,182,.9); font-size: 24px; }
 .fs-wow .fs-spark { position: absolute; left: 50%; top: 22px; font-style: normal; font-size: 16px; animation: fsSpark .9s ease-out forwards; }
 @keyframes fsSpark { from { transform: translate(-50%, 0) rotate(var(--a)) translateY(0) scale(.4); opacity: 1; } to { transform: translate(-50%, 0) rotate(var(--a)) translateY(calc(var(--d) * -1)) scale(1.1); opacity: 0; } }
+
+.dress-only { margin: 6px 0 0; padding: 8px 12px; border-radius: 12px; background: #FFF4DE; color: #7A5A3A; font-size: 13px; font-weight: 700; text-align: center; word-break: keep-all; }
