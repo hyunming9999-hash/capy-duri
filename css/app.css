@@ -1348,3 +1348,4 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 @keyframes gradeIn { 0% { transform: scale(.2) rotate(-20deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
 @keyframes sGlow { 0%, 100% { box-shadow: 0 0 10px rgba(255,170,0,.8); } 50% { box-shadow: 0 0 26px #FFD23F, 0 0 40px rgba(255,77,141,.6); } }
 @keyframes wowOut { to { transform: translateX(-50%) translateY(-30px); opacity: 0; } }
+.so-crowbtn small { display: block; font-size: 11px; font-weight: 700; opacity: .9; }

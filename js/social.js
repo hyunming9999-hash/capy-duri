@@ -512,8 +512,9 @@ export function mount(el, ctx) {
     const x = Math.max(60, Math.min(WATER_X - 60, me.x + (Math.random() < 0.5 ? -1 : 1) * (90 + Math.random() * 60)));
     const e = h('div', { class: 'so-crow', style: { left: x + 'px', bottom: (me.dy * 100).toFixed(1) + '%' } }, h('img', { src: 'img/crow/crow.webp', alt: '까마귀 악당' }));
     worldEl.append(e);
-    const warn = h('div', { class: 'so-crowwarn' }, h('b', null, '⚠️ 까마귀 악당 출현!'), h('small', null, '친한 동물들에게 이간질을 하려고 해요. 어서 퇴치하세요!'));
-    const btn = h('button', { class: 'so-crowbtn', onClick: crowCharm }, '🧿 까마귀 퇴치', h('i'));
+    const names = targets.map(i => ANIMALS[i].name).join(', ');
+    const warn = h('div', { class: 'so-crowwarn' }, h('b', null, '⚠️ 까마귀 악당 출현!'), h('small', null, `${names}에게 이간질을 하려 해요! 어서 퇴치하세요!`));
+    const btn = h('button', { class: 'so-crowbtn', onClick: crowCharm }, '🧿 까마귀 퇴치', h('small', null, `${names} 지키기`), h('i'));
     stageEl.append(warn, btn); setTimeout(() => warn.remove(), 2800); sfx('bad'); setTimeout(() => sfx('bad'), 350);
     crow = { e, x, y: me.dy, targets, k: 0, end: now + CROW_MS, at: now + 1500, btn, last: now, done: false };
     setTimeout(() => alive && pop(e, '까악! 까악!', 'say'), 300);
@@ -551,11 +552,13 @@ export function mount(el, ctx) {
   }
   function crowEnd(ok, why) {
     const c = crow; if (!c || c.done) return; c.done = true; c.btn.remove();
-    if (ok) { pop(c.e, '까악?! 부, 부적이다!', 'say'); gameFx('win', '까마귀 퇴치!'); c.targets.forEach((i, n) => setTimeout(() => alive && actors[i] && pop(actors[i].e, toned(i, '휴, 하마터면 속을 뻔했네!'), 'say long'), 900 + n * 600)); }
+    if (ok) { pop(c.e, '까악?! 부, 부적이다!', 'say'); gameFx('win', '까마귀 퇴치!'); c.targets.forEach((i, n) => setTimeout(() => alive && actors[i] && pop(actors[i].e, toned(i, '역시 까마귀는 나쁜 놈이었어!'), 'say long'), 900 + n * 900)); }
     else { if (why) toast(why); pop(c.e, '까악까악! 속았지롱~', 'say'); sfx('lose');
       c.targets.forEach((i, n) => { const r = mine[i] || {}, lost = Math.min(A(i), 15 + Math.floor(Math.random() * 6)), top = A(i) >= 100 || r.hit100;
         setRel(i, { a: A(i) - lost, crowLie: { n: Math.min(5, lost), t: ctx.store.now() }, ...(top ? { hit100: true, crowed: true } : {}) });
-        setTimeout(() => { if (!alive || !actors[i]) return; const o = actors[i]; pop(o.e, toned(i, '어떻게 나한테 그럴 수 있어') + ` (친밀도 -${lost})`, 'say long'); o.e.classList.add('ouch'); setTimeout(() => o.e.classList.remove('ouch'), 600); }, 1000 + n * 900); });
+        // 이간질당한 동물은 나한테 걸어와서 따진다
+        setTimeout(() => { if (!alive || !actors[i]) return; const o = actors[i]; if (o.st !== 'chase') { leave(o); o.st = 'walk'; o.spot = null; o.wait = 0; o.tx = Math.max(40, Math.min(WATER_X - 40, me.x + (n ? 56 : -56))); o.e.classList.add('walk'); o.e.classList.toggle('left', o.tx < o.x); const sp = o.sp; o.sp = 150; setTimeout(() => { o.sp = sp; }, 6000); }
+          setTimeout(() => { if (!alive) return; pop(o.e, toned(i, `${ctx.me.name}, 어떻게 나한테 그럴 수 있어?`) + ` (친밀도 -${lost})`, 'say long'); animalVoice(i); o.e.classList.add('ouch'); setTimeout(() => o.e.classList.remove('ouch'), 600); }, Math.min(4500, 500 + Math.abs(o.x - me.x) / 150 * 1000)); }, 900 + n * 1100); });
       setTimeout(() => alive && toast('삐진 동물에게 말을 걸어 해명하면 조금(최대 +5) 풀려요', 4000), 3200); scores(); }
     setTimeout(() => c.e.classList.add('flee'), 900);
     setTimeout(() => { c.e.remove(); if (crow === c) crow = null; }, 2400);
