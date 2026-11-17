@@ -118,9 +118,11 @@ export function mount(el, ctx) {
 
   function setGame(v) { const fresh = !v || v.n !== game.n || v.phase !== game.phase || v.at !== game.at;
     if (v && v.phase === 'over' && game.phase === 'serve') { const won = (v.sc0 > v.sc1 ? 0 : 1) === my(); const cx = { e: 0.4, m: 0.6, h: 0.8 }[lvKey] || 0.6, ln = { e: '하', m: '중', h: '상' }[lvKey] || '중'; ctx.earnMatch(PAY.volley(won) * (mode === 'online' ? 1 : cx), '배구', [`${won ? '승리' : '패배'} = ${PAY.volley(won)}코인`, ...(mode === 'online' ? [] : [`컴퓨터전(${ln}) ${Math.round(cx * 100)}% = ${Math.round(PAY.volley(won) * cx)}코인`])], won ? 'win' : 'lose', 'volley', mode === 'online'); gameFx(won ? 'win' : 'lose', `${v.sc0} : ${v.sc1}`); } // 방금 끝났을 때만
-    if (v && v.n === 1 && v.phase === 'serve' && game.n !== 1) { chg[0] = chg[1] = dsh[0] = dsh[1] = 0; drawPips(); }
+    if (v && v.n === 1 && v.phase === 'serve' && game.n !== 1) { chg[0] = chg[1] = dsh[0] = dsh[1] = 0; drawPips(); clearCards(); }
     game = v || { sc0: 0, sc1: 0, serve: 0, phase: 'idle', at: 0, n: 0 }; if (fresh) placeBall(); }
-  function newGame() { const v = { sc0: 0, sc1: 0, serve: 0, phase: 'serve', at: now(), n: (game.n || 0) + 1 }; chg[0] = chg[1] = dsh[0] = dsh[1] = 0; drawPips(); ps[0].x = 200; ps[1].x = 600; mode === 'online' ? ctx.store.set('games/volley', v) : setGame(v); }
+  // 새 판이 시작되면 지난 판 정산창·승패 연출은 바로 치운다
+  const clearCards = () => document.querySelectorAll('.earn-card, .gfx').forEach(e => e.remove());
+  function newGame() { clearCards(); const v = { sc0: 0, sc1: 0, serve: 0, phase: 'serve', at: now(), n: (game.n || 0) + 1 }; chg[0] = chg[1] = dsh[0] = dsh[1] = 0; drawPips(); ps[0].x = 200; ps[1].x = 600; mode === 'online' ? ctx.store.set('games/volley', v) : setGame(v); }
   function point(loser) {
     sfx('point');
     dead = true; deadMine = true;

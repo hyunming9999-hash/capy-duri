@@ -1418,3 +1418,8 @@ body.vb-on { overflow: hidden; }
 .vb-lv span { color: #fff; font-weight: 800; font-size: 13px; padding: 0 4px; }
 .vb-lv button { border: 2px solid #fff; background: rgba(255,255,255,.2); color: #fff; font-weight: 900; font-size: 15px; width: 46px; height: 32px; border-radius: 14px; cursor: pointer; }
 .vb-lv button.on { background: #fff; color: #E8453C; }
+/* 배구 중 정산창: 작게, 화면 위 가운데(시작 버튼과 안 겹치게), 4초 뒤 사라짐 */
+body.vb-on .earn-card { top: 8px; width: min(60vw, 300px); padding: 8px 12px; animation: vbCardOut 4.5s forwards; }
+body.vb-on .earn-card.hot { animation: none; }
+body.vb-on .earn-card p { font-size: 12px; } body.vb-on .earn-card p.sum { font-size: 18px; }
+@keyframes vbCardOut { 0%, 80% { opacity: 1; } 100% { opacity: 0; visibility: hidden; pointer-events: none; } }
