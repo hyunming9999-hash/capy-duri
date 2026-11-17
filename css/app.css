@@ -1405,7 +1405,7 @@ body.vb-on { overflow: hidden; }
 .vb-spk { position: absolute; left: 50%; transform: translateX(-50%); z-index: 3; pointer-events: none; }
 .vb-pips { display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,.3); border-radius: 12px; padding: 3px 10px; color: #fff; font-size: 11px; font-weight: 800; white-space: nowrap; }
 .vb-pips i { width: 11px; height: 11px; border-radius: 50%; border: 2px solid #fff; } .vb-pips i.on { background: #FFD23F; }
-.vb-start { position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%); z-index: 4; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 14px 44px; border: 4px solid #fff; border-radius: 28px; background: linear-gradient(#FFD23F, #FFA51F); color: #5B3A00; box-shadow: 0 6px 0 #C97F00, 0 10px 24px rgba(0,0,0,.25); cursor: pointer; animation: startPulse 1.2s ease-in-out infinite; }
+.vb-start { position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%); z-index: 4; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 14px 44px; border: 4px solid #fff; border-radius: 28px; background: linear-gradient(#FFD23F, #FFA51F); color: #5B3A00; box-shadow: 0 6px 0 #C97F00, 0 10px 24px rgba(0,0,0,.25); cursor: pointer; animation: startPulse 1.2s ease-in-out infinite; }
 .vb-start b { font-size: 30px; font-weight: 900; white-space: nowrap; } .vb-start small { font-size: 12px; font-weight: 700; opacity: .8; white-space: nowrap; }
 .vb-start:active { transform: translate(-50%, -48%); box-shadow: 0 3px 0 #C97F00; }
 .vb-start[hidden] { display: none; }
@@ -1430,3 +1430,32 @@ body.vb-on .earn-card p { font-size: 12px; } body.vb-on .earn-card p.sum { font-
 .vb-intro-c p { margin: 4px 14px 0; font-size: 16px; font-weight: 800; color: #4A3524; text-align: center; } .vb-intro-c p em { font-style: normal; color: #fff; background: #FF8A00; padding: 0 6px; border-radius: 6px; }
 .vb-intro-c small { margin-top: 4px; font-size: 12px; color: #8A7563; text-align: center; padding: 0 10px; }
 .vb-intro-go { margin-top: 8px; background: #FFD23F; color: #5B3A00; font-weight: 900; padding: 6px 18px; border-radius: 16px; box-shadow: 0 3px 0 #C99500; animation: startPulse 1.2s ease-in-out infinite; }
+/* 배구 조작: 이동 슬라이드 패드 */
+.vb-slide { position: relative; display: flex; align-items: center; justify-content: space-between; width: 210px; height: 78px; padding: 0 18px; border: 3px solid rgba(255,255,255,.95); border-radius: 40px; background: rgba(255,255,255,.25); backdrop-filter: blur(3px); touch-action: none; -webkit-user-select: none; user-select: none; box-shadow: 0 5px 0 rgba(0,0,0,.2); }
+.vb-slide i { font-style: normal; font-size: 30px; font-weight: 900; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.35); pointer-events: none; }
+.vb-slide span { width: 3px; height: 50%; background: rgba(255,255,255,.7); border-radius: 2px; pointer-events: none; }
+.vb-slide[data-d="l"] { background: linear-gradient(90deg, rgba(255,210,63,.75) 50%, rgba(255,255,255,.25) 50%); }
+.vb-slide[data-d="r"] { background: linear-gradient(90deg, rgba(255,255,255,.25) 50%, rgba(255,210,63,.75) 50%); }
+.vb-knob { position: absolute; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; background: rgba(255,255,255,.55); border: 3px solid #fff; pointer-events: none; }
+/* A안: 아래 조작대(코트는 그 위에) */
+.vb-rot[data-lay="A"]::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 24%; z-index: 2; background: linear-gradient(#C99A62, #A8784A); border-top: 4px solid #E6C08A; box-shadow: inset 0 6px 10px rgba(0,0,0,.15); pointer-events: none; }
+.vb-rot[data-lay="A"] .vb-pad { bottom: 0; height: 24%; align-items: center; } .vb-rot[data-lay="A"] .vb-pad.r { flex-direction: row; align-items: center; }
+.vb-rot[data-lay="A"] .vb-slide { height: 66%; max-height: 72px; background-color: rgba(0,0,0,.12); }
+.vb-rot[data-lay="A"] .vb-btn.jmp { width: 72px; height: 72px; } .vb-rot[data-lay="A"] .vb-btn.spk, .vb-rot[data-lay="A"] .vb-btn.dsh { width: 60px; height: 60px; }
+/* B안: 코트 위에 겹치되 반투명·작게, 양 끝 구석으로 */
+.vb-rot[data-lay="B"] .vb-pad { bottom: 6px; } .vb-rot[data-lay="B"] .vb-pad.l { left: 8px; } .vb-rot[data-lay="B"] .vb-pad.r { right: 8px; }
+.vb-rot[data-lay="B"] .vb-slide { width: 180px; height: 62px; opacity: .55; }
+.vb-rot[data-lay="B"] .vb-btn { opacity: .55; } .vb-rot[data-lay="B"] .vb-btn.jmp { width: 66px; height: 66px; } .vb-rot[data-lay="B"] .vb-btn.spk, .vb-rot[data-lay="B"] .vb-btn.dsh { width: 52px; height: 52px; }
+.vb-rot[data-lay="B"] .vb-btn.ready, .vb-rot[data-lay="B"] .vb-btn.now { opacity: 1; }
+/* C안: 왼쪽 아래 넓은 곳 아무 데나 대고 밀면 이동, 오른쪽 버튼은 오른쪽 끝 세로 한 줄 */
+.vb-rot[data-lay="C"] .vb-pad.l { left: 0; bottom: 0; width: 42%; height: 58%; }
+.vb-rot[data-lay="C"] .vb-slide { width: 100%; height: 100%; border: 0; border-radius: 0 40px 0 0; background: linear-gradient(0deg, rgba(255,255,255,.18), rgba(255,255,255,0)); box-shadow: none; backdrop-filter: none; justify-content: center; gap: 40px; }
+.vb-rot[data-lay="C"] .vb-slide i { opacity: .45; font-size: 22px; } .vb-rot[data-lay="C"] .vb-slide span { height: 22px; width: auto; background: none; color: rgba(255,255,255,.75); font-size: 11px; font-weight: 800; }
+.vb-rot[data-lay="C"] .vb-slide span::after { content: '아무 데나 대고 밀기'; }
+.vb-rot[data-lay="C"] .vb-slide[data-d="l"], .vb-rot[data-lay="C"] .vb-slide[data-d="r"] { background: linear-gradient(0deg, rgba(255,255,255,.18), rgba(255,255,255,0)); }
+.vb-rot[data-lay="C"] .vb-pad.r { right: 8px; bottom: 8px; flex-direction: column-reverse; align-items: center; gap: 8px; }
+.vb-rot[data-lay="C"] .vb-btn { opacity: .7; } .vb-rot[data-lay="C"] .vb-btn.jmp { width: 72px; height: 72px; } .vb-rot[data-lay="C"] .vb-btn.spk, .vb-rot[data-lay="C"] .vb-btn.dsh { width: 52px; height: 52px; } .vb-rot[data-lay="C"] .vb-btn.ready, .vb-rot[data-lay="C"] .vb-btn.now { opacity: 1; }
+.vb-intro { cursor: default; }
+.vb-intro-go { border: 0; cursor: pointer; font-size: 15px; }
+.vb-intro-dots { display: flex; gap: 6px; margin-top: 6px; } .vb-intro-dots i { width: 8px; height: 8px; border-radius: 50%; background: #E3D5C0; } .vb-intro-dots i.on { background: #F2A33A; width: 20px; border-radius: 4px; }
+.vb-rot[data-lay="A"] .vb-pad.r { gap: 10px; } .vb-rot[data-lay="A"] .vb-btn { align-self: center; }

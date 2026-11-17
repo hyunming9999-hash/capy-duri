@@ -64,7 +64,20 @@ export function mount(el, ctx) {
   const chg = [0, 0], dsh = [0, 0], armAt = [0, 0]; let dHeld = false; let flash = 0, shake = 0, spikeTxt = 0, outTxt = 0, lastTouch = 0, prevSide = 0, lastHit = -1, camZ = 1, camTop = 0, ghost = null;
   const btn = (k, cls, label, sub) => { const b = h('button', { class: 'vb-btn ' + cls }, h('b', null, label), sub && h('small', null, sub)); holdBtn(b, () => { inp[k] = true; if (k === 's') armAt[my()] = performance.now(); }, () => { inp[k] = false; }); return b; };
   const spkBtn = btn('s', 'spk', '스파이크', '0/3'); spkBtn.append(h('em', { class: 'vb-now' }, '눌러!')); const pips = h('div', { class: 'vb-pips' });
-  const left = h('div', { class: 'vb-pad l' }, btn('l', 'mv', '◀'), btn('r', 'mv', '▶'));
+  // 조작 배치 3안: A 아래 조작대 / B 투명 슬라이드 패드 / C 왼쪽 아무 데나 밀기(가상 조이스틱)
+  let LAY = (() => { try { const q = new URLSearchParams(location.search).get('vblay'); return q || localStorage.getItem('capy.vbLay') || 'A'; } catch { return 'A'; } })();
+  // 이동 패드: 한 판 안에서 손가락을 떼지 않고 왼쪽·오른쪽으로 미끄러지듯 바꿀 수 있다
+  const slide = h('div', { class: 'vb-slide' }, h('i', null, '◀'), h('span'), h('i', null, '▶'));
+  const setDir = d => { inp.l = d < 0; inp.r = d > 0; slide.dataset.d = d < 0 ? 'l' : d > 0 ? 'r' : ''; };
+  { let id = null, x0 = 0, joy = false; const knob = h('em', { class: 'vb-knob' });
+    const dirAt = e => { const r = slide.getBoundingClientRect(), port = innerHeight > innerWidth;
+      if (joy) { const dx = port ? e.clientY - x0 : e.clientX - x0; return Math.abs(dx) < 10 ? 0 : Math.sign(dx); }
+      const p = port ? (e.clientY - r.top) / r.height : (e.clientX - r.left) / r.width; return p < 0.5 ? -1 : 1; };
+    slide.addEventListener('pointerdown', e => { e.preventDefault(); id = e.pointerId; slide.setPointerCapture(id); joy = LAY === 'C'; const port = innerHeight > innerWidth; x0 = port ? e.clientY : e.clientX;
+      if (joy) { const r = slide.getBoundingClientRect(); knob.style.left = (port ? e.clientY - r.top : e.clientX - r.left) + 'px'; knob.style.top = (port ? r.right - e.clientX : e.clientY - r.top) + 'px'; slide.append(knob); } setDir(dirAt(e)); });
+    slide.addEventListener('pointermove', e => { if (e.pointerId !== id) return; setDir(dirAt(e)); });
+    const up = e => { if (e.pointerId !== id) return; id = null; setDir(0); knob.remove(); }; ['pointerup', 'pointercancel'].forEach(n => slide.addEventListener(n, up)); }
+  const left = h('div', { class: 'vb-pad l' }, slide);
   const dshBtn = btn('d', 'dsh', '대쉬', '0/2');
   const right = h('div', { class: 'vb-pad r' }, dshBtn, spkBtn, btn('j', 'jmp', '점프'));
   const exit = h('button', { class: 'vb-tb x', onClick: () => ctx.go('game') }, '✕ 나가기');
@@ -73,22 +86,25 @@ export function mount(el, ctx) {
   const lvRow = h('div', { class: 'vb-lv', hidden: true }), drawLv = () => lvRow.replaceChildren(h('span', null, '컴퓨터'), ...[['e', '하'], ['m', '중'], ['h', '상']].map(([k, t]) => h('button', { class: k === lvKey ? 'on' : '', onClick: () => { lvKey = k; try { localStorage.setItem('capy.volleyLv', k); } catch {} drawLv(); } }, t)));
   const spk = h('div', { class: 'vb-spk' }, pips);
   const rot = h('div', { class: 'vb-rot' }, canvas, top, spk, left, right, newBtn, lvRow), wrap = h('div', { class: 'vb' }, rot);
-  let VK = 1, VX = 0, VY = 0; // 화면 전체를 쓰는 캔버스 안에서 코트(800×450)를 그릴 배율과 위치
+  let VK = 1, VX = 0, VY = 0, PADB = 0; // 화면 전체를 쓰는 캔버스 안에서 코트(800×450)를 그릴 배율과 위치
   document.body.append(wrap); document.body.classList.add('vb-on');
   // 들어올 때 큰 안내 화면: 박진감 넘치는 썸네일 + 스파이크 쓰는 법. 누르면 닫힌다
-  const intro = h('div', { class: 'vb-intro', onClick: () => intro.remove() }, h('div', { class: 'vb-intro-c' },
-    h('img', { src: 'img/volley/intro.webp', alt: '' }),
-    h('b', null, '🔥 스파이크 꿀팁'),
-    h('p', null, '스파이크를 쓰려면 점프해서 ', h('em', null, '카피바라 얼굴과 공의 높이가 비슷할 때'), ' 눌러야 해요!'),
-    h('small', null, '공을 상대 진영으로 3번 넘기면 스파이크 1번 · 넘길 때마다 대쉬도 1번씩(최대 2번) 쌓여요'),
-    h('span', { class: 'vb-intro-go' }, '알겠어요! (화면을 누르면 닫혀요)')));
+  const ipg = [
+    ['img/volley/intro.webp', '🔥 스파이크 꿀팁', ['공이 ', h('em', null, '머리 앞, 눈높이'), '에 맞을 때 점프해서 스파이크를 누르면 써요!'], '공을 상대 진영으로 3번 넘기면 스파이크 1번이 충전돼요'],
+    ['img/volley/intro2.webp', '💨 대쉬 꿀팁', ['대쉬는 ', h('em', null, '방향키와 같이'), ' 눌러야 해요! 땅에 있을 때만 써요'], '공을 넘길 때마다 대쉬 1번씩, 최대 2번까지 모여요']];
+  const intro = h('div', { class: 'vb-intro' }), showIntro = n => { const [src, t, body, sub] = ipg[n], last = n === ipg.length - 1;
+    intro.replaceChildren(h('div', { class: 'vb-intro-c' }, h('img', { src, alt: '' }), h('b', null, t), h('p', null, ...body), h('small', null, sub),
+      h('div', { class: 'vb-intro-dots' }, ...ipg.map((_, k) => h('i', { class: k === n ? 'on' : '' }))),
+      h('button', { class: 'vb-intro-go', onClick: e => { e.stopPropagation(); last ? intro.remove() : showIntro(n + 1); } }, last ? '알겠어요! 시작하러 가기' : '다음 장: 대쉬 쓰는 법 👉'))); };
+  showIntro(0);
   rot.append(intro); // 화면 전체(게임 카드 안에 넣으면 둥근 모서리에 잘린다)
   // 세로로 들고 있으면 화면을 90도 돌려 가로로 보여 준다. 조작 버튼은 코트를 가리지 않게 양옆에 둔다
   // 가로 풀화면: 화면 전체가 캔버스. 코트는 높이에 꽉 맞추고, 남는 양옆은 배경을 이어 그린다
   const fit = () => { const pw = innerWidth, ph = innerHeight, port = ph > pw, w = port ? ph : pw, hh = port ? pw : ph, dpr = Math.min(2, devicePixelRatio || 1);
     rot.style.width = w + 'px'; rot.style.height = hh + 'px'; rot.style.transform = `translate(-50%, -50%)${port ? ' rotate(90deg)' : ''}`;
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(hh * dpr); canvas.style.width = w + 'px'; canvas.style.height = hh + 'px';
-    VK = Math.min(w / W, hh / H) * dpr; VX = (canvas.width - W * VK) / 2; VY = canvas.height - H * VK; spk.style.top = (VY + 64 * VK) / dpr + 'px'; };
+    PADB = LAY === 'A' ? Math.round(hh * 0.24 * dpr) : 0; rot.dataset.lay = LAY;
+    VK = Math.min(w / W, (hh - PADB / dpr) / H) * dpr; VX = (canvas.width - W * VK) / 2; VY = canvas.height - PADB - H * VK; spk.style.top = (VY + 64 * VK) / dpr + 'px'; };
   // 처음 화면을 누르면 진짜 전체화면(주소창까지 숨김)으로 바꾼다. 지원 안 하는 폰은 그대로
   const goFull = () => { const d = document.documentElement; if (!document.fullscreenElement && d.requestFullscreen) d.requestFullscreen({ navigationUI: 'hide' }).then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch {} setTimeout(fit, 200); }).catch(() => {}); };
   wrap.addEventListener('pointerdown', goFull, { once: true });
@@ -217,8 +233,9 @@ export function mount(el, ctx) {
     // 가로: 공·카피바라가 코트 뒤로 가면 그만큼 넓게 보여 준다(네트가 가운데)
     const half = Math.max(...[ball.x, ps[0].x, ps[1].x].map(x => Math.abs(x - NETX))) + 230, wantW0 = 0, wantW = Math.min(1, canvas.width / (2 * Math.min(half, WALL_R - NETX + 125)) / VK);
     const want = Math.min(H / (H - Math.max(-SKY - 60, camTop)), wantW); camZ += (want - camZ) * 0.06;
-    const K = VK * camZ, OX = canvas.width / 2 - NETX * K, OY = canvas.height - H * K;
+    const K = VK * camZ, OX = canvas.width / 2 - NETX * K, OY = canvas.height - PADB - H * K;
     g.setTransform(K, 0, 0, K, OX + sx * K, OY + sy * K);
+    g.fillStyle = '#F2CF8C'; g.fillRect(-OX / K - 20, GROUND, canvas.width / K + 40, (canvas.height - OY) / K + 20); // 코트 아래 모래
     // 배경은 화면 가로에 꽉 맞게 키우고, 그림 속 모래선(높이의 400/450)이 코트 바닥에 오도록 맞춘다(위아래는 잘려도 된다)
     if (bg.complete && bg.naturalWidth) { const bw = canvas.width / K + 12, bh = bw * H / W, bx = -OX / K - 6, by = GROUND - bh * GROUND / H; if (by > -OY / K) { g.fillStyle = '#5DB9EE'; g.fillRect(bx, -OY / K - 4, bw, by - (-OY / K) + 8); } g.drawImage(bg, bx, by, bw, bh); } else { g.fillStyle = '#9DD6F0'; g.fillRect(0, 0, W, H); g.fillStyle = '#E8C98F'; g.fillRect(0, GROUND, W, H - GROUND); }
     // 양 끝 벽(대나무 기둥): 화면 위쪽 끝까지 이어 그린다
