@@ -1,6 +1,6 @@
 // 바닷가 낚시 — 카피바라들의 주요 경제활동. 낚시터는 배를 타야만 갈 수 있고, 초급·중급·고급 세 구역으로 나뉜다
 // 던지기(힘 조절) → 입질 기다리기 → 챔질 → 밀고 당기기(줄 팽팽함을 조절하며 감기). 물고기는 클수록 값이 나간다
-import { h, toast, holdBtn, ask } from './ui.js';
+import { h, toast, holdBtn, ask, modal } from './ui.js';
 import { capy } from './capy.js';
 import { sfx } from './sound.js';
 import { gullSvg } from './animals.js';
@@ -74,6 +74,16 @@ export function rollCatch(zone, rodT, isPearl, power) {
   const d = zone === 1 ? 1 + t * 2 : zone === 2 ? 4 + t * 2 + (f.rare ? 1 : 0) : 6.5 + t * 2 + (f.king ? 1 : 0); // 낚싯대 차이는 '끊어짐 칸을 몇 번 버티나'로 따로 매긴다
   const shiny = zone >= 2 && Math.random() < SHINY_P;
   return { f, cm, g, price: shiny ? Math.round(price * SHINY_X) : price, d, p: power, shiny };
+}
+// 등급 확인하기: 이 물고기가 몇 등급인지, 등급표(확률·크기·값)에서 어디쯤인지 보여 준다
+export function gradeInfo(f, cm, g) {
+  const L = { S: '전설의 대물!', A: '엄청 큰 녀석!', B: '꽤 큼직해요', C: '보통 크기', D: '아담한 녀석' }, cmOf = t => Math.round((f.cm[0] + (f.cm[1] - f.cm[0]) * t) * 10) / 10;
+  modal({ title: '📊 등급 확인', body: h('div', { class: 'gi' },
+    h('div', { class: 'gi-top' }, h('span', { class: 'fs-grade big g' + g }, g), h('div', null, h('b', null, `${f.name} · ${cm}cm`), h('small', null, `${L[g]} 이 물고기는 ${f.cm[0]}~${f.cm[1]}cm까지 자라요`))),
+    h('table', { class: 'gi-t' }, h('tr', null, h('th', null, '등급'), h('th', null, '나올 확률'), h('th', null, '크기'), h('th', null, '값')),
+      ...Object.entries(GRADE).map(([k, v]) => h('tr', { class: k === g ? 'on' : '' }, h('td', null, h('span', { class: 'fs-grade g' + k }, k)), h('td', null, v.p + '%'), h('td', null, `${cmOf(v.band[0])}~${cmOf(v.band[1])}cm`), h('td', null, v.x === 1 ? '기본' : `×${v.x}`)))),
+    h('p', { class: 'dim center' }, 'S에 가까울수록 드물고, 크고, 비싸요. 멀리 던질수록 S·A가 조금 더 잘 물어요.')),
+    actions: [{ label: '확인', primary: true }] });
 }
 // 등급표: 확률(기본) · 크기 구간(물고기 크기 범위 안에서) · 값 배수
 export const GRADE = { S: { p: 3, band: [0.9, 1], x: 2 }, A: { p: 9, band: [0.75, 0.9], x: 1.5 }, B: { p: 18, band: [0.55, 0.75], x: 1.25 }, C: { p: 30, band: [0.3, 0.55], x: 1.1 }, D: { p: 40, band: [0, 0.3], x: 1 } };
@@ -161,6 +171,7 @@ export function openFishing(o) {
     const w = weightOf(f, cm), card = h('div', { class: 'fs-card' + (f.pearl ? ' pearl' : f.king ? ' king' : f.rare || shiny ? ' rare' : f.icon ? ' trash' : '') + (shiny ? ' shiny' : '') }, h('div', { class: 'fs-pic', html: fishSvg(f, true, shiny) }), shiny && h('em', { class: 'fs-shiny' }, '✨ 이로치! 색이 다른 귀한 녀석 · 값 1.5배 ✨'),
       h('b', null, f.pearl ? '✨ 바다 진주! ✨' : f.king ? `👑 ${f.name}` : f.name), cur.g && h('span', { class: 'fs-grade g' + cur.g }, `${cur.g}등급`), !f.icon && !f.pearl && h('p', null, `${cm}cm · ${kg(w)}`), keep ? h('p', { class: 'fs-won kept' }, '🧺 가방에 담았어요 · 카피수퍼 물고기 판매에서 팔아요') : h('p', { class: 'fs-won' }, price > 0 ? `+${price.toLocaleString('ko-KR')} 🪙` : `${price} 🪙`), o.trial && h('small', null, '체험 중이라 돈과 도감은 저장되지 않아요.'),
       f.icon && h('small', null, '바다 쓰레기를 건졌어요. 처리 비용이 나갔어요.'),
+      cur.g && h('button', { class: 'btn sm fs-gbtn', onClick: () => gradeInfo(f, cm, cur.g) }, '📊 등급 확인하기'),
       h('div', { class: 'fs-acts' }, h('button', { class: 'btn primary', onClick: () => { card.remove(); ready(); } }, '또 던지기'), h('button', { class: 'btn', onClick: () => { card.remove(); close(); } }, '그만하기')));
     wrap.append(card); say(''); btn.textContent = '…'; btn.onclick = null;
     // 와! ○○○을 잡았다! — 화면 가득 터지는 글자, 그 아래 등급

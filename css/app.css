@@ -1349,3 +1349,9 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 @keyframes sGlow { 0%, 100% { box-shadow: 0 0 10px rgba(255,170,0,.8); } 50% { box-shadow: 0 0 26px #FFD23F, 0 0 40px rgba(255,77,141,.6); } }
 @keyframes wowOut { to { transform: translateX(-50%) translateY(-30px); opacity: 0; } }
 .so-crowbtn small { display: block; font-size: 11px; font-weight: 700; opacity: .9; }
+.fs-gbtn { margin: 4px auto 2px; display: block; background: #EEF6FF; border: 2px solid #9CCBEA; color: #1C5C9C; font-weight: 800; }
+.gi-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; } .gi-top .fs-grade.big { animation: none; flex: none; } .gi-top b { display: block; font-size: 16px; } .gi-top small { color: #7A6656; }
+.gi-t { width: 100%; border-collapse: collapse; font-size: 13px; text-align: center; } .gi-t th { color: #8A7563; font-weight: 700; padding: 4px; border-bottom: 2px solid #F0E4D2; } .gi-t td { padding: 5px 4px; border-bottom: 1px solid #F5ECDF; }
+.gi-t tr.on td { background: #FFF4CC; font-weight: 800; } .gi-t .fs-grade { margin: 0; }
+/* 낚시 화면 위에 뜨는 창(진주부적 사용 묻기·등급 확인)이 낚시 화면 뒤로 숨지 않게 */
+.fs ~ .modal-wrap { z-index: 4600; }
