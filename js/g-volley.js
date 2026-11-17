@@ -128,6 +128,9 @@ export function mount(el, ctx) {
   const placeBall = () => { lastHit = -1; prevSide = game.serve ? 1 : 0; lastTouch = game.serve; Object.assign(ball, { x: serveX(), y: 150, vx: 0, vy: 0, rot: 0, spike: 0 }); trail.length = 0; dead = false; deadMine = false; };
   const sprites = [null, null], yz = new Image(), bg = new Image(), wallL = new Image(), wallR = new Image(), palmA = new Image(), palmB = new Image(); palmA.src = 'img/volley/palmA.webp'; palmB.src = 'img/volley/palmB.webp'; wallL.src = 'img/volley/wallL.webp'; wallR.src = 'img/volley/wallR.webp'; yz.src = 'img/volley/ball.webp'; bg.src = 'img/volley/bg.webp';
   const yz0 = new Image(); yz0.src = yuzuUrl;
+  // 양쪽 테라스 응원단: 생김새가 다른 카피바라 넷(왼쪽 둘, 오른쪽 둘)
+  const FANS = [{ color: 'cream', acc: 'flower', face: 'happy' }, { color: 'choco', acc: 'ribbon', face: 'wow' }, { color: 'peach', acc: 'yuzu', face: 'love' }, { color: 'brown', acc: 'leaf', face: 'wink' }], fanIm = [];
+  FANS.forEach((o, k) => loadImg(capyUrl(o)).then(im => { fanIm[k] = im; }));
   const loadSprites = () => [0, 1].forEach(i => { const uid = mode === 'online' ? ctx.order[i] : (i ? null : ctx.uid); loadImg(capyUrl(uid ? ctx.capyOf(uid, { face: 'happy', rare: null, pin: '', hat: '', acc: 'none' }) : { color: 'choco', acc: 'towel', face: 'wink' })).then(im => { sprites[i] = im; }); });
   const drawPips = () => { const dn = dsh[my()]; dshBtn.classList.toggle('ready', dn > 0); dshBtn.querySelector('small').textContent = `${dn}/${DSH_MAX}`; const n = chg[my()], ready = n >= SPK_N; pips.replaceChildren(h('small', null, ready ? '스파이크 준비 완료!' : `상대 진영으로 ${SPK_N - n}번 더 넘기면`), ...Array.from({ length: SPK_N }, (_, k) => h('i', { class: k < n ? 'on' : '' }))); spkBtn.classList.toggle('ready', ready); spkBtn.querySelector('small').textContent = ready ? '점프!' : `${n}/${SPK_N}`; };
 
@@ -264,6 +267,20 @@ export function mount(el, ctx) {
           for (let k = -2; k < 60; k++) { const yy = FENCE - k * 22; g.beginPath(); g.moveTo(x0, yy); g.lineTo(x0 + ww, yy - 22); g.moveTo(x0, yy - 22); g.lineTo(x0 + ww, yy); g.stroke(); if (yy < topW - 400) break; }
           g.fillStyle = '#E8453C'; g.fillRect(x0 - 2, FENCE - 4, ww + 4, 8); }
         g.drawImage(img, x0, y0, ww, wh); }
+      // 양쪽 벽: 위에는 테라스(난간 뒤에서 카피바라 둘이 응원), 아래에는 문
+      { const t = performance.now() / 1000, TY = GROUND - 300;
+        for (const [side, base] of [[-1, 0], [1, 2]]) { const inner = side < 0 ? WALL_L + 18 : WALL_R - 18, outer = inner + side * 250, xa = Math.min(inner, outer), xb = Math.max(inner, outer);
+          // 응원하는 카피바라(난간 뒤라 아랫몸은 가려진다): 번갈아 폴짝, 깃발 흔들기
+          [0, 1].forEach(n => { const im = fanIm[base + n]; if (!im) return; const cx = inner + side * (62 + n * 112), hop = Math.max(0, Math.sin(t * 5 + n * Math.PI)) * 14, sw = Math.sin(t * 5 + n * Math.PI) * 0.12;
+            g.save(); g.translate(cx, TY - 22 - hop); g.rotate(sw); g.drawImage(im, -52, -104, 104, 137); 
+            g.strokeStyle = '#7A4E2D'; g.lineWidth = 3; g.beginPath(); g.moveTo(40, -20); g.lineTo(58, -84); g.stroke(); g.fillStyle = n ? '#2B8FD6' : '#E8453C'; g.beginPath(); g.moveTo(58, -84); g.lineTo(90, -72 + Math.sin(t * 9 + n) * 5); g.lineTo(58, -60); g.fill(); g.restore(); });
+          // 테라스 바닥 + 난간
+          g.fillStyle = '#D9D2C6'; g.fillRect(xa, TY, xb - xa, 12); g.fillStyle = 'rgba(0,0,0,.12)'; g.fillRect(xa, TY + 12, xb - xa, 8);
+          g.fillStyle = '#5A3B26'; g.fillRect(xa, TY - 40, xb - xa, 7); for (let x = xa + 6; x < xb; x += 24) g.fillRect(x, TY - 38, 5, 38);
+          // 문(바깥쪽 벽돌 벽 아래)
+          const dx = inner + side * 175, dw = 70, dh = 112, dl = dx - dw / 2;
+          g.fillStyle = '#E8E1D5'; g.fillRect(dl - 8, GROUND + 14 - dh - 8, dw + 16, dh + 8); g.fillStyle = '#9A6A43'; g.fillRect(dl, GROUND + 14 - dh, dw, dh); g.strokeStyle = '#7A4E2D'; g.lineWidth = 3; g.strokeRect(dl + 8, GROUND + 14 - dh + 10, dw - 16, dh / 2 - 14); g.strokeRect(dl + 8, GROUND + 14 - dh / 2 + 4, dw - 16, dh / 2 - 18);
+          g.fillStyle = '#F2C94C'; g.beginPath(); g.arc(dx + side * -22, GROUND + 14 - dh / 2, 4.5, 0, 7); g.fill(); } }
       for (const [a0, a1] of [[viewL - 200, WALL_L + 20], [WALL_R - 20, viewR + 200]]) { const gr = g.createLinearGradient(0, GROUND + 6, 0, GROUND + 30); gr.addColorStop(0, 'rgba(120,85,40,.28)'); gr.addColorStop(1, 'rgba(120,85,40,0)'); g.fillStyle = gr; g.fillRect(a0, GROUND + 8, a1 - a0, 24); } } // 벽 밑 모래 그림자
     else { g.fillStyle = '#F4F1EA'; g.fillRect(WALL_L - 60, -SKY - 400, 60, GROUND + SKY + 420); g.fillRect(WALL_R, -SKY - 400, 60, GROUND + SKY + 420); }
     // 네트: 기둥 + 그물 + 흰 띠
