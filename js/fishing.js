@@ -85,6 +85,8 @@ export function gradeInfo(f, cm, g) {
     h('p', { class: 'dim center' }, 'S에 가까울수록 드물고, 크고, 비싸요. 멀리 던질수록 S·A가 조금 더 잘 물어요.')),
     actions: [{ label: '확인', primary: true }] });
 }
+// 풍랑이 불 확률(물고기와 싸울 때마다)
+const STORM_P = 0.07;
 // 등급표: 확률(기본) · 크기 구간(물고기 크기 범위 안에서) · 값 배수
 export const GRADE = { S: { p: 3, band: [0.9, 1], x: 2 }, A: { p: 9, band: [0.75, 0.9], x: 1.5 }, B: { p: 18, band: [0.55, 0.75], x: 1.25 }, C: { p: 30, band: [0.3, 0.55], x: 1.1 }, D: { p: 40, band: [0, 0.3], x: 1 } };
 function rollGrade(power) { const w = Object.entries(GRADE).map(([k, v]) => [k, v.p * (k === 'S' || k === 'A' ? 1 + power * 0.6 : 1)]), tot = w.reduce((a, [, x]) => a + x, 0); let r = Math.random() * tot; for (const [k, x] of w) { r -= x; if (r <= 0) return k; } return 'D'; }
@@ -103,7 +105,7 @@ const kg = w => (w >= 1000 ? (w / 1000).toFixed(2) + 't' : w >= 1 ? w.toFixed(1)
 // o = { ctx, zone, bag(), save(patch), coins(n), dex(id, cm), onClose() }
 export function openFishing(o) {
   let c0 = 0, castTo = 60, flew = false, clickAt = 0, creakAt = 0, pressAt = 0, eyeAt = 0, taps = 0, pat = 0, pat0 = 1, nextSpike = 0, tele = 0;
-  let alive = true, raf = 0, last = 0, phase = 'ready', power = 0, pdir = 1, t0 = 0, biteAt = 0, biteEnd = 0, nibAt = 0, cur = null, dist = 100, ten = 30, hold = false, burst = 0, nextBurst = 0, slack = 0, shown = false;
+  let stormAt = 0, alive = true, raf = 0, last = 0, phase = 'ready', power = 0, pdir = 1, t0 = 0, biteAt = 0, biteEnd = 0, nibAt = 0, cur = null, dist = 100, ten = 30, hold = false, burst = 0, nextBurst = 0, slack = 0, shown = false;
   const zone = o.zone, rodT = () => o.bag().rod || 0, rod = () => RODS[rodT()];
   const float = h('i', { class: 'fs-float' }), hook = h('i', { class: 'fs-hook' }), rl = h('div', { class: 'fs-rl', html: '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="" fill="none" stroke="#fff" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>' }), fishEl = h('div', { class: 'fs-fish' }), mark = h('b', { class: 'fs-mark' });
   const me = h('div', { class: 'fs-me', html: capy(o.ctx.capyOf(o.ctx.uid, { face: 'happy' })) }), rodEl = h('i', { class: 'fs-rod' });
@@ -161,9 +163,13 @@ export function openFishing(o) {
     if (shown && now > biteEnd) return;
     pat0 = pat = cur.f.icon ? 99 : PATIENCE[zone] + (cur.f.king || cur.f.pearl ? 4 : 0); bar.style.setProperty('--lo', BAND_LO[zone] + '%'); tele = 0; nextSpike = cur.f.icon ? Infinity : now + rnd(...SPIKE_GAP[zone]) * 1000; taps = 0; patEl.hidden = !!cur.f.icon;
     if (cur.f.pearl) { pearlTxt.textContent = '✨ 바다 진주다! ✨'; sfx('bigfish'); }
+    stormAt = !cur.f.icon && Math.random() < STORM_P ? now + rnd(1200, 4000) : 0; // 가끔 풍랑: 싸우는 도중에 불면 무조건 놓친다(진주부적을 쓴 진주는 싸움 없이 끌어올려서 안 걸린다)
     sfx('hookset'); strikes = 0; drawPips(true); phase = 'fight'; dist = 100; ten = 35; burst = 0; slack = 0; nextBurst = now + rnd(900, 1800); wrap.classList.add('fight'); fishEl.className = 'fs-fish on'; fishEl.innerHTML = shadow();
     say(cur.f.icon ? '누르고 있으면 감아요.' : '줄을 주황 칸에 맞춰야 끌려와요! 빨간 칸은 2번 닿으면 끝이에요.'); btn.textContent = '꾹 눌러\n감기'; btn.onclick = null;
   }
+  // 풍랑: 하늘이 어두워지고 비바람이 치며 배가 크게 흔들리다가 줄이 풀려 물고기가 달아난다
+  function storm() { stormAt = 0; phase = 'storm'; hold = false; wrap.classList.remove('reel'); wrap.classList.add('storm'); sfx('splash'); setTimeout(() => sfx('bad'), 500); say('🌊 풍랑이다! 배가 크게 흔들려요…', 'warn'); btn.textContent = '…'; btn.onclick = null;
+    setTimeout(() => { if (!alive) return; wrap.classList.remove('storm'); fail('풍랑 때문에 물고기를 놓쳤어요… (바다가 거칠 땐 어쩔 수 없어요)'); }, 2200); }
   function fail(text) { sfx(/끊어/.test(text) ? 'snap' : 'bad'); ready(text); }
   function landed() {
     const { f, cm, price, shiny } = cur; sfx(price <= 0 ? 'bad' : f.king || f.rare || f.pearl || shiny ? 'bigfish' : 'coin'); if (price > 0) splash(34, true); phase = 'done'; patEl.hidden = true; pearlTxt.hidden = true; if (!f.pearl) wrap.classList.remove('pearl'); wrap.classList.remove('fight', 'reel'); float.style.display = rl.style.display = hook.style.display = 'none'; fishEl.className = 'fs-fish';
@@ -198,6 +204,7 @@ export function openFishing(o) {
       if (!shown) fishEl.style.left = fx + (1 - Math.min(1, (now - t0) / (biteAt - t0))) * 65 + (nibAt && now > nibAt && now < nibAt + 350 ? -3 : 4) + '%'; else fishEl.style.left = fx + '%';
       if (shown && now > biteEnd) fail('놓쳤어요. 미끼만 먹고 갔어요.');
     } else if (phase === 'fight') {
+      if (stormAt && now > stormAt) return void storm();
       const d = cur.d;
       if (!burst && now > nextBurst) { burst = now + (450 + d * 50); } if (burst && now > burst) { burst = 0; nextBurst = now + Math.max(1100, 3000 - d * 150) * rnd(0.7, 1.3); }
       const B = !!burst, TM = ZONE_TEN[zone] * ROD_TEN[rodT()], LO = cur.f.icon ? 0 : BAND_LO[zone]; pat -= dt; patEl.firstChild.style.width = Math.max(0, pat / pat0 * 100) + '%'; patEl.classList.toggle('low', pat < pat0 * 0.3);
