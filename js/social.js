@@ -1,5 +1,5 @@
 // 동물 친목회 — 놀이터에서 동물 30마리와 말하고, 선물하고, 거래한다. 친밀도와 기억은 사람마다 따로다
-import { h, toast, modal, gameFx, holdBtn } from './ui.js';
+import { h, toast, modal, gameFx, holdBtn, ymd } from './ui.js';
 import { capy, PIN_CHEST } from './capy.js';
 import { ANIMALS, animalSvg } from './animals.js';
 import { ZOO_HATS, nameOf as clothName } from './clothes.js';
@@ -161,8 +161,10 @@ export function mount(el, ctx) {
     <path d="M573 357 L594 324 q5 -6 10 0 L625 357z" fill="#F0625A" stroke="#B5473C" stroke-width="2.4" stroke-linejoin="round"/><circle cx="599" cy="339" r="4.5" fill="#FFD21F"/></svg>`;
   const capA = (i, v, cake) => (v >= 100 && !cake && A(i) < 100 ? 99 : Math.min(100, v)); // 100점은 케이크로만
   // 교류(점수가 오르거나 말을 나눔)하면 그때부터 하루 동안은 식지 않는다
-  const setRel = (i, patch, cake) => { if (patch.a != null) patch = { ...patch, a: capA(i, patch.a, cake) }; if ((patch.a != null && patch.a > A(i)) || (patch.mem && !String((patch.mem[patch.mem.length - 1] || {}).s || '').startsWith('(')) || patch.fedAt) patch = { ...patch, fedAt: ctx.store.now(), dropN: 0, dropL: 0, lowAt: 0 }; mine = { ...mine, [i]: { ...(mine[i] || {}), ...patch } }; return ctx.store.update(`social/${ctx.uid}/${i}`, patch).catch(() => {}); };
+  const setRel = (i, patch, cake) => { if (patch.a != null) patch = { ...patch, a: capA(i, patch.a, cake) }; if (patch.a === 100 && A(i) < 100) patch = { ...patch, hit100: true, ...((mine[i] || {}).crowed ? { x2: true } : {}) }; if ((patch.a != null && patch.a > A(i)) || (patch.mem && !String((patch.mem[patch.mem.length - 1] || {}).s || '').startsWith('(')) || patch.fedAt) patch = { ...patch, fedAt: ctx.store.now(), dropN: 0, dropL: 0, lowAt: 0 }; mine = { ...mine, [i]: { ...(mine[i] || {}), ...patch } }; return ctx.store.update(`social/${ctx.uid}/${i}`, patch).catch(() => {}); };
   const pinOf = u => (ctx.members[u] || {}).pin;
+  // 황금옷 값: 까마귀 이간질로 100에서 떨어졌다가 다시 100이 된 동물은 그 동물의 황금옷만 2배
+  const rarePrice = i => RARE_PRICE * ((mine[i] || {}).x2 ? 2 : 1);
   // 받은 액세서리 달기, 산 옷 입기(다시 누르면 벗는다). 내 카피바라에 바로 보인다
   const SLOT = { t: 'top', b: 'bottom', h: 'hat', s: 'shoe' };
   async function wearPin(i) { await ctx.store.update('members/' + ctx.uid, { pin: i }).catch(() => {}); ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), pin: i }; scores(); }
@@ -207,7 +209,7 @@ export function mount(el, ctx) {
     meEl = h('div', { class: 'so-me', html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) }); mePop = h('div', { class: 'so-mepop' }); world.append(meEl, mePop);
     meTube = h('div', { class: 'so-metube', html: tubeSvg('#FF6B6B'), style: { display: 'none' } }); palTube = h('div', { class: 'so-metube', html: tubeSvg('#FF9DB8'), style: { display: 'none' } }); meTubeB = h('div', { class: 'so-metube', html: tubeSvg('#FF6B6B', 'back'), style: { display: 'none' } }); palTubeB = h('div', { class: 'so-metube', html: tubeSvg('#FF9DB8', 'back'), style: { display: 'none' } }); world.append(meTubeB, palTubeB); boatEl = h('div', { class: 'so-boat', style: { display: 'none' } }); palBoat = h('div', { class: 'so-boat', style: { display: 'none' } }); palBoatI = palBoatDrawn = -1; world.append(meTube, palTube, boatEl, palBoat, palPop); me.boat = null; offer = null;
     palEl = h('div', { class: 'so-me so-pal', style: { display: 'none' } }); pal.spot = null; pal.dx = -1; world.append(palEl); drawPal();
-    scroller.append(world);
+    scroller.append(world); worldEl = world;
     rideBtn = h('button', { class: 'dp so-dp so-ride', disabled: true, onClick: toggleRide }, '🎠', h('small', null, '타기'));
     const pad = h('div', { class: 'so-pad' }, h('div', { class: 'dpad so-dpad' }, [['U', '▲'], ['L', '◀'], ['D', '▼'], ['R', '▶']].map(([k, t]) => { const b = h('button', { class: 'dp so-dp dp-' + k, 'aria-label': k }, t); holdBtn(b, () => keys.add(k), () => keys.delete(k)); return b; })),
       h('span', { class: 'so-sp' }), h('div', { class: 'so-acts2' }, rideBtn, (fishMode = -1, fishBtn = h('button', { class: 'dp so-dp so-hit', onClick: () => (fishMode > 0 ? goFish() : punch()) }, '👊', h('small', null, '때리기')))));
@@ -215,7 +217,7 @@ export function mount(el, ctx) {
     chatIn.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); sendChat(chatIn); } }); chatIn.addEventListener('focus', () => keys.clear());
     micBtn = h('button', { class: 'btn sm so-mic', onClick: toggleMic }, '🎤', h('small', null, '음성')); drawMic();
     const chatBar = h('div', { class: 'so-chatbar' }, chatIn, h('button', { class: 'btn sm primary', onClick: () => sendChat(chatIn) }, '보내기'), micBtn, h('button', { class: 'btn sm so-help', 'aria-label': '도움말', onClick: () => modal({ title: '🐾 동물 친목회', body: h('p', null, '방향키로 걸어가요. 놀이기구 앞에서 🎠 로 타요. 동물과 같이 타면 친해져요. 동물을 누르면 말을 걸어요. 얼굴이 빨간 동물(-10점 이하)은 쫓아와요! 오른쪽 끝은 바닷가예요. 아래 칸에 글을 쓰면 상대 머리 위에 말풍선이 뜨고, 🎤를 둘 다 누르면 목소리로 얘기할 수 있어요.'), actions: [{ label: '닫기', primary: true }] }) }, '?'));
-    el.replaceChildren(top, hpRow, waveBar, h('div', { class: 'so-stage' }, scroller, chatLog), (sbPanel = h('div', { class: 'sb-panel', hidden: true })), pad, chatBar);
+    el.replaceChildren(top, hpRow, waveBar, (stageEl = h('div', { class: 'so-stage' }, scroller, chatLog)), (sbPanel = h('div', { class: 'sb-panel', hidden: true })), pad, chatBar);
     scores(); drawHp(); lastT = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(step);
   }
   // 체력: 맞으면 줄고, 0이 되면 쓰러져서 10분 동안 친목회에 못 들어온다. 회복 포션은 카피수퍼에서 판다
@@ -340,7 +342,7 @@ export function mount(el, ctx) {
   function endSorry(kind) { (kind ? [kind] : ['btn', 'type']).forEach(k => { const u = SORRY_UI[k]; clearTimeout(u.t); if (u.el) u.el.remove(); u.el = null; u.list = []; }); }
   function forgive(kind) { SORRY_UI[kind].list.forEach(k => { const o = actors[k]; if (!o || o.st !== 'chase') return; o.st = 'idle'; o.until = performance.now() + 1500; o.e.classList.remove('walk', 'chase'); pop(o.e, toned(k, '…이번만 봐준다'), 'say'); }); sfx('point'); endSorry(kind); }
   function quickSorry(i) {
-    const kind = A(i) < -15 ? 'type' : 'btn', u = SORRY_UI[kind]; u.list.push(i); actors[i].nextHit = performance.now() + u.ms; actors[i].until += u.ms; // 사과할 시간 동안은 때리지 않고, 그만큼 더 쫓는다 if (u.el) return;
+    const kind = A(i) < -15 ? 'type' : 'btn', u = SORRY_UI[kind]; u.list.push(i); actors[i].nextHit = performance.now() + u.ms; actors[i].until += u.ms; if (u.el) return; // 사과할 시간 동안은 때리지 않고, 그만큼 더 쫓는다
     if (kind === 'btn') u.el = h('button', { class: 'so-sorry', onClick: () => forgive('btn') }, '🙇 미안해!', h('i'));
     else { const inp = h('input', { class: 'so-sorryin', placeholder: '미안해', maxLength: 8, autocomplete: 'off', enterKeyHint: 'send' }), bar = h('i'), tip = h('span', null, '👇 여기를 눌러 "미안해"라고 입력하세요');
       const hold = ms => { const t = performance.now() + ms; u.list.forEach(k => { const o = actors[k]; if (o) { o.until += Math.max(0, t - o.nextHit); o.nextHit = t; } }); };
@@ -475,6 +477,7 @@ export function mount(el, ctx) {
         else { const sh = shiny && (A(i) < 30 || Math.random() < 0.6); pop(o.e, line(i, sh ? 'shine' : 'greet', toned(i, pick(sh ? RAREGREET : GREET)(ctx.me.name))), 'say long'); } }
       const k = Math.min(1, dt * 5); o.y += (ty - o.y) * k; o.s += (ts - o.s) * k;
       o.e.style.left = o.x + 'px'; o.e.style.bottom = (o.y * 100).toFixed(2) + '%'; o.e.style.transform = `scale(${o.s.toFixed(3)})`; });
+    crowTick(now, paused, wet); charmTick(now, paused, wet);
     raf = requestAnimationFrame(step);
   }
   // 동물 머리 위 친밀도: 내 점수(크게)와 상대 점수(작게). 사이가 나쁘면 찌푸리고, 좋으면 하트가 떠오른다
@@ -485,6 +488,92 @@ export function mount(el, ctx) {
       if (e.dataset.mood !== mood) { e.dataset.mood = mood; e.querySelector('.so-body').innerHTML = animalSvg(i, true, mood); }
       if (+e.dataset.hearts !== hearts) { e.dataset.hearts = hearts; e.querySelector('.so-hearts').replaceChildren(...Array.from({ length: hearts }, (_, k) => h('i', { style: { animationDelay: k * 0.7 + 's', left: [50, 22, 78][k] + '%' } }, '💗'))); } });
     const face = h('div', { html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) }); if (meEl) meEl.innerHTML = face.innerHTML; drawPal();
+  }
+
+  // ----- 까마귀 악당: 친목회에 있을 때만, 하루 두 번, 육지에서 내 근처에 나타나 친한 동물(50~100점) 둘에게 이간질한다 -----
+  // 퇴치 버튼 → 악귀퇴치부적 3장 중 진짜 1장(1/3)을 고르면 퇴치. 못 고르거나 시간이 다 되면 두 동물이 각각 -15~-20
+  const CROW_N = 2, CROW_MS = 25000;
+  let crow = null, crowNext = 0, worldEl = null, stageEl = null, charmSnooze = 0;
+  if (isMock) window.capyDebug = { crow: () => { crowNext = 1; }, charm: () => { charmSnooze = 0; window.capyDebug.charmNow = true; }, fx: n => charmFx(n) }; // 연습 모드에서만: 시험용으로 바로 부르기
+  const crowUsed = () => (bag.crowDay === ymd() ? bag.crowN || 0 : 0);
+  function crowTick(now, paused, wet) {
+    if (crow) return crowMove(now, paused);
+    if (trial || !worldEl || paused || wet || me.boat || crowUsed() >= CROW_N) return;
+    if (!crowNext) { crowNext = now + (90 + Math.random() * 330) * 1000; return; } // 친목회에서 1.5~7분 놀다 보면 나타난다
+    if (now < crowNext) return;
+    const pool = actors.map((o, i) => i).filter(i => A(i) >= 50 && A(i) <= 100 && actors[i].st !== 'chase');
+    if (!pool.length) { crowNext = now + 60000; return; }
+    // 화면에서 보이도록 내 근처 넷 중에서 무작위로 둘을 고른다
+    crowSpawn(now, pool.sort((a, b) => Math.abs(actors[a].x - me.x) - Math.abs(actors[b].x - me.x)).slice(0, 4).sort(() => Math.random() - 0.5).slice(0, 2));
+  }
+  function crowSpawn(now, targets) {
+    saveBag({ crowDay: ymd(), crowN: crowUsed() + 1 });
+    const x = Math.max(60, Math.min(WATER_X - 60, me.x + (Math.random() < 0.5 ? -1 : 1) * (90 + Math.random() * 60)));
+    const e = h('div', { class: 'so-crow', style: { left: x + 'px', bottom: (me.dy * 100).toFixed(1) + '%' } }, h('img', { src: 'img/crow/crow.webp', alt: '까마귀 악당' }));
+    worldEl.append(e);
+    const warn = h('div', { class: 'so-crowwarn' }, h('b', null, '⚠️ 까마귀 악당 출현!'), h('small', null, '친한 동물들에게 이간질을 하려고 해요. 어서 퇴치하세요!'));
+    const btn = h('button', { class: 'so-crowbtn', onClick: crowCharm }, '🧿 까마귀 퇴치', h('i'));
+    stageEl.append(warn, btn); setTimeout(() => warn.remove(), 2800); sfx('bad'); setTimeout(() => sfx('bad'), 350);
+    crow = { e, x, y: me.dy, targets, k: 0, end: now + CROW_MS, at: now + 1500, btn, last: now, done: false };
+    setTimeout(() => alive && pop(e, '까악! 까악!', 'say'), 300);
+  }
+  function crowMove(now, paused) {
+    const c = crow, dt = Math.min(0.1, (now - c.last) / 1000); c.last = now; if (c.done) return;
+    if (paused) { c.end += dt * 1000; c.at += dt * 1000; return; } // 부적 창이 떠 있는 동안은 시간이 멈춘다
+    const i = c.targets[c.k], tg = actors[i];
+    if (tg && now > c.at) { const d = tg.x - c.x; c.y += (tg.y - c.y) * Math.min(1, dt * 4); c.e.classList.toggle('left', d < 0);
+      if (Math.abs(d) > 34) c.x += Math.sign(d) * Math.min(Math.abs(d) - 30, 240 * dt);
+      else { pop(c.e, `속닥속닥… "${iga(ctx.me.name)} 너 바보래~"`, 'say long'); sfx('tock'); setTimeout(() => alive && pop(tg.e, toned(i, '뭐? 정말?!'), 'say'), 1100); c.k++; c.at = now + 2800; } }
+    c.e.style.left = c.x + 'px'; c.e.style.bottom = (c.y * 100).toFixed(1) + '%';
+    const left = Math.max(0, c.end - now); c.btn.lastChild.style.width = left / CROW_MS * 100 + '%';
+    if (!left) crowEnd(false, '시간 안에 퇴치하지 못했어요');
+  }
+  // 뒷면이 같은 카드 n장 중 진짜 한 장 고르기(까마귀 퇴치부적·진주부적 공용)
+  function pickCards({ title, tip, n, back, win, lose, okText, noText, onPick, onCancel }) {
+    const right = Math.floor(Math.random() * n); let picked = false, close;
+    const msg = h('p', { class: 'tal-msg' }, tip), show = (c, ok) => { c.classList.add('flip'); setTimeout(() => { c.firstChild.src = ok ? win : lose; c.classList.add(ok ? 'win' : 'lose'); }, 230); };
+    const cards = Array.from({ length: n }, (_, k) => h('button', { class: 'tal-card', onClick: () => { if (picked) return; picked = true; const ok = k === right;
+      cards.forEach(c => { c.disabled = true; }); show(cards[k], ok); sfx(ok ? 'point' : 'bad'); setTimeout(() => { msg.textContent = ok ? okText : noText; msg.className = 'tal-msg ' + (ok ? 'ok' : 'no'); }, 300);
+      setTimeout(() => cards.forEach((c, j) => j !== k && (c.classList.add('dim'), show(c, j === right))), 1000);
+      setTimeout(() => { close(); onPick(ok); }, 2600); } }, h('img', { src: back, alt: '뒷면' })));
+    close = modal({ title, body: h('div', { class: 'tal' }, msg, h('div', { class: 'tal-row n' + n }, cards)), onClose: () => { if (!picked && onCancel) onCancel(); } });
+  }
+  function crowCharm() {
+    if (!crow || crow.done || crow.picking) return; crow.picking = true;
+    pickCards({ title: '🧿 악귀퇴치부적', tip: '세 장 중 한 장만 진짜 퇴치부적이에요. 딱 한 번만 고를 수 있어요!', n: 3, back: 'img/crow/tal-back.webp', win: 'img/crow/tal-win.webp', lose: 'img/crow/tal-fail.webp',
+      okText: '✨ 진짜 퇴치부적! 까마귀가 도망가요!', noText: '꽝… 가짜 부적이었어요. 이간질이 먹혀 버렸어요.', onPick: ok => crowEnd(ok), onCancel: () => { if (crow) crow.picking = false; } });
+  }
+  function crowEnd(ok, why) {
+    const c = crow; if (!c || c.done) return; c.done = true; c.btn.remove();
+    if (ok) { pop(c.e, '까악?! 부, 부적이다!', 'say'); gameFx('win', '까마귀 퇴치!'); c.targets.forEach((i, n) => setTimeout(() => alive && actors[i] && pop(actors[i].e, toned(i, '휴, 하마터면 속을 뻔했네!'), 'say long'), 900 + n * 600)); }
+    else { if (why) toast(why); pop(c.e, '까악까악! 속았지롱~', 'say'); sfx('lose');
+      c.targets.forEach((i, n) => { const r = mine[i] || {}, lost = Math.min(A(i), 15 + Math.floor(Math.random() * 6)), top = A(i) >= 100 || r.hit100;
+        setRel(i, { a: A(i) - lost, crowLie: { n: Math.min(5, lost), t: ctx.store.now() }, ...(top ? { hit100: true, crowed: true } : {}) });
+        setTimeout(() => { if (!alive || !actors[i]) return; const o = actors[i]; pop(o.e, toned(i, '어떻게 나한테 그럴 수 있어') + ` (친밀도 -${lost})`, 'say long'); o.e.classList.add('ouch'); setTimeout(() => o.e.classList.remove('ouch'), 600); }, 1000 + n * 900); });
+      setTimeout(() => alive && toast('삐진 동물에게 말을 걸어 해명하면 조금(최대 +5) 풀려요', 4000), 3200); scores(); }
+    setTimeout(() => c.e.classList.add('flee'), 900);
+    setTimeout(() => { c.e.remove(); if (crow === c) crow = null; crowNext = 0; }, 2400);
+  }
+  // ----- 진주 낚시 부적: 95점 이상 단짝이 셋 이상이면, 화·금요일 하루 한 번 정해진 시각 뒤에 마주친 단짝이 건네준다(2장 중 진짜 1장) -----
+  const charmFrom = () => { const d = new Date(), s = [...(ymd() + ctx.uid)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7); d.setHours(9 + s % 13, (s >>> 5) % 60, 0, 0); return d.getTime(); };
+  function charmTick(now, paused, wet) {
+    if (trial || paused || wet || me.boat || crow || now < charmSnooze || bag.charmDay === ymd()) return; const wd = new Date().getDay(); if (wd !== 2 && wd !== 5) return;
+    if (Date.now() < charmFrom() && !(isMock && window.capyDebug && window.capyDebug.charmNow)) return;
+    const best = actors.map((o, i) => i).filter(i => A(i) >= 95); if (best.length < 3) return;
+    const i = best.find(k => Math.abs(actors[k].x - me.x) < 90 && actors[k].st !== 'chase'); if (i == null) return;
+    charmSnooze = now + 90000; pop(actors[i].e, toned(i, '잠깐! 너한테 줄 게 있어. 진주 낚시 부적이야!'), 'say long'); animalVoice(i);
+    setTimeout(() => { if (!alive || document.querySelector('.modal-wrap')) return;
+      pickCards({ title: `🦪 ${ANIMALS[i].name}의 진주부적`, tip: '둘 중 하나는 가짜래요. 진짜를 골라 보세요! (기회는 한 번)', n: 2, back: 'img/crow/pearl-back.webp', win: 'img/crow/pearl-win.webp', lose: 'img/crow/pearl-fake.webp',
+        okText: `✨ 진짜 진주부적! (${(bag.pcharm || 0) + 1}/3)`, noText: '아쉽다… 젖은 조약돌 그림이었어요.',
+        onPick: ok => { saveBag({ charmDay: ymd(), ...(ok ? { pcharm: (bag.pcharm || 0) + 1 } : {}) }); if (ok) charmFx(bag.pcharm); } }); }, 1600);
+  }
+  // 진짜 진주부적을 받으면: 화면 가득 빛줄기와 반짝이 속에서 부적이 떠오른다
+  function charmFx(n) { sfx('bigfish'); setTimeout(() => sfx('point'), 500);
+    const fx = h('div', { class: 'charm-fx', onClick: () => fx.remove() }, h('i', { class: 'cf-rays' }), h('i', { class: 'cf-ring' }), h('i', { class: 'cf-ring r2' }),
+      ...Array.from({ length: 22 }, (_, k) => h('em', { class: 'cf-sp', style: { left: (4 + (k * 41) % 92) + '%', top: (6 + (k * 59) % 86) + '%', animationDelay: (k % 8) * 0.12 + 's', fontSize: (14 + (k * 7) % 18) + 'px' } }, k % 3 ? '✦' : '🫧')),
+      h('img', { class: 'cf-card', src: 'img/crow/pearl-win.webp', alt: '진주부적' }),
+      h('b', { class: 'cf-t' }, '앗…! 전설의 진주부적이다!'), h('small', { class: 'cf-s' }, n >= 3 ? `진주부적 ${n}장 · 진주가 걸리면 써서 90% 확률로 낚아요!` : `진주부적 ${n} / 3 · 3장 모으면 진주 성공률 90%`));
+    document.body.append(fx); setTimeout(() => fx.classList.add('out'), 4200); setTimeout(() => fx.remove(), 4800);
   }
 
   // ----- 동물과 만나기 -----
@@ -499,7 +588,11 @@ export function mount(el, ctx) {
         : v <= KEEP_AT ? '💬 사흘 동안 말을 안 걸면 친밀도가 -3 돼요. 말을 걸면 멈춰요'
         : left <= 0 ? '💬 하루를 건너뛰어서 서운해해요. 말을 걸면 바로 멈춰요 (하루 최대 -3)'
         : `💬 하루에 한 번만 말을 걸면 사이가 유지돼요 (남은 시간 ${Math.floor(left / 3600000)}시간 ${Math.floor(left / 60000) % 60}분)`; } if (moodOf(v) !== faceMood) { faceMood = moodOf(v); faceEl.innerHTML = animalSvg(i, true, faceMood); } meter.replaceChildren(h('b', null, `${lv[2]} ${lv[1]}`), h('i', null, h('u', { style: { width: (v + 100) / 2 + '%', background: v < 0 ? '#E5484D' : v >= PIN_AT ? '#FF7FA8' : '#57C26B' } })), h('span', null, `${v}점${nx ? ` · ${nx[1]}까지 ${nx[0] - v}` : ''}`)); scores(); };
-    const drawQuick = () => quick.replaceChildren(...[pick(QUICK.good), A(i) < 0 ? '미안해, 내가 잘못했어' : pick(QUICK.flat), pick(QUICK.bad)].map((t, k) => h('button', { class: 'so-q q' + k, onClick: () => talk(t) }, t)));
+    const lie = () => (mine[i] || {}).crowLie;
+    // 까마귀 이간질로 삐진 동물에게는 해명할 수 있다(한 번, 최대 +5)
+    async function explain() { const L = lie(); if (!L) return; const back = Math.max(1, Math.min(L.n || 5, 2 + Math.floor(Math.random() * 4)));
+      await setRel(i, { a: capA(i, A(i) + back), crowLie: null }); say(pick(['…정말? 까마귀가 꾸민 거였구나. 오해해서 미안해.', '그랬구나… 그 까마귀 말만 믿고 서운해했네.', '휴, 역시 그럴 리가 없지! 다시 믿을게.']), 'glad'); drawQuick(); after(back); }
+    const drawQuick = () => quick.replaceChildren(...(lie() ? [h('button', { class: 'so-q q0 crowq', onClick: explain }, '🙅 아니야! 까마귀가 꾸민 거짓말이야')] : []), ...[pick(QUICK.good), A(i) < 0 ? '미안해, 내가 잘못했어' : pick(QUICK.flat), pick(QUICK.bad)].map((t, k) => h('button', { class: 'so-q q' + k, onClick: () => talk(t) }, t)));
     // 친밀도가 바뀐 뒤: 선물로 받는 액세서리, 사이가 나쁠 때 삥 뜯기
     async function after(d, was) {
       const v = A(i), rel = mine[i] || {};
@@ -562,8 +655,8 @@ export function mount(el, ctx) {
       const row = (ic, nm, sub, price, owned, fn) => h('button', { class: 'so-row' + (typeof ic === 'string' ? '' : ' big'), disabled: owned, onClick: fn }, typeof ic === 'string' ? h('span', null, ic) : ic, h('b', null, nm), h('small', null, owned ? '이미 갖고 있어요' : `${won(price)} · ${sub}`));
       const cl = modal({ title: `🤝 ${a.name}와 거래`, body: h('div', { class: 'so-list' },
         row(p.pin, `${a.name}의 상징 액세서리`, v >= 10 ? '친해지면(50점) 그냥 줘요' : '아는 사이(10점)부터 팔아요', 500, hasPin, async () => { if (v < 10) return toast('아직 그 정도로 친하지 않대요'); if (!(await ctx.spend(500))) return; await ctx.store.update('bag/' + ctx.uid + '/pins', { [i]: true }).catch(() => {}); bag = { ...bag, pins: { ...(bag.pins || {}), [i]: true } }; await setRel(i, { got: true }); await wearPin(i); cl(); say(`자, ${p.pin} 여기. 내가 달아 줬어, 잘 달고 다녀!`, 'glad'); }),
-        h('button', { class: 'so-row big rare' + (v >= RARE_AT ? ' open' : ''), disabled: !!(bag.rares || {})[i], onClick: async () => { if (v < RARE_AT) return toast(`단짝(${RARE_AT}점)이 되어야 열려요. 지금 ${v}점`); if (!(await ctx.spend(RARE_PRICE))) return; bag = { ...bag, rares: { ...(bag.rares || {}), [i]: true } }; await ctx.store.update('bag/' + ctx.uid + '/rares', { [i]: true }).catch(() => {}); await wearRare(i); cl(); goldGet(i); say('이건 단짝한테만 주는 내 보물이야. 네가 걸치니까 눈이 부셔!', 'gift'); } },
-          h('span', { class: 'so-try', html: capy({ color: ctx.me.color, acc: 'none', face: 'happy', rare: rareOf(i) }) }), h('b', null, `✨ 초레어 · ${rareName(i)}`), h('small', null, (bag.rares || {})[i] ? '이미 갖고 있어요' : v >= RARE_AT ? `${won(RARE_PRICE)} · 걸치면 모두가 칭찬해요` : `🔒 단짝(${RARE_AT}점)이 되면 열려요 · ${won(RARE_PRICE)}`)),
+        h('button', { class: 'so-row big rare' + (v >= RARE_AT ? ' open' : ''), disabled: !!(bag.rares || {})[i], onClick: async () => { if (v < RARE_AT) return toast(`단짝(${RARE_AT}점)이 되어야 열려요. 지금 ${v}점`); if (!(await ctx.spend(rarePrice(i)))) return; bag = { ...bag, rares: { ...(bag.rares || {}), [i]: true } }; await ctx.store.update('bag/' + ctx.uid + '/rares', { [i]: true }).catch(() => {}); await wearRare(i); cl(); goldGet(i); say('이건 단짝한테만 주는 내 보물이야. 네가 걸치니까 눈이 부셔!', 'gift'); } },
+          h('span', { class: 'so-try', html: capy({ color: ctx.me.color, acc: 'none', face: 'happy', rare: rareOf(i) }) }), h('b', null, `✨ 초레어 · ${rareName(i)}`), h('small', null, (bag.rares || {})[i] ? '이미 갖고 있어요' : v >= RARE_AT ? `${won(rarePrice(i))}${(mine[i] || {}).x2 ? ' (까마귀 사건 뒤라 2배)' : ''} · 걸치면 모두가 칭찬해요` : `🔒 단짝(${RARE_AT}점)이 되면 열려요 · ${won(rarePrice(i))}`)),
         row(tryOn(ware.id), `${ware.name} (${a.name} 전용)`, disc < 1 ? `친구 할인 ${Math.round((1 - disc) * 100)}%` : '친해지면 깎아 줘요', wp, ctx.owns(ware.id), async () => { if (!(await ctx.spend(wp))) return; await ctx.store.set(`owned/${ctx.uid}/${ware.id}`, true).catch(() => {}); ctx.owned[ctx.uid] = { ...(ctx.owned[ctx.uid] || {}), [ware.id]: true }; await wearCloth(ware.id); cl(); say(`${ware.name}, 입혀 줬어. 잘 어울린다! (가방이나 옷놀이에서 갈아입을 수 있어)`, 'glad'); })), actions: [{ label: '닫기' }] });
     }
     const memBtn = () => { const mem = Array.isArray((mine[i] || {}).mem) ? mine[i].mem : Object.values((mine[i] || {}).mem || {}); modal({ title: `📜 ${a.name}가 기억하는 말`, body: mem.length ? h('div', { class: 'so-mem' }, mem.slice().reverse().map(m => h('p', null, h('b', null, `나: ${m.s}`), h('span', null, `${a.name}: ${m.r}`), h('em', { class: m.d > 0 ? 'up' : m.d < 0 ? 'down' : '' }, (m.d > 0 ? '+' : '') + m.d)))) : h('p', { class: 'center' }, '아직 나눈 말이 없어요.'), actions: [{ label: '닫기', primary: true }] }); };
@@ -690,6 +783,7 @@ export function mount(el, ctx) {
     const draw = () => { const pins = Object.keys(bag.pins || {}).filter(k => bag.pins[k]).map(Number), worn = pinOf(ctx.uid), wares = ANIMALS.map((_, i) => i).filter(i => ctx.owns(wareOf(i).id) && priceOf(wareOf(i).id) > 0);
       body.replaceChildren(h('div', { class: 'so-bagme', html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) }),
         h('p', { class: 'center' }, Object.entries(GIFTS).map(([k, [ic, nm]]) => `${ic} ${nm} ${bag[k] || 0}개`).join(' · ')),
+        h('p', { class: 'center so-charm' }, h('img', { src: 'img/crow/pearl-win.webp', alt: '' }), ` 진주부적 ${bag.pcharm || 0}장`, h('small', { class: 'dim' }, (bag.pcharm || 0) >= 3 ? ' · 진주가 걸리면 3장으로 성공률 90%' : ' · 3장 모으면 진주 성공률 90%')),
         h('b', null, `동물에게 받은 액세서리 ${pins.length} / ${ANIMALS.length}`),
         pins.length ? h('div', { class: 'so-pins' }, pins.map(i => h('button', { class: 'so-pin' + (worn === i ? ' on' : ''), onClick: async () => { await wearPin(worn === i ? null : i); draw(); } }, h('span', null, PERSONA[i].pin), h('small', null, worn === i ? '착용 중' : ANIMALS[i].name), h('small', { class: 'dim' }, PIN_CHEST.has(PERSONA[i].pin) ? '가슴에' : '손에')))) : h('p', { class: 'dim center' }, `동물과 ${PIN_AT}점까지 친해지면 그 동물의 상징을 선물로 받아요.`),
         h('b', null, `✨ 초레어 보물 ${Object.keys(bag.rares || {}).filter(k => bag.rares[k]).length} / ${ANIMALS.length}`),

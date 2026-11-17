@@ -1,6 +1,6 @@
 // 바닷가 낚시 — 카피바라들의 주요 경제활동. 낚시터는 배를 타야만 갈 수 있고, 초급·중급·고급 세 구역으로 나뉜다
 // 던지기(힘 조절) → 입질 기다리기 → 챔질 → 밀고 당기기(줄 팽팽함을 조절하며 감기). 물고기는 클수록 값이 나간다
-import { h, toast, holdBtn } from './ui.js';
+import { h, toast, holdBtn, ask } from './ui.js';
 import { capy } from './capy.js';
 import { sfx } from './sound.js';
 import { gullSvg } from './animals.js';
@@ -46,6 +46,7 @@ export function fishSvg(f, big, shiny) { const sv = fishSvg0(f, big); if (!shiny
   return sv.replace('<svg ', `<svg style="filter:hue-rotate(${shinyHue(f)}deg) saturate(1.35) brightness(1.06)" `).replace('</svg>', '<g fill="#fff" stroke="#FFE066" stroke-width="1"><path d="M14 8l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M104 60l1.5 3.500 3.500 1.500-3.500 1.500-1.500 3.500-1.500-3.500-3.500-1.500 3.500-1.500z"/><path d="M98 6l1.200 3 3 1.200-3 1.200-1.200 3-1.200-3-3-1.200 3-1.200z"/></g></svg>'); }
 function fishSvg0(f, big) {
   if (f.id && !f.pearl && !f.icon && !OLD_LOOK.has(f.id) && FISH_IMG) return `<svg viewBox="0 0 120 80"><image href="img/fish/${f.id}.webp" x="0" y="0" width="120" height="80" preserveAspectRatio="xMidYMid meet"/></svg>`;
+  if (f.pearl) return `<svg viewBox="0 0 120 80"><image href="img/fish/pearl.webp" x="0" y="0" width="120" height="80" preserveAspectRatio="xMidYMid meet"/></svg>`; // 힉스필드로 그린 바다 진주
   if (f.pearl) return `<svg viewBox="0 0 120 80"><ellipse cx="60" cy="58" rx="40" ry="14" fill="#F3D9E4" stroke="#C99AB0" stroke-width="2.5"/><path d="M22 54 Q60 8 98 54" fill="#FFEAF2" stroke="#C99AB0" stroke-width="2.5"/><circle cx="60" cy="50" r="15" fill="#fff" stroke="#E9C46A" stroke-width="2.5"/><circle cx="54" cy="44" r="5" fill="#FFF6D6"/><path d="M96 14l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#FFE066"/></svg>`;
   if (f.icon) return `<svg viewBox="0 0 120 80"><text x="60" y="58" font-size="52" text-anchor="middle">${f.icon}</text></svg>`;
   const seed = f.seed != null ? f.seed : f.k * 7 + f.z * 13, [c, l] = f.z === 3 ? DEEP[seed % DEEP.length] : f.z === 2 ? (seed % 3 ? PAL[(seed * 5) % PAL.length] : DEEP[seed % DEEP.length]) : PAL[seed % PAL.length], d = 'rgba(0,0,0,.28)';
@@ -127,6 +128,16 @@ export function openFishing(o) {
     setFloat(castTo); float.className = 'fs-float'; hook.style.display = ''; hook.classList.remove('up'); rodEl.className = 'fs-rod'; splash(castTo, true); sfx('splash');
     fishEl.className = 'fs-fish on far'; fishEl.innerHTML = shadow(); fishEl.style.left = '125%'; setBar(0);
     say('찌가 쑥 들어가면 바로 챔질!'); btn.textContent = '챔질!'; btn.onclick = strike;
+    // 진주가 걸리면 "앗, 진주 같아!" 그리고 진주부적 3장이 있으면 쓸지 묻는다(쓰면 90% 확률로 낚고 부적 3장이 사라진다)
+    if (cur.f.pearl) { say('앗, 진주 같아!'); if ((o.bag().pcharm || 0) >= 3 && !o.trial) { phase = 'ask'; btn.textContent = '…'; btn.onclick = null; setTimeout(() => alive && usePearlSet(), 700); } }
+  }
+  async function usePearlSet() {
+    const yes = await ask('✨ 앗, 진주 같아! 진주부적 세트(3장)를 사용할까요? 사용하면 이번 진주를 90% 확률로 낚아요.', '사용하기', '안 쓸래');
+    if (!alive || phase !== 'ask') return;
+    if (!yes) { phase = 'wait'; t0 = performance.now(); biteAt = t0 + rnd(1400, 4200); nibAt = 0; say('찌가 쑥 들어가면 바로 챔질!'); btn.textContent = '챔질!'; btn.onclick = strike; return; }
+    o.save({ pcharm: Math.max(0, (o.bag().pcharm || 0) - 3) }); sfx('point'); pearlTxt.hidden = false; pearlTxt.textContent = '🦪 진주부적 발동! 🦪'; say('부적이 빛나요… 진주를 끌어올리는 중!');
+    phase = 'charm'; wrap.classList.add('fight', 'reel'); fishEl.className = 'fs-fish on'; fishEl.innerHTML = shadow();
+    setTimeout(() => { if (!alive) return; wrap.classList.remove('reel'); if (Math.random() < 0.9) landed(); else fail('앗… 진주가 마지막에 빠져나갔어요. (부적은 사용됐어요)'); }, 1800);
   }
   function strike() {
     const now = performance.now();
