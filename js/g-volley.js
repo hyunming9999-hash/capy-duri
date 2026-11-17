@@ -104,7 +104,7 @@ export function mount(el, ctx) {
   const fit = () => { const pw = innerWidth, ph = innerHeight, port = ph > pw, w = port ? ph : pw, hh = port ? pw : ph, dpr = Math.min(2, devicePixelRatio || 1);
     rot.style.width = w + 'px'; rot.style.height = hh + 'px'; rot.style.transform = `translate(-50%, -50%)${port ? ' rotate(90deg)' : ''}`;
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(hh * dpr); canvas.style.width = w + 'px'; canvas.style.height = hh + 'px';
-    PADB = LAY === 'A' ? Math.round(hh * 0.24 * dpr) : 0; rot.dataset.lay = LAY; try { rot.dataset.skin = new URLSearchParams(location.search).get('vbskin') || localStorage.getItem('capy.vbSkin') || 'k2'; } catch {}
+    PADB = LAY === 'A' ? Math.round(hh * 0.24 * dpr) : 0; rot.dataset.lay = LAY; try { rot.dataset.wm = new URLSearchParams(location.search).get('vbwm') || localStorage.getItem('capy.vbWm') || 'w0'; } catch {} try { rot.dataset.skin = new URLSearchParams(location.search).get('vbskin') || localStorage.getItem('capy.vbSkin') || 'k2'; } catch {}
     VK = Math.min(w / W, (hh - PADB / dpr) / H) * dpr; VX = (canvas.width - W * VK) / 2; VY = canvas.height - PADB - H * VK; spk.style.top = (VY + 64 * VK) / dpr + 'px'; };
   // 처음 화면을 누르면 진짜 전체화면(주소창까지 숨김)으로 바꾼다. 지원 안 하는 폰은 그대로
   const goFull = () => { const d = document.documentElement; if (!document.fullscreenElement && d.requestFullscreen) d.requestFullscreen({ navigationUI: 'hide' }).then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch {} setTimeout(fit, 200); }).catch(() => {}); };
@@ -251,10 +251,18 @@ export function mount(el, ctx) {
     if (wallL.complete && wallL.naturalWidth && wallR.complete && wallR.naturalWidth) { const ww = 110, topW = -OY / K - 20, viewL = -OX / K - 10, viewR = (canvas.width - OX) / K + 10;
       // 흰 벽돌 벽(왼쪽: 레트로 포스터, 오른쪽: 하이파이브 포스터). 위로는 맨 위 '벽돌만 있는 부분'을 이어 붙이고, 벽 바깥은 화면 끝까지 벽돌로 채운다
       // 벽 바깥은 먼저 흰 벽 색으로 화면 끝까지 칠해 빈틈이 보이지 않게 한다
-      g.fillStyle = '#F3EFE7'; g.fillRect(viewL - 200, topW - 200, WALL_L - 30 - viewL + 200, GROUND + 14 - topW + 200); g.fillRect(WALL_R + 30, topW - 200, viewR - WALL_R + 200, GROUND + 14 - topW + 200);
+      const WM = rot.dataset.wm || 'w0', FENCE = GROUND - 340; // 벽 바깥 처리 방식(시안 w1·w2·w3)
+      if (WM === 'w0') { g.fillStyle = '#F3EFE7'; g.fillRect(viewL - 200, topW - 200, WALL_L - 30 - viewL + 200, GROUND + 14 - topW + 200); g.fillRect(WALL_R + 30, topW - 200, viewR - WALL_R + 200, GROUND + 14 - topW + 200); }
+      if (WM === 'w1') { g.fillStyle = 'rgba(255,255,255,.28)'; g.fillRect(viewL - 200, topW - 200, WALL_L - 30 - viewL + 200, GROUND + 230 - topW); g.fillRect(WALL_R + 30, topW - 200, viewR - WALL_R + 200, GROUND + 230 - topW); }
+      if (WM === 'w2') { for (const [x0b, x1b] of [[viewL - 200, WALL_L - 30], [WALL_R + 30, viewR + 200]]) { const gr = g.createLinearGradient(x0b < WALL_L ? WALL_L - 30 : WALL_R + 30, 0, x0b < WALL_L ? WALL_L - 130 : WALL_R + 130, 0); gr.addColorStop(0, '#2A1650'); gr.addColorStop(1, '#0B0A14'); g.fillStyle = gr; g.fillRect(x0b, topW - 400, x1b - x0b, GROUND + 900 - topW); }
+        g.save(); g.shadowColor = '#A86BFF'; g.shadowBlur = 18; g.strokeStyle = '#B98BFF'; g.lineWidth = 4; for (const xx of [WALL_L - 30, WALL_R + 30]) { g.beginPath(); g.moveTo(xx, topW - 400); g.lineTo(xx, GROUND + 400); g.stroke(); } g.restore(); }
       for (const [img, wx, side] of [[wallL, WALL_L, -1], [wallR, WALL_R, 1]]) { const iw = img.naturalWidth, ih = img.naturalHeight, wh = ww * ih / iw, x0 = side < 0 ? wx - ww + 16 : wx - 16, y0 = GROUND + 16 - wh, sl = ih * 0.28, slH = ww * sl / iw;
-        for (let cx = x0 + side * (ww - 2); side < 0 ? cx + ww > viewL : cx < viewR; cx += side * (ww - 2)) for (let y = GROUND + 16 - slH; y + slH > topW - slH; y -= slH - 1) g.drawImage(img, 0, 0, iw, sl, cx, y, ww, slH);
-        for (let y = y0 - slH + 1; y + slH > topW - slH; y -= slH - 1) g.drawImage(img, 0, 0, iw, sl, x0, y, ww, slH);
+        if (WM === 'w0') for (let cx = x0 + side * (ww - 2); side < 0 ? cx + ww > viewL : cx < viewR; cx += side * (ww - 2)) for (let y = GROUND + 16 - slH; y + slH > topW - slH; y -= slH - 1) g.drawImage(img, 0, 0, iw, sl, cx, y, ww, slH);
+        const yTop = WM === 'w3' ? FENCE : topW - slH; g.save(); if (WM === 'w3') { g.beginPath(); g.rect(x0 - 10, FENCE, ww + 20, GROUND + 100 - FENCE); g.clip(); } for (let y = y0 - slH + 1; y + slH > yTop; y -= slH - 1) g.drawImage(img, 0, 0, iw, sl, x0, y, ww, slH); g.restore();
+        if (WM === 'w3') { // 벽 위로는 하얀 기둥 + 그물 펜스(하늘이 비쳐 보인다)
+          const fx = x0 + ww / 2; g.fillStyle = '#FFFFFF'; g.fillRect(fx - 7, topW - 400, 14, FENCE - topW + 402); g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 1.5;
+          for (let k = -2; k < 60; k++) { const yy = FENCE - k * 22; g.beginPath(); g.moveTo(x0, yy); g.lineTo(x0 + ww, yy - 22); g.moveTo(x0, yy - 22); g.lineTo(x0 + ww, yy); g.stroke(); if (yy < topW - 400) break; }
+          g.fillStyle = '#E8453C'; g.fillRect(x0 - 2, FENCE - 4, ww + 4, 8); }
         g.drawImage(img, x0, y0, ww, wh); }
       for (const [a0, a1] of [[viewL - 200, WALL_L + 20], [WALL_R - 20, viewR + 200]]) { const gr = g.createLinearGradient(0, GROUND + 6, 0, GROUND + 30); gr.addColorStop(0, 'rgba(120,85,40,.28)'); gr.addColorStop(1, 'rgba(120,85,40,0)'); g.fillStyle = gr; g.fillRect(a0, GROUND + 8, a1 - a0, 24); } } // 벽 밑 모래 그림자
     else { g.fillStyle = '#F4F1EA'; g.fillRect(WALL_L - 60, -SKY - 400, 60, GROUND + SKY + 420); g.fillRect(WALL_R, -SKY - 400, 60, GROUND + SKY + 420); }
