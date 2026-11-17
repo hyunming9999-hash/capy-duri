@@ -1220,7 +1220,7 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .bb-st.done { background: #E6F7EA; border-color: #8FD19E; } .bb-st.hard { color: #C2410C; } .bb-st.hard.done { background: #FFE9DC; border-color: #FFB085; }
 .bb-st.on { background: var(--yuzu); border-color: var(--yuzu-d); box-shadow: 0 3px 0 var(--yuzu-d); } .bb-st.lock { opacity: .45; }
 .bb-play { position: relative; display: flex; justify-content: center; }
-.bb-board { width: min(100%, 380px); height: auto; border-radius: 16px; border: 4px solid #8A5A2B; box-shadow: 0 5px 0 #6B4220; touch-action: none; background: #EFE4FF; }
+.bb-board { width: 100%; max-width: none; height: auto; border-radius: 16px; border: 4px solid #8A5A2B; box-shadow: 0 5px 0 #6B4220; touch-action: none; background: #EFE4FF; }
 .bb-keys { display: grid; grid-template-columns: 1fr 1.7fr 1fr; gap: 10px; max-width: 400px; width: 100%; margin: 0 auto; touch-action: none; user-select: none; -webkit-user-select: none; }
 .bb-keys .tt-key { height: 56px; font: 900 22px var(--head); }
 .bb-keys .bb-fire b { font-size: 18px; }
@@ -1243,3 +1243,12 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .bet-bar > .btn, .bet-bar .bet-acts { grid-column: 2; grid-row: 1 / span 2; } .bet-acts { display: flex; gap: 6px; }
 .bet-pick { display: flex; flex-direction: column; gap: 8px; text-align: center; } .bet-pick p { margin: 0; font-size: 13.5px; }
 .bet-amt { font: 900 30px var(--head); color: #C98A00; } .bet-chips { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+
+/* 카피 버블: 판을 크게, 둘레는 얇게 */
+.game-bubble .bb { gap: 6px; } .game-bubble .bb .tt-top { padding: 3px 10px; } .game-bubble .bb-board { border-width: 3px; box-shadow: 0 3px 0 #6B4220; }
+.game-bubble .bb-key { height: 50px; }
+/* 💰 내기 줄은 작게 한 줄로 */
+.bet-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; padding: 4px 6px 4px 10px; border-radius: 999px; border-width: 1.5px; min-height: 30px; }
+.bet-bar span { font-size: 12.5px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bet-bar small { display: none; }
+.bet-bar .btn.sm, .bet-bar .bet-acts .btn { padding: 3px 10px; font-size: 12px; min-height: 0; height: 24px; }

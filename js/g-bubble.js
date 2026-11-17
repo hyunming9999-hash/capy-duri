@@ -148,7 +148,7 @@ export function mount(el, ctx) {
     box.replaceChildren(topEl, h('div', { class: 'bb-play' }, cv), keysEl); aimTouch(cv); drawTop(); requestAnimationFrame(fit);
   }
   // 점수칸·게임판·버튼이 한 화면에 다 들어오게 판 크기를 맞춘다
-  function fit() { if (!cv || !cv.isConnected) return; window.scrollTo(0, 0); const top = cv.getBoundingClientRect().top, room = window.innerHeight - top - keysEl.offsetHeight - 22, w = Math.max(220, Math.min(box.clientWidth, 400, room * W / H)); cv.style.width = w + 'px'; keysEl.style.maxWidth = Math.max(w, 300) + 'px'; }
+  function fit() { if (!cv || !cv.isConnected) return; window.scrollTo(0, 0); const top = cv.getBoundingClientRect().top, room = window.innerHeight - top - keysEl.offsetHeight - 14, w = Math.max(220, Math.min(box.clientWidth, 520, room * W / H)); cv.style.width = w + 'px'; keysEl.style.maxWidth = Math.max(w, 300) + 'px'; }
   window.addEventListener('resize', fit);
   // 손가락으로는 겨누기만 하고, 발사는 발사 버튼으로만 한다
   function aimTouch(c) { let on = false;

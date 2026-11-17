@@ -30,11 +30,11 @@ function betBar(ctx, g) {
   const el = h('div', { class: 'bet-bar' }), pn = () => ctx.nameOf(ctx.partnerId), pj = (a, b) => josa(pn(), a, b);
   const draw = () => { const b = ctx.betOf(g.id), me = ctx.uid;
     if (!ctx.partnerId) return el.replaceChildren();
-    if (!b) return el.replaceChildren(h('span', null, '💰 내기 없음'), h('small', null, `${pj('와', '과')} 같은 돈을 걸고 경쟁 판 승자가 모두 가져가요`), h('button', { class: 'btn sm', onClick: offer }, '내기 걸기'));
-    if (b.state === 'offer' && b.by === me) return el.replaceChildren(h('span', null, `💰 ${b.amount}코인 내기 신청`), h('small', null, `${pj('가', '이')} 받으면 성사돼요`), h('button', { class: 'btn sm', onClick: () => ctx.cancelBet(g.id) }, '취소'));
-    if (b.state === 'offer') return el.replaceChildren(h('span', { class: 'hot' }, `💰 ${pj('가', '이')} ${b.amount}코인 내기를 걸었어요!`), h('small', null, `받으면 나도 ${b.amount}코인을 걸고, 다음 경쟁 판 승자가 ${b.amount * 2}코인을 가져가요`), h('div', { class: 'bet-acts' }, h('button', { class: 'btn sm', onClick: () => ctx.cancelBet(g.id) }, '거절'), h('button', { class: 'btn sm primary', onClick: () => ctx.acceptBet(g.id) }, '받기')));
+    if (!b) return el.replaceChildren(h('span', null, '💰 내기 없음'), h('button', { class: 'btn sm', onClick: offer }, '💰 내기 걸기'));
+    if (b.state === 'offer' && b.by === me) return el.replaceChildren(h('span', null, `💰 ${b.amount}코인 내기 신청 · 기다리는 중`), h('small', null, `${pj('가', '이')} 받으면 성사돼요`), h('button', { class: 'btn sm', onClick: () => ctx.cancelBet(g.id) }, '취소'));
+    if (b.state === 'offer') return el.replaceChildren(h('span', { class: 'hot' }, `💰 ${pj('가', '이')} ${b.amount}코인 내기!`), h('small', null, `받으면 나도 ${b.amount}코인을 걸고, 다음 경쟁 판 승자가 ${b.amount * 2}코인을 가져가요`), h('div', { class: 'bet-acts' }, h('button', { class: 'btn sm', onClick: () => ctx.cancelBet(g.id) }, '거절'), h('button', { class: 'btn sm primary', onClick: () => ctx.acceptBet(g.id) }, '받기')));
     const old = ctx.store.now() - (b.at || 0) > 30 * 60000;
-    el.replaceChildren(h('span', { class: 'hot' }, `🔥 ${b.amount}코인 내기 성사!`), h('small', null, `다음 경쟁 판에서 이긴 사람이 판돈 ${b.amount * 2}코인을 가져가요 · 비기면 돌려받아요`), ...(old ? [h('button', { class: 'btn sm', onClick: () => ctx.cancelBet(g.id) }, '무르기')] : [])); };
+    el.replaceChildren(h('span', { class: 'hot' }, `🔥 ${b.amount}코인 내기 중 · 이기면 +${b.amount * 2}`), h('small', null, `다음 경쟁 판에서 이긴 사람이 판돈 ${b.amount * 2}코인을 가져가요 · 비기면 돌려받아요`), ...(old ? [h('button', { class: 'btn sm', onClick: () => ctx.cancelBet(g.id) }, '무르기')] : [])); };
   const offer = () => { let v = 100; const amt = h('b', { class: 'bet-amt' }, '100코인'), set = n => { v = Math.max(10, Math.min(n, ctx.coins())); amt.textContent = `${v}코인`; };
     modal({ title: `💰 ${g.title} 내기`, body: h('div', { class: 'bet-pick' }, h('p', null, `${pj('와', '과')} 같은 돈을 걸어요(1:1). 다음 경쟁 판에서 이긴 사람이 둘이 건 돈을 모두 가져가요.`), amt,
       h('div', { class: 'bet-chips' }, [50, 100, 300, 500, 1000].map(n => h('button', { class: 'chip', onClick: () => set(n) }, String(n)))), h('input', { class: 'inp', type: 'number', min: 10, step: 10, placeholder: '직접 입력', onInput: e => set(+e.target.value || 0) }),
