@@ -1481,3 +1481,7 @@ body.vb-on .earn-card p { font-size: 12px; } body.vb-on .earn-card p.sum { font-
 .vb-rot[data-skin="k3"] .vb-btn { border: 3px solid #101114; box-shadow: 0 5px 0 #0A0B0D, inset 0 3px 0 rgba(255,255,255,.35); }
 .vb-rot[data-skin="k3"] .vb-btn.jmp { background: linear-gradient(#4C8DFF, #2A62D8) !important; } .vb-rot[data-skin="k3"] .vb-btn.spk { background: linear-gradient(#8A8F99, #5E636C) !important; } .vb-rot[data-skin="k3"] .vb-btn.spk.ready { background: linear-gradient(#FF6B5B, #E0352B) !important; } .vb-rot[data-skin="k3"] .vb-btn.dsh { background: linear-gradient(#8A8F99, #5E636C) !important; } .vb-rot[data-skin="k3"] .vb-btn.dsh.ready { background: linear-gradient(#48D68A, #22A862) !important; }
 .fs-grade.gF { background: #5B5F66; }
+.fs-card.storm-card { border-color: #5C7A99; background: linear-gradient(#EAF1F8, #FFFFFF); }
+.storm-pic { position: relative; font-size: 60px; line-height: 1; margin: 4px auto 26px; animation: crowShake .5s ease-in-out infinite; } .storm-pic span { position: absolute; left: 50%; bottom: -10px; font-size: 40px; transform: translateX(-10%); }
+.fs-card.storm-card b { color: #2E4A66; } .fs-card.storm-card p { font-size: 14px; color: #4A5A6A; margin: 6px 4px 2px; } .fs-card.storm-card small { color: #7A8896; display: block; margin-bottom: 4px; }
+.fs-card.wait .fs-acts .btn { opacity: .55; pointer-events: none; }
