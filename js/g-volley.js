@@ -104,7 +104,7 @@ export function mount(el, ctx) {
   const fit = () => { const pw = innerWidth, ph = innerHeight, port = ph > pw, w = port ? ph : pw, hh = port ? pw : ph, dpr = Math.min(2, devicePixelRatio || 1);
     rot.style.width = w + 'px'; rot.style.height = hh + 'px'; rot.style.transform = `translate(-50%, -50%)${port ? ' rotate(90deg)' : ''}`;
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(hh * dpr); canvas.style.width = w + 'px'; canvas.style.height = hh + 'px';
-    PADB = LAY === 'A' ? Math.round(hh * 0.24 * dpr) : 0; rot.dataset.lay = LAY; try { rot.dataset.skin = new URLSearchParams(location.search).get('vbskin') || localStorage.getItem('capy.vbSkin') || ''; } catch {}
+    PADB = LAY === 'A' ? Math.round(hh * 0.24 * dpr) : 0; rot.dataset.lay = LAY; try { rot.dataset.skin = new URLSearchParams(location.search).get('vbskin') || localStorage.getItem('capy.vbSkin') || 'k2'; } catch {}
     VK = Math.min(w / W, (hh - PADB / dpr) / H) * dpr; VX = (canvas.width - W * VK) / 2; VY = canvas.height - PADB - H * VK; spk.style.top = (VY + 64 * VK) / dpr + 'px'; };
   // 처음 화면을 누르면 진짜 전체화면(주소창까지 숨김)으로 바꾼다. 지원 안 하는 폰은 그대로
   const goFull = () => { const d = document.documentElement; if (!document.fullscreenElement && d.requestFullscreen) d.requestFullscreen({ navigationUI: 'hide' }).then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch {} setTimeout(fit, 200); }).catch(() => {}); };
