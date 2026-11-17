@@ -201,15 +201,27 @@ function leave() { LS.del('room'); location.hash = ''; location.reload(); }
 const PATCH_UNTIL = Date.parse('2026-11-18T02:00:00+09:00'); // 이 시각까지만, 들어올 때마다 보여 준다
 function patchNote() { if (Date.now() >= PATCH_UNTIL) return;
   const li = (ic, t, d) => h('li', null, h('span', null, ic), h('div', null, h('b', null, t), h('small', null, d)));
-  modal({ title: '✨ 패치 소식 · 까마귀 악당과 신발', body: h('div', { class: 'patch' },
-    h('div', { class: 'patch-crow' }, h('i', { class: 'pc-fog' }), h('i', { class: 'pc-fog f2' }), h('img', { src: 'img/crow/crow.webp', alt: '까마귀 악당' })),
-    h('ul', null,
-      li('🐦‍⬛', '까마귀 악당 등장!', '친목회에 있을 때 하루 2번, 내 근처 땅 위에 나타나 친한 동물 둘에게 "OO이 너 바보래" 하고 이간질해요. 경고가 뜨면 바로 퇴치하세요.'),
-      li('🧿', '퇴치부적 3장 중 진짜 1장', '퇴치 버튼을 누르고 부적을 한 장 고르세요. 진짜면 퇴치! 꽝이거나 시간이 지나면 두 동물의 친밀도가 15~20 깎여요.'),
-      li('🙅', '억울하면 해명하기', '삐진 동물에게 말을 걸어 "까마귀가 꾸민 거짓말이야"를 누르면 최대 5점 풀려요.'),
-      li('🦪', '진주부적 (화·금요일)', '친밀도 100(만렙) 동물을 3마리 이상 유지하면, 그날 한 번 단짝이 진주부적을 줘요(2장 중 진짜 1장). 3장 모으면 진주가 걸렸을 때 써서 90% 확률로 낚아요. 까마귀에게 당해 만렙이 깨지지 않게 조심!'),
-      li('👢', '황금 구두 & 신발 9켤레', '돼지는 황금 모피 부츠, 개구리는 황금 수정구슬 구두로 바뀌었어요(옷과 함께 신어요). 옷입히기에 운동화·구두·장화 등 신발 탭이 생겼어요.'))),
-    actions: [{ label: '확인', primary: true }] }); }
+  // 두 장짜리 공지: 1장 까마귀 악당 → 2장 전설의 진주부적(다음 장으로 넘기도록 유도)
+  const pages = [
+    () => [h('div', { class: 'patch-crow' }, h('i', { class: 'pc-fog' }), h('i', { class: 'pc-fog f2' }), h('img', { src: 'img/crow/crow.webp', alt: '까마귀 악당' })),
+      h('ul', null,
+        li('🐦‍⬛', '까마귀 악당 등장!', '친목회에 있을 때 하루 2번, 내 근처 땅 위에 나타나 친한 동물 둘에게 "OO이 너 바보래" 하고 이간질해요. 경고가 뜨면 바로 퇴치하세요.'),
+        li('🧿', '퇴치부적 3장 중 진짜 1장', '퇴치 버튼을 누르고 부적을 한 장 고르세요. 진짜면 퇴치! 꽝이거나 시간이 지나면 두 동물의 친밀도가 15~20 깎여요.'),
+        li('🙅', '억울하면 해명하기', '삐진 동물에게 말을 걸어 "까마귀가 꾸민 거짓말이야"를 누르면 최대 5점 풀려요.')),
+      h('button', { class: 'patch-next', onClick: () => go(1) }, h('img', { src: 'img/crow/pearl-back.webp', alt: '' }), h('span', null, h('b', null, '다음 장에 전설의 진주부적이!'), h('small', null, '눌러서 넘겨 보세요 👉')))],
+    () => [h('div', { class: 'patch-pearl' }, h('i', { class: 'pp-rays' }), ...Array.from({ length: 10 }, (_, k) => h('em', { style: { left: (6 + (k * 37) % 88) + '%', top: (8 + (k * 53) % 80) + '%', animationDelay: (k % 5) * 0.2 + 's' } }, k % 2 ? '✦' : '🫧')), h('img', { src: 'img/crow/pearl-win.webp', alt: '진주부적' }), h('b', null, '전설의 진주부적')),
+      h('ul', null,
+        li('🦪', '진주부적 (화·금요일)', '친밀도 100(만렙) 동물을 3마리 이상 유지하면, 그날 한 번 단짝이 진주부적을 줘요(2장 중 진짜 1장).'),
+        li('🎣', '3장 모으면 진주 성공률 90%', '진주가 걸리면 "앗, 진주 같아!" 하고 쓸지 물어봐요. 쓰면 부적 3장이 사라져요. 까마귀에게 당해 만렙이 깨지지 않게 조심!'),
+        li('👢', '황금 구두 & 신발 9켤레', '돼지는 황금 모피 부츠, 개구리는 황금 수정구슬 구두로 바뀌었어요(옷과 함께 신어요). 옷입히기에 운동화·구두·장화 등 신발 탭이 생겼어요.'))]];
+  const box = h('div', { class: 'patch' }), dots = h('div', { class: 'patch-dots' });
+  let at = 0, nextBtn, prevBtn;
+  function go(n) { at = n; box.replaceChildren(...pages[n]()); box.scrollTop = 0; const m = box.closest('.modal'); if (m) m.scrollTop = 0;
+    dots.replaceChildren(...pages.map((_, k) => h('i', { class: k === n ? 'on' : '' }))); if (nextBtn) { nextBtn.textContent = n === pages.length - 1 ? '확인' : '다음 장 👉'; prevBtn.style.visibility = n ? 'visible' : 'hidden'; } }
+  go(0);
+  const close = modal({ title: '✨ 패치 소식 · 까마귀 악당과 진주부적', body: h('div', null, box, dots),
+    actions: [{ label: '👈 이전', onClick: () => at && go(at - 1) }, { label: '다음 장 👉', primary: true, onClick: c => (at < pages.length - 1 ? go(at + 1) : c()) }] });
+  const btns = [...document.querySelectorAll('.modal-wrap:last-child .modal-actions .btn')]; [prevBtn, nextBtn] = btns; go(0); return close; }
 function enter() {
   entered = true; setTimeout(patchNote, 900);
   ctx.store.presence(ctx.uid); shareBattery();

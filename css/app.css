@@ -1319,3 +1319,14 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .patch-crow img { position: relative; z-index: 1; height: 160px; display: block; margin: 18px auto 0; filter: drop-shadow(0 0 14px #C98BFF) drop-shadow(0 6px 4px rgba(0,0,0,.5)); animation: crowBob 1.6s ease-in-out infinite; }
 @keyframes pcFog { from { transform: translateX(-6%); } to { transform: translateX(6%); } }
 @keyframes pcFlash { 0%, 70%, 100% { opacity: 0; } 74%, 82% { opacity: 1; } 78% { opacity: .2; } }
+/* 패치 공지 두 장 */
+.patch-next { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 10px; padding: 10px 14px; border: 2px solid #8FD3F4; border-radius: 16px; background: linear-gradient(135deg, #E6F7FF, #FFFFFF); cursor: pointer; text-align: left; animation: pnPulse 1.4s ease-in-out infinite; }
+.patch-next img { height: 54px; filter: drop-shadow(0 0 8px #9BE7FF); }
+.patch-next span { display: flex; flex-direction: column; } .patch-next b { color: #1C5C9C; font-size: 15px; } .patch-next small { color: #4A7FA8; }
+@keyframes pnPulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(143,211,244,.6); } 50% { transform: scale(1.02); box-shadow: 0 0 0 8px rgba(143,211,244,0); } }
+.patch-pearl { position: relative; height: 210px; margin: 4px -4px 16px; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 45%, #BFF3FF 0%, #4BB3E8 35%, #1B5C9E 70%, #0D2F5C 100%); }
+.pp-rays { position: absolute; left: 50%; top: 45%; width: 600px; height: 600px; margin: -300px; background: repeating-conic-gradient(rgba(255,255,255,.22) 0 7deg, transparent 7deg 20deg); animation: cfSpin 14s linear infinite; }
+.patch-pearl em { position: absolute; color: #fff; font-style: normal; text-shadow: 0 0 8px #9BE7FF; animation: cfTw 1.4s ease-in-out infinite; }
+.patch-pearl img { position: relative; height: 150px; filter: drop-shadow(0 0 16px #CFF6FF); animation: cfFloat 2.2s ease-in-out infinite; }
+.patch-pearl b { position: relative; margin-top: 6px; color: #fff; font-size: 18px; font-weight: 900; text-shadow: 0 0 8px #2B8FD6, 0 2px 0 #1C5C9C; }
+.patch-dots { display: flex; justify-content: center; gap: 6px; margin-top: 10px; } .patch-dots i { width: 8px; height: 8px; border-radius: 50%; background: #E3D5C0; } .patch-dots i.on { background: #F2A33A; width: 20px; border-radius: 4px; }
