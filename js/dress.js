@@ -8,7 +8,7 @@ const SETS = { top: TOPS, bottom: BOTTOMS, hat: HATS, shoe: SHOES };
 
 export function mount(el, ctx) {
   let who = ctx.uid, tab = 'top', sex = 'all', sel = { top: '', bottom: '', hat: '', shoe: '', ...(ctx.dress[ctx.uid] || {}) }, saved = ctx.dress;
-  let goldOwned = []; const inv = h('div', { class: 'dress-inv' });
+  let goldOwned = [], invTab = 'gold'; const inv = h('div', { class: 'dress-inv' });
   const stage = h('div', { class: 'dress-stage' }), grid = h('div', { class: 'dress-grid' }), ctl = h('div', { class: 'dress-ctl' });
   // 친목회 전용 모자는 상점에서 팔지 않고, 동물에게 사서 가진 것만 맨 앞에 보인다
   const list = () => [...(tab === 'hat' ? ZOO_HATS.filter(x => ctx.owns(x.id)) : []), ...SETS[tab].filter(x => sex === 'all' || x.sex === sex || x.sex === 'u')];
@@ -21,6 +21,7 @@ export function mount(el, ctx) {
     for (const id of need()) if (!(await ctx.buy(id))) return; // 아직 없는 옷은 사서 입는다
     try { await ctx.store.set('dress/' + who, { top: sel.top || '', bottom: sel.bottom || '', hat: sel.hat || '', shoe: sel.shoe || '', by: ctx.uid, ts: ctx.store.now() }); toast(bare() ? (who === ctx.uid ? '다 벗었어요' : `${ctx.nameOf(who)}의 옷을 벗겼어요`) : who === ctx.uid ? '갈아입었어요' : `${ctx.nameOf(who)}에게 입혀 줬어요`); } catch { toast('저장하지 못했어요. 잠시 뒤 다시 해 보세요'); }
   };
+  const buyOne = async id => { const p = priceOf(id); if (p > ctx.coins()) return toast(`돈이 모자라요 (${won(p)} 필요, 지금 ${won(ctx.coins())})`); if (await ctx.buy(id)) { toast(`${nameOf(id)}을(를) 샀어요! 가진 장비 > 일반 장비에 담겼어요`, 2400); draw(); } };
   const random = () => { const r = a => a[Math.floor(Math.random() * a.length)].id; const f = k => SETS[k].filter(x => (sex === 'all' || x.sex === sex || x.sex === 'u') && ctx.owns(x.id)); sel = { top: r(f('top')), bottom: r(f('bottom')), hat: Math.random() < 0.7 ? r(f('hat')) : '', shoe: f('shoe').length && Math.random() < 0.7 ? r(f('shoe')) : '' }; draw(); };
 
   function draw() {
@@ -34,7 +35,16 @@ export function mount(el, ctx) {
       s.by && s.by !== who && (s.top || s.bottom || s.hat || s.shoe) && h('small', { class: 'dim' }, `지금 입은 옷은 ${josa(ctx.nameOf(s.by), '가', '이')} 입혀 준 옷이에요`)].filter(Boolean));
     // 상대 카피바라는 구경만: 옷을 바꾸거나 벗기거나 입힐 수 없다
     const view = who !== ctx.uid; ctl.hidden = grid.hidden = tabs.hidden = inv.hidden = view;
-    if (!view) inv.replaceChildren(eqInv({ owned: goldOwned, worn: rareList(m.rare), wear: async i => { await wearGold(ctx, i); draw(); } }));
+    if (!view) { const SL = { top: '상의', bottom: '하의', hat: '모자', shoe: '신발' }, slotIdOf = id => Object.keys(SETS).find(k => SETS[k].some(x => x.id === id)) || (ZOO_HATS.some(x => x.id === id) ? 'hat' : '');
+      const mine = [...ZOO_HATS, ...TOPS, ...BOTTOMS, ...HATS, ...SHOES].filter(x => ctx.owns(x.id) && (priceOf(x.id) > 0 || ZOO_HATS.includes(x)));
+      const tabsEl = h('div', { class: 'inv-tabs' }, [['gold', `✨ 황금 장비 ${goldOwned.length}`], ['cloth', `👕 일반 장비 ${mine.length}`]].map(([k, t]) => h('button', { class: invTab === k ? 'on' : '', onClick: () => { invTab = k; draw(); } }, t)));
+      const cloth = h('div', { class: 'eq eq-invw' }, h('div', { class: 'eq-inv-h' }, h('b', null, `👕 산 옷·모자·신발 ${mine.length}벌`), h('small', null, '누르면 입어 보기 · 다시 누르면 벗기 · 저장은 아래 입기 버튼')),
+        mine.length ? h('div', { class: 'eq-inv' }, mine.map(x => { const k = slotIdOf(x.id), on = sel[k] === x.id;
+          return h('button', { class: 'eq-item cloth' + (on ? ' on' : ''), title: x.name, onClick: () => { sel[k] = on ? '' : x.id; draw(); } },
+            h('span', { html: k === 'hat' ? capy({ color: m.color, hat: x.id, head: true }).replace('viewBox="0 -22 120 112"', 'viewBox="0 -24 120 76"') : k === 'shoe' ? capy({ color: m.color, shoe: x.id }).replace('viewBox="0 -22 120 158"', 'viewBox="24 108 72 30"') : capy({ color: m.color, [k]: x.id }).replace('viewBox="0 -22 120 158"', 'viewBox="16 80 88 56"') }),
+            h('em', null, SL[k] || ''), on && h('i', null, '입는 중'), h('small', null, x.name)); }))
+          : h('p', { class: 'eq-empty' }, '아직 산 옷이 없어요. 아래 옷 목록에서 유료 옷을 눌러 구매하기를 누르면 여기에 담겨요.'));
+      inv.replaceChildren(tabsEl, invTab === 'gold' ? eqInv({ owned: goldOwned, worn: rareList(m.rare), wear: async i => { await wearGold(ctx, i); draw(); } }) : cloth); }
     if (view) stage.append(h('p', { class: 'dress-only' }, `👀 ${josa(ctx.nameOf(who), '가', '이')} 지금 입은 옷이에요. ${ctx.nameOf(who)}의 옷은 ${ctx.nameOf(who)}만 바꿀 수 있어요`));
     ctl.replaceChildren(
       h('button', { class: 'btn', onClick: random }, '🎲 아무거나'),
@@ -43,6 +53,7 @@ export function mount(el, ctx) {
       h('small', { class: 'dress-wallet' }, '내 돈 ', h('b', { 'data-coins': 1 }, won(ctx.coins()))));
     const items = list();
     grid.replaceChildren(...items.map(it => h('button', { class: 'dress-item' + (sel[tab] === it.id ? ' on' : '') + (ctx.owns(it.id) ? '' : ' lock'), 'data-price': ctx.owns(it.id) ? '' : won(priceOf(it.id)), title: it.name, 'aria-label': it.name, onClick: () => { if (who !== ctx.uid) return toast('상대 카피바라의 옷은 바꿀 수 없어요'); sel[tab] = sel[tab] === it.id ? '' : it.id; draw(); } },
+      sel[tab] === it.id && !ctx.owns(it.id) && who === ctx.uid && h('b', { class: 'dress-buy', onClick: e => { e.stopPropagation(); buyOne(it.id); } }, '구매하기'),
       h('span', { html: tab === 'hat' ? capy({ color: m.color, hat: it.id, head: true }).replace('viewBox="0 -22 120 112"', 'viewBox="0 -24 120 76"') : tab === 'shoe' ? capy({ color: m.color, shoe: it.id }).replace('viewBox="0 -22 120 158"', 'viewBox="24 108 72 30"') : capy({ color: m.color, [tab]: it.id }).replace('viewBox="0 -22 120 158"', 'viewBox="16 80 88 56"') }), h('small', null, it.name))));
     tabs.replaceChildren(
       h('div', { class: 'tabs' }, [['top', `상의 ${TOPS.length}`], ['bottom', `하의 ${BOTTOMS.length}`], ['hat', `모자 ${HATS.length}`], ['shoe', `신발 ${SHOES.length}`]].map(([k, t]) => h('button', { class: 'tab' + (tab === k ? ' on' : ''), onClick: () => { tab = k; draw(); } }, t))),

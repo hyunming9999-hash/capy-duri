@@ -1533,3 +1533,14 @@ body.vb-on .modal-wrap { z-index: 4600; }
 /* 피팅룸 장비창: 옷 피팅 화면 안에 들어가므로 여백을 맞춘다 */
 .dress-stage .eq { width: 100%; margin: 6px 0 4px; }
 .dress-stage .eq-me { min-height: 280px; } .dress-inv { margin: 10px 0 4px; } .eq-invw { padding-top: 2px; }
+
+/* 옷 고르면 가격 대신 구매하기 버튼, 산 옷은 가격 없음 */
+.dress-item.lock.on::after { display: none; }
+.dress-buy { order: 99; margin: 3px auto 0; padding: 3px 9px; border-radius: 999px; background: linear-gradient(135deg, #FFB703, #FF8A00); color: #fff; font: 900 11px/1.3 var(--head); box-shadow: 0 2px 0 #B5651D; white-space: nowrap; cursor: pointer; animation: buyPop .25s cubic-bezier(.2,1.6,.4,1); }
+@keyframes buyPop { from { transform: scale(.6); } to { transform: scale(1); } }
+/* 가진 장비: 황금 / 일반 탭 */
+.inv-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; margin: 10px 0 -2px; background: #1F2A36; border-radius: 14px 14px 0 0; }
+.inv-tabs button { padding: 8px 4px; border-radius: 10px; border: 0; background: #2D3C4B; color: #9FB3C4; font: 800 13px/1.2 var(--head); cursor: pointer; }
+.inv-tabs button.on { background: #FFD23F; color: #3A2A00; }
+.inv-tabs + .eq { border-radius: 0 0 16px 16px; margin-top: 0; }
+.eq-item.cloth span { display: block; width: 52px; } .eq-item.cloth svg { display: block; width: 100%; }
