@@ -54,7 +54,7 @@ const RARE_BACK = new Set([17, 19, 27, 28]); // 등 뒤에 그리는 것(날개�
 const RARE_SHOE = new Set([12, 13]); // 발에 신는 것(구두): 발 위에 따로 그린다
 const RARE_BODY = new Set([5, 8, 9, 18, 20, 22, 24, 26]); // 몸에 입는 것(상의·하의·한 벌): 몸 위, 얼굴 아래에 그려서 입은 것처럼 보이게 한다
 const RARE_FIT = { 0: [5, 0, 1], 4: [3, 0, 1], 14: [7, 0, 1], 25: [5, 0, 1], 5: [0, 30, 0.72], 7: [0, 0, 0.72], 10: [0, -25, 0.9], 11: [0, -17, 1], 15: [0, -8, 1], 17: [0, -10, 1], 21: [0, -14, 1], 18: [0, -2, 0.95], 20: [0, 6, 1], 26: [0, 6, 1] };
-const RARE_HOLD = new Set([0, 4, 14, 25]); // 손에 쥐는 것: 자루 위에 손을 한 번 더 그려서 쥔 것처럼 보이게 한다
+const RARE_HOLD = new Set([0, 4, 14, 25]); // 손에 쥐는 것: 자루 위에 손을 한 번 더 그려서 쥔 것처럼 보이게 한다(오른손). 무기를 들면 방패(2)는 왼손 쪽으로 뒤집어 그린다
 export function capy(o = {}) {
   const c = COLORS[o.color] || COLORS.brown;
   const back = o.view === 'back';
@@ -82,7 +82,7 @@ export function capy(o = {}) {
   if (o.rare && o.rare.i != null && !back) { const gid = 'rg' + (++rareN), list = (o.rare.list || [o.rare.i]).slice(0, 6), n = list.length; // 여섯 개까지 함께 걸친다. 많이 걸칠수록 빛이 커진다
     glow = `<defs><radialGradient id="${gid}"><stop offset="0" stop-color="#FFFBD6" stop-opacity=".95"/><stop offset=".5" stop-color="#FFE066" stop-opacity="${Math.min(0.95, 0.5 + n * 0.08)}"/><stop offset="1" stop-color="#FFC93C" stop-opacity="0"/></radialGradient></defs><circle cx="60" cy="74" r="${72 + n * 4}" fill="url(#${gid})"><animate attributeName="r" values="${64 + n * 4};${78 + n * 4};${64 + n * 4}" dur="2.2s" repeatCount="indefinite"/></circle>`;
     list.forEach(k => { const [dx, dy, sc] = RARE_FIT[k] || [0, 0, 1], S = 224.7 * sc, img = `<image href="img/rare/${k}.webp" x="${(60 + dx - S / 2).toFixed(1)}" y="${(57 + dy - S / 2).toFixed(1)}" width="${S.toFixed(1)}" height="${S.toFixed(1)}"/>`;
-      if (RARE_SHOE.has(k)) return; if (RARE_BACK.has(k)) wearB += img; else if (RARE_BODY.has(k)) wearM += img; else gem += img + (RARE_HOLD.has(k) ? `<ellipse cx="${96 + dx * 0.6}" cy="104" rx="7.5" ry="6.5" fill="${c.body}"/><path d="M${91 + dx * 0.6} 101 q5 -3 10 0" fill="none" stroke="${c.dark}" stroke-width="1.4" stroke-linecap="round" opacity=".6"/>` : ''); });
+      if (RARE_SHOE.has(k)) return; if (RARE_BACK.has(k)) wearB += img; else if (RARE_BODY.has(k)) wearM += img; else if (k === 2 && list.some(x => RARE_HOLD.has(x))) gem += `<g transform="matrix(-1 0 0 1 120 0)">${img}</g>`; else gem += img + (RARE_HOLD.has(k) ? `<ellipse cx="${96 + dx * 0.6}" cy="104" rx="7.5" ry="6.5" fill="${c.body}"/><path d="M${91 + dx * 0.6} 101 q5 -3 10 0" fill="none" stroke="${c.dark}" stroke-width="1.4" stroke-linecap="round" opacity=".6"/>` : ''); });
     gem += [[4, 62, 0], [116, 50, .6], [10, 126, 1.1], [112, 120, 1.6], [60, -34, .3], [-10, 22, .9], [130, 92, 1.3], [30, -24, .5]].map(([x, y, d]) => `<path d="M${x} ${y - 10} l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="#FFFDF0" stroke="#F0C24A" stroke-width="1"><animate attributeName="opacity" values="0.15;1;0.15" dur="1.6s" begin="${d}s" repeatCount="indefinite"/></path>`).join(''); }
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158"${glow ? ' style="overflow:visible"' : ''}>${glow}${wearB}${body}${wearM}${shoeToe}${head}${pin}${gem}</svg>`;
 }

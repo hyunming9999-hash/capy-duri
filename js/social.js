@@ -56,7 +56,34 @@ export const RARE_MAX = 6;
 export const rareList = v => (v == null ? [] : Array.isArray(v) ? v : typeof v === 'object' ? Object.values(v) : [v]).map(Number).filter(i => ANIMALS[i] && PERSONA[i]).slice(0, RARE_MAX);
 export const rareOf = v => { const list = rareList(v); return list.length ? { i: list[0], list, e: PERSONA[list[0]].pin, c: ANIMALS[list[0]].body } : null; };
 // 자리: 같은 자리에는 하나만(한 벌은 상의·하의와 같이 못 입는다)
-const RARE_SLOT = { hat: [1, 6, 10, 11, 15, 21, 23], eye: [3, 7, 16, 29], top: [9, 20, 22, 26], bottom: [18], feet: [12, 13], suit: [5, 8, 24], hand: [0, 2, 4, 14, 25], back: [17, 19, 27, 28] };
+const RARE_SLOT = { hat: [1, 6, 10, 11, 15, 21, 23], eye: [3, 7, 16, 29], top: [9, 20, 22, 26], bottom: [18], feet: [12, 13], suit: [5, 8, 24], hand: [0, 4, 14, 25], shield: [2], back: [17, 19, 27, 28] };
+// ⚔️ 장비창(옷놀이 피팅룸·가방에서 같이 쓴다): 가운데 캐릭터, 양옆에 자리 칸. 자리마다 황금 장비 하나씩, 최대 여섯 개
+const EQ_L = [['hat', '머리'], ['eye', '눈'], ['back', '등'], ['shield', '왼손 방패']], EQ_R = [['hand', '오른손 무기'], ['top', '상의'], ['bottom', '하의'], ['suit', '한벌'], ['feet', '신발']];
+const EQ_NAME = Object.fromEntries([...EQ_L, ...EQ_R]);
+export function eqBoard(ctx, { worn, center, wear, readOnly }) {
+  const at = k => worn.find(i => slotOf(i) === k), suitOn = at('suit') != null;
+  const slot = ([k, label]) => { const i = at(k), off = i == null && suitOn && (k === 'top' || k === 'bottom');
+    return h('button', { class: 'eq-slot' + (i != null ? ' on' : '') + (off ? ' off' : ''), title: i != null ? rareName(i) : label, onClick: () => { if (i == null) return toast(off ? '한벌 장비를 입고 있어서 비어 있어요' : readOnly ? `${label} 자리가 비어 있어요` : `${label} 자리에 걸칠 황금 장비를 아래 '가진 황금 장비'에서 골라요`, 2200); if (readOnly) return toast(rareName(i), 1600); wear(i); } },
+      i != null ? h('img', { src: `img/rare/ic/${i}.webp`, alt: '' }) : h('i', null, off ? '한벌' : label), i != null && h('small', null, label)); };
+  return h('div', { class: 'eq' },
+    h('div', { class: 'eq-head' }, h('b', null, 'EQUIPMENT'), h('span', null, `황금 장비 ${worn.length} / ${RARE_MAX}`)),
+    h('div', { class: 'eq-board' }, h('div', { class: 'eq-col' }, EQ_L.map(slot)), h('div', { class: 'eq-me', html: center }), h('div', { class: 'eq-col' }, EQ_R.map(slot))));
+}
+export function eqInv({ owned, worn, wear }) {
+  owned = [...owned].sort((a, b) => a - b);
+  return h('div', { class: 'eq eq-invw' }, h('div', { class: 'eq-inv-h' }, h('b', null, `✨ 가진 황금 장비 ${owned.length} / ${ANIMALS.length}`), h('small', null, '누르면 걸치기·벗기 · 같은 자리는 바꿔 걸쳐요')),
+    owned.length ? h('div', { class: 'eq-inv' }, owned.map(i => { const on = worn.includes(i);
+      return h('button', { class: 'eq-item' + (on ? ' on' : ''), title: rareName(i), onClick: () => wear(i) }, h('img', { src: `img/rare/ic/${i}.webp`, alt: '' }), h('em', null, ({ hand: '무기', shield: '방패' })[slotOf(i)] || EQ_NAME[slotOf(i)] || ''), on && h('i', null, '착용'), h('small', null, rareName(i).replace('황금 ', ''))); }))
+      : h('p', { class: 'eq-empty' }, `동물과 단짝(${RARE_AT}점)이 되면 그 동물에게서 ${RARE_PRICE.toLocaleString('ko-KR')}코인에 황금 장비를 살 수 있어요.`));
+}
+// 피팅룸에서 걸치기·벗기: 같은 자리 것은 바꿔 걸치고, 여섯 개를 넘지 않는다
+export async function wearGold(ctx, i) {
+  let list = rareList((ctx.members[ctx.uid] || {}).rare);
+  if (list.includes(i)) list = list.filter(x => x !== i);
+  else { const out = list.filter(x => clash(x, i)); list = list.filter(x => !clash(x, i)); if (list.length >= RARE_MAX) return void toast('황금 장비는 여섯 개까지 걸칠 수 있어요. 하나를 벗고 걸치세요');
+    if (out.length) toast(`같은 자리라서 ${out.map(rareName).join(', ')}을(를) 벗고 걸쳤어요`, 2600); list = [...list, i]; }
+  const v = list.length ? list : null; ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), rare: v }; await ctx.store.update('members/' + ctx.uid, { rare: v }).catch(() => {});
+}
 const slotOf = i => Object.keys(RARE_SLOT).find(k => RARE_SLOT[k].includes(i)), clash = (a, b) => { const x = slotOf(a), y = slotOf(b); return x === y || (x === 'suit' && (y === 'top' || y === 'bottom')) || (y === 'suit' && (x === 'top' || x === 'bottom')); };
 // 보물 2~3개: 멋지다·눈부시다·존경한다 (동물마다 다른 말)
 const AWE1 = ['주인님 같은 멋짐이야! 꼬리가 멈추질 않아', '흥, 인정할게. 오늘은 네가 제일 멋져', '찍… 눈이 부셔서 치즈도 안 보여', '볼이 터질 만큼 멋져! 존경해', '귀가 쫑긋 섰어. 너무 눈부셔', '여우인 내가 봐도 반할 만큼 멋져', '곰도 고개 숙일 멋짐이야. 존경해', '대나무보다 네가 더 좋아질 만큼 멋져', '졸다가 깼어… 너무 눈부셔서', '어흥! 이 호랑이가 인정하는 멋짐이야', '밀림의 왕인 나도 존경스러워', '음메… 들판 전체가 환해졌어. 멋져', '꿀꿀! 진흙 속 진주처럼 빛나', '개굴! 연못에 해가 뜬 줄 알았어', '우끼! 바나나보다 눈부셔! 존경해', '꼬끼오! 새벽 해보다 눈부셔', '뒤뚱… 빙하보다 반짝여. 멋져', '삐약! 커서 꼭 너처럼 될래. 존경해', '꽥! 연못 최고의 멋쟁이야', '부엉… 밤눈 밝은 내가 봐도 눈부셔', '아우우! 달보다 네가 더 빛나', '킁킁, 온 숲이 네 멋짐을 알아', '히힝! 달리다 멈춰 설 만큼 멋져', '무지개도 너만큼 빛나진 않아', '느릿느릿… 백 년 살아도 이런 멋짐은 처음이야', '다리 여덟 개로 다 박수 칠게. 멋져', '어흑어흑! 박수! 너무 눈부셔', '가시가 다 눕도록 감동했어. 존경해', '도토리 다 줘도 안 아까울 멋짐이야', '너굴! 훔치고 싶을 만큼 멋져… 농담이야, 존경해'];
@@ -811,13 +838,11 @@ export function mount(el, ctx) {
   function openBag() {
     const body = h('div', { class: 'so-list' }); let cl;
     const draw = () => { const pins = Object.keys(bag.pins || {}).filter(k => bag.pins[k]).map(Number), worn = pinOf(ctx.uid), wares = ANIMALS.map((_, i) => i).filter(i => ctx.owns(wareOf(i).id) && priceOf(wareOf(i).id) > 0);
-      body.replaceChildren(h('div', { class: 'so-bagme', html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) }),
+      body.replaceChildren(eqBoard(ctx, { worn: myRares(), center: capy(ctx.capyOf(ctx.uid, { face: 'happy', rare: rareOf(myRares()) })), wear: async k => { await wearRare(k); draw(); } }), eqInv({ owned: Object.keys(bag.rares || {}).filter(k => bag.rares[k]).map(Number), worn: myRares(), wear: async k => { await wearRare(k); draw(); } }),
         h('p', { class: 'center' }, Object.entries(GIFTS).map(([k, [ic, nm]]) => `${ic} ${nm} ${bag[k] || 0}개`).join(' · ')),
         h('p', { class: 'center so-charm' }, h('img', { src: 'img/crow/pearl-win.webp', alt: '' }), ` 진주부적 ${bag.pcharm || 0}장`, h('small', { class: 'dim' }, (bag.pcharm || 0) >= 3 ? ' · 진주가 걸리면 3장으로 성공률 90%' : ' · 3장 모으면 진주 성공률 90%')),
         h('b', null, `동물에게 받은 액세서리 ${pins.length} / ${ANIMALS.length}`),
         pins.length ? h('div', { class: 'so-pins' }, pins.map(i => h('button', { class: 'so-pin' + (worn === i ? ' on' : ''), onClick: async () => { await wearPin(worn === i ? null : i); draw(); } }, h('span', null, PERSONA[i].pin), h('small', null, worn === i ? '착용 중' : ANIMALS[i].name), h('small', { class: 'dim' }, PIN_CHEST.has(PERSONA[i].pin) ? '가슴에' : '손에')))) : h('p', { class: 'dim center' }, `동물과 ${PIN_AT}점까지 친해지면 그 동물의 상징을 선물로 받아요.`),
-        h('b', null, `✨ 초레어 보물 ${Object.keys(bag.rares || {}).filter(k => bag.rares[k]).length} / ${ANIMALS.length}`),
-        Object.keys(bag.rares || {}).filter(k => bag.rares[k]).length ? h('div', { class: 'so-list' }, Object.keys(bag.rares).filter(k => bag.rares[k]).map(Number).map(i => { const on = myRares().includes(i); return h('button', { class: 'so-row big rare open' + (on ? ' on' : ''), onClick: async () => { await wearRare(i); draw(); } }, h('span', { class: 'so-try', html: capy({ color: ctx.me.color, acc: 'none', face: 'happy', rare: rareOf(i) }) }), h('b', null, rareName(i)), h('small', null, on ? '걸치는 중 (누르면 벗기)' : '누르면 걸치기')); })) : h('p', { class: 'dim center' }, `동물과 단짝(${RARE_AT}점)이 되면 그 동물에게서 ${RARE_PRICE.toLocaleString('ko-KR')}코인에 살 수 있어요.`),
         h('b', null, `🐟 물고기 도감 ${Object.keys(dex).length} / ${FISH.length}${dex.pearl ? ' · 진주 ' + dex.pearl.n + '개' : ''}`),
         h('p', { class: 'dim center' }, '아직 못 잡은 물고기는 그림자로 보여요. 잡으면 그 칸이 채워져요.'),
         ...[1, 2, 3].flatMap(z => { const list = FISH.filter(f => f.z === z), got = list.filter(f => dex[f.id]).length; return [h('small', { class: 'so-dexz' }, `${ZONES[z]} ${got} / ${list.length}`),

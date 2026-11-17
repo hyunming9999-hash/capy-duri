@@ -1507,3 +1507,29 @@ body.vb-on .modal-wrap { z-index: 4600; }
 @keyframes fsSpark { from { transform: translate(-50%, 0) rotate(var(--a)) translateY(0) scale(.4); opacity: 1; } to { transform: translate(-50%, 0) rotate(var(--a)) translateY(calc(var(--d) * -1)) scale(1.1); opacity: 0; } }
 
 .dress-only { margin: 6px 0 0; padding: 8px 12px; border-radius: 12px; background: #FFF4DE; color: #7A5A3A; font-size: 13px; font-weight: 700; text-align: center; word-break: keep-all; }
+
+/* ⚔️ 장비창(메이플 장비창 느낌): 가운데 캐릭터, 양옆에 자리 칸, 아래에 가진 장비 */
+.eq { background: #1F2A36; border: 2px solid #0F161E; border-radius: 16px; padding: 10px; margin-bottom: 12px; box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
+.eq-head { display: flex; align-items: baseline; justify-content: space-between; padding: 0 4px 8px; }
+.eq-head b { font: 900 16px/1 var(--head); color: #D7E35A; letter-spacing: 1px; } .eq-head span { font-size: 12px; font-weight: 800; color: #CFE3F2; background: #3B5368; padding: 3px 9px; border-radius: 10px; }
+.eq-board { display: grid; grid-template-columns: 62px 1fr 62px; gap: 6px; background: #B9BEC4; border-radius: 12px; padding: 8px; }
+.eq-col { display: grid; grid-template-rows: repeat(5, 54px); gap: 5px; align-content: center; }
+.eq-slot { position: relative; width: 62px; height: 54px; padding: 3px; border-radius: 8px; border: 2.5px solid #8F969D; background: #9DA3AA; display: grid; place-items: center; cursor: pointer; }
+.eq-slot i { font-style: normal; font-size: 10px; line-height: 1.15; text-align: center; word-break: keep-all; font-weight: 800; color: #6E757C; }
+.eq-slot.on { border-color: #E9B949; background: radial-gradient(circle at 50% 40%, #FFF6D6, #C9B48A); box-shadow: 0 0 10px rgba(255,210,63,.55); }
+.eq-slot.on img { width: 100%; height: 100%; object-fit: contain; }
+.eq-slot small { position: absolute; left: 2px; top: 1px; font-size: 9px; font-weight: 900; color: #fff; background: rgba(30,42,54,.75); padding: 0 4px; border-radius: 5px; }
+.eq-slot.off { opacity: .5; border-style: dashed; }
+.eq-me { border-radius: 10px; overflow: hidden; background: radial-gradient(circle at 50% 35%, #FFFFFF 0%, #DCEBFA 45%, #8DB2DA 100%); display: grid; place-items: center; min-height: 270px; box-shadow: inset 0 0 0 2px #6E8FB2; }
+.eq-me svg { width: 92%; max-height: 260px; }
+.eq-inv-h { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; padding: 12px 4px 6px; } .eq-inv-h b { color: #FFE27A; font-size: 13px; } .eq-inv-h small { color: #9FB3C4; font-size: 10.5px; }
+.eq-inv { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.eq-item { position: relative; padding: 4px 2px 3px; border-radius: 9px; border: 2px solid #4B5E70; background: #2D3C4B; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+.eq-item img { width: 48px; height: 48px; object-fit: contain; } .eq-item small { font-size: 9.5px; color: #DCE6EE; line-height: 1.2; text-align: center; word-break: keep-all; }
+.eq-item em { position: absolute; left: 3px; top: 2px; font-style: normal; font-size: 8.5px; font-weight: 800; color: #9FB3C4; }
+.eq-item.on { border-color: #E9B949; background: #4A4128; } .eq-item i { position: absolute; right: 2px; top: 2px; font-style: normal; font-size: 8.5px; font-weight: 900; color: #3A2A00; background: #FFD23F; padding: 0 4px; border-radius: 5px; }
+.eq-empty { color: #9FB3C4; font-size: 12px; text-align: center; padding: 8px; }
+
+/* 피팅룸 장비창: 옷 피팅 화면 안에 들어가므로 여백을 맞춘다 */
+.dress-stage .eq { width: 100%; margin: 6px 0 4px; }
+.dress-stage .eq-me { min-height: 280px; } .dress-inv { margin: 10px 0 4px; } .eq-invw { padding-top: 2px; }

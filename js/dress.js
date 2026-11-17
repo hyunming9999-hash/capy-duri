@@ -3,10 +3,12 @@ import { h, toast, josa } from './ui.js';
 import { capy } from './capy.js';
 import { TOPS, BOTTOMS, HATS, ZOO_HATS, SHOES, nameOf } from './clothes.js';
 import { priceOf, won } from './money.js';
+import { eqBoard, eqInv, wearGold, rareList, rareOf } from './social.js';
 const SETS = { top: TOPS, bottom: BOTTOMS, hat: HATS, shoe: SHOES };
 
 export function mount(el, ctx) {
   let who = ctx.uid, tab = 'top', sex = 'all', sel = { top: '', bottom: '', hat: '', shoe: '', ...(ctx.dress[ctx.uid] || {}) }, saved = ctx.dress;
+  let goldOwned = []; const inv = h('div', { class: 'dress-inv' });
   const stage = h('div', { class: 'dress-stage' }), grid = h('div', { class: 'dress-grid' }), ctl = h('div', { class: 'dress-ctl' });
   // 친목회 전용 모자는 상점에서 팔지 않고, 동물에게 사서 가진 것만 맨 앞에 보인다
   const list = () => [...(tab === 'hat' ? ZOO_HATS.filter(x => ctx.owns(x.id)) : []), ...SETS[tab].filter(x => sex === 'all' || x.sex === sex || x.sex === 'u')];
@@ -25,11 +27,14 @@ export function mount(el, ctx) {
     const m = ctx.members[who] || {}, s = saved[who] || {}, same = (s.top || '') === (sel.top || '') && (s.bottom || '') === (sel.bottom || '') && (s.hat || '') === (sel.hat || '') && (s.shoe || '') === (sel.shoe || '');
     stage.replaceChildren(...[
       ctx.order.length > 1 && h('div', { class: 'chips' }, ctx.order.map(u => h('button', { class: 'chip' + (who === u ? ' on' : ''), onClick: () => pickWho(u) }, u === ctx.uid ? '내 카피바라' : ctx.nameOf(u) + ' 카피바라 구경'))),
-      h('div', { class: 'dress-capy', html: capy({ color: m.color, acc: m.acc, face: 'happy', top: sel.top, bottom: sel.bottom, hat: sel.hat, shoe: sel.shoe }) }),
+      // 장비창: 가운데 카피바라(고른 옷 + 걸친 황금 장비), 양옆에 황금 장비 자리 칸
+      eqBoard(ctx, { worn: rareList(m.rare), readOnly: who !== ctx.uid, wear: async i => { await wearGold(ctx, i); draw(); },
+        center: capy({ ...(ctx.capyOf ? ctx.capyOf(who) : { color: m.color, acc: m.acc }), face: 'happy', top: sel.top, bottom: sel.bottom, hat: sel.hat, shoe: sel.shoe, rare: rareOf(m.rare) }) }),
       h('p', { class: 'dress-name' }, h('b', null, nameOf(sel.top) || '상의 없음'), ' + ', h('b', null, nameOf(sel.bottom) || '하의 없음'), ' + ', h('b', null, nameOf(sel.hat) || '모자 없음'), ' + ', h('b', null, nameOf(sel.shoe) || '신발 없음')),
       s.by && s.by !== who && (s.top || s.bottom || s.hat || s.shoe) && h('small', { class: 'dim' }, `지금 입은 옷은 ${josa(ctx.nameOf(s.by), '가', '이')} 입혀 준 옷이에요`)].filter(Boolean));
     // 상대 카피바라는 구경만: 옷을 바꾸거나 벗기거나 입힐 수 없다
-    const view = who !== ctx.uid; ctl.hidden = grid.hidden = tabs.hidden = view;
+    const view = who !== ctx.uid; ctl.hidden = grid.hidden = tabs.hidden = inv.hidden = view;
+    if (!view) inv.replaceChildren(eqInv({ owned: goldOwned, worn: rareList(m.rare), wear: async i => { await wearGold(ctx, i); draw(); } }));
     if (view) stage.append(h('p', { class: 'dress-only' }, `👀 ${josa(ctx.nameOf(who), '가', '이')} 지금 입은 옷이에요. ${ctx.nameOf(who)}의 옷은 ${ctx.nameOf(who)}만 바꿀 수 있어요`));
     ctl.replaceChildren(
       h('button', { class: 'btn', onClick: random }, '🎲 아무거나'),
@@ -44,8 +49,9 @@ export function mount(el, ctx) {
       h('div', { class: 'chips' }, [['all', '전체'], ['m', '남자 옷'], ['f', '여자 옷']].map(([k, t]) => h('button', { class: 'chip' + (sex === k ? ' on' : ''), onClick: () => { sex = k; draw(); } }, t)), h('small', { class: 'dim' }, ` ${items.length}${tab === 'hat' ? '개' : tab === 'shoe' ? '켤레' : '벌'}`)));
   }
   const tabs = h('div');
-  el.append(stage, ctl, tabs, grid);
+  el.append(stage, ctl, inv, tabs, grid);
   const off = ctx.store.on('dress', v => { saved = v || {}; draw(); });
+  const offG = ctx.store.on('bag/' + ctx.uid + '/rares', v => { goldOwned = Object.keys(v || {}).filter(k => v[k]).map(Number); draw(); }); // 가진 황금 장비
   draw();
-  return () => off();
+  return () => { off(); offG(); };
 }
