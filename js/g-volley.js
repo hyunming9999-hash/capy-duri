@@ -1,5 +1,5 @@
 // 카피바라 배구 — 유자 공으로 하는 1:1 배구(가로 화면). 둘이 온라인으로 하거나 컴퓨터와 연습.
-// 기본 공격(공 치기) 3번마다 스파이크 1번: 점프해서 공에 닿을 때 스파이크를 누르면 상대 코트로 내리꽂는다.
+// 내가 친 공을 상대 진영으로 3번 넘기면 스파이크 1번: 점프해서 공에 닿을 때 스파이크를 누르면 상대 코트로 내리꽂는다.
 // 온라인 방식: 각자 자기 카피바라를 움직이고, 공은 "공이 있는 쪽" 사람이 계산해서 상대에게 알려 준다.
 import { PAY } from './money.js';
 import { h, holdBtn, loadImg, josa, gameFx } from './ui.js';
@@ -50,7 +50,7 @@ export function stepPlayer(p, i, inp, speed = SPEED) {
   p.x = Math.max(lo, Math.min(hi, p.x));
 }
 
-const SPK_N = 3, ARM_MS = 650; // 기본 공격 3번 → 스파이크 1번 / 스파이크 버튼을 누르고 이 시간 안에 공에 닿으면 발동
+const SPK_N = 3, ARM_MS = 650; // 상대 진영으로 3번 넘기기 → 스파이크 1번 / 스파이크 버튼을 누르고 이 시간 안에 공에 닿으면 발동
 export function mount(el, ctx) {
   let alive = true, raf = 0, acc = 0, lastT = 0;
   const canvas = h('canvas', { class: 'volley vb-cv', width: W, height: H }), g = canvas.getContext('2d');
@@ -58,7 +58,7 @@ export function mount(el, ctx) {
   const modeBtn = h('button', { class: 'vb-tb' }), newBtn = h('button', { class: 'vb-tb primary' }, '새 게임');
   const inp = { l: false, r: false, j: false, s: false };
   // 스파이크 충전: [나, 상대] 기본 공격 횟수(0~3). 3이면 스파이크 준비 완료
-  const chg = [0, 0], armAt = [0, 0]; let flash = 0, shake = 0, spikeTxt = 0;
+  const chg = [0, 0], armAt = [0, 0]; let flash = 0, shake = 0, spikeTxt = 0, lastHit = -1, camZ = 1;
   const btn = (k, cls, label, sub) => { const b = h('button', { class: 'vb-btn ' + cls }, h('b', null, label), sub && h('small', null, sub)); holdBtn(b, () => { inp[k] = true; if (k === 's') armAt[my()] = performance.now(); }, () => { inp[k] = false; }); return b; };
   const spkBtn = btn('s', 'spk', '스파이크', ''), pips = h('div', { class: 'vb-pips' });
   const left = h('div', { class: 'vb-pad l' }, btn('l', 'mv', '◀'), btn('r', 'mv', '▶'));
@@ -93,11 +93,11 @@ export function mount(el, ctx) {
   let game = { sc0: 0, sc1: 0, serve: 0, phase: 'idle', at: 0, n: 0 }, dead = false, deadMine = false, oppSeen = 0, sendT = 0, lastP = '', lastPT = 0, aiErr = 0, aiT = 0;
   const now = () => mode === 'online' ? ctx.store.now() : Date.now();
   const live = () => game.phase === 'serve' && now() >= game.at + 1000 && !dead;
-  const placeBall = () => { Object.assign(ball, { x: game.serve ? 600 : 200, y: 150, vx: 0, vy: 0, rot: 0, spike: 0 }); trail.length = 0; dead = false; deadMine = false; };
+  const placeBall = () => { lastHit = -1; Object.assign(ball, { x: game.serve ? 600 : 200, y: 150, vx: 0, vy: 0, rot: 0, spike: 0 }); trail.length = 0; dead = false; deadMine = false; };
   const sprites = [null, null], yz = new Image(), bg = new Image(); yz.src = 'img/volley/ball.webp'; bg.src = 'img/volley/bg.webp';
   const yz0 = new Image(); yz0.src = yuzuUrl;
   const loadSprites = () => [0, 1].forEach(i => { const uid = mode === 'online' ? ctx.order[i] : (i ? null : ctx.uid); loadImg(capyUrl(uid ? ctx.capyOf(uid, { face: 'happy' }) : { color: 'choco', acc: 'towel', face: 'wink' })).then(im => { sprites[i] = im; }); });
-  const drawPips = () => { const n = chg[my()], ready = n >= SPK_N; pips.replaceChildren(h('small', null, ready ? '스파이크 준비 완료!' : `기본 공격 ${SPK_N - n}번 더`), ...Array.from({ length: SPK_N }, (_, k) => h('i', { class: k < n ? 'on' : '' }))); spkBtn.classList.toggle('ready', ready); spkBtn.lastChild.textContent = ready ? '점프해서 공에!' : `${n}/${SPK_N}`; };
+  const drawPips = () => { const n = chg[my()], ready = n >= SPK_N; pips.replaceChildren(h('small', null, ready ? '스파이크 준비 완료!' : `상대 진영으로 ${SPK_N - n}번 더 넘기면`), ...Array.from({ length: SPK_N }, (_, k) => h('i', { class: k < n ? 'on' : '' }))); spkBtn.classList.toggle('ready', ready); spkBtn.lastChild.textContent = ready ? '점프해서 공에!' : `${n}/${SPK_N}`; };
 
   // 공을 쳤을 때: 스파이크 준비 + 버튼을 막 눌렀고 + 공중이면 스파이크, 아니면 기본 공격 1번 충전
   function onHit(i, p) {
@@ -105,7 +105,7 @@ export function mount(el, ctx) {
     if (!mine && !cpu) return; // 온라인에서 상대가 친 건 상대 화면이 계산한다
     const armed = performance.now() - armAt[i] < ARM_MS || (mine && inp.s), air = p.y < standY - 40;
     if (chg[i] >= SPK_N && armed && air) { chg[i] = 0; armAt[i] = 0; flash = 10; shake = 14; spikeTxt = 50; sfx('hit'); setTimeout(() => sfx('pop'), 60); drawPips(); return 'spike'; }
-    if (chg[i] < SPK_N) { chg[i]++; if (mine) { drawPips(); if (chg[i] === SPK_N) sfx('point'); } }
+    lastHit = i; // 충전은 공이 내 손을 떠나 상대 진영으로 넘어갔을 때 1회(tick에서 센다)
   }
 
   function setGame(v) { const fresh = !v || v.n !== game.n || v.phase !== game.phase || v.at !== game.at;
@@ -163,7 +163,9 @@ export function mount(el, ctx) {
     if (inp.j && ps[me].y >= standY - 1 && ps[me].vy < 0 && !ps[me].jf) sfx('jump'); ps[me].jf = ps[me].vy < 0;
     if (flash) flash--; if (shake) shake--; if (spikeTxt) spikeTxt--;
     if (!live()) return;
-    const bvx = ball.vx, bvy = ball.vy, landed = stepBall(ball, ps, onHit);
+    const bx0 = ball.x, bvx = ball.vx, bvy = ball.vy, landed = stepBall(ball, ps, onHit);
+    // 스파이크 충전: 내가 친 공이 네트를 넘어 상대 진영으로 가면 1회(스파이크로 넘긴 건 빼고)
+    if (lastHit >= 0 && (bx0 < NETX) !== (ball.x < NETX) && (ball.x < NETX ? 1 : 0) === lastHit) { const i = lastHit; lastHit = -1; if (!ball.spike && chg[i] < SPK_N && (i === my() || (mode === 'cpu' && i === 1))) { chg[i]++; if (i === my()) { drawPips(); if (chg[i] === SPK_N) sfx('point'); } } }
     if (ball.spike) { trail.push([ball.x, ball.y]); if (trail.length > 10) trail.shift(); } else if (trail.length) trail.shift();
     if (Math.abs(ball.vx - bvx) > 1.2 || ball.vy - bvy < -2) sfx('pop'); // 공이 튕길 때
     if (landed) {
@@ -175,9 +177,12 @@ export function mount(el, ctx) {
   function draw() {
     const sx = shake ? (Math.random() - 0.5) * shake : 0, sy = shake ? (Math.random() - 0.5) * shake : 0;
     g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#5DB9EE'; g.fillRect(0, 0, canvas.width, canvas.height);
-    g.setTransform(VK, 0, 0, VK, VX + sx * VK, VY + sy * VK);
+    // 카메라: 공이 높이 뜨면 부드럽게 줌 아웃해서 공과 카피바라가 한 화면에 다 보이게, 내려오면 다시 줌 인
+    const topY = Math.min(0, ball.y - BR - 50), want = H / (H - topY); camZ += (want - camZ) * (want < camZ ? 0.18 : 0.07);
+    const K = VK * camZ, OX = canvas.width / 2 - NETX * K, OY = canvas.height - H * K;
+    g.setTransform(K, 0, 0, K, OX + sx * K, OY + sy * K);
     // 배경은 화면 가로에 꽉 맞게 키우고, 그림 속 모래선(높이의 400/450)이 코트 바닥에 오도록 맞춘다(위아래는 잘려도 된다)
-    if (bg.complete && bg.naturalWidth) { const bw = canvas.width / VK + 12, bh = bw * H / W, bx = -VX / VK - 6; g.drawImage(bg, bx, GROUND - bh * GROUND / H, bw, bh); } else { g.fillStyle = '#9DD6F0'; g.fillRect(0, 0, W, H); g.fillStyle = '#E8C98F'; g.fillRect(0, GROUND, W, H - GROUND); }
+    if (bg.complete && bg.naturalWidth) { const bw = canvas.width / K + 12, bh = bw * H / W, bx = -OX / K - 6, by = GROUND - bh * GROUND / H; if (by > -OY / K) { g.fillStyle = '#5DB9EE'; g.fillRect(bx, -OY / K - 4, bw, by - (-OY / K) + 8); } g.drawImage(bg, bx, by, bw, bh); } else { g.fillStyle = '#9DD6F0'; g.fillRect(0, 0, W, H); g.fillStyle = '#E8C98F'; g.fillRect(0, GROUND, W, H - GROUND); }
     // 네트: 기둥 + 그물 + 흰 띠
     g.fillStyle = '#8A5E3B'; g.fillRect(NETX - 4, NETTOP - 6, 8, GROUND - NETTOP + 6);
     g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 1.2; for (let y = NETTOP + 10; y < GROUND - 6; y += 12) { g.beginPath(); g.moveTo(NETX - NETW / 2, y); g.lineTo(NETX + NETW / 2, y); g.stroke(); }
@@ -190,9 +195,8 @@ export function mount(el, ctx) {
       if (im) { if (i === 1) { g.save(); g.translate(p.x, 0); g.scale(-1, 1); g.drawImage(im, -50, p.y - 59, 100, 131.7); g.restore(); } else g.drawImage(im, p.x - 50, p.y - 59, 100, 131.7); } else { g.fillStyle = '#BC8C60'; g.beginPath(); g.arc(p.x, p.y, PR, 0, 7); g.fill(); } });
     // 스파이크 꼬리
     trail.forEach(([x, y], k) => { g.globalAlpha = (k + 1) / trail.length * 0.5; g.fillStyle = '#FF8A00'; g.beginPath(); g.arc(x, y, BR * (0.4 + k / trail.length * 0.6), 0, 7); g.fill(); }); g.globalAlpha = 1;
-    if (ball.y < -BR) { g.fillStyle = '#FF8A00'; g.beginPath(); g.moveTo(ball.x, 8); g.lineTo(ball.x - 10, 24); g.lineTo(ball.x + 10, 24); g.fill(); } // 공이 화면 위로 나가면 화살표
-    else { g.save(); g.translate(ball.x, ball.y); g.rotate(ball.rot); const im = yz.complete && yz.naturalWidth ? yz : yz0; if (im.complete && im.naturalWidth) g.drawImage(im, -BR - 3, -BR - 3, BR * 2 + 6, BR * 2 + 6); else { g.fillStyle = '#FFC93C'; g.beginPath(); g.arc(0, 0, BR, 0, 7); g.fill(); } g.restore(); }
-    if (flash) { g.fillStyle = `rgba(255,255,255,${flash / 14})`; g.fillRect(-W, -H, W * 3, H * 3); }
+    { g.save(); g.translate(ball.x, ball.y); g.rotate(ball.rot); const im = yz.complete && yz.naturalWidth ? yz : yz0; if (im.complete && im.naturalWidth) g.drawImage(im, -BR - 3, -BR - 3, BR * 2 + 6, BR * 2 + 6); else { g.fillStyle = '#FFC93C'; g.beginPath(); g.arc(0, 0, BR, 0, 7); g.fill(); } g.restore(); }
+    if (flash) { g.fillStyle = `rgba(255,255,255,${flash / 14})`; g.fillRect(-W * 2, -H * 3, W * 5, H * 5); }
     g.setTransform(VK, 0, 0, VK, VX, VY);
     // 점수판
     g.font = '700 40px Jua, sans-serif'; g.textAlign = 'center'; g.lineWidth = 6; g.strokeStyle = '#fff';
