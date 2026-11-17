@@ -169,25 +169,57 @@ export function mount(el, ctx) {
     if (mode !== 'online') return;
     const opp = 1 - ctx.idx;
     offs.push(ctx.store.on('games/volley', setGame));
-    offs.push(ctx.store.on('rt/volley/p' + opp, v => { if (!v) return; const lag = oppSeen ? 0 : 1; oppSeen = Date.now(); ghost = { x: v.x, y: v.y, vx: v.vx, vy: v.vy }; if (lag) Object.assign(ps[opp], ghost); chg[opp] = v.c || 0; dsh[opp] = v.d || 0; }));
+    offs.push(ctx.store.on('rt/volley/p' + opp, v => { if (v && !p2pOn()) onP(v); }));
     // 상대가 공을 친 순간의 상태만 받는다. 그동안 늦게 도착한 만큼 앞으로 굴려서 맞추고, 화면에서는 어긋난 만큼을 몇 프레임에 걸쳐 부드럽게 메운다
-    offs.push(ctx.store.on('rt/volley/hit', v => {
-      if (!v || v.side === ctx.idx || v.n !== game.n || v.q === seenHit || deadMine) return; seenHit = v.q;
+    offs.push(ctx.store.on('rt/volley/hit', onHitMsg));
+    p2pStart(); offs.push(p2pStop);
+    if (ctx.idx === 1) { offs.push(ctx.store.on('rt/volley/pid0', v => { oppPid = v && v.id; linkT = 0; tryLink(); })); const iv = setInterval(tryLink, 2000); offs.push(() => clearInterval(iv)); }
+    else offs.push(ctx.store.on('rt/volley/pid1', v => { if (v && peer && peer.open && !p2pOn()) ctx.store.set('rt/volley/pid0', { id: peer.id, at: ctx.store.now() }).catch(() => {}); })); // 상대가 새로 들어오면 내 연결 주소를 다시 알려 준다
+  }
+  function onP(v) { const opp = 1 - ctx.idx, lag = oppSeen ? 0 : 1; oppSeen = Date.now(); ghost = { x: v.x, y: v.y, vx: v.vx, vy: v.vy }; if (lag) Object.assign(ps[opp], ghost); chg[opp] = v.c || 0; dsh[opp] = v.d || 0; }
+  function onHitMsg(v) {
+      if (!v || v.side === ctx.idx || v.n !== game.n || seenQ.has(v.q) || deadMine) return; seenQ.add(v.q); if (seenQ.size > 60) seenQ.delete(seenQ.values().next().value);
       dead = false; const ox = ball.x, oy = ball.y;
       if (v.sp && !ball.spike) { flash = 10; shake = 30; try { navigator.vibrate && navigator.vibrate(80); } catch {} spikeTxt = 50; sfx('hit'); } else sfx('pop');
       Object.assign(ball, { x: v.x, y: v.y, vx: v.vx, vy: v.vy, spike: v.sp || 0, cd: [14, 14] }); lastHit = v.side; lastTouch = v.side;
       const k = Math.max(0, Math.min(30, Math.round((ctx.store.now() - v.t) / 16.7)));
       for (let i = 0; i < k; i++) if (stepBall(ball, [])) { ball.y = GROUND - BR; break; }
       rOff.x += ox - ball.x; rOff.y += oy - ball.y; if (Math.hypot(rOff.x, rOff.y) > 160) rOff.x = rOff.y = 0;
-    }));
+  }
+  // 직접 연결(호떡철권과 같은 PeerJS·WebRTC): 위치와 '친 순간'을 서버를 거치지 않고 폰끼리 바로 주고받는다
+  // 처음 서로를 찾을 때만 PeerJS 연결 서버를 쓰고, 연결이 안 되는 망이면 지금처럼 Firebase로 계속 한다
+  const ICE = { iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }, { urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turn:openrelay.metered.ca:443?transport=tcp'], username: 'openrelayproject', credential: 'openrelayproject' }] };
+  let peer = null, conn = null, oppPid = null, linkT = 0;
+  const p2pOn = () => !!(conn && conn.open);
+  const loadPeer = () => window.Peer ? Promise.resolve() : new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = 'js/vendor/peerjs.min.js'; sc.onload = ok; sc.onerror = no; document.head.append(sc); });
+  function p2pStart() {
+    loadPeer().then(() => { if (!alive || mode !== 'online' || peer) return; let me; try { const o = { config: ICE, debug: 0 }, m = location.search.match(/peerhost=([^&]+)/); if (m) { const [hh, pp] = m[1].split(':'); Object.assign(o, { host: hh, port: +pp || 9000, secure: false, path: '/' }); } me = new window.Peer(o); } catch { return; } peer = me;
+      me.on('open', id => { if (peer !== me) return; ctx.store.set('rt/volley/pid' + ctx.idx, { id, at: ctx.store.now() }).catch(() => {}); tryLink(); });
+      me.on('connection', c => { if (peer === me) wire(c); });
+      me.on('disconnected', () => { if (peer === me && !me.destroyed) try { me.reconnect(); } catch {} });
+      me.on('error', () => {});
+    }).catch(() => {});
+  }
+  function p2pStop() { const c = conn, pe = peer; conn = null; peer = null; oppPid = null; try { c && c.close(); } catch {} try { pe && pe.destroy(); } catch {} if (mode === 'online' || pe) ctx.store.remove('rt/volley/pid' + ctx.idx).catch(() => {}); }
+  function tryLink() { // 오른쪽(두 번째) 사람이 왼쪽 사람에게 건다
+    if (ctx.idx !== 1 || !peer || !peer.open || !oppPid || p2pOn() || Date.now() - linkT < 5000) return; linkT = Date.now();
+    try { wire(peer.connect(oppPid, { reliable: true, serialization: 'json' })); } catch {}
+  }
+  function wire(c) {
+    if (conn && conn !== c) try { conn.close(); } catch {} conn = c;
+    c.on('data', d => { if (c !== conn || !d || typeof d !== 'object') return; if (d.t === 'p') onP(d); else if (d.t === 'h') onHitMsg(d); });
+    const bye = () => { if (c === conn) { conn = null; linkT = 0; } }; c.on('close', bye); c.on('error', bye);
   }
   // 공 동기화: 내가 친 순간의 공 상태(위치·속도·스파이크)만 한 번 보낸다
-  const FAR = { x: -99999, y: -99999, vx: 0, vy: 0 }, rOff = { x: 0, y: 0 }; let hitNow = false, seenHit = 0, hitSeq = 0;
-  function sendHit() { const r = n => Math.round(n * 100) / 100; ctx.store.set('rt/volley/hit', { x: r(ball.x), y: r(ball.y), vx: r(ball.vx), vy: r(ball.vy), sp: ball.spike || 0, side: ctx.idx, n: game.n, q: ctx.idx + '-' + (++hitSeq) + '-' + Date.now(), t: ctx.store.now() }).catch(() => {}); }
+  const FAR = { x: -99999, y: -99999, vx: 0, vy: 0 }, rOff = { x: 0, y: 0 }; let hitNow = false, hitSeq = 0; const seenQ = new Set();
+  function sendHit() { const r = n => Math.round(n * 100) / 100, v = { x: r(ball.x), y: r(ball.y), vx: r(ball.vx), vy: r(ball.vy), sp: ball.spike || 0, side: ctx.idx, n: game.n, q: ctx.idx + '-' + (++hitSeq) + '-' + Date.now(), t: ctx.store.now() };
+    if (p2pOn()) try { conn.send({ t: 'h', ...v }); } catch {}
+    ctx.store.set('rt/volley/hit', v).catch(() => {}); }
   function send(t) {
-    if (mode !== 'online' || t - sendT < 40) return; sendT = t;
+    if (mode !== 'online' || t - sendT < (p2pOn() ? 30 : 40)) return; sendT = t;
     const p = ps[ctx.idx], r = n => Math.round(n * 10) / 10;
     const pv = { x: r(p.x), y: r(p.y), vx: r(p.vx), vy: r(p.vy), c: chg[ctx.idx], d: dsh[ctx.idx] }, key = JSON.stringify(pv);
+    if (p2pOn()) { const d = conn.dataChannel; if (!(d && d.bufferedAmount > 16384)) try { conn.send({ t: 'p', ...pv }); } catch {} if (t - lastPT > 1000) { lastPT = t; lastP = key; ctx.store.set('rt/volley/p' + ctx.idx, { ...pv, k: Math.round(t) }).catch(() => {}); } return; }
     if (key !== lastP || t - lastPT > 1000) { lastP = key; lastPT = t; ctx.store.set('rt/volley/p' + ctx.idx, { ...pv, k: Math.round(t) }).catch(() => {}); }
   }
   // 컴퓨터 난이도: 하·중·상 [이동 속도, 판단 오차(px), 다시 판단하는 간격(ms), 받으러 뛰는 확률, 스파이크 쓰는 확률, 대쉬 쓰는 확률]
@@ -333,7 +365,7 @@ export function mount(el, ctx) {
     const showStart = game.phase !== 'serve'; if (newBtn.hidden === showStart) { newBtn.hidden = !showStart; newBtn.firstChild.textContent = game.phase === 'over' ? '▶ 한 판 더' : '▶ 시작';  if (bar) bar.classList.toggle('lock', !showStart); }
     const pm = ps[my()], go = chg[my()] >= SPK_N && live() && (ball.x < NETX ? 0 : 1) === my() && Math.abs(ball.x - pm.x) < 165 && spikeOk(pm); if (go !== spkBtn.classList.contains('now')) spkBtn.classList.toggle('now', go); // 스파이크 준비된 채 점프하면 '눌러!'
     const here = mode !== 'online' || Date.now() - oppSeen < 3000;
-    const txt = mode === 'cpu' ? '컴퓨터와 연습 중' : here ? `${josa(ctx.nameOf(ctx.order[1 - ctx.idx]), '와', '과')} 대결 · 나는 ${ctx.idx ? '오른쪽' : '왼쪽'}` : `${josa(ctx.nameOf(ctx.order[1 - ctx.idx]), '가', '이')} 들어오길 기다리는 중…`;
+    const txt = mode === 'cpu' ? '컴퓨터와 연습 중' : here ? `${josa(ctx.nameOf(ctx.order[1 - ctx.idx]), '와', '과')} 대결 · 나는 ${ctx.idx ? '오른쪽' : '왼쪽'}${p2pOn() ? ' · ⚡직접 연결' : ''}` : `${josa(ctx.nameOf(ctx.order[1 - ctx.idx]), '가', '이')} 들어오길 기다리는 중…`;
     if (info.textContent !== txt) info.textContent = txt;
   }
   function setMode(m) {
