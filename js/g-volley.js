@@ -56,7 +56,7 @@ export function stepPlayer(p, i, inp, speed = SPEED) {
 const SPK_N = 3, ARM_MS = 650, DSH_MAX = 2; // 상대 진영으로 3번 넘기기 → 스파이크 1번 / 스파이크 버튼을 누르고 이 시간 안에 공에 닿으면 발동
 export function mount(el, ctx) {
   let alive = true, raf = 0, acc = 0, lastT = 0;
-  const canvas = h('canvas', { class: 'volley vb-cv', width: W, height: H }), g = canvas.getContext('2d');
+  const canvas = h('canvas', { class: 'vb-cv', width: W, height: H }), g = canvas.getContext('2d');
   const info = h('div', { class: 'vb-info' }, '불러오는 중…');
   const modeBtn = h('button', { class: 'vb-tb' }), newBtn = h('button', { class: 'vb-start' }, h('b', null, '▶ 시작'), h('small', null, '7점 먼저 내면 승리'), h('em', null, '🏃 신속한 움직임을 위해 장신구를 모두 벗었어요!'));
   const inp = { l: false, r: false, j: false, s: false };
@@ -74,7 +74,7 @@ export function mount(el, ctx) {
   const spk = h('div', { class: 'vb-spk' }, pips);
   const rot = h('div', { class: 'vb-rot' }, canvas, top, spk, left, right, newBtn, lvRow), wrap = h('div', { class: 'vb' }, rot);
   let VK = 1, VX = 0, VY = 0; // 화면 전체를 쓰는 캔버스 안에서 코트(800×450)를 그릴 배율과 위치
-  el.append(wrap); document.body.classList.add('vb-on');
+  document.body.append(wrap); document.body.classList.add('vb-on'); // 화면 전체(게임 카드 안에 넣으면 둥근 모서리에 잘린다)
   // 세로로 들고 있으면 화면을 90도 돌려 가로로 보여 준다. 조작 버튼은 코트를 가리지 않게 양옆에 둔다
   // 가로 풀화면: 화면 전체가 캔버스. 코트는 높이에 꽉 맞추고, 남는 양옆은 배경을 이어 그린다
   const fit = () => { const pw = innerWidth, ph = innerHeight, port = ph > pw, w = port ? ph : pw, hh = port ? pw : ph, dpr = Math.min(2, devicePixelRatio || 1);
@@ -213,7 +213,7 @@ export function mount(el, ctx) {
     if (bg.complete && bg.naturalWidth) { const bw = canvas.width / K + 12, bh = bw * H / W, bx = -OX / K - 6, by = GROUND - bh * GROUND / H; if (by > -OY / K) { g.fillStyle = '#5DB9EE'; g.fillRect(bx, -OY / K - 4, bw, by - (-OY / K) + 8); } g.drawImage(bg, bx, by, bw, bh); } else { g.fillStyle = '#9DD6F0'; g.fillRect(0, 0, W, H); g.fillStyle = '#E8C98F'; g.fillRect(0, GROUND, W, H - GROUND); }
     // 양 끝 벽(대나무 기둥): 화면 위쪽 끝까지 이어 그린다
     // 야자수: 바다 쪽 먼 배경에 서 있는 장식(공·카피바라와 부딪히지 않는다)
-    for (const [im, px, ph] of [[palmA, -40, 320], [palmB, 845, 270]]) if (im.complete && im.naturalWidth) { const pw = ph * im.naturalWidth / im.naturalHeight; g.drawImage(im, px - pw / 2, GROUND + 8 - ph, pw, ph); } // 밑동 모래가 코트 모래에 묻히게
+    for (const [im, px, ph] of [[palmA, -40, 270], [palmB, 845, 230]]) if (im.complete && im.naturalWidth) { const pw = ph * im.naturalWidth / im.naturalHeight; g.drawImage(im, px - pw / 2, GROUND - 14 - ph, pw, ph); } // 경기장 흰 선 뒤쪽(바닷가 모래)에 서 있게
     if (wallL.complete && wallL.naturalWidth && wallR.complete && wallR.naturalWidth) { const ww = 110, topW = -OY / K - 20, viewL = -OX / K - 10, viewR = (canvas.width - OX) / K + 10;
       // 흰 벽돌 벽(왼쪽: 레트로 포스터, 오른쪽: 하이파이브 포스터). 위로는 맨 위 '벽돌만 있는 부분'을 이어 붙이고, 벽 바깥은 화면 끝까지 벽돌로 채운다
       // 벽 바깥은 먼저 흰 벽 색으로 화면 끝까지 칠해 빈틈이 보이지 않게 한다
@@ -269,5 +269,5 @@ export function mount(el, ctx) {
   modeBtn.onclick = () => setMode(mode === 'online' ? 'cpu' : 'online');
   newBtn.onclick = newGame;
   setMode(mode); raf = requestAnimationFrame(loop);
-  return () => { alive = false; cancelAnimationFrame(raf); offs.forEach(f => f()); removeEventListener('keydown', kd); removeEventListener('keyup', ku); removeEventListener('resize', fit); document.body.classList.remove('vb-on'); if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {}); try { screen.orientation && screen.orientation.unlock && screen.orientation.unlock(); } catch {} if (mode === 'online') ctx.store.remove('rt/volley/p' + ctx.idx).catch(() => {}); };
+  return () => { alive = false; cancelAnimationFrame(raf); offs.forEach(f => f()); removeEventListener('keydown', kd); removeEventListener('keyup', ku); removeEventListener('resize', fit); document.body.classList.remove('vb-on'); wrap.remove(); if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {}); try { screen.orientation && screen.orientation.unlock && screen.orientation.unlock(); } catch {} if (mode === 'online') ctx.store.remove('rt/volley/p' + ctx.idx).catch(() => {}); };
 }

@@ -14,6 +14,7 @@ export function mount(el, ctx) {
   const need = () => ['top', 'bottom', 'hat', 'shoe'].filter(k => sel[k] && !ctx.owns(sel[k]) && (saved[who] || {})[k] !== sel[k]).map(k => sel[k]), // 그 카피바라가 이미 입고 있는 옷은 다시 살 필요가 없다(하나만 벗기려 해도 옷값을 내라고 하던 문제)
     bare = () => !sel.top && !sel.bottom && !sel.hat && !sel.shoe, cost = () => need().reduce((a, id) => a + priceOf(id), 0);
   const save = async () => {
+    if (who !== ctx.uid && ['top', 'bottom', 'hat', 'shoe'].some(k => (saved[who] || {})[k] && !sel[k])) return toast('상대 카피바라의 옷은 벗길 수 없어요. 다른 옷으로 갈아입혀 줄 수는 있어요');
     if (cost() > ctx.coins()) return toast(`돈이 모자라요 (${won(cost())} 필요, 지금 ${won(ctx.coins())}). 게임을 하면 돈을 벌어요`);
     for (const id of need()) if (!(await ctx.buy(id))) return; // 아직 없는 옷은 사서 입는다
     try { await ctx.store.set('dress/' + who, { top: sel.top || '', bottom: sel.bottom || '', hat: sel.hat || '', shoe: sel.shoe || '', by: ctx.uid, ts: ctx.store.now() }); toast(bare() ? (who === ctx.uid ? '다 벗었어요' : `${ctx.nameOf(who)}의 옷을 벗겼어요`) : who === ctx.uid ? '갈아입었어요' : `${ctx.nameOf(who)}에게 입혀 줬어요`); } catch { toast('저장하지 못했어요. 잠시 뒤 다시 해 보세요'); }
@@ -29,11 +30,11 @@ export function mount(el, ctx) {
       s.by && s.by !== who && (s.top || s.bottom || s.hat || s.shoe) && h('small', { class: 'dim' }, `지금 입은 옷은 ${josa(ctx.nameOf(s.by), '가', '이')} 입혀 준 옷이에요`)].filter(Boolean));
     ctl.replaceChildren(
       h('button', { class: 'btn', onClick: random }, '🎲 아무거나'),
-      h('button', { class: 'btn', onClick: () => { sel = { top: '', bottom: '', hat: '', shoe: '' }; draw(); } }, '다 벗기'),
+      who === ctx.uid ? h('button', { class: 'btn', onClick: () => { sel = { top: '', bottom: '', hat: '', shoe: '' }; draw(); } }, '다 벗기') : '',
       h('button', { class: 'btn primary', disabled: same, onClick: save }, same ? (bare() ? '벗고 있어요' : '입고 있어요') : bare() ? (who === ctx.uid ? '옷 벗기' : '옷 벗기기') : cost() ? `${won(cost())} 사서 ${who === ctx.uid ? '입기' : '입혀 주기'}` : who === ctx.uid ? '이 옷 입기' : '이 옷 입혀 주기'),
       h('small', { class: 'dress-wallet' }, '내 돈 ', h('b', { 'data-coins': 1 }, won(ctx.coins()))));
     const items = list();
-    grid.replaceChildren(...items.map(it => h('button', { class: 'dress-item' + (sel[tab] === it.id ? ' on' : '') + (ctx.owns(it.id) ? '' : ' lock'), 'data-price': ctx.owns(it.id) ? '' : won(priceOf(it.id)), title: it.name, 'aria-label': it.name, onClick: () => { sel[tab] = sel[tab] === it.id ? '' : it.id; draw(); } },
+    grid.replaceChildren(...items.map(it => h('button', { class: 'dress-item' + (sel[tab] === it.id ? ' on' : '') + (ctx.owns(it.id) ? '' : ' lock'), 'data-price': ctx.owns(it.id) ? '' : won(priceOf(it.id)), title: it.name, 'aria-label': it.name, onClick: () => { if (sel[tab] === it.id && who !== ctx.uid) return toast('상대 카피바라의 옷은 벗길 수 없어요'); sel[tab] = sel[tab] === it.id ? '' : it.id; draw(); } },
       h('span', { html: tab === 'hat' ? capy({ color: m.color, hat: it.id, head: true }).replace('viewBox="0 -22 120 112"', 'viewBox="0 -24 120 76"') : tab === 'shoe' ? capy({ color: m.color, shoe: it.id }).replace('viewBox="0 -22 120 158"', 'viewBox="24 108 72 30"') : capy({ color: m.color, [tab]: it.id }).replace('viewBox="0 -22 120 158"', 'viewBox="16 80 88 56"') }), h('small', null, it.name))));
     tabs.replaceChildren(
       h('div', { class: 'tabs' }, [['top', `상의 ${TOPS.length}`], ['bottom', `하의 ${BOTTOMS.length}`], ['hat', `모자 ${HATS.length}`], ['shoe', `신발 ${SHOES.length}`]].map(([k, t]) => h('button', { class: 'tab' + (tab === k ? ' on' : ''), onClick: () => { tab = k; draw(); } }, t))),
