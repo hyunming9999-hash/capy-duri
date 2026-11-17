@@ -70,7 +70,7 @@ const RAREGREET = [n => `우와, ${n} 몸에서 빛이 나!`, n => `${n}, 그 �
 // 사이 유지: 50점 이상으로 친해진 동물은 하루에 한 번만 말을 걸면(선물·같이 놀기도 된다) 그날은 식지 않는다
 // 하루(24시간) 넘게 교류가 없으면 그때부터 8시간마다 1점씩 자연스럽게 식는다(하루에 많아야 3점, 50점 밑으로 내려가면 멈춘다)
 // 식는 것은 실제 시간으로 세고(앱을 꺼 둔 동안도 흐른다), 화가 풀리는 것은 친목회 안에 있는 시간만 센다
-const KEEP_AT = 50, DAY_MS = 86400000, DROP_MS = 28800000;
+const KEEP_AT = 50, DAY_MS = 86400000, DROP_MS = 28800000, LOW_MS = 3 * 86400000;
 // 날짜 기준: 말을 건 날은 안 식는다. 하루를 통째로 거르면 그다음 날 0시부터 8시간마다 -1(하루 최대 -3)
 const dueAt = fed => { const d = new Date(fed); d.setHours(0, 0, 0, 0); return d.getTime() + 2 * DAY_MS; };
 const dropsBy = (fed, now) => (now < dueAt(fed) ? 0 : Math.floor((now - dueAt(fed)) / DROP_MS) + 1);
@@ -160,7 +160,7 @@ export function mount(el, ctx) {
     <path d="M573 357 L594 324 q5 -6 10 0 L625 357z" fill="#F0625A" stroke="#B5473C" stroke-width="2.4" stroke-linejoin="round"/><circle cx="599" cy="339" r="4.5" fill="#FFD21F"/></svg>`;
   const capA = (i, v, cake) => (v >= 100 && !cake && A(i) < 100 ? 99 : Math.min(100, v)); // 100점은 케이크로만
   // 교류(점수가 오르거나 말을 나눔)하면 그때부터 하루 동안은 식지 않는다
-  const setRel = (i, patch, cake) => { if (patch.a != null) patch = { ...patch, a: capA(i, patch.a, cake) }; if ((patch.a != null && patch.a > A(i)) || (patch.mem && !String((patch.mem[patch.mem.length - 1] || {}).s || '').startsWith('(')) || patch.fedAt) patch = { ...patch, fedAt: ctx.store.now(), dropN: 0 }; mine = { ...mine, [i]: { ...(mine[i] || {}), ...patch } }; return ctx.store.update(`social/${ctx.uid}/${i}`, patch).catch(() => {}); };
+  const setRel = (i, patch, cake) => { if (patch.a != null) patch = { ...patch, a: capA(i, patch.a, cake) }; if ((patch.a != null && patch.a > A(i)) || (patch.mem && !String((patch.mem[patch.mem.length - 1] || {}).s || '').startsWith('(')) || patch.fedAt) patch = { ...patch, fedAt: ctx.store.now(), dropN: 0, dropL: 0, lowAt: 0 }; mine = { ...mine, [i]: { ...(mine[i] || {}), ...patch } }; return ctx.store.update(`social/${ctx.uid}/${i}`, patch).catch(() => {}); };
   const pinOf = u => (ctx.members[u] || {}).pin;
   // 받은 액세서리 달기, 산 옷 입기(다시 누르면 벗는다). 내 카피바라에 바로 보인다
   const SLOT = { t: 'top', b: 'bottom', h: 'hat' };
@@ -300,8 +300,15 @@ export function mount(el, ctx) {
   const acc = {}; // 동물별로 화가 풀리는 데 쌓인 시간 { calm } — 중간중간 저장해 두고 다음에 이어서 센다
   const accOf = k => acc[k] || (acc[k] = { calm: (mine[k] || {}).calmT || 0 });
   function calm(ms) { let ch = false; Object.keys(mine).forEach(k => { const r = mine[k]; if (!r || !ANIMALS[k]) return; const t = accOf(k), was = { ...t };
-      if (r.a >= KEEP_AT) { t.calm = 0; const wall = ctx.store.now(); if (!r.fedAt) return void setRel(k, { fedAt: wall, dropN: 0 }); const n = dropsBy(r.fedAt, wall) - (r.dropN || 0);
-        if (n > 0) { const v = Math.max(KEEP_AT - 1, r.a - n), lost = r.a - v; setRel(k, { a: v, dropN: (r.dropN || 0) + n }); ch = true; const o = actors[k]; if (lost > 0 && o && alive) setTimeout(() => alive && pop(o.e, line(+k, 'sulk', toned(+k, pick(SULK))) + ` (친밀도 -${lost})`, 'say long'), 400 + Math.random() * 2500); } }
+      if (r.a > 0) { t.calm = 0; const wall = ctx.store.now(); if (!r.fedAt) return void setRel(k, { fedAt: wall, dropN: 0 });
+        let v = r.a, patch = null;
+        // 50 초과: 하루 거르면 8시간마다 -1, 50에서 멈춘다
+        if (v > KEEP_AT) { const done = r.dropN || 0, n = dropsBy(r.fedAt, wall) - done;
+          if (n > 0) { const use = Math.min(n, v - KEEP_AT); v -= use; patch = { a: v, dropN: done + n }; if (v === KEEP_AT) patch.lowAt = dueAt(r.fedAt) + (done + use - 1) * DROP_MS; } }
+        // 50 이하: 사흘을 거를 때마다 한 번에 -3, 0에서 멈춘다
+        if (v <= KEEP_AT) { const base = Math.max((patch && patch.lowAt) || r.lowAt || 0, dueAt(r.fedAt) - DAY_MS), m = Math.floor((wall - base) / LOW_MS) - (r.dropL || 0);
+          if (m > 0) { v = Math.max(0, v - 3 * m); patch = { ...patch, a: v, dropL: (r.dropL || 0) + m }; } }
+        if (patch) { const lost = r.a - v; setRel(k, patch); ch = true; const o = actors[k]; if (lost > 0 && o && alive) setTimeout(() => alive && pop(o.e, line(+k, 'sulk', toned(+k, pick(SULK))) + ` (친밀도 -${lost})`, 'say long'), 400 + Math.random() * 2500); } }
       else if (r.a < 0) { t.calm += ms; if (t.calm >= CALM_MS) { t.calm = 0; setRel(k, { a: Math.min(0, r.a + 1), calmT: 0 }); ch = true; } else if (Math.floor(t.calm / 150000) !== Math.floor(was.calm / 150000)) setRel(k, { calmT: t.calm }); }
       else t.calm = 0; }); if (ch) scores(); }
   // 물에서는 사이 나쁜 동물이 때리는 대신 머리를 눌러 물을 먹인다: 돈은 안 나가고 체력이 조금씩 계속 준다
@@ -475,7 +482,11 @@ export function mount(el, ctx) {
     const bubble = h('p', { class: 'so-bubble' }), meter = h('div', { class: 'so-meter' }), quick = h('div', { class: 'so-quick' }), input = h('input', { class: 'so-input', maxLength: 60, placeholder: `${a.name}에게 하고 싶은 말`, enterKeyHint: 'send' });
     const say = (t, cls = '', raw = false) => { bubble.className = 'so-bubble ' + cls; bubble.textContent = raw || t === '…' ? t : toned(i, t); };
     const fedNote = h('p', { class: 'so-fed' });
-    const drawMeter = () => { const v = A(i), lv = levelOf(v), nx = LEVELS.find(l => l[0] > v); { const left = dueAt((mine[i] || {}).fedAt || ctx.store.now()) - ctx.store.now(); fedNote.hidden = v < KEEP_AT; fedNote.className = 'so-fed' + (left < 3 * 3600000 ? ' due' : ''); fedNote.textContent = left <= 0 ? '💬 하루를 건너뛰어서 서운해해요. 말을 걸면 바로 멈춰요 (하루 최대 -3)' : left > DAY_MS ? '💬 오늘은 말을 걸었어요. 사이가 식지 않아요' : `💬 하루에 한 번만 말을 걸면 사이가 유지돼요 (남은 시간 ${Math.floor(left / 3600000)}시간 ${Math.floor(left / 60000) % 60}분)`; } if (moodOf(v) !== faceMood) { faceMood = moodOf(v); faceEl.innerHTML = animalSvg(i, true, faceMood); } meter.replaceChildren(h('b', null, `${lv[2]} ${lv[1]}`), h('i', null, h('u', { style: { width: (v + 100) / 2 + '%', background: v < 0 ? '#E5484D' : v >= PIN_AT ? '#FF7FA8' : '#57C26B' } })), h('span', null, `${v}점${nx ? ` · ${nx[1]}까지 ${nx[0] - v}` : ''}`)); scores(); };
+    const drawMeter = () => { const v = A(i), lv = levelOf(v), nx = LEVELS.find(l => l[0] > v); { const left = dueAt((mine[i] || {}).fedAt || ctx.store.now()) - ctx.store.now(); fedNote.hidden = v <= 0; fedNote.className = 'so-fed' + (v > KEEP_AT && left < 3 * 3600000 ? ' due' : '');
+      fedNote.textContent = left > DAY_MS ? '💬 오늘은 말을 걸었어요. 사이가 식지 않아요'
+        : v <= KEEP_AT ? '💬 사흘 동안 말을 안 걸면 친밀도가 -3 돼요. 말을 걸면 멈춰요'
+        : left <= 0 ? '💬 하루를 건너뛰어서 서운해해요. 말을 걸면 바로 멈춰요 (하루 최대 -3)'
+        : `💬 하루에 한 번만 말을 걸면 사이가 유지돼요 (남은 시간 ${Math.floor(left / 3600000)}시간 ${Math.floor(left / 60000) % 60}분)`; } if (moodOf(v) !== faceMood) { faceMood = moodOf(v); faceEl.innerHTML = animalSvg(i, true, faceMood); } meter.replaceChildren(h('b', null, `${lv[2]} ${lv[1]}`), h('i', null, h('u', { style: { width: (v + 100) / 2 + '%', background: v < 0 ? '#E5484D' : v >= PIN_AT ? '#FF7FA8' : '#57C26B' } })), h('span', null, `${v}점${nx ? ` · ${nx[1]}까지 ${nx[0] - v}` : ''}`)); scores(); };
     const drawQuick = () => quick.replaceChildren(...[pick(QUICK.good), A(i) < 0 ? '미안해, 내가 잘못했어' : pick(QUICK.flat), pick(QUICK.bad)].map((t, k) => h('button', { class: 'so-q q' + k, onClick: () => talk(t) }, t)));
     // 친밀도가 바뀐 뒤: 선물로 받는 액세서리, 사이가 나쁠 때 삥 뜯기
     async function after(d, was) {
