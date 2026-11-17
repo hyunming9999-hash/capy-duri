@@ -54,7 +54,7 @@ export function stepPlayer(p, i, inp, speed = SPEED) {
   p.x = Math.max(lo, Math.min(hi, p.x));
 }
 
-const SPK_N = 3, ARM_MS = 1100, DSH_MAX = 2; // 상대 진영으로 3번 넘기기 → 스파이크 1번 / 스파이크 버튼을 누르고 이 시간 안에 공에 닿으면 발동
+const SPK_N = 3, ARM_MS = 1300, DSH_MAX = 2; // 상대 진영으로 3번 넘기기 → 스파이크 1번 / 스파이크 버튼을 누르고 이 시간 안에 공에 닿으면 발동
 export function mount(el, ctx) {
   let alive = true, raf = 0, acc = 0, lastT = 0;
   const canvas = h('canvas', { class: 'vb-cv', width: W, height: H }), g = canvas.getContext('2d');
@@ -91,7 +91,7 @@ export function mount(el, ctx) {
   document.body.append(wrap); document.body.classList.add('vb-on');
   // 들어올 때 큰 안내 화면: 박진감 넘치는 썸네일 + 스파이크 쓰는 법. 누르면 닫힌다
   const ipg = [
-    ['img/volley/intro.webp', '🔥 스파이크 꿀팁', ['공이 ', h('em', null, '머리와 같은 높이거나 머리보다 조금 위'), '에 있을 때 스파이크를 누르면 써요!'], '공을 상대 진영으로 3번 넘기면 스파이크 1번이 충전돼요'],
+    ['img/volley/intro.webp', '🔥 스파이크 꿀팁', ['', h('em', null, '점프한 채로'), ' 공이 머리 근처(같은 높이~조금 위)에 있을 때 스파이크를 누르면 써요!'], '공을 상대 진영으로 3번 넘기면 스파이크 1번이 충전돼요'],
     ['img/volley/intro2.webp', '💨 대쉬 꿀팁', ['대쉬는 ', h('em', null, '방향키와 같이'), ' 눌러야 해요! 땅에 있을 때만 써요'], '공을 넘길 때마다 대쉬 1번씩, 최대 2번까지 모여요']];
   const intro = h('div', { class: 'vb-intro' }), showIntro = n => { const [src, t, body, sub] = ipg[n], last = n === ipg.length - 1;
     intro.replaceChildren(h('div', { class: 'vb-intro-c' }, h('img', { src, alt: '' }), h('b', null, t), h('p', null, ...body), h('small', null, sub),
@@ -136,8 +136,8 @@ export function mount(el, ctx) {
 
   // 공을 쳤을 때: 스파이크 준비 + 버튼을 막 눌렀고 + 공중이면 스파이크, 아니면 기본 공격 1번 충전
   // 스파이크 가능한 위치: 공이 머리와 같은 높이이거나 머리보다 조금 위, 머리 앞쪽 가까이
-  const spikeOk = p => ball.y < p.y + 45 && ball.y > p.y - 230;
-  function trySpike(i) { const p = ps[i]; if (chg[i] < SPK_N || !live() || (ball.x < NETX ? 0 : 1) !== i || Math.abs(ball.x - p.x) > 140 || !spikeOk(p)) return false;
+  const spikeOk = p => p.y < standY - 18 && ball.y < p.y + 60 && ball.y > p.y - 260; // 점프해서 공중에 있을 때만, 공이 머리 언저리면
+  function trySpike(i) { const p = ps[i]; if (chg[i] < SPK_N || !live() || (ball.x < NETX ? 0 : 1) !== i || Math.abs(ball.x - p.x) > 165 || !spikeOk(p)) return false;
     chg[i] = 0; armAt[i] = 0; lastTouch = i; lastHit = i; flash = 12; shake = 34; try { navigator.vibrate && navigator.vibrate([60, 30, 120]); } catch {} spikeTxt = 50; sfx('hit'); setTimeout(() => sfx('pop'), 60); spikeBall(ball, i); drawPips(); return true; }
   function onHit(i, p) {
     lastTouch = i;
@@ -325,7 +325,7 @@ export function mount(el, ctx) {
     send(t); draw();
     const showLv = game.phase !== 'serve' && mode === 'cpu'; if (lvRow.hidden === showLv) { lvRow.hidden = !showLv; if (showLv) drawLv(); }
     const showStart = game.phase !== 'serve'; if (newBtn.hidden === showStart) { newBtn.hidden = !showStart; newBtn.firstChild.textContent = game.phase === 'over' ? '▶ 한 판 더' : '▶ 시작'; }
-    const pm = ps[my()], go = chg[my()] >= SPK_N && live() && (ball.x < NETX ? 0 : 1) === my() && Math.abs(ball.x - pm.x) < 140 && spikeOk(pm); if (go !== spkBtn.classList.contains('now')) spkBtn.classList.toggle('now', go); // 스파이크 준비된 채 점프하면 '눌러!'
+    const pm = ps[my()], go = chg[my()] >= SPK_N && live() && (ball.x < NETX ? 0 : 1) === my() && Math.abs(ball.x - pm.x) < 165 && spikeOk(pm); if (go !== spkBtn.classList.contains('now')) spkBtn.classList.toggle('now', go); // 스파이크 준비된 채 점프하면 '눌러!'
     const here = mode !== 'online' || Date.now() - oppSeen < 3000;
     const txt = mode === 'cpu' ? '컴퓨터와 연습 중' : here ? `${josa(ctx.nameOf(ctx.order[1 - ctx.idx]), '와', '과')} 대결 · 나는 ${ctx.idx ? '오른쪽' : '왼쪽'}` : `${josa(ctx.nameOf(ctx.order[1 - ctx.idx]), '가', '이')} 들어오길 기다리는 중…`;
     if (info.textContent !== txt) info.textContent = txt;
