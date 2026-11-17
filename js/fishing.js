@@ -68,12 +68,17 @@ export function rollCatch(zone, rodT, isPearl, power) {
   const under = rodT < zone, pool = FISH.filter(f => f.z === zone && !(under && (f.rare || f.king)));
   const more = FISH.filter(f => f.z === zone && !f.rare && !f.king).length / BASE_COMMON[zone]; // 물고기 종류가 늘어도 귀한 것·대장이 나올 확률은 예전 그대로
   const w = pool.map(f => (f.king ? 0.25 * more : f.rare ? 0.45 * more : 1) * (f.king || f.rare ? 1 + power * 1.2 : 1)), tot = w.reduce((a, b) => a + b, 0); let r = Math.random() * tot, f = pool[0]; for (let i = 0; i < pool.length; i++) { r -= w[i]; if (r <= 0) { f = pool[i]; break; } }
-  const t = Math.min(1, Math.pow(Math.random(), 1.6 - power * 0.6)), cm = Math.round((f.cm[0] + (f.cm[1] - f.cm[0]) * t) * 10) / 10; // 멀리 던질수록 큰 놈이 잘 문다
-  const price = Math.round(f.price[0] + (f.price[1] - f.price[0]) * Math.pow(t, 1.3));
+  // 등급(크기): 같은 물고기라도 D~S. S일수록 드물고 크고 비싸다. 멀리 던질수록 높은 등급이 조금 더 잘 문다
+  const g = rollGrade(power), [b0, b1] = GRADE[g].band, t = b0 + (b1 - b0) * Math.random(), cm = Math.round((f.cm[0] + (f.cm[1] - f.cm[0]) * t) * 10) / 10;
+  const price = Math.round((f.price[0] + (f.price[1] - f.price[0]) * Math.pow(t, 1.3)) * GRADE[g].x);
   const d = zone === 1 ? 1 + t * 2 : zone === 2 ? 4 + t * 2 + (f.rare ? 1 : 0) : 6.5 + t * 2 + (f.king ? 1 : 0); // 낚싯대 차이는 '끊어짐 칸을 몇 번 버티나'로 따로 매긴다
   const shiny = zone >= 2 && Math.random() < SHINY_P;
-  return { f, cm, price: shiny ? Math.round(price * SHINY_X) : price, d, p: power, shiny };
+  return { f, cm, g, price: shiny ? Math.round(price * SHINY_X) : price, d, p: power, shiny };
 }
+// 등급표: 확률(기본) · 크기 구간(물고기 크기 범위 안에서) · 값 배수
+export const GRADE = { S: { p: 3, band: [0.9, 1], x: 2 }, A: { p: 9, band: [0.75, 0.9], x: 1.5 }, B: { p: 18, band: [0.55, 0.75], x: 1.25 }, C: { p: 30, band: [0.3, 0.55], x: 1.1 }, D: { p: 40, band: [0, 0.3], x: 1 } };
+function rollGrade(power) { const w = Object.entries(GRADE).map(([k, v]) => [k, v.p * (k === 'S' || k === 'A' ? 1 + power * 0.6 : 1)]), tot = w.reduce((a, [, x]) => a + x, 0); let r = Math.random() * tot; for (const [k, x] of w) { r -= x; if (r <= 0) return k; } return 'D'; }
+const josaUl = w => { const c = (w || '').charCodeAt(w.length - 1) - 0xAC00; return w + (c >= 0 && c <= 11171 && c % 28 !== 0 ? '을' : '를'); };
 // 물고기가 화내며 팔짝 뛸 때: 줄이 한순간에 확 팽팽해진다(누르고 있으면 그대로, 손을 뗐으면 절반). [초급, 중급, 고급]
 const SPIKE = [0, 14, 20, 26], SPIKE_GAP = [[0, 0], [5, 8], [4, 6.5], [3, 5]], TELE = 400;
 // 난이도 맞춤(가상 플레이로 맞춘 값): 손이 빠른 사람이 초급 낚싯대로 초급 56%·중급 48%·고급 39%쯤, 고급 낚싯대로 79%·79%·71%쯤 잡는다. 서툴면 거의 못 잡는다
@@ -152,12 +157,15 @@ export function openFishing(o) {
   function fail(text) { sfx(/끊어/.test(text) ? 'snap' : 'bad'); ready(text); }
   function landed() {
     const { f, cm, price, shiny } = cur; sfx(price <= 0 ? 'bad' : f.king || f.rare || f.pearl || shiny ? 'bigfish' : 'coin'); if (price > 0) splash(34, true); phase = 'done'; patEl.hidden = true; pearlTxt.hidden = true; if (!f.pearl) wrap.classList.remove('pearl'); wrap.classList.remove('fight', 'reel'); float.style.display = rl.style.display = hook.style.display = 'none'; fishEl.className = 'fs-fish';
-    const keep = price > 0 && o.keep; if (keep) o.keep({ id: f.id, cm, p: price, ...(shiny ? { shiny: 1 } : {}) }); else o.coins(price); if (!f.icon) o.dex(f.id, cm, shiny); // 물고기는 바로 돈이 아니라 가방에 담아 카피마켓에 판다
+    const keep = price > 0 && o.keep; if (keep) o.keep({ id: f.id, cm, p: price, ...(cur.g ? { g: cur.g } : {}), ...(shiny ? { shiny: 1 } : {}) }); else o.coins(price); if (!f.icon) o.dex(f.id, cm, shiny); // 물고기는 바로 돈이 아니라 가방에 담아 카피마켓에 판다
     const w = weightOf(f, cm), card = h('div', { class: 'fs-card' + (f.pearl ? ' pearl' : f.king ? ' king' : f.rare || shiny ? ' rare' : f.icon ? ' trash' : '') + (shiny ? ' shiny' : '') }, h('div', { class: 'fs-pic', html: fishSvg(f, true, shiny) }), shiny && h('em', { class: 'fs-shiny' }, '✨ 이로치! 색이 다른 귀한 녀석 · 값 1.5배 ✨'),
-      h('b', null, f.pearl ? '✨ 바다 진주! ✨' : f.king ? `👑 ${f.name}` : f.name), !f.icon && !f.pearl && h('p', null, `${cm}cm · ${kg(w)}`), keep ? h('p', { class: 'fs-won kept' }, '🧺 가방에 담았어요 · 카피수퍼 물고기 판매에서 팔아요') : h('p', { class: 'fs-won' }, price > 0 ? `+${price.toLocaleString('ko-KR')} 🪙` : `${price} 🪙`), o.trial && h('small', null, '체험 중이라 돈과 도감은 저장되지 않아요.'),
+      h('b', null, f.pearl ? '✨ 바다 진주! ✨' : f.king ? `👑 ${f.name}` : f.name), cur.g && h('span', { class: 'fs-grade g' + cur.g }, `${cur.g}등급`), !f.icon && !f.pearl && h('p', null, `${cm}cm · ${kg(w)}`), keep ? h('p', { class: 'fs-won kept' }, '🧺 가방에 담았어요 · 카피수퍼 물고기 판매에서 팔아요') : h('p', { class: 'fs-won' }, price > 0 ? `+${price.toLocaleString('ko-KR')} 🪙` : `${price} 🪙`), o.trial && h('small', null, '체험 중이라 돈과 도감은 저장되지 않아요.'),
       f.icon && h('small', null, '바다 쓰레기를 건졌어요. 처리 비용이 나갔어요.'),
       h('div', { class: 'fs-acts' }, h('button', { class: 'btn primary', onClick: () => { card.remove(); ready(); } }, '또 던지기'), h('button', { class: 'btn', onClick: () => { card.remove(); close(); } }, '그만하기')));
     wrap.append(card); say(''); btn.textContent = '…'; btn.onclick = null;
+    // 와! ○○○을 잡았다! — 화면 가득 터지는 글자, 그 아래 등급
+    if (!f.icon) { const wow = h('div', { class: 'fs-wow' + (cur.g ? ' g' + cur.g : '') + (f.pearl || f.king ? ' gold' : '') }, h('b', null, `와! ${josaUl(f.pearl ? '바다 진주' : f.name)} 잡았다!`), cur.g && h('span', { class: 'fs-grade big g' + cur.g }, cur.g), cur.g && h('small', null, { S: '전설의 대물!', A: '엄청 큰 녀석!', B: '꽤 큼직해요', C: '보통 크기', D: '아담한 녀석' }[cur.g]));
+      (wrap.querySelector('.fs-view') || wrap).append(wow); setTimeout(() => wow.classList.add('out'), 1900); setTimeout(() => wow.remove(), 2400); }
   }
   // 찔끔찔끔 누르기: 0.3초도 안 되게 눌렀다 떼면 물고기가 눈치채고 인내심이 깎인다(깊은 바다일수록 많이)
   const down = () => { if (!hold) pressAt = performance.now(); hold = true; };

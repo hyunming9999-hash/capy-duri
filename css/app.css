@@ -1334,3 +1334,17 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .tal-time i { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #7B4FB5, #B07FE8); transition: width .1s linear; }
 .tal-time b { position: relative; display: block; text-align: center; font-size: 12px; line-height: 18px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.4); }
 .tal-time.hurry i { background: linear-gradient(90deg, #E5484D, #FF8787); } .tal-time.hurry { animation: crowShake .3s ease-in-out infinite; }
+/* 물고기 등급 */
+.fs-grade { display: inline-block; min-width: 26px; padding: 1px 8px; margin: 4px 0 2px; border-radius: 10px; font: 900 13px/1.5 var(--head); color: #fff; }
+.fs-grade.gS { background: linear-gradient(135deg, #FFD23F, #FF8A00, #FF4D8D); box-shadow: 0 0 10px rgba(255,170,0,.8); } .fs-grade.gA { background: #9B5DE5; } .fs-grade.gB { background: #3A86FF; } .fs-grade.gC { background: #2BB673; } .fs-grade.gD { background: #9AA0A6; }
+.fs-wow { position: absolute; left: 50%; top: 3%; transform: translateX(-50%); z-index: 30; display: flex; flex-direction: column; align-items: center; pointer-events: none; animation: wowIn .5s cubic-bezier(.2,1.6,.4,1); width: 96%; }
+.fs-wow.out { animation: wowOut .5s ease-in forwards; }
+.fs-wow b { font: 900 21px/1.25 var(--head); color: #fff; text-align: center; padding: 6px 16px; border-radius: 18px; border: 3px solid #fff; background: linear-gradient(135deg, #2B8FD6, #1C5C9C); box-shadow: 0 4px 0 #134674, 0 6px 14px rgba(0,0,0,.25); word-break: keep-all; }
+.fs-wow.gold b, .fs-wow.gS b { background: linear-gradient(135deg, #FFB703, #FF6B00); box-shadow: 0 4px 0 #B5651D, 0 0 18px rgba(255,210,63,.9); } .fs-wow.gA b { background: linear-gradient(135deg, #9B5DE5, #6A2FB0); box-shadow: 0 4px 0 #4E2280, 0 6px 14px rgba(0,0,0,.25); }
+.fs-grade.big { font-size: 26px; min-width: 50px; padding: 0 12px; margin-top: 6px; border-radius: 16px; border: 3px solid #fff; animation: gradeIn .5s .25s cubic-bezier(.2,1.6,.4,1) both; }
+.fs-wow small { margin-top: 4px; background: rgba(255,255,255,.9); color: #5B4636; font-weight: 800; padding: 2px 10px; border-radius: 10px; }
+.fs-wow.gS .fs-grade.big { animation: gradeIn .5s .25s cubic-bezier(.2,1.6,.4,1) both, sGlow 1s .75s ease-in-out infinite; }
+@keyframes wowIn { 0% { transform: translateX(-50%) scale(.2); opacity: 0; } 100% { transform: translateX(-50%) scale(1); opacity: 1; } }
+@keyframes gradeIn { 0% { transform: scale(.2) rotate(-20deg); opacity: 0; } 100% { transform: none; opacity: 1; } }
+@keyframes sGlow { 0%, 100% { box-shadow: 0 0 10px rgba(255,170,0,.8); } 50% { box-shadow: 0 0 26px #FFD23F, 0 0 40px rgba(255,77,141,.6); } }
+@keyframes wowOut { to { transform: translateX(-50%) translateY(-30px); opacity: 0; } }
