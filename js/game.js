@@ -25,6 +25,7 @@ export const GAMES = [
 export function mount(el, ctx, sub) {
   const g = GAMES.find(x => x.id === sub);
   if (g) { ctx.setTitle(g.title); el.classList.add('game-' + g.id); return g.mod.mount(el, ctx); }
+  el.append(h('div', { class: 'g-streak' }, h('b', null, '🔥 연승 보너스'), h('small', null, '컴퓨터전·경쟁전에서 이기면 1승 ×1 → 2연승 ×1.5 → 3연승 ×1.8 → 4연승 ×2.3 (4연승에서 확정). 연승 중에 지면 연승으로 번 돈의 2/3를 잃어요. 이길 때마다 그만두고 챙길 수 있고, 컴퓨터는 연승할수록 강해져요. 기록 모드는 해당 없어요.')));
   el.append(h('div', { class: 'game-list' }, GAMES.map((x, i) => h('button', { class: 'game-card', style: { animationDelay: i * 50 + 'ms' }, onClick: () => ctx.go('game-' + x.id) },
     capyEl({ color: ['brown', 'cream', 'choco', 'peach'][i % 4], acc: x.acc, face: x.face, head: true }), h('div', null, h('b', null, x.title), h('small', null, x.sub), RATE[x.id] && h('small', { class: 'g-rate' }, '🪙 ' + RATE[x.id])), h('span', { class: 'go' }, '›'))),
     h('a', { class: 'game-card ext', href: HOTTEOK, target: '_blank', rel: 'noopener', style: { animationDelay: '300ms' } }, h('span', { class: 'ext-ic' }, '🥊'), h('div', null, h('b', null, '호떡 철권'), h('small', null, '따로 만든 게임 · 새 창에서 열려요')), h('span', { class: 'go' }, '↗'))));

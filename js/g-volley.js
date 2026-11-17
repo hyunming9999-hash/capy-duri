@@ -70,7 +70,7 @@ export function mount(el, ctx) {
   const loadSprites = () => [0, 1].forEach(i => { const uid = mode === 'online' ? ctx.order[i] : (i ? null : ctx.uid); loadImg(capyUrl(uid ? ctx.capyOf(uid, { face: 'happy' }) : { color: 'choco', acc: 'towel', face: 'wink' })).then(im => { sprites[i] = im; }); });
 
   function setGame(v) { const fresh = !v || v.n !== game.n || v.phase !== game.phase || v.at !== game.at;
-    if (v && v.phase === 'over' && game.phase === 'serve') { const won = (v.sc0 > v.sc1 ? 0 : 1) === my(); ctx.earn(PAY.volley(won) * (mode === 'online' ? 1 : 0.6), '배구', [`${won ? '승리' : '패배'} = ${PAY.volley(won)}코인`, ...(mode === 'online' ? [] : [`컴퓨터전 60% = ${Math.round(PAY.volley(won) * 0.6)}코인`])]); gameFx(won ? 'win' : 'lose', `${v.sc0} : ${v.sc1}`); } // 방금 끝났을 때만
+    if (v && v.phase === 'over' && game.phase === 'serve') { const won = (v.sc0 > v.sc1 ? 0 : 1) === my(); ctx.earnMatch(PAY.volley(won) * (mode === 'online' ? 1 : 0.6), '배구', [`${won ? '승리' : '패배'} = ${PAY.volley(won)}코인`, ...(mode === 'online' ? [] : [`컴퓨터전 60% = ${Math.round(PAY.volley(won) * 0.6)}코인`])], won ? 'win' : 'lose', 'volley'); gameFx(won ? 'win' : 'lose', `${v.sc0} : ${v.sc1}`); } // 방금 끝났을 때만
     game = v || { sc0: 0, sc1: 0, serve: 0, phase: 'idle', at: 0, n: 0 }; if (fresh) placeBall(); }
   function newGame() { const v = { sc0: 0, sc1: 0, serve: 0, phase: 'serve', at: now(), n: (game.n || 0) + 1 }; mode === 'online' ? ctx.store.set('games/volley', v) : setGame(v); ps[0].x = 200; ps[1].x = 600; }
   function point(loser) {
@@ -106,16 +106,17 @@ export function mount(el, ctx) {
     if (live() && (ball.x < NETX ? 0 : 1) === ctx.idx) ctx.store.set('rt/volley/ball', { x: r(ball.x), y: r(ball.y), vx: r(ball.vx), vy: r(ball.vy), side: ctx.idx, n: game.n, t: ctx.store.now() }).catch(() => {});
   }
   function ai(p) {
-    if (Date.now() > aiT) { aiT = Date.now() + 900; aiErr = (Math.random() - 0.5) * 130; }
+    const lv = ctx.streakLv('volley'); // 연승할수록 컴퓨터가 공을 더 정확히 따라가고 더 자주 뛴다
+    if (Date.now() > aiT) { aiT = Date.now() + 900 - lv * 120; aiErr = (Math.random() - 0.5) * 130 * (1 - lv * 0.25); }
     const tx = ball.x > NETX - 20 ? ball.x + 20 + aiErr : 610, o = { l: p.x > tx + 8, r: p.x < tx - 8, j: false };
-    o.j = ball.x > NETX && Math.abs(ball.x - p.x) < 70 && ball.y < p.y - 70 && ball.y > 170 && ball.vy > 0 && Math.random() < 0.15;
+    o.j = ball.x > NETX && Math.abs(ball.x - p.x) < 70 && ball.y < p.y - 70 && ball.y > 170 && ball.vy > 0 && Math.random() < 0.15 + lv * 0.08;
     return o;
   }
   function tick() {
     const me = my();
     stepPlayer(ps[me], me, inp);
     if (mode === 'online' && Date.now() - oppSeen > 300) ps[1 - me].vx = 0;
-    stepPlayer(ps[1 - me], 1 - me, mode === 'cpu' ? ai(ps[1]) : null, CPU_SPEED);
+    stepPlayer(ps[1 - me], 1 - me, mode === 'cpu' ? ai(ps[1]) : null, CPU_SPEED * (mode === 'cpu' ? 1 + ctx.streakLv('volley') * 0.1 : 1));
     if (inp.j && ps[me].y >= standY - 1 && ps[me].vy < 0 && !ps[me].jf) sfx('jump'); ps[me].jf = ps[me].vy < 0;
     if (!live()) return;
     const bvx = ball.vx, bvy = ball.vy, landed = stepBall(ball, ps);

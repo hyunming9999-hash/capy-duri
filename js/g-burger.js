@@ -130,7 +130,7 @@ export function mount(el, ctx) {
   function pickCust(qi) { if (qi === curIdx()) return; sfx('tock'); mySel = qi; paint(); }
   const curIdx = () => Q()[selI()], trayAt = qi => (L.trays[qi] = L.trays[qi] || { st: [], c: 0 }), curTray = () => trayAt(curIdx()); // 손님마다 쟁반이 따로 있어서 여러 손님 것을 같이 준비할 수 있다
   // 컴퓨터 상대: 판을 시작할 때 "몇 초에 몇 점"을 미리 정해 두고, 지난 시간만큼 점수가 오른다
-  function cpuPlan(run) { const r = rng(run.seed * 31 + 7), [gap, acc] = CPU[run.diff], plan = []; let t = gap * (0.7 + r() * 0.4), i = 0;
+  function cpuPlan(run) { const r = rng(run.seed * 31 + 7), lv = ctx.streakLv('burger'), gap = CPU[run.diff][0] * (1 - 0.1 * lv), acc = Math.min(0.97, CPU[run.diff][1] + 0.06 * lv), plan = []; // 연승할수록 컴퓨터가 빨라지고 실수가 준다 let t = gap * (0.7 + r() * 0.4), i = 0;
     while (t < run.dur) { const o = orderOf(run.seed, i++, run.diff), full = 60 + o.fills.length * 10 + 20 + (LEVEL[run.diff].only ? 0 : 80) + (run.calc ? 40 : 0); plan.push([t, r() < acc ? full : Math.round(full * (0.35 + r() * 0.4) / 10) * 10]); t += gap * (0.75 + r() * 0.5); }
     return plan; }
   const cpuScore = () => { if (!S || !S.plan) return 0; const e = (Math.min(now(), endAt(S)) - S.startAt) / 1000; return S.plan.reduce((a, [t, p]) => a + (t <= e ? p : 0), 0); };
@@ -336,9 +336,10 @@ export function mount(el, ctx) {
 
   function result() {
     const key = `${S.kind}-${S.diff}-${ctx.uid}${S.calc ? '-c' : ''}`, my = L && L.id === S.id ? L.score : ((S.sc || {})[ctx.uid] || {}).s || 0, served = L && L.id === S.id ? L.n : 0, other = otherScore(), prev = best[key];
-    if (fxDone !== S.id) { fxDone = S.id; const id = S.id; ctx.earn(PAY.burger(my), '카피 버거', [`내 점수 ${my}점 ÷ 8 = ${PAY.burger(my)}코인`]);
+    if (fxDone !== S.id) { fxDone = S.id; const id = S.id, bl = [`내 점수 ${my}점 ÷ 8 = ${PAY.burger(my)}코인`]; if (S.kind === 'rec') ctx.earn(PAY.burger(my), '카피 버거', bl);
       if (my > 0 && (!prev || my > prev.s)) ctx.store.tx('games/burgerBest/' + key, c => (c && c.s >= my ? undefined : { s: my, at: now() })).catch(() => {});
       setTimeout(() => { if (!alive || !S || S.id !== id) return; const o2 = otherScore(); // 경쟁은 상대 마지막 점수가 올 때까지 잠깐 기다린다
+        if (S.kind !== 'rec') { if (o2) ctx.earnMatch(PAY.burger(my), '카피 버거', bl, my > o2.s ? 'win' : my < o2.s ? 'lose' : 'draw', 'burger'); else ctx.earn(PAY.burger(my), '카피 버거', bl); }
         if (o2) gameFx(my > o2.s ? 'win' : my < o2.s ? 'lose' : 'draw', `${my} : ${o2.s}`); else if (my > 0) gameFx('win', `${my}점${prev && my > prev.s ? ' 신기록' : ''}`); if (S.kind === 'vs') paint(); }, S.kind === 'vs' ? 1300 : 200); }
     box.replaceChildren(h('div', { class: 'bg-end' }, ...[h('span', null, '🍔'), h('b', null, S.kind === 'rec' ? '영업 끝!' : other ? (my > other.s ? '이겼어요!' : my < other.s ? '졌어요…' : '비겼어요') : '영업 끝!'),
       h('p', { class: 'bg-big' }, `${my}점`), h('p', { class: 'dim' }, `${MODES[S.kind][0]} · 손님 ${served}명 · ${LEVEL[S.diff].name}${S.calc ? ' · 계산' : ''}`),
