@@ -1164,3 +1164,15 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .sb-loot.gold .gold-item { width: 170px; filter: drop-shadow(0 0 14px rgba(255, 220, 90, .95)); } .sb-loot.gold .gold-item img { width: 100%; display: block; }
 .sb-loot.gold strong { font-size: 27px; text-align: center; }
 .sb-loot.gold em { position: relative; font: 800 15px/1.3 var(--head); font-style: normal; color: #FFF3C4; text-shadow: 0 2px 0 #5A3A12; animation: sbChest .5s .9s both; }
+
+/* 카피마켓(할아버지 주인장) */
+.mk-head { display: grid; grid-template-columns: 78px 1fr; gap: 8px; align-items: center; margin-bottom: 4px; }
+.mk-gp svg { width: 78px; display: block; overflow: visible; }
+.mk-say { position: relative; margin: 0; padding: 9px 11px; background: #FFF8E6; border: 2px solid #E8D3A8; border-radius: 14px; font-size: 13px; line-height: 1.45; color: #5A3A22; }
+.mk-say::before { content: ''; position: absolute; left: -8px; top: 22px; border: 7px solid transparent; border-right-color: #E8D3A8; border-left: 0; }
+.mk-say.pop { animation: mkPop .25s ease-out; } @keyframes mkPop { from { transform: scale(.94); opacity: .4; } }
+.so-row.mk-fish.on { border-color: #E9A23B; background: #FFF6E0; }
+.so-row.mk-fish.gold { border-color: #E9C46A; background: #FFFBEA; }
+.mk-deal { display: grid; grid-template-columns: 1fr 1.4fr; gap: 6px; }
+.mk-all { margin-top: 6px; width: 100%; }
+.fs-won.kept { font-size: 14px; color: #7A5A20; }
