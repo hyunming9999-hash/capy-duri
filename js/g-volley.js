@@ -227,7 +227,7 @@ export function mount(el, ctx) {
     if (key !== lastP || t - lastPT > 1000) { lastP = key; lastPT = t; ctx.store.set('rt/volley/p' + ctx.idx, { ...pv, k: Math.round(t) }).catch(() => {}); }
   }
   // 컴퓨터 난이도: 하·중·상 [이동 속도, 판단 오차(px), 다시 판단하는 간격(ms), 받으러 뛰는 확률, 스파이크 쓰는 확률, 대쉬 쓰는 확률]
-  const LV = { e: [3.9, 170, 800, 0.15, 0.12, 0.01], m: [4.9, 110, 600, 0.3, 0.3, 0.03], h: [5.8, 60, 420, 0.5, 0.5, 0.05] }; // 상 = 예전 중
+  const LV = { e: [3.9, 170, 800, 0.15, 0.12, 0.01], m: [4.9, 110, 600, 0.3, 0.3, 0.03], h: [5.2, 95, 540, 0.36, 0.36, 0.035] }; // 상 = 중보다 살짝 어렵게(가상 대결에서 받아 넘기는 비율 중 84% · 상 88%)
   let lvKey = (() => { try { return localStorage.getItem('capy.volleyLv') || 'm'; } catch { return 'm'; } })(), aiPred = 610, aiPT = 0;
   // 공이 내 쪽으로 오면, 받을 높이까지 내려오는 자리를 미리 계산해 둔다(벽이 없어 코트 뒤로 흐르는 공도 쫓아간다)
   function predict() { const b = { ...ball, cd: [9, 9] }; for (let k = 0; k < 260; k++) { if (stepBall(b, [])) break; if (b.vy > 0 && b.y >= standY - 50) break; } return b.x; }
