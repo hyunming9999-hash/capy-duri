@@ -1521,8 +1521,8 @@ body.vb-on .modal-wrap { z-index: 4600; }
 .eq-slot small { position: absolute; left: 2px; top: 1px; font-size: 9px; font-weight: 900; color: #fff; background: rgba(30,42,54,.75); padding: 0 4px; border-radius: 5px; }
 .eq-slot.off { opacity: .5; border-style: dashed; }
 .eq-me { border-radius: 10px; overflow: hidden; background: radial-gradient(circle at 50% 35%, #FFFFFF 0%, #DCEBFA 45%, #8DB2DA 100%); display: grid; place-items: center; min-height: 270px; box-shadow: inset 0 0 0 2px #6E8FB2; }
-.eq-me svg { width: 92%; max-height: 260px; }
-.eq-inv-h { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; padding: 12px 4px 6px; } .eq-inv-h b { color: #FFE27A; font-size: 13px; } .eq-inv-h small { color: #9FB3C4; font-size: 10.5px; }
+.eq-me svg { width: 58%; max-height: 230px; overflow: visible; } /* 날개·방패·후광이 칸 밖으로 잘리지 않게 캐릭터를 줄여 가운데에 둔다 */
+.eq-inv-h { display: flex; flex-direction: column; gap: 2px; padding: 12px 4px 6px; } .eq-inv-h b { white-space: nowrap; } .eq-inv-h b { color: #FFE27A; font-size: 13px; } .eq-inv-h small { color: #9FB3C4; font-size: 10.5px; }
 .eq-inv { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .eq-item { position: relative; padding: 4px 2px 3px; border-radius: 9px; border: 2px solid #4B5E70; background: #2D3C4B; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
 .eq-item img { width: 48px; height: 48px; object-fit: contain; } .eq-item small { font-size: 9.5px; color: #DCE6EE; line-height: 1.2; text-align: center; word-break: keep-all; }
