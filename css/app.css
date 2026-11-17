@@ -1221,7 +1221,16 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .bb-st.on { background: var(--yuzu); border-color: var(--yuzu-d); box-shadow: 0 3px 0 var(--yuzu-d); } .bb-st.lock { opacity: .45; }
 .bb-play { position: relative; display: flex; justify-content: center; }
 .bb-board { width: min(100%, 380px); height: auto; border-radius: 16px; border: 4px solid #8A5A2B; box-shadow: 0 5px 0 #6B4220; touch-action: none; background: #EFE4FF; }
-.bb-keys { display: grid; grid-template-columns: 1fr 1.6fr 1fr; gap: 8px; max-width: 380px; width: 100%; margin: 0 auto; touch-action: none; user-select: none; -webkit-user-select: none; }
+.bb-keys { display: grid; grid-template-columns: 1fr 1.7fr 1fr; gap: 10px; max-width: 400px; width: 100%; margin: 0 auto; touch-action: none; user-select: none; -webkit-user-select: none; }
 .bb-keys .tt-key { height: 56px; font: 900 22px var(--head); }
 .bb-keys .bb-fire b { font-size: 18px; }
 .bb-end-ic { font-size: 44px; }
+
+.bb-board { width: 100%; }
+.bb-key { height: 58px; display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 20px; border: 0; color: #fff; touch-action: none;
+  background: linear-gradient(180deg, #B794F6 0%, #8B5CF6 55%, #7444DB 100%); box-shadow: 0 5px 0 #5B2FB0, 0 8px 14px rgba(91,47,176,.3), inset 0 2px 0 rgba(255,255,255,.55), inset 0 -3px 0 rgba(0,0,0,.12); transition: transform .05s, box-shadow .05s; }
+.bb-key .bb-ic { width: 26px; height: 26px; display: block; filter: drop-shadow(0 1px 0 rgba(0,0,0,.25)); } .bb-key .bb-ic svg { width: 100%; height: 100%; display: block; }
+.bb-key.fire { background: linear-gradient(180deg, #FFB3C7 0%, #FF6B95 50%, #F0457A 100%); box-shadow: 0 5px 0 #B8285A, 0 8px 16px rgba(240,69,122,.35), inset 0 2px 0 rgba(255,255,255,.6), inset 0 -3px 0 rgba(0,0,0,.12); }
+.bb-key.fire b { font: 900 20px/1 var(--head); letter-spacing: 1px; text-shadow: 0 2px 0 rgba(150,20,70,.45); } .bb-key.fire .bb-ic { width: 28px; height: 28px; }
+.bb-key.on, .bb-key:active { transform: translateY(5px); box-shadow: 0 0 0 transparent, inset 0 3px 6px rgba(0,0,0,.2); }
+.bb .tt-top { margin-bottom: 0; }

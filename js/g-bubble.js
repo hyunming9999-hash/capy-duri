@@ -6,7 +6,7 @@ import { PAY } from './money.js';
 import { animalSvg } from './animals.js';
 import { capyUrl } from './capy.js';
 
-const COLS = 8, R = 20, ROWH = R * Math.sqrt(3), LIMIT = 12, W = COLS * R * 2, LINE_Y = R + (LIMIT - 1) * ROWH + R, H = Math.round(LINE_Y + 96), GUN = { x: W / 2, y: LINE_Y + 50 };
+const COLS = 8, R = 20, ROWH = R * Math.sqrt(3), LIMIT = 12, W = COLS * R * 2, LINE_Y = R + (LIMIT - 1) * ROWH + R, H = Math.round(LINE_Y + 96), GUN = { x: W / 2, y: LINE_Y + 40 };
 const PATH = 'games/bubble', STAGES = 30;
 // 구슬 색과 그 안의 동물 얼굴(색으로도, 얼굴로도 구별된다)
 const COLORS = [['#FF6B6B', 4], ['#FFD43B', 17], ['#4DABF7', 16], ['#69DB7C', 13], ['#B197FC', 25], ['#FFA94D', 5], ['#F783AC', 12], ['#CED4DA', 7]];
@@ -103,6 +103,9 @@ export function mount(el, ctx) {
     g2.fillStyle = gr; g2.beginPath(); g2.arc(R, R, R - 1, 0, 7); g2.fill(); g2.lineWidth = 1.6; g2.strokeStyle = 'rgba(60,40,30,.55)'; g2.stroke();
     const im = new Image(); im.onload = () => { g2.save(); g2.beginPath(); g2.arc(R, R, R - 2.5, 0, 7); g2.clip(); g2.drawImage(im, R * 0.2, R * 0.28, R * 1.6, R * 1.49); g2.restore(); g2.fillStyle = 'rgba(255,255,255,.55)'; g2.beginPath(); g2.ellipse(R * 0.62, R * 0.45, R * 0.28, R * 0.16, -0.6, 0, 7); g2.fill(); };
     im.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(animalSvg(ai)); return c; });
+  // 힉스필드로 그린 수정 구슬·놀이공원 배경·발사대(그림이 오기 전에는 위에서 그린 구슬을 쓴다)
+  const ART = { balls: COLORS.map((_, i) => { const im = new Image(); im.src = `img/bubble/b${i}.webp`; return im; }), bg: Object.assign(new Image(), { src: 'img/bubble/bg.webp' }), gun: Object.assign(new Image(), { src: 'img/bubble/gun.webp' }) };
+  const ok = im => im.complete && im.naturalWidth > 0;
   let capyIm = null; { const im = new Image(); im.onload = () => { capyIm = im; }; im.src = capyUrl(ctx.capyOf(ctx.uid, { face: 'happy' })); }
 
   function lobby() {
@@ -137,35 +140,42 @@ export function mount(el, ctx) {
   let cv, cx, topEl, keysEl;
   function build() {
     cv = h('canvas', { class: 'bb-board', width: Math.round(W * DPR), height: Math.round(H * DPR) }); cx = cv.getContext('2d'); topEl = h('div', { class: 'tt-top' });
-    const hold = (label, cls, fn) => { const b = h('button', { class: 'tt-key ' + cls, 'aria-label': label }, h('b', null, label)); let iv = 0; const stop = () => { clearInterval(iv); b.classList.remove('on'); };
+    const IC = { l: '<svg viewBox="0 0 40 40"><path d="M26 7 L11 20 L26 33" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>', r: '<svg viewBox="0 0 40 40"><path d="M14 7 L29 20 L14 33" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      fire: '<svg viewBox="0 0 40 40"><circle cx="20" cy="22" r="13" fill="none" stroke="currentColor" stroke-width="3.5"/><circle cx="20" cy="22" r="5" fill="currentColor"/><path d="M20 2v8M20 34v4M4 22h-2M38 22h-2" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg>' };
+    const hold = (label, cls, fn) => { const b = h('button', { class: 'bb-key ' + cls, 'aria-label': label }, h('span', { class: 'bb-ic', html: IC[cls] })); let iv = 0; const stop = () => { clearInterval(iv); b.classList.remove('on'); };
       b.addEventListener('pointerdown', e => { e.preventDefault(); b.classList.add('on'); fn(); iv = setInterval(fn, 30); }); ['pointerup', 'pointerleave', 'pointercancel'].forEach(n => b.addEventListener(n, stop)); return b; };
-    keysEl = h('div', { class: 'bb-keys' }, hold('◀', 'mv', () => { ang = Math.max(-1.35, ang - 0.035); }), h('button', { class: 'tt-key drop bb-fire', onClick: fire }, h('b', null, '🫧 발사')), hold('▶', 'mv', () => { ang = Math.min(1.35, ang + 0.035); }));
-    box.replaceChildren(topEl, h('div', { class: 'bb-play' }, cv), keysEl); aimTouch(cv); drawTop();
+    keysEl = h('div', { class: 'bb-keys' }, hold('왼쪽으로 겨누기', 'l', () => { ang = Math.max(-1.35, ang - 0.035); }), h('button', { class: 'bb-key fire', 'aria-label': '발사', onClick: fire }, h('span', { class: 'bb-ic', html: IC.fire }), h('b', null, '발사')), hold('오른쪽으로 겨누기', 'r', () => { ang = Math.min(1.35, ang + 0.035); }));
+    box.replaceChildren(topEl, h('div', { class: 'bb-play' }, cv), keysEl); aimTouch(cv); drawTop(); requestAnimationFrame(fit);
   }
+  // 점수칸·게임판·버튼이 한 화면에 다 들어오게 판 크기를 맞춘다
+  function fit() { if (!cv || !cv.isConnected) return; window.scrollTo(0, 0); const top = cv.getBoundingClientRect().top, room = window.innerHeight - top - keysEl.offsetHeight - 22, w = Math.max(220, Math.min(box.clientWidth, 400, room * W / H)); cv.style.width = w + 'px'; keysEl.style.maxWidth = Math.max(w, 300) + 'px'; }
+  window.addEventListener('resize', fit);
+  // 손가락으로는 겨누기만 하고, 발사는 발사 버튼으로만 한다
   function aimTouch(c) { let on = false;
     const set = e => { const rc = c.getBoundingClientRect(), x = (e.clientX - rc.left) / rc.width * W, y = (e.clientY - rc.top) / rc.height * H; if (y > GUN.y - 8) return false; ang = Math.max(-1.35, Math.min(1.35, Math.atan2(x - GUN.x, GUN.y - y))); return true; };
     c.addEventListener('pointerdown', e => { e.preventDefault(); try { c.setPointerCapture(e.pointerId); } catch {} on = set(e); });
     c.addEventListener('pointermove', e => { if (on) set(e); });
-    c.addEventListener('pointerup', e => { if (on && set(e)) fire(); on = false; }); c.addEventListener('pointercancel', () => { on = false; }); }
+    c.addEventListener('pointerup', e => { if (on) set(e); on = false; }); c.addEventListener('pointercancel', () => { on = false; }); }
   function fire() { if (!G || paused || phase() !== 'play') return; if (G.shoot(ang)) sfx('bshoot'); }
-  const drawBall = (c, x, y, s = 1, a = 1) => { cx.globalAlpha = a; cx.drawImage(sprites[c], x - R * s, y - R * s, R * 2 * s, R * 2 * s); cx.globalAlpha = 1; };
+  const drawBall = (c, x, y, s = 1, a = 1) => { cx.globalAlpha = a; const im = ART.balls[c]; if (ok(im)) cx.drawImage(im, x - R * s * 1.04, y - R * s * 1.04, R * 2.08 * s, R * 2.08 * s); else cx.drawImage(sprites[c], x - R * s, y - R * s, R * 2 * s, R * 2 * s); cx.globalAlpha = 1; };
   function drawBoard() {
     const g = G; cx.setTransform(DPR, 0, 0, DPR, 0, 0);
     // 바탕: 연한 체크무늬 + 나무 테두리
-    cx.fillStyle = '#EFE4FF'; cx.fillRect(0, 0, W, H); cx.fillStyle = '#E4D6FA'; for (let y = 0; y < LINE_Y; y += 20) for (let x = (y / 20) % 2 * 20; x < W; x += 40) cx.fillRect(x, y, 20, 20);
+    if (ok(ART.bg)) { const ir = ART.bg.naturalWidth / ART.bg.naturalHeight, bw = Math.max(W, H * ir); cx.drawImage(ART.bg, (W - bw) / 2, 0, bw, bw / ir); } else { cx.fillStyle = '#EFE4FF'; cx.fillRect(0, 0, W, H); cx.fillStyle = '#E4D6FA'; for (let y = 0; y < LINE_Y; y += 20) for (let x = (y / 20) % 2 * 20; x < W; x += 40) cx.fillRect(x, y, 20, 20); }
     if (g.drop) { cx.fillStyle = '#C9A27A'; cx.fillRect(0, 0, W, g.drop * ROWH); cx.fillStyle = '#B48A5E'; for (let x = 6; x < W; x += 28) cx.fillRect(x, 4, 16, g.drop * ROWH - 8); cx.fillStyle = '#8A5A2B'; cx.fillRect(0, g.drop * ROWH - 4, W, 4); }
     const warn = S.kind === 'stage' ? stageInfo(S.stage).every - (g.shots % stageInfo(S.stage).every) <= 2 : pushT > (pushMs() - 1800);
     const shake = warn && !paused ? Math.sin(performance.now() / 40) * 1.4 : 0;
     g.each((rr, c, v) => { const p = g.xy(rr, c); drawBall(v, p.x + shake, p.y); });
     // 선
     cx.strokeStyle = 'rgba(229,72,77,.6)'; cx.setLineDash([8, 6]); cx.lineWidth = 2; cx.beginPath(); cx.moveTo(0, LINE_Y); cx.lineTo(W, LINE_Y); cx.stroke(); cx.setLineDash([]);
-    cx.fillStyle = '#FFF6E4'; cx.fillRect(0, LINE_Y + 2, W, H - LINE_Y); cx.fillStyle = '#E2C49A'; cx.fillRect(0, LINE_Y + 2, W, 4);
+    cx.fillStyle = 'rgba(255,246,228,.82)'; cx.fillRect(0, LINE_Y + 2, W, H - LINE_Y); cx.fillStyle = '#E2C49A'; cx.fillRect(0, LINE_Y + 2, W, 3);
     // 겨냥선: 벽에 한 번 튕기는 데까지(난이도가 높을수록 짧다)
     const guide = S.kind === 'stage' ? stageInfo(S.stage).guide : LEVELS[S.diff].guide; { let x = GUN.x, y = GUN.y, vx = Math.sin(ang), vy = -Math.cos(ang), left = 520 * guide; cx.fillStyle = 'rgba(90,60,140,.45)';
       for (let d = 0; d < left; d += 14) { x += vx * 14; y += vy * 14; if (x < R) { x = 2 * R - x; vx = -vx; } if (x > W - R) { x = 2 * (W - R) - x; vx = -vx; } if (y < R + g.drop * ROWH) break; let hitB = false; g.each((rr, c) => { if (!hitB) { const p = g.xy(rr, c); hitB = (p.x - x) ** 2 + (p.y - y) ** 2 < (R * 1.75) ** 2; } }); if (hitB) break; cx.beginPath(); cx.arc(x, y, 2.6, 0, 7); cx.fill(); } }
     // 발사대: 화살과 카피바라
-    cx.save(); cx.translate(GUN.x, GUN.y); cx.fillStyle = '#B5793C'; cx.beginPath(); cx.arc(0, 0, 30, Math.PI, 0); cx.fill(); cx.strokeStyle = '#8A5A2B'; cx.lineWidth = 3; cx.stroke();
+    cx.save(); cx.translate(GUN.x, GUN.y); if (!ok(ART.gun)) { cx.fillStyle = '#B5793C'; cx.beginPath(); cx.arc(0, 0, 30, Math.PI, 0); cx.fill(); cx.strokeStyle = '#8A5A2B'; cx.lineWidth = 3; cx.stroke(); }
     cx.rotate(ang); cx.fillStyle = '#F2C230'; cx.strokeStyle = '#8A5A00'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(-5, 0); cx.lineTo(-5, -46); cx.lineTo(-11, -46); cx.lineTo(0, -62); cx.lineTo(11, -46); cx.lineTo(5, -46); cx.lineTo(5, 0); cx.closePath(); cx.fill(); cx.stroke(); cx.restore();
+    if (ok(ART.gun)) cx.drawImage(ART.gun, GUN.x - 34, GUN.y - 13, 68, 68 * ART.gun.naturalHeight / ART.gun.naturalWidth);
     if (!g.fly && !g.over) drawBall(g.cur, GUN.x, GUN.y);
     drawBall(g.next, 34, H - 26, 0.8); cx.fillStyle = '#7A5A9A'; cx.font = '800 11px sans-serif'; cx.textAlign = 'center'; cx.fillText('다음', 34, H - 48);
     if (capyIm) cx.drawImage(capyIm, W - 76, H - 74, 62, 81);
@@ -240,5 +250,5 @@ export function mount(el, ctx) {
     ctx.store.on('games/bubbleStage', v => { prog = v || {}; if (phase() === 'lobby') lobby(); }),
   ];
   paint(); raf = requestAnimationFrame(loop);
-  return () => { alive = false; cancelAnimationFrame(raf); window.removeEventListener('keydown', kd); offs.forEach(f => f()); };
+  return () => { alive = false; cancelAnimationFrame(raf); window.removeEventListener('keydown', kd); window.removeEventListener('resize', fit); offs.forEach(f => f()); };
 }
