@@ -8,6 +8,7 @@ import { capyUrl, yuzuUrl } from './capy.js';
 
 const W = 800, H = 450, GROUND = 400, NETX = 400, NETW = 12, NETTOP = 268, PR = 40, FOOT = 71, BR = 28, WIN = 7;
 // HIT: 공이 맞는 범위(그림보다 넉넉하게), GB: 공 중력(작을수록 천천히 떨어짐), FALL: 공이 떨어지는 최고 속도
+const EXT = 240, DASH = 15; // 코트 뒤로 더 갈 수 있는 거리, 대쉬 속도
 const HIT = 50, GB = 0.24, FALL = 8, GP = 0.9, SPEED = 6.8, CPU_SPEED = 4.2, JUMP = -15.5;
 const standY = GROUND - FOOT;
 const SKY = 210; // 공이 이만큼 화면 위로 나갔다가 돌아올 수 있다(가로 화면에서는 화살표로 위치를 알려 준다)
@@ -18,8 +19,7 @@ export function stepBall(b, ps, onHit) {
   if (b.cd) b.cd = b.cd.map(v => Math.max(0, v - 1)); else b.cd = [0, 0];
   if (b.spike) b.spike--;
   b.vy = Math.min(FALL, b.vy + GB); b.x += b.vx; b.y += b.vy; b.rot += b.vx * 0.03;
-  if (b.x < BR) { b.x = BR; b.vx = Math.abs(b.vx) * 0.9; }
-  if (b.x > W - BR) { b.x = W - BR; b.vx = -Math.abs(b.vx) * 0.9; }
+  // 옆 벽은 없다: 공이 뒤로 가면 그대로 흘러가고, 카메라가 줌 아웃해서 따라 보여 준다
   if (b.y < BR - SKY) { b.y = BR - SKY; b.vy = Math.abs(b.vy) * 0.9; }
   const nx = Math.max(NETX - NETW / 2, Math.min(b.x, NETX + NETW / 2)), ny = Math.max(NETTOP, Math.min(b.y, GROUND));
   let dx = b.x - nx, dy = b.y - ny, d = Math.hypot(dx, dy);
@@ -43,14 +43,15 @@ export function stepBall(b, ps, onHit) {
   return b.y >= GROUND - BR;
 }
 export function stepPlayer(p, i, inp, speed = SPEED) {
-  if (inp) { p.vx = (inp.r ? speed : 0) - (inp.l ? speed : 0); if (inp.j && p.y >= standY) p.vy = JUMP; }
+  if (p.dT > 0) { p.vx = p.dDir * DASH; p.dT--; } // 대쉬 중에는 정해진 방향으로 쭉 미끄러진다
+  else if (inp) { p.vx = (inp.r ? speed : 0) - (inp.l ? speed : 0); if (inp.j && p.y >= standY) p.vy = JUMP; }
   p.vy += GP; p.x += p.vx; p.y += p.vy;
   if (p.y > standY) { p.y = standY; p.vy = 0; }
-  const lo = i ? NETX + NETW / 2 + PR : PR, hi = i ? W - PR : NETX - NETW / 2 - PR;
+  const lo = i ? NETX + NETW / 2 + PR : PR - EXT, hi = i ? W - PR + EXT : NETX - NETW / 2 - PR; // 코트 뒤쪽으로 EXT만큼 더 갈 수 있다
   p.x = Math.max(lo, Math.min(hi, p.x));
 }
 
-const SPK_N = 3, ARM_MS = 650; // 상대 진영으로 3번 넘기기 → 스파이크 1번 / 스파이크 버튼을 누르고 이 시간 안에 공에 닿으면 발동
+const SPK_N = 3, ARM_MS = 650, DSH_MAX = 2; // 상대 진영으로 3번 넘기기 → 스파이크 1번 / 스파이크 버튼을 누르고 이 시간 안에 공에 닿으면 발동
 export function mount(el, ctx) {
   let alive = true, raf = 0, acc = 0, lastT = 0;
   const canvas = h('canvas', { class: 'volley vb-cv', width: W, height: H }), g = canvas.getContext('2d');
@@ -58,11 +59,12 @@ export function mount(el, ctx) {
   const modeBtn = h('button', { class: 'vb-tb' }), newBtn = h('button', { class: 'vb-start' }, h('b', null, '▶ 시작'), h('small', null, '7점 먼저 내면 승리'));
   const inp = { l: false, r: false, j: false, s: false };
   // 스파이크 충전: [나, 상대] 기본 공격 횟수(0~3). 3이면 스파이크 준비 완료
-  const chg = [0, 0], armAt = [0, 0]; let flash = 0, shake = 0, spikeTxt = 0, lastHit = -1, camZ = 1, camTop = 0, ghost = null;
+  const chg = [0, 0], dsh = [0, 0], armAt = [0, 0]; let dHeld = false; let flash = 0, shake = 0, spikeTxt = 0, lastHit = -1, camZ = 1, camTop = 0, ghost = null;
   const btn = (k, cls, label, sub) => { const b = h('button', { class: 'vb-btn ' + cls }, h('b', null, label), sub && h('small', null, sub)); holdBtn(b, () => { inp[k] = true; if (k === 's') armAt[my()] = performance.now(); }, () => { inp[k] = false; }); return b; };
   const spkBtn = btn('s', 'spk', '스파이크', '0/3'); spkBtn.append(h('em', { class: 'vb-now' }, '눌러!')); const pips = h('div', { class: 'vb-pips' });
   const left = h('div', { class: 'vb-pad l' }, btn('l', 'mv', '◀'), btn('r', 'mv', '▶'));
-  const right = h('div', { class: 'vb-pad r' }, spkBtn, btn('j', 'jmp', '점프'));
+  const dshBtn = btn('d', 'dsh', '대쉬', '0/2');
+  const right = h('div', { class: 'vb-pad r' }, dshBtn, spkBtn, btn('j', 'jmp', '점프'));
   const exit = h('button', { class: 'vb-tb x', onClick: () => ctx.go('game') }, '✕ 나가기');
   const bar = el.querySelector('.bet-bar');
   const top = h('div', { class: 'vb-top' }, exit, info, bar || '', modeBtn);
@@ -81,7 +83,7 @@ export function mount(el, ctx) {
   wrap.addEventListener('pointerdown', goFull, { once: true });
   addEventListener('resize', fit); setTimeout(fit, 0); try { screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {}); } catch {}
 
-  const KEY = { ArrowLeft: 'l', ArrowRight: 'r', ArrowUp: 'j', a: 'l', d: 'r', w: 'j', ' ': 'j', s: 's', ArrowDown: 's', Shift: 's' };
+  const KEY = { ArrowLeft: 'l', ArrowRight: 'r', ArrowUp: 'j', a: 'l', d: 'r', w: 'j', ' ': 'j', s: 's', ArrowDown: 's', Shift: 's', x: 'd', e: 'd', Control: 'd' };
   const kd = e => { const k = KEY[e.key]; if (k) { e.preventDefault(); if (k === 's' && !inp.s) armAt[my()] = performance.now(); inp[k] = true; } };
   const ku = e => { const k = KEY[e.key]; if (k) inp[k] = false; };
   addEventListener('keydown', kd); addEventListener('keyup', ku);
@@ -97,22 +99,22 @@ export function mount(el, ctx) {
   const sprites = [null, null], yz = new Image(), bg = new Image(); yz.src = 'img/volley/ball.webp'; bg.src = 'img/volley/bg.webp';
   const yz0 = new Image(); yz0.src = yuzuUrl;
   const loadSprites = () => [0, 1].forEach(i => { const uid = mode === 'online' ? ctx.order[i] : (i ? null : ctx.uid); loadImg(capyUrl(uid ? ctx.capyOf(uid, { face: 'happy' }) : { color: 'choco', acc: 'towel', face: 'wink' })).then(im => { sprites[i] = im; }); });
-  const drawPips = () => { const n = chg[my()], ready = n >= SPK_N; pips.replaceChildren(h('small', null, ready ? '스파이크 준비 완료!' : `상대 진영으로 ${SPK_N - n}번 더 넘기면`), ...Array.from({ length: SPK_N }, (_, k) => h('i', { class: k < n ? 'on' : '' }))); spkBtn.classList.toggle('ready', ready); spkBtn.querySelector('small').textContent = ready ? '점프!' : `${n}/${SPK_N}`; };
+  const drawPips = () => { const dn = dsh[my()]; dshBtn.classList.toggle('ready', dn > 0); dshBtn.querySelector('small').textContent = `${dn}/${DSH_MAX}`; const n = chg[my()], ready = n >= SPK_N; pips.replaceChildren(h('small', null, ready ? '스파이크 준비 완료!' : `상대 진영으로 ${SPK_N - n}번 더 넘기면`), ...Array.from({ length: SPK_N }, (_, k) => h('i', { class: k < n ? 'on' : '' }))); spkBtn.classList.toggle('ready', ready); spkBtn.querySelector('small').textContent = ready ? '점프!' : `${n}/${SPK_N}`; };
 
   // 공을 쳤을 때: 스파이크 준비 + 버튼을 막 눌렀고 + 공중이면 스파이크, 아니면 기본 공격 1번 충전
   function onHit(i, p) {
     const mine = i === my(), cpu = mode === 'cpu' && i === 1;
     if (!mine && !cpu) return; // 온라인에서 상대가 친 건 상대 화면이 계산한다
     const armed = performance.now() - armAt[i] < ARM_MS || (mine && inp.s), air = p.y < standY - 40;
-    if (chg[i] >= SPK_N && armed && air) { chg[i] = 0; armAt[i] = 0; flash = 10; shake = 14; spikeTxt = 50; sfx('hit'); setTimeout(() => sfx('pop'), 60); drawPips(); return 'spike'; }
+    if (chg[i] >= SPK_N && armed && air) { chg[i] = 0; armAt[i] = 0; flash = 12; shake = 34; try { navigator.vibrate && navigator.vibrate([60, 30, 120]); } catch {} spikeTxt = 50; sfx('hit'); setTimeout(() => sfx('pop'), 60); drawPips(); return 'spike'; }
     lastHit = i; // 충전은 공이 내 손을 떠나 상대 진영으로 넘어갔을 때 1회(tick에서 센다)
   }
 
   function setGame(v) { const fresh = !v || v.n !== game.n || v.phase !== game.phase || v.at !== game.at;
     if (v && v.phase === 'over' && game.phase === 'serve') { const won = (v.sc0 > v.sc1 ? 0 : 1) === my(); ctx.earnMatch(PAY.volley(won) * (mode === 'online' ? 1 : 0.6), '배구', [`${won ? '승리' : '패배'} = ${PAY.volley(won)}코인`, ...(mode === 'online' ? [] : [`컴퓨터전 60% = ${Math.round(PAY.volley(won) * 0.6)}코인`])], won ? 'win' : 'lose', 'volley', mode === 'online'); gameFx(won ? 'win' : 'lose', `${v.sc0} : ${v.sc1}`); } // 방금 끝났을 때만
-    if (v && v.n === 1 && v.phase === 'serve' && game.n !== 1) { chg[0] = chg[1] = 0; drawPips(); }
+    if (v && v.n === 1 && v.phase === 'serve' && game.n !== 1) { chg[0] = chg[1] = dsh[0] = dsh[1] = 0; drawPips(); }
     game = v || { sc0: 0, sc1: 0, serve: 0, phase: 'idle', at: 0, n: 0 }; if (fresh) placeBall(); }
-  function newGame() { const v = { sc0: 0, sc1: 0, serve: 0, phase: 'serve', at: now(), n: (game.n || 0) + 1 }; chg[0] = chg[1] = 0; drawPips(); mode === 'online' ? ctx.store.set('games/volley', v) : setGame(v); ps[0].x = 200; ps[1].x = 600; }
+  function newGame() { const v = { sc0: 0, sc1: 0, serve: 0, phase: 'serve', at: now(), n: (game.n || 0) + 1 }; chg[0] = chg[1] = dsh[0] = dsh[1] = 0; drawPips(); mode === 'online' ? ctx.store.set('games/volley', v) : setGame(v); ps[0].x = 200; ps[1].x = 600; }
   function point(loser) {
     sfx('point');
     dead = true; deadMine = true;
@@ -127,13 +129,13 @@ export function mount(el, ctx) {
     if (mode !== 'online') return;
     const opp = 1 - ctx.idx;
     offs.push(ctx.store.on('games/volley', setGame));
-    offs.push(ctx.store.on('rt/volley/p' + opp, v => { if (!v) return; const lag = oppSeen ? 0 : 1; oppSeen = Date.now(); ghost = { x: v.x, y: v.y, vx: v.vx, vy: v.vy }; if (lag) Object.assign(ps[opp], ghost); chg[opp] = v.c || 0; }));
+    offs.push(ctx.store.on('rt/volley/p' + opp, v => { if (!v) return; const lag = oppSeen ? 0 : 1; oppSeen = Date.now(); ghost = { x: v.x, y: v.y, vx: v.vx, vy: v.vy }; if (lag) Object.assign(ps[opp], ghost); chg[opp] = v.c || 0; dsh[opp] = v.d || 0; }));
     offs.push(ctx.store.on('rt/volley/ball', v => {
       if (!v || v.side === ctx.idx || v.n !== game.n) return;
       const senderSide = (v.x < NETX ? 0 : 1) === v.side, mine = (ball.x < NETX ? 0 : 1) === ctx.idx;
       if ((!senderSide && mine) || deadMine) return;
       dead = false;
-      if (v.sp && !ball.spike) { flash = 8; shake = 12; spikeTxt = 50; sfx('hit'); }
+      if (v.sp && !ball.spike) { flash = 10; shake = 30; try { navigator.vibrate && navigator.vibrate(80); } catch {} spikeTxt = 50; sfx('hit'); }
       Object.assign(ball, { x: v.x, y: v.y, vx: v.vx, vy: v.vy, spike: v.sp || 0 });
       const k = Math.max(0, Math.min(20, Math.round((ctx.store.now() - v.t) / 16.7)));
       for (let i = 0; i < k; i++) if (stepBall(ball, [])) { ball.y = GROUND - BR; break; }
@@ -142,7 +144,7 @@ export function mount(el, ctx) {
   function send(t) {
     if (mode !== 'online' || t - sendT < 40) return; sendT = t;
     const p = ps[ctx.idx], r = n => Math.round(n * 10) / 10;
-    const pv = { x: r(p.x), y: r(p.y), vx: r(p.vx), vy: r(p.vy), c: chg[ctx.idx] }, key = JSON.stringify(pv);
+    const pv = { x: r(p.x), y: r(p.y), vx: r(p.vx), vy: r(p.vy), c: chg[ctx.idx], d: dsh[ctx.idx] }, key = JSON.stringify(pv);
     if (key !== lastP || t - lastPT > 1000) { lastP = key; lastPT = t; ctx.store.set('rt/volley/p' + ctx.idx, { ...pv, k: Math.round(t) }).catch(() => {}); }
     if (live() && (ball.x < NETX ? 0 : 1) === ctx.idx) ctx.store.set('rt/volley/ball', { x: r(ball.x), y: r(ball.y), vx: r(ball.vx), vy: r(ball.vy), sp: ball.spike || 0, side: ctx.idx, n: game.n, t: ctx.store.now() }).catch(() => {});
   }
@@ -153,10 +155,12 @@ export function mount(el, ctx) {
     o.j = ball.x > NETX && Math.abs(ball.x - p.x) < 70 && ball.y < p.y - 70 && ball.y > 170 && ball.vy > 0 && Math.random() < 0.15 + lv * 0.08;
     // 스파이크가 준비되면 네트 가까이에서 뛰어올라 내리꽂으려 한다
     if (chg[1] >= SPK_N && p.y < standY - 20 && ball.x > NETX && ball.x < NETX + 200 && Math.abs(ball.x - p.x) < 80 && Math.random() < 0.5 + lv * 0.1) armAt[1] = performance.now();
+    if (dsh[1] > 0 && p.y >= standY && !(p.dT > 0) && Math.abs(tx - p.x) > 170 && Math.random() < 0.05) { p.dT = 12; p.dDir = tx > p.x ? 1 : -1; dsh[1]--; }
     return o;
   }
   function tick() {
     const me = my();
+    { const p = ps[me], dir = (inp.r ? 1 : 0) - (inp.l ? 1 : 0); if (inp.d && !dHeld && dir && p.y >= standY && dsh[me] > 0 && !(p.dT > 0)) { p.dT = 12; p.dDir = dir; dsh[me]--; drawPips(); sfx('swing'); } dHeld = inp.d; } // 대쉬: 땅에 있을 때 방향키와 함께
     stepPlayer(ps[me], me, inp);
     if (mode === 'online') { // 상대: 마지막으로 받은 상태를 물리로 계속 진행시킨 '유령'을 부드럽게 따라간다(받을 때마다 순간이동하면 뚝뚝 끊겨 보인다)
       const o = ps[1 - me]; if (ghost) { if (Date.now() - oppSeen > 300) ghost.vx = 0; stepPlayer(ghost, 1 - me, null); o.x += (ghost.x - o.x) * 0.3; o.y += (ghost.y - o.y) * 0.35; o.vx = ghost.vx; o.vy = ghost.vy; } }
@@ -166,21 +170,24 @@ export function mount(el, ctx) {
     if (!live()) return;
     const bx0 = ball.x, bvx = ball.vx, bvy = ball.vy, landed = stepBall(ball, ps, onHit);
     // 스파이크 충전: 내가 친 공이 네트를 넘어 상대 진영으로 가면 1회(스파이크로 넘긴 건 빼고)
-    if (lastHit >= 0 && (bx0 < NETX) !== (ball.x < NETX) && (ball.x < NETX ? 1 : 0) === lastHit) { const i = lastHit; lastHit = -1; if (!ball.spike && chg[i] < SPK_N && (i === my() || (mode === 'cpu' && i === 1))) { chg[i]++; if (i === my()) { drawPips(); if (chg[i] === SPK_N) sfx('point'); } } }
+    // 대쉬도 같은 조건으로 1회씩 쌓인다(최대 2회)
+    if (lastHit >= 0 && (bx0 < NETX) !== (ball.x < NETX) && (ball.x < NETX ? 1 : 0) === lastHit) { const i = lastHit; lastHit = -1; if (!ball.spike && (i === my() || (mode === 'cpu' && i === 1))) { if (chg[i] < SPK_N) { chg[i]++; if (i === my() && chg[i] === SPK_N) sfx('point'); } if (dsh[i] < DSH_MAX) dsh[i]++; if (i === my()) drawPips(); } }
     if (ball.spike) { trail.push([ball.x, ball.y]); if (trail.length > 10) trail.shift(); } else if (trail.length) trail.shift();
     if (Math.abs(ball.vx - bvx) > 1.2 || ball.vy - bvy < -2) sfx('pop'); // 공이 튕길 때
     if (landed) {
-      ball.y = GROUND - BR; ball.vy = 0; ball.vx *= 0.5; if (ball.spike) shake = 10;
+      ball.y = GROUND - BR; ball.vy = 0; ball.vx *= 0.5; if (ball.spike) { shake = 26; try { navigator.vibrate && navigator.vibrate(150); } catch {} }
       const side = ball.x < NETX ? 0 : 1;
       if (mode === 'cpu' || side === ctx.idx) point(side); else dead = true;
     }
   }
   function draw() {
-    const sx = shake ? (Math.random() - 0.5) * shake : 0, sy = shake ? (Math.random() - 0.5) * shake : 0;
+    const sx = shake ? (Math.random() - 0.5) * shake * 1.5 : 0, sy = shake ? (Math.random() - 0.5) * shake * 1.5 : 0;
     g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#5DB9EE'; g.fillRect(0, 0, canvas.width, canvas.height);
     // 카메라: 공이 높이 뜨면 부드럽게 줌 아웃해서 공과 카피바라가 한 화면에 다 보이게, 내려오면 다시 줌 인
     if (ball.vy < 0 || !live()) camTop = Math.min(0, (ball.vy < 0 ? ball.y - ball.vy * ball.vy / (2 * GB) : ball.y) - BR - 50); // 올라가는 중이면 꼭대기 높이를 미리 계산
-    const want = H / (H - Math.max(-SKY - 60, camTop)); camZ += (want - camZ) * 0.06;
+    // 가로: 공·카피바라가 코트 뒤로 가면 그만큼 넓게 보여 준다(네트가 가운데)
+    const half = Math.max(...[ball.x, ps[0].x, ps[1].x].map(x => Math.abs(x - NETX))) + 230, wantW = Math.min(1, canvas.width / (2 * half) / VK);
+    const want = Math.min(H / (H - Math.max(-SKY - 60, camTop)), wantW); camZ += (want - camZ) * 0.06;
     const K = VK * camZ, OX = canvas.width / 2 - NETX * K, OY = canvas.height - H * K;
     g.setTransform(K, 0, 0, K, OX + sx * K, OY + sy * K);
     // 배경은 화면 가로에 꽉 맞게 키우고, 그림 속 모래선(높이의 400/450)이 코트 바닥에 오도록 맞춘다(위아래는 잘려도 된다)
@@ -194,6 +201,7 @@ export function mount(el, ctx) {
     g.beginPath(); g.ellipse(ball.x, GROUND + 3, 20, 5, 0, 0, 7); g.fill();
     ps.forEach((p, i) => { const im = sprites[i];
       if (chg[i] >= SPK_N) { g.save(); g.globalAlpha = .45 + Math.sin(performance.now() / 120) * .2; const gr = g.createRadialGradient(p.x, p.y + 10, 10, p.x, p.y + 10, 70); gr.addColorStop(0, '#FFE066'); gr.addColorStop(1, 'rgba(255,224,102,0)'); g.fillStyle = gr; g.beginPath(); g.arc(p.x, p.y + 10, 70, 0, 7); g.fill(); g.restore(); }
+      if (im && p.dT > 0) { g.save(); g.globalAlpha = .35; const ox = -p.dDir * 34; if (i === 1) { g.translate(p.x + ox, 0); g.scale(-1, 1); g.drawImage(im, -50, p.y - 59, 100, 131.7); } else g.drawImage(im, p.x + ox - 50, p.y - 59, 100, 131.7); g.restore(); } // 대쉬 잔상
       if (im) { if (i === 1) { g.save(); g.translate(p.x, 0); g.scale(-1, 1); g.drawImage(im, -50, p.y - 59, 100, 131.7); g.restore(); } else g.drawImage(im, p.x - 50, p.y - 59, 100, 131.7); } else { g.fillStyle = '#BC8C60'; g.beginPath(); g.arc(p.x, p.y, PR, 0, 7); g.fill(); } });
     // 스파이크 꼬리
     trail.forEach(([x, y], k) => { g.globalAlpha = (k + 1) / trail.length * 0.5; g.fillStyle = '#FF8A00'; g.beginPath(); g.arc(x, y, BR * (0.4 + k / trail.length * 0.6), 0, 7); g.fill(); }); g.globalAlpha = 1;
@@ -223,7 +231,7 @@ export function mount(el, ctx) {
   }
   function setMode(m) {
     mode = m; modeBtn.textContent = m === 'online' ? '컴퓨터와 연습' : '둘이 하기'; modeBtn.hidden = ctx.order.length < 2;
-    ps[0].x = 200; ps[1].x = 600; chg[0] = chg[1] = 0; ghost = null; oppSeen = 0; drawPips(); setGame(null); loadSprites(); connect();
+    ps[0].x = 200; ps[1].x = 600; chg[0] = chg[1] = dsh[0] = dsh[1] = 0; ghost = null; oppSeen = 0; drawPips(); setGame(null); loadSprites(); connect();
   }
   modeBtn.onclick = () => setMode(mode === 'online' ? 'cpu' : 'online');
   newBtn.onclick = newGame;

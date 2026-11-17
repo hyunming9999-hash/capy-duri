@@ -1410,3 +1410,5 @@ body.vb-on { overflow: hidden; }
 .vb-start:active { transform: translate(-50%, -48%); box-shadow: 0 3px 0 #C97F00; }
 .vb-start[hidden] { display: none; }
 @keyframes startPulse { 0%, 100% { scale: 1; } 50% { scale: 1.05; } }
+.vb-btn.dsh { width: 62px; height: 62px; background: rgba(110,115,122,.7); align-self: flex-end; } .vb-btn.dsh b { font-size: 14px; } .vb-btn.dsh small { font-size: 10px; font-weight: 700; margin-top: 2px; }
+.vb-btn.dsh.ready { background: linear-gradient(#5EE0A0, #1FA868); }
