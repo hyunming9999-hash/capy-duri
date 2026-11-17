@@ -105,6 +105,8 @@ const SPIKE = [0, 14, 20, 26], SPIKE_GAP = [[0, 0], [5, 8], [4, 6.5], [3, 5]], T
 // 난이도 맞춤(가상 플레이로 맞춘 값): 손이 빠른 사람이 초급 낚싯대로 초급 56%·중급 48%·고급 39%쯤, 고급 낚싯대로 79%·79%·71%쯤 잡는다. 서툴면 거의 못 잡는다
 // BAND_LO = 이 값부터 끊어짐 칸(80) 전까지가 '주황 칸'. 줄이 주황 칸에 있을 때 감아야 끌려온다(깊은 바다일수록 좁다)
 // ZONE_TEN = 바다별로 줄이 팽팽해지는 빠르기, ZONE_REEL = 감기는 빠르기, PATIENCE = 물고기 인내심(초, 깊을수록 짧다), ROD_TEN = 좋은 낚싯대일수록 줄이 덜 팽팽해진다
+// 낚싯대가 바다보다 높으면(EZ 단계 = 낚싯대 등급 - 바다 등급) 더 쉽게: 줄이 덜 팽팽해지고, 감는 칸이 넓고, 더 잘 감기고, 물고기가 더 오래 버틴다
+const EZ_TEN = [1, 0.8, 0.66], EZ_BAND = [0, 7, 12], EZ_REEL = [1, 1.25, 1.5], EZ_PAT = [0, 4, 7], EZ_BITE = [0, 150, 260];
 const BAND_LO = [0, 55, 64, 68], ZONE_TEN = [0, 1.3, 1, 0.92], ZONE_REEL = [0, 1, 1.4, 2.3], PATIENCE = [0, 17, 15, 14], ROD_TEN = [1, 1, 0.91, 0.84];
 export const strikesOf = () => 2;
 export const weightOf = (f, cm) => (f.pearl || f.icon ? 0 : Math.max(0.01, Math.pow(cm, 3) * (f.name === '고래킹' ? 0.00003 : 0.000013)));
@@ -115,7 +117,7 @@ const kg = w => (w >= 1000 ? (w / 1000).toFixed(2) + 't' : w >= 1 ? w.toFixed(1)
 export function openFishing(o) {
   let c0 = 0, castTo = 60, flew = false, clickAt = 0, creakAt = 0, pressAt = 0, eyeAt = 0, taps = 0, pat = 0, pat0 = 1, nextSpike = 0, tele = 0;
   let stormAt = 0, alive = true, raf = 0, last = 0, phase = 'ready', power = 0, pdir = 1, t0 = 0, biteAt = 0, biteEnd = 0, nibAt = 0, cur = null, dist = 100, ten = 30, hold = false, burst = 0, nextBurst = 0, slack = 0, shown = false;
-  const zone = o.zone, rodT = () => o.bag().rod || 0, rod = () => RODS[rodT()];
+  const zone = o.zone, rodT = () => o.bag().rod || 0, rod = () => RODS[rodT()], ez = () => Math.max(0, Math.min(2, rodT() - zone));
   const float = h('i', { class: 'fs-float' }), hook = h('i', { class: 'fs-hook' }), rl = h('div', { class: 'fs-rl', html: '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="" fill="none" stroke="#fff" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>' }), fishEl = h('div', { class: 'fs-fish' }), mark = h('b', { class: 'fs-mark' });
   const me = h('div', { class: 'fs-me', html: capy(o.ctx.capyOf(o.ctx.uid, { face: 'happy' })) }), rodEl = h('i', { class: 'fs-rod' });
   // 위: 타고 온 배가 그대로 물 위에 떠 있다. 아래: 물속(구역마다 그림이 다르다)
@@ -170,7 +172,7 @@ export function openFishing(o) {
     if (phase !== 'wait') return;
     if (now < biteAt) { sfx('miss'); return ready('너무 빨랐어요. 물고기가 놀라 달아났어요. (미끼 1개 사용)'); }
     if (shown && now > biteEnd) return;
-    pat0 = pat = cur.f.icon ? 99 : PATIENCE[zone] + (cur.f.king || cur.f.pearl ? 4 : 0); bar.style.setProperty('--lo', BAND_LO[zone] + '%'); tele = 0; nextSpike = cur.f.icon ? Infinity : now + rnd(...SPIKE_GAP[zone]) * 1000; taps = 0; patEl.hidden = !!cur.f.icon;
+    pat0 = pat = cur.f.icon ? 99 : PATIENCE[zone] + (cur.f.king || cur.f.pearl ? 4 : 0) + EZ_PAT[ez()]; bar.style.setProperty('--lo', (BAND_LO[zone] - EZ_BAND[ez()]) + '%'); tele = 0; nextSpike = cur.f.icon ? Infinity : now + rnd(...SPIKE_GAP[zone]) * 1000; taps = 0; patEl.hidden = !!cur.f.icon;
     if (cur.f.pearl) { pearlTxt.textContent = '✨ 바다 진주다! ✨'; sfx('bigfish'); }
     stormAt = !cur.f.icon && Math.random() < STORM_P ? now + rnd(1200, 4000) : 0; // 가끔 풍랑: 싸우는 도중에 불면 무조건 놓친다(진주부적을 쓴 진주는 싸움 없이 끌어올려서 안 걸린다)
     sfx('hookset'); strikes = 0; drawPips(true); phase = 'fight'; dist = 100; ten = 35; burst = 0; slack = 0; nextBurst = now + rnd(900, 1800); wrap.classList.add('fight'); fishEl.className = 'fs-fish on'; fishEl.innerHTML = shadow();
@@ -218,20 +220,20 @@ export function openFishing(o) {
     else if (phase === 'power') { power += pdir * dt * (150 + zone * 25); if (power >= 100) { power = 100; pdir = -1; } if (power <= 0) { power = 0; pdir = 1; } setBar(power, 'pow'); }
     else if (phase === 'wait') {
       float.classList.toggle('nib', !!nibAt && now > nibAt && now < nibAt + 350);
-      if (now >= biteAt && !shown) { shown = true; biteEnd = now + [0, 900, 700, 520][zone] + cur.p * 260 - (rodT() < zone ? 130 : 0) - (cur.f.pearl ? 180 : 0); float.classList.add('bite'); mark.textContent = '!'; splash(fx); sfx('bite'); }
+      if (now >= biteAt && !shown) { shown = true; biteEnd = now + [0, 900, 700, 520][zone] + EZ_BITE[ez()] + cur.p * 260 - (rodT() < zone ? 130 : 0) - (cur.f.pearl ? 180 : 0); float.classList.add('bite'); mark.textContent = '!'; splash(fx); sfx('bite'); }
       if (!shown) fishEl.style.left = fx + (1 - Math.min(1, (now - t0) / (biteAt - t0))) * 65 + (nibAt && now > nibAt && now < nibAt + 350 ? -3 : 4) + '%'; else fishEl.style.left = fx + '%';
       if (shown && now > biteEnd) fail('놓쳤어요. 미끼만 먹고 갔어요.');
     } else if (phase === 'fight') {
       if (stormAt && now > stormAt) return void storm();
       const d = cur.d;
       if (!burst && now > nextBurst) { burst = now + (450 + d * 50); } if (burst && now > burst) { burst = 0; nextBurst = now + Math.max(1100, 3000 - d * 150) * rnd(0.7, 1.3); }
-      const B = !!burst, TM = ZONE_TEN[zone] * ROD_TEN[rodT()], LO = cur.f.icon ? 0 : BAND_LO[zone]; pat -= dt; patEl.firstChild.style.width = Math.max(0, pat / pat0 * 100) + '%'; patEl.classList.toggle('low', pat < pat0 * 0.3);
+      const B = !!burst, TM = ZONE_TEN[zone] * ROD_TEN[rodT()] * EZ_TEN[ez()], LO = cur.f.icon ? 0 : BAND_LO[zone] - EZ_BAND[ez()]; pat -= dt; patEl.firstChild.style.width = Math.max(0, pat / pat0 * 100) + '%'; patEl.classList.toggle('low', pat < pat0 * 0.3);
       if (pat <= 0) { delete fishEl.dataset.rev; return void fail(taps >= 4 ? '물고기가 눈치채고 떠났어요. 찔끔찔끔 감으면 안 돼요.' : '너무 오래 끌었어요. 물고기가 바늘을 털고 떠났어요.'); }
       wrap.classList.toggle('reel', hold); if (hold && now > clickAt) { clickAt = now + (B ? 150 : 75); sfx('reel'); } if (ten > 74 && now > creakAt) { creakAt = now + 260; sfx('strain'); }
       // 화내기: 0.4초 동안 빨갛게 부르르 떨다가(신호) 팔짝 뛰면서 줄이 확 팽팽해진다
       if (!tele && now > nextSpike) { tele = now + TELE; fishEl.classList.add('mad'); sfx('tock'); }
       if (tele && now >= tele) { tele = 0; nextSpike = now + rnd(...SPIKE_GAP[zone]) * 1000; ten += SPIKE[zone] * TM * (hold ? 1 : 0.5); fishEl.classList.remove('mad'); fishEl.classList.add('jump'); setTimeout(() => fishEl.classList.remove('jump'), 520); splash(fx, true); sfx('splash'); bar.classList.add('spike'); setTimeout(() => bar.classList.remove('spike'), 300); }
-      if (hold) { dist -= (cur.f.icon ? 34 : Math.max(7, 27 - d * 1.5) * ZONE_REEL[zone] * (ten >= LO ? 1 : 0.15)) * (1 + cur.p * 0.2) * dt * (B ? 0.5 : 1); ten += (25 + d * 1.1) * 1.12 * TM * (1 - cur.p * 0.25) * (B ? 1.35 : 1) * dt; } // 멀리 던졌으면 더 잘 감기고 줄이 덜 팽팽해진다
+      if (hold) { dist -= (cur.f.icon ? 34 : Math.max(7, 27 - d * 1.5) * ZONE_REEL[zone] * (ten >= LO ? 1 : 0.15)) * (1 + cur.p * 0.2) * EZ_REEL[ez()] * dt * (B ? 0.5 : 1); ten += (25 + d * 1.1) * 1.12 * TM * (1 - cur.p * 0.25) * (B ? 1.35 : 1) * dt; } // 멀리 던졌으면 더 잘 감기고 줄이 덜 팽팽해진다
       else { ten -= (50 - d * 0.8) * dt; dist += (0.8 + d * 0.42) * 1.2 * (B ? 1.4 : 1) * dt; }
       // 끊어짐 칸(80)을 건드리면 한 번으로 센다. 줄이 튕기며 물고기가 조금 달아나고, 정해진 횟수를 다 쓰면 놓친다
       if (ten >= 80) { strikes++; drawPips(true); if (strikes >= lim()) { delete fishEl.dataset.rev; return void (cur.f.icon ? landed() : fail('줄이 끊어졌어요! 끊어짐 칸을 두 번 건드렸어요.')); }
