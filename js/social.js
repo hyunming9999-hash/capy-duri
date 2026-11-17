@@ -539,6 +539,8 @@ export function mount(el, ctx) {
   const CROW_N = 2, CROW_MS = 25000, CROW_STAY = 300000, PICK_MS = 10000; // 하루 2번: 첫 번째는 친목회 5분째, 두 번째는 그 뒤 아무 때나(2~25분 더 놀다 보면)
   let crow = null, crowStay = 0, crowLast = 0, worldEl = null, stageEl = null, charmSnooze = 0;
   if (isMock) window.capyDebug = { crow: () => { crowStay = 1e9; }, charm: () => { charmSnooze = 0; window.capyDebug.charmNow = true; }, fx: n => charmFx(n) }; // 연습 모드에서만: 시험용으로 바로 부르기
+  // 화·수요일은 예전처럼(하루 2번: 5분째 + 그 뒤 2~25분, 한 번에 둘을 이간질), 다른 날은 접속 2분째에 1번만, 한 마리만
+  const crowBig = () => [2, 3].includes(new Date().getDay()), crowMax = () => (crowBig() ? CROW_N : 1), crowWho = () => (crowBig() ? 2 : 1);
   const crowUsed = () => (bag.crowDay === ymd() ? bag.crowN || 0 : 0);
   let srNext = 0, srAt = 0, srUntil = 0; const srSaid = new Set();
   function sRumorTick(now, paused, wet) {
@@ -554,13 +556,13 @@ export function mount(el, ctx) {
   function crowTick(now, paused, wet) {
     if (crow) return crowMove(now, paused);
     const dt = crowLast ? Math.min(1000, now - crowLast) : 0; crowLast = now;
-    if (trial || !worldEl || crowUsed() >= CROW_N) return;
+    if (trial || !worldEl || crowUsed() >= crowMax()) return;
     if (!paused) crowStay += dt; // 친목회에 머문 시간(창이 떠 있는 동안은 빼고). 정해진 시간이 넘으면 땅 위로 나오는 순간 반드시 나타난다
-    const need = crowUsed() ? (bag.crow2At || 600000) : CROW_STAY; if (crowStay < need || paused || wet || me.boat) return;
-    const pool = actors.map((o, i) => i).filter(i => A(i) >= 50 && A(i) <= 100 && actors[i].st !== 'chase');
+    const need = crowUsed() ? (bag.crow2At || 600000) : crowBig() ? CROW_STAY : 120000; if (crowStay < need || paused || wet || me.boat) return;
+    const pool = actors.map((o, i) => i).filter(i => A(i) >= 50 && A(i) <= 100 && actors[i].st !== 'chase' && ctx.store.now() - Math.max((mine[i] || {}).crowHit || 0, ((mine[i] || {}).crowLie || {}).t || 0) > 3 * 86400000); // 한 번 당한 동물은 3일 동안 안 당한다
     if (!pool.length) return;
     // 화면에서 보이도록 내 근처 넷 중에서 무작위로 둘을 고른다
-    crowSpawn(now, pool.sort((a, b) => Math.abs(actors[a].x - me.x) - Math.abs(actors[b].x - me.x)).slice(0, 4).sort(() => Math.random() - 0.5).slice(0, 2));
+    crowSpawn(now, pool.sort((a, b) => Math.abs(actors[a].x - me.x) - Math.abs(actors[b].x - me.x)).slice(0, 4).sort(() => Math.random() - 0.5).slice(0, crowWho()));
   }
   function crowSpawn(now, targets) {
     const first = !crowUsed(); saveBag({ crowDay: ymd(), crowN: crowUsed() + 1, ...(first ? { crow2At: Math.round((120 + Math.random() * 1380) * 1000) } : {}) }); crowStay = 0; // 두 번째는 첫 번째 뒤로 2~25분 더 놀아야(정말 랜덤)
@@ -610,7 +612,7 @@ export function mount(el, ctx) {
     if (ok) { pop(c.e, '까악?! 부, 부적이다!', 'say'); gameFx('win', '까마귀 퇴치!'); c.targets.forEach((i, n) => setTimeout(() => alive && actors[i] && pop(actors[i].e, toned(i, '역시 까마귀는 나쁜 놈이었어!'), 'say long'), 900 + n * 900)); }
     else { if (why) toast(why); pop(c.e, '까악까악! 속았지롱~', 'say'); sfx('lose');
       c.targets.forEach((i, n) => { const r = mine[i] || {}, lost = Math.min(A(i), 15 + Math.floor(Math.random() * 6)), top = A(i) >= 100 || r.hit100;
-        setRel(i, { a: A(i) - lost, crowLie: { n: Math.min(5, lost), t: ctx.store.now() }, ...(top ? { hit100: true, crowed: true } : {}) });
+        setRel(i, { a: A(i) - lost, crowHit: ctx.store.now(), crowLie: { n: Math.min(5, lost), t: ctx.store.now() }, ...(top ? { hit100: true, crowed: true } : {}) });
         // 이간질당한 동물은 나한테 걸어와서 따진다
         setTimeout(() => { if (!alive || !actors[i]) return; const o = actors[i]; if (o.st !== 'chase') { leave(o); o.st = 'walk'; o.spot = null; o.wait = 0; o.tx = Math.max(40, Math.min(WATER_X - 40, me.x + (n ? 56 : -56))); o.e.classList.add('walk'); o.e.classList.toggle('left', o.tx < o.x); const sp = o.sp; o.sp = 150; setTimeout(() => { o.sp = sp; }, 6000); }
           setTimeout(() => { if (!alive) return; pop(o.e, toned(i, `${ctx.me.name}, 어떻게 나한테 그럴 수 있어?`) + ` (친밀도 -${lost})`, 'say long'); animalVoice(i); o.e.classList.add('ouch'); setTimeout(() => o.e.classList.remove('ouch'), 600); }, Math.min(4500, 500 + Math.abs(o.x - me.x) / 150 * 1000)); }, 900 + n * 1100); });
