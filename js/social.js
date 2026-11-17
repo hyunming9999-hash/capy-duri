@@ -211,8 +211,10 @@ export function mount(el, ctx) {
     palEl = h('div', { class: 'so-me so-pal', style: { display: 'none' } }); pal.spot = null; pal.dx = -1; world.append(palEl); drawPal();
     // 카피수퍼: 바닷가 그림 속 매점 건물. 이 건물을 눌러야 들어간다(간판에 카피바라 얼굴, 아래에 '수퍼')
     const bx = (x, y) => [PW + x / 1213 * TILE, y / 520 * H], [mx0, my0] = bx(218, 176), [mx1, my1] = bx(392, 316);
+    const [gx0, gy0] = bx(257, 241), [gx1, gy1] = bx(354, 272), gw = gx1 - gx0, gh = gy1 - gy0; // 유리창 칸: 글씨는 이 안에만
     world.append(h('button', { class: 'so-mart', 'aria-label': '카피수퍼 들어가기', style: { left: mx0 + 'px', top: my0 + 'px', width: mx1 - mx0 + 'px', height: my1 - my0 + 'px' }, onClick: () => openShop() },
-      h('span', { class: 'so-mart-face', html: capy({ color: 'brown', face: 'happy', head: true }) }), h('b', { class: 'so-mart-t', style: { fontSize: Math.round((mx1 - mx0) * 0.25) + 'px' } }, '수퍼')));
+      h('span', { class: 'so-mart-face', style: { width: (mx1 - mx0) * 0.88 + 'px' }, html: GRANDPA }),
+      h('b', { class: 'so-mart-t', style: { left: gx0 - mx0 + 'px', top: gy0 - my0 + 'px', width: gw + 'px', height: gh + 'px', fontSize: Math.floor(Math.min(gh * 0.82, gw / 2.6)) + 'px' } }, '수퍼')));
     scroller.append(world); worldEl = world;
     rideBtn = h('button', { class: 'dp so-dp so-ride', disabled: true, onClick: toggleRide }, '🎠', h('small', null, '타기'));
     const pad = h('div', { class: 'so-pad' }, h('div', { class: 'dpad so-dpad' }, [['U', '▲'], ['L', '◀'], ['D', '▼'], ['R', '▶']].map(([k, t]) => { const b = h('button', { class: 'dp so-dp dp-' + k, 'aria-label': k }, t); holdBtn(b, () => keys.add(k), () => keys.delete(k)); return b; })),
