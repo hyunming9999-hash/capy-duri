@@ -56,7 +56,7 @@ export function stepPlayer(p, i, inp, speed = SPEED) {
 
 const SPK_N = 3, ARM_MS = 1300, DSH_MAX = 2; // 상대 진영으로 3번 넘기기 → 스파이크 1번 / 스파이크 버튼을 누르고 이 시간 안에 공에 닿으면 발동
 export function mount(el, ctx) {
-  let alive = true, raf = 0, acc = 0, lastT = 0;
+  let alive = true, raf = 0, acc = 0, lastT = 0, dprCap = 2, slowN = 0, frN = 0;
   const canvas = h('canvas', { class: 'vb-cv', width: W, height: H }), g = canvas.getContext('2d');
   const info = h('div', { class: 'vb-info' }, '불러오는 중…');
   const modeBtn = h('button', { class: 'vb-tb' }), newBtn = h('button', { class: 'vb-start' }, h('b', null, '▶ 시작'), h('small', null, '7점 먼저 내면 승리'), h('em', null, '🏃 신속한 움직임을 위해 장신구를 모두 벗었어요!'));
@@ -101,7 +101,7 @@ export function mount(el, ctx) {
   rot.append(intro); // 화면 전체(게임 카드 안에 넣으면 둥근 모서리에 잘린다)
   // 세로로 들고 있으면 화면을 90도 돌려 가로로 보여 준다. 조작 버튼은 코트를 가리지 않게 양옆에 둔다
   // 가로 풀화면: 화면 전체가 캔버스. 코트는 높이에 꽉 맞추고, 남는 양옆은 배경을 이어 그린다
-  const fit = () => { const pw = innerWidth, ph = innerHeight, port = ph > pw, w = port ? ph : pw, hh = port ? pw : ph, dpr = Math.min(2, devicePixelRatio || 1);
+  const fit = () => { const pw = innerWidth, ph = innerHeight, port = ph > pw, w = port ? ph : pw, hh = port ? pw : ph, dpr = Math.min(dprCap, devicePixelRatio || 1);
     rot.style.width = w + 'px'; rot.style.height = hh + 'px'; rot.style.transform = `translate(-50%, -50%)${port ? ' rotate(90deg)' : ''}`;
     canvas.width = Math.round(w * dpr); canvas.height = Math.round(hh * dpr); canvas.style.width = w + 'px'; canvas.style.height = hh + 'px';
     PADB = LAY === 'A' ? Math.round(hh * 0.24 * dpr) : 0; rot.dataset.lay = LAY; try { rot.dataset.wm = new URLSearchParams(location.search).get('vbwm') || localStorage.getItem('capy.vbWm') || 'w0'; } catch {} try { rot.dataset.skin = new URLSearchParams(location.search).get('vbskin') || localStorage.getItem('capy.vbSkin') || 'k2'; } catch {}
@@ -225,7 +225,7 @@ export function mount(el, ctx) {
     if (flash) flash--; if (shake) shake--; if (spikeTxt) spikeTxt--;
     if (!live()) return;
     if ((ball.x < NETX) !== (prevSide === 0) && live()) { lastTouch = prevSide; } prevSide = ball.x < NETX ? 0 : 1;
-    hitNow = false; const hitters = mode === 'online' ? ps.map((p, i) => (i === ctx.idx ? p : FAR)) : ps;
+    hitNow = false; const hitters = mode === 'online' && !ghost ? ps.map((p, i) => (i === ctx.idx ? p : FAR)) : ps;
     const bx0 = ball.x, bvx = ball.vx, bvy = ball.vy, landed = stepBall(ball, hitters, onHit);
     if (hitNow && mode === 'online') sendHit();
     // 스파이크 충전: 내가 친 공이 네트를 넘어 상대 진영으로 가면 1회(스파이크로 넘긴 건 빼고)
@@ -325,7 +325,8 @@ export function mount(el, ctx) {
   }
   function loop(t) {
     if (!alive) return; raf = requestAnimationFrame(loop);
-    acc += Math.min(100, t - (lastT || t)); lastT = t;
+    const fdt = t - (lastT || t); acc += Math.min(100, fdt); lastT = t;
+    if (dprCap > 1 && fdt > 0) { frN++; if (fdt > 24) slowN++; if (frN >= 90) { if (slowN > 25) { dprCap = dprCap > 1.5 ? 1.5 : 1; fit(); } frN = slowN = 0; } }
     while (acc >= 16.67) { tick(); acc -= 16.67; }
     send(t); draw();
     const showLv = game.phase !== 'serve' && mode === 'cpu'; if (lvRow.hidden === showLv) { lvRow.hidden = !showLv; if (showLv) drawLv(); }
