@@ -101,7 +101,7 @@ export function mount(el, ctx) {
   // 서브 공은 서브하는 카피바라 머리 위에서 나온다(지금 서 있는 자리 그대로)
   const serveX = () => { const p = ps[game.serve ? 1 : 0], lo = game.serve ? NETX + 60 : -EXT + 40, hi = game.serve ? W + EXT - 40 : NETX - 60; return Math.max(lo, Math.min(hi, p && isFinite(p.x) ? p.x : (game.serve ? 600 : 200))); };
   const placeBall = () => { lastHit = -1; prevSide = game.serve ? 1 : 0; lastTouch = game.serve; Object.assign(ball, { x: serveX(), y: 150, vx: 0, vy: 0, rot: 0, spike: 0 }); trail.length = 0; dead = false; deadMine = false; };
-  const sprites = [null, null], yz = new Image(), bg = new Image(), wallL = new Image(), wallR = new Image(); wallL.src = 'img/volley/wallL.webp'; wallR.src = 'img/volley/wallR.webp'; yz.src = 'img/volley/ball.webp'; bg.src = 'img/volley/bg.webp';
+  const sprites = [null, null], yz = new Image(), bg = new Image(), wallL = new Image(), wallR = new Image(), palm = new Image(); palm.src = 'img/volley/palm.webp'; wallL.src = 'img/volley/wallL.webp'; wallR.src = 'img/volley/wallR.webp'; yz.src = 'img/volley/ball.webp'; bg.src = 'img/volley/bg.webp';
   const yz0 = new Image(); yz0.src = yuzuUrl;
   const loadSprites = () => [0, 1].forEach(i => { const uid = mode === 'online' ? ctx.order[i] : (i ? null : ctx.uid); loadImg(capyUrl(uid ? ctx.capyOf(uid, { face: 'happy', rare: null, pin: '', hat: '', acc: 'none' }) : { color: 'choco', acc: 'towel', face: 'wink' })).then(im => { sprites[i] = im; }); });
   const drawPips = () => { const dn = dsh[my()]; dshBtn.classList.toggle('ready', dn > 0); dshBtn.querySelector('small').textContent = `${dn}/${DSH_MAX}`; const n = chg[my()], ready = n >= SPK_N; pips.replaceChildren(h('small', null, ready ? '스파이크 준비 완료!' : `상대 진영으로 ${SPK_N - n}번 더 넘기면`), ...Array.from({ length: SPK_N }, (_, k) => h('i', { class: k < n ? 'on' : '' }))); spkBtn.classList.toggle('ready', ready); spkBtn.querySelector('small').textContent = ready ? '점프!' : `${n}/${SPK_N}`; };
@@ -212,9 +212,12 @@ export function mount(el, ctx) {
     // 배경은 화면 가로에 꽉 맞게 키우고, 그림 속 모래선(높이의 400/450)이 코트 바닥에 오도록 맞춘다(위아래는 잘려도 된다)
     if (bg.complete && bg.naturalWidth) { const bw = canvas.width / K + 12, bh = bw * H / W, bx = -OX / K - 6, by = GROUND - bh * GROUND / H; if (by > -OY / K) { g.fillStyle = '#5DB9EE'; g.fillRect(bx, -OY / K - 4, bw, by - (-OY / K) + 8); } g.drawImage(bg, bx, by, bw, bh); } else { g.fillStyle = '#9DD6F0'; g.fillRect(0, 0, W, H); g.fillStyle = '#E8C98F'; g.fillRect(0, GROUND, W, H - GROUND); }
     // 양 끝 벽(대나무 기둥): 화면 위쪽 끝까지 이어 그린다
-    if (wallL.complete && wallL.naturalWidth && wallR.complete && wallR.naturalWidth) { const ww = 110, topW = -OY / K - 20;
-      // 흰 벽돌 벽(왼쪽: 레트로 포스터, 오른쪽: 하이파이브 포스터). 위로는 맨 위 '벽돌만 있는 부분'을 이어 붙인다
+    // 야자수: 바다 쪽 먼 배경에 서 있는 장식(공·카피바라와 부딪히지 않는다)
+    if (palm.complete && palm.naturalWidth) { const ph = 300, pw = ph * palm.naturalWidth / palm.naturalHeight; for (const [px, fl] of [[-40, 1], [840, -1]]) { g.save(); g.translate(px, 0); g.scale(fl, 1); g.globalAlpha = .95; g.drawImage(palm, -pw / 2, GROUND - 40 - ph, pw, ph); g.restore(); } }
+    if (wallL.complete && wallL.naturalWidth && wallR.complete && wallR.naturalWidth) { const ww = 110, topW = -OY / K - 20, viewL = -OX / K - 10, viewR = (canvas.width - OX) / K + 10;
+      // 흰 벽돌 벽(왼쪽: 레트로 포스터, 오른쪽: 하이파이브 포스터). 위로는 맨 위 '벽돌만 있는 부분'을 이어 붙이고, 벽 바깥은 화면 끝까지 벽돌로 채운다
       for (const [img, wx, side] of [[wallL, WALL_L, -1], [wallR, WALL_R, 1]]) { const iw = img.naturalWidth, ih = img.naturalHeight, wh = ww * ih / iw, x0 = side < 0 ? wx - ww + 16 : wx - 16, y0 = GROUND + 16 - wh, sl = ih * 0.28, slH = ww * sl / iw;
+        for (let cx = x0 + side * (ww - 2); side < 0 ? cx + ww > viewL : cx < viewR; cx += side * (ww - 2)) for (let y = GROUND + 16 - slH; y + slH > topW; y -= slH - 1) g.drawImage(img, 0, 0, iw, sl, cx, y, ww, slH);
         for (let y = y0 - slH + 1; y + slH > topW; y -= slH - 1) g.drawImage(img, 0, 0, iw, sl, x0, y, ww, slH);
         g.drawImage(img, x0, y0, ww, wh); } }
     else { g.fillStyle = '#F4F1EA'; g.fillRect(WALL_L - 60, -SKY - 400, 60, GROUND + SKY + 420); g.fillRect(WALL_R, -SKY - 400, 60, GROUND + SKY + 420); }
