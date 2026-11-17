@@ -205,21 +205,22 @@ export function mount(el, ctx) {
     // 카메라: 공이 높이 뜨면 부드럽게 줌 아웃해서 공과 카피바라가 한 화면에 다 보이게, 내려오면 다시 줌 인
     if (ball.vy < 0 || !live()) camTop = Math.min(0, (ball.vy < 0 ? ball.y - ball.vy * ball.vy / (2 * GB) : ball.y) - BR - 50); // 올라가는 중이면 꼭대기 높이를 미리 계산
     // 가로: 공·카피바라가 코트 뒤로 가면 그만큼 넓게 보여 준다(네트가 가운데)
-    const half = Math.max(...[ball.x, ps[0].x, ps[1].x].map(x => Math.abs(x - NETX))) + 230, wantW0 = 0, wantW = Math.min(1, canvas.width / (2 * Math.min(half, WALL_R - NETX + 70)) / VK);
+    const half = Math.max(...[ball.x, ps[0].x, ps[1].x].map(x => Math.abs(x - NETX))) + 230, wantW0 = 0, wantW = Math.min(1, canvas.width / (2 * Math.min(half, WALL_R - NETX + 125)) / VK);
     const want = Math.min(H / (H - Math.max(-SKY - 60, camTop)), wantW); camZ += (want - camZ) * 0.06;
     const K = VK * camZ, OX = canvas.width / 2 - NETX * K, OY = canvas.height - H * K;
     g.setTransform(K, 0, 0, K, OX + sx * K, OY + sy * K);
     // 배경은 화면 가로에 꽉 맞게 키우고, 그림 속 모래선(높이의 400/450)이 코트 바닥에 오도록 맞춘다(위아래는 잘려도 된다)
     if (bg.complete && bg.naturalWidth) { const bw = canvas.width / K + 12, bh = bw * H / W, bx = -OX / K - 6, by = GROUND - bh * GROUND / H; if (by > -OY / K) { g.fillStyle = '#5DB9EE'; g.fillRect(bx, -OY / K - 4, bw, by - (-OY / K) + 8); } g.drawImage(bg, bx, by, bw, bh); } else { g.fillStyle = '#9DD6F0'; g.fillRect(0, 0, W, H); g.fillStyle = '#E8C98F'; g.fillRect(0, GROUND, W, H - GROUND); }
     // 양 끝 벽(대나무 기둥): 화면 위쪽 끝까지 이어 그린다
-    if (wallImg.complete && wallImg.naturalWidth) { const iw = wallImg.naturalWidth, ih = wallImg.naturalHeight, ww = 96, sc = ww / iw, topW = -OY / K - 30;
-      // 아래(모래 받침+대나무)는 그림 그대로, 위로는 가운데 대나무 마디를 이어 붙이고, 맨 위에는 잎사귀 머리를 얹는다
-      const capH = ih * 0.24, midA = ih * 0.3, midH = ih * 0.4, baseA = ih * 0.24, baseH = ih - baseA;
-      for (const [wx, fl] of [[WALL_L, 1], [WALL_R, -1]]) { g.save(); g.translate(wx, 0); g.scale(fl, 1); const x0 = -ww + 14;
-        let y = GROUND + 16 - baseH * sc; g.drawImage(wallImg, 0, baseA, iw, baseH, x0, y, ww, baseH * sc);
-        while (y > topW + capH * sc) { const hh = Math.min(midH * sc, y - (topW + capH * sc)) + 1; y -= hh - 1; g.drawImage(wallImg, 0, midA + midH - hh / sc, iw, hh / sc, x0, y, ww, hh); }
-        g.drawImage(wallImg, 0, 0, iw, capH, x0, y - capH * sc + 2, ww, capH * sc); g.restore(); } }
-    else { g.fillStyle = '#8DBF4A'; g.fillRect(WALL_L - 60, -SKY - 400, 60, GROUND + SKY + 420); g.fillRect(WALL_R, -SKY - 400, 60, GROUND + SKY + 420); }
+    if (wallImg.complete && wallImg.naturalWidth) { const ww = 120, wh = ww * wallImg.naturalHeight / wallImg.naturalWidth, topW = -OY / K - 20;
+      // 서핑보드 벽: 바닥부터 보드 묶음을 화면 위까지 차곡차곡 쌓는다(맨 아래만 모래 받침이 보이게)
+      for (const [wx, fl] of [[WALL_L, 1], [WALL_R, -1]]) { g.save(); g.translate(wx, 0); g.scale(fl, 1); const x0 = -ww + 18;
+        const ih = wallImg.naturalHeight, iw = wallImg.naturalWidth, cut = 0.88; let y = GROUND + 14 - wh; const ys = [];
+        for (let n = 1; n < 8 && y > topW; n++) { y -= wh * cut * 0.9; ys.push(y); } // 위 칸들은 모래 받침을 빼고 보드만
+        ys.reverse().forEach(yy => g.drawImage(wallImg, 0, 0, iw, ih * cut, x0, yy, ww, wh * cut));
+        g.drawImage(wallImg, x0, GROUND + 14 - wh, ww, wh);
+        g.restore(); } }
+    else { g.fillStyle = '#7FD8C8'; g.fillRect(WALL_L - 60, -SKY - 400, 60, GROUND + SKY + 420); g.fillRect(WALL_R, -SKY - 400, 60, GROUND + SKY + 420); }
     // 네트: 기둥 + 그물 + 흰 띠
     g.fillStyle = '#8A5E3B'; g.fillRect(NETX - 4, NETTOP - 6, 8, GROUND - NETTOP + 6);
     g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 1.2; for (let y = NETTOP + 10; y < GROUND - 6; y += 12) { g.beginPath(); g.moveTo(NETX - NETW / 2, y); g.lineTo(NETX + NETW / 2, y); g.stroke(); }
