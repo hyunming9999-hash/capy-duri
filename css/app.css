@@ -1368,3 +1368,4 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 @keyframes fsStorm { 0% { transform: rotate(-12deg) translateY(0); } 50% { transform: rotate(12deg) translateY(-14px); } 100% { transform: rotate(-12deg) translateY(0); } }
 @keyframes fsStormView { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-3px, 2px); } 75% { transform: translate(3px, -2px); } }
 @keyframes fsRain { from { background-position: 0 0, 0 0; } to { background-position: -14px 60px, 0 0; } }
+.fs-card.wait .fs-acts .btn { opacity: .55; pointer-events: none; transition: opacity .3s; }

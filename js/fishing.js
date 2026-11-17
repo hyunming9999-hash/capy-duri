@@ -174,13 +174,15 @@ export function openFishing(o) {
   function landed() {
     const { f, cm, price, shiny } = cur; sfx(price <= 0 ? 'bad' : f.king || f.rare || f.pearl || shiny ? 'bigfish' : 'coin'); if (price > 0) splash(34, true); phase = 'done'; patEl.hidden = true; pearlTxt.hidden = true; if (!f.pearl) wrap.classList.remove('pearl'); wrap.classList.remove('fight', 'reel'); float.style.display = rl.style.display = hook.style.display = 'none'; fishEl.className = 'fs-fish';
     const keep = price > 0 && o.keep; if (keep) o.keep({ id: f.id, cm, p: price, ...(cur.g ? { g: cur.g } : {}), ...(shiny ? { shiny: 1 } : {}) }); else o.coins(price); if (!f.icon) o.dex(f.id, cm, shiny); // 물고기는 바로 돈이 아니라 가방에 담아 카피마켓에 판다
+    // 릴을 연타하다가 결과 창 버튼이 눌려 바로 닫히지 않게: 창이 뜨고 1.2초 동안은 버튼이 안 먹는다. 창은 버튼을 누르기 전까지 그대로 있다
+    const shownAt = performance.now(), safe = () => performance.now() - shownAt > 1200;
     const g = cur.g; let gEl = null; // 등급은 '등급 확인하기'를 누르기 전까지 ?로 가려 둔다
     const w = weightOf(f, cm), card = h('div', { class: 'fs-card' + (f.pearl ? ' pearl' : f.king ? ' king' : f.rare || shiny ? ' rare' : f.icon ? ' trash' : '') + (shiny ? ' shiny' : '') }, h('div', { class: 'fs-pic', html: fishSvg(f, true, shiny) }), shiny && h('em', { class: 'fs-shiny' }, '✨ 이로치! 색이 다른 귀한 녀석 · 값 1.5배 ✨'),
       h('b', null, f.pearl ? '✨ 바다 진주! ✨' : f.king ? `👑 ${f.name}` : f.name), cur.g && (gEl = h('span', { class: 'fs-grade hide' }, '?등급')), !f.icon && !f.pearl && h('p', null, `${cm}cm · ${kg(w)}`), keep ? h('p', { class: 'fs-won kept' }, '🧺 가방에 담았어요 · 카피수퍼 물고기 판매에서 팔아요') : h('p', { class: 'fs-won' }, price > 0 ? `+${price.toLocaleString('ko-KR')} 🪙` : `${price} 🪙`), o.trial && h('small', null, '체험 중이라 돈과 도감은 저장되지 않아요.'),
       f.icon && h('small', null, '바다 쓰레기를 건졌어요. 처리 비용이 나갔어요.'),
       cur.g && h('button', { class: 'btn sm fs-gbtn', onClick: () => { if (gEl.classList.contains('hide')) { gEl.className = 'fs-grade pop g' + g; gEl.textContent = `${g}등급`; sfx(g === 'S' || g === 'A' ? 'bigfish' : 'point'); setTimeout(() => gradeInfo(f, cm, g), 650); } else gradeInfo(f, cm, g); } }, h('i', { class: 'fs-gico', html: '<svg viewBox="0 0 20 20"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12.6 12.6 L17 17" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>' }), '등급 확인하기'),
-      h('div', { class: 'fs-acts' }, h('button', { class: 'btn primary', onClick: () => { card.remove(); ready(); } }, '또 던지기'), h('button', { class: 'btn', onClick: () => { card.remove(); close(); } }, '그만하기')));
-    wrap.append(card); say(''); btn.textContent = '…'; btn.onclick = null;
+      h('div', { class: 'fs-acts' }, h('button', { class: 'btn primary', onClick: () => { if (safe()) { card.remove(); ready(); } } }, '또 던지기'), h('button', { class: 'btn', onClick: () => { if (safe()) { card.remove(); close(); } } }, '그만하기')));
+    wrap.append(card); say(''); btn.textContent = '…'; btn.onclick = null; card.classList.add('wait'); setTimeout(() => card.classList.remove('wait'), 1200);
     // 와! ○○○을 잡았다! — 화면 가득 터지는 글자, 그 아래 등급
     if (!f.icon) { const wow = h('div', { class: 'fs-wow' + (f.pearl || f.king ? ' gold' : '') }, h('b', null, `와! ${josaUl(f.pearl ? '바다 진주' : f.name)} 잡았다!`), cur.g && h('small', null, '몇 등급일까? 등급 확인하기를 눌러 보세요'));
       (wrap.querySelector('.fs-view') || wrap).append(wow); setTimeout(() => wow.classList.add('out'), 1900); setTimeout(() => wow.remove(), 2400); }
