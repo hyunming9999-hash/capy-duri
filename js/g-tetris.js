@@ -31,7 +31,7 @@ export function makeGame(seed, diff) {
   // 진행될수록 조금씩 빨라진다: 지운 줄 수만큼(10줄에 14%) + 버틴 시간만큼(30초에 4%)
   g.t = 0; g.speed = () => Math.max(70, LV.ms * Math.pow(0.86, g.lines / 10) * Math.pow(0.96, g.t / 30000));
   g.move = dx => { if (g.over || !fits(g.cur.m, g.cur.x + dx, g.cur.y)) return false; g.cur.x += dx; return true; };
-  g.rotate = () => { if (g.over) return false; const m = rot(g.cur.m); for (const [dx, dy] of [[0, 0], [-1, 0], [1, 0], [-2, 0], [2, 0], [0, -1]]) if (fits(m, g.cur.x + dx, g.cur.y + dy)) { g.cur.m = m; g.cur.x += dx; g.cur.y += dy; return true; } return false; };
+  g.rotate = (ccw) => { if (g.over) return false; const m = ccw ? rot(rot(rot(g.cur.m))) : rot(g.cur.m); for (const [dx, dy] of [[0, 0], [-1, 0], [1, 0], [-2, 0], [2, 0], [0, -1]]) if (fits(m, g.cur.x + dx, g.cur.y + dy)) { g.cur.m = m; g.cur.x += dx; g.cur.y += dy; return true; } return false; };
   g.ghostY = () => { let y = g.cur.y; while (fits(g.cur.m, g.cur.x, y + 1)) y++; return y; };
   g.swap = () => { if (g.over || g.held) return false; const k = g.cur.k; spawn(g.hold || take()); g.hold = k; g.held = true; return true; };
   g.garbage = (n, hole) => { for (let i = 0; i < n; i++) { if (g.board[0].some(Boolean)) g.over = true; g.board.shift(); g.board.push(junkRow(hole)); } if (g.cur && !fits(g.cur.m, g.cur.x, g.cur.y)) g.cur.y = Math.max(-2, g.cur.y - n); };
@@ -70,7 +70,7 @@ export function mount(el, ctx) {
       h('div', { class: 'bg-row' }, Object.entries(LEVELS).map(([k, v]) => chip(diff === k, v.name, () => { diff = k; save(); lobby(); }, v.sub))),
       h('p', { class: 'dim bg-note' + (mode === 'vs' && !pid() ? ' warn' : '') }, mode === 'vs' ? (pid() ? `시작하면 ${ctx.nameOf(pid())} 화면에서도 같이 시작돼요. 같은 블록이 나오고, 2줄 이상 한 번에 지우면 상대 바닥에 방해 줄이 올라가요. 먼저 꼭대기까지 쌓이면 져요.` : '상대가 아직 방에 없어요. 기록 모드를 골라 주세요') : '꼭대기까지 쌓일 때까지 계속해요. 10줄마다 빨라져요.'),
       h('button', { class: 'btn primary big', onClick: start }, '시작'),
-      h('p', { class: 'dim center' }, '왼쪽·오른쪽 옮기기 · 내리기 · 돌리기 · 뚝!(바로 떨어뜨리기) · 보관: 블록 바꿔 두기'),
+      h('p', { class: 'dim center' }, '판을 톡 = 돌리기 · 좌우로 끌기 = 옮기기 · 아래로 휙 = 뚝! · 위로 휙 = 보관. 아래 버튼으로도 할 수 있어요(왼손 이동, 오른손 돌리기)'),
       (b || pb) && h('p', { class: 'dim center' }, [b && `내 최고 ${b.s.toLocaleString()}점`, pb && `${ctx.nameOf(pid())} 최고 ${pb.s.toLocaleString()}점`].filter(Boolean).join(' · '))].filter(Boolean));
   }
   function start() {
@@ -92,17 +92,35 @@ export function mount(el, ctx) {
   const mini = k => { const c = h('canvas', { width: 64, height: 44 }), g2 = c.getContext('2d'); if (!k) return c; const m = SHAPES[k], rows = m.filter(r => r.some(Boolean)), w = m[0].length, s = 14, ox = (64 - w * s) / 2, oy = (44 - rows.length * s) / 2;
     g2.translate(ox, oy); rows.forEach((row, y) => row.forEach((v, x) => v && cellAt(g2, x, y, k, s))); return c; };
   function build() {
-    const vw = Math.min(el.clientWidth || 360, 520), vh = window.innerHeight; cell = Math.max(14, Math.floor(Math.min((vw - 96) / W, (vh - 268) / H)));
+    const vw = Math.min(el.clientWidth || 360, 520), vh = window.innerHeight; cell = Math.max(14, Math.floor(Math.min((vw - 96) / W, (vh - 300) / H)));
     cv = h('canvas', { class: 'tt-board', width: W * cell, height: H * cell }); cx = cv.getContext('2d'); side = h('div', { class: 'tt-side' }); top = h('div', { class: 'tt-top' });
     const ICON = { l: '<path d="M26 8 9 20l17 12z"/>', r: '<path d="M14 8l17 12-17 12z"/>', down: '<path d="M8 13h24L20 31z"/>',
       rot: '<path d="M30.5 20a10.5 10.5 0 1 1-4-8.2" fill="none" stroke="currentColor" stroke-width="4.6" stroke-linecap="round"/><path d="M21.5 5.5 31 9l-3.5 9.5z"/>',
-      drop: '<path d="M16.5 4h7v11h7L20 27 9.500 15h7z"/><rect x="7" y="30" width="26" height="5" rx="2.5"/>' };
+      drop: '<path d="M16.5 4h7v11h7L20 27 9.500 15h7z"/><rect x="7" y="30" width="26" height="5" rx="2.5"/>',
+      ccw: '<path d="M9.5 20a10.5 10.5 0 1 0 4-8.2" fill="none" stroke="currentColor" stroke-width="4.6" stroke-linecap="round"/><path d="M18.5 5.5 9 9l3.5 9.5z"/>',
+      hold: '<rect x="8" y="10" width="24" height="22" rx="5" fill="none" stroke="currentColor" stroke-width="4"/><path d="M14 6h12" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>' };
     const hold = (fn, label, cls = '', rep = 0, ic = 'l') => { const b = h('button', { class: 'tt-key ' + cls, 'aria-label': label }, h('span', { class: 'tt-ic', html: `<svg viewBox="0 0 40 40" fill="currentColor" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round">${ICON[ic]}</svg>` }), h('small', null, label)); let t = 0, iv = 0;
-      const stop = () => { clearTimeout(t); clearInterval(iv); b.classList.remove('on'); }; b.addEventListener('pointerdown', e => { e.preventDefault(); b.classList.add('on'); try { navigator.vibrate && navigator.vibrate(8); } catch {} fn(); if (rep) t = setTimeout(() => { iv = setInterval(fn, rep); }, 190); });
+      const stop = () => { clearTimeout(t); clearInterval(iv); b.classList.remove('on'); }; b.addEventListener('pointerdown', e => { e.preventDefault(); b.classList.add('on'); try { navigator.vibrate && navigator.vibrate(8); } catch {} fn(); if (rep) t = setTimeout(() => { iv = setInterval(fn, rep); }, 160); });
       ['pointerup', 'pointerleave', 'pointercancel'].forEach(n => b.addEventListener(n, stop)); return b; };
     box.replaceChildren(top, h('div', { class: 'tt-play' }, cv, side),
-      h('div', { class: 'tt-keys' }, hold(() => act('l'), '왼쪽', 'mv', 70, 'l'), hold(() => act('down'), '내리기', 'dn', 50, 'down'), hold(() => act('r'), '오른쪽', 'mv', 70, 'r'), h('i'), hold(() => act('rot'), '돌리기', 'rot', 0, 'rot'), hold(() => act('drop'), '뚝!', 'drop', 0, 'drop')));
+      h('div', { class: 'tt-keys2' },
+        h('div', { class: 'tt-pad' }, hold(() => act('drop'), '뚝!', 'drop wide', 0, 'drop'), hold(() => act('l'), '왼쪽', 'mv', 50, 'l'), hold(() => act('down'), '내리기', 'dn', 40, 'down'), hold(() => act('r'), '오른쪽', 'mv', 50, 'r')),
+        h('div', { class: 'tt-ab' }, hold(() => act('hold'), '보관', 'hd wide', 0, 'hold'), hold(() => act('ccw'), '왼쪽 돌기', 'rot b', 0, 'ccw'), hold(() => act('rot'), '오른쪽 돌기', 'rot a', 0, 'rot'))));
+    gestures(cv);
   }
+  // 판 위 손가락 조작(모바일 테트리스처럼): 톡 = 돌리기(왼쪽 반은 반대로), 좌우로 끌기 = 한 칸씩 따라 이동, 천천히 아래로 끌기 = 내리기, 아래로 휙 = 뚝!, 위로 휙 = 보관
+  function gestures(c) { let p = null;
+    c.addEventListener('pointerdown', e => { e.preventDefault(); try { c.setPointerCapture(e.pointerId); } catch {} p = { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t: performance.now(), moved: false, soft: 0, cur: G && G.cur }; });
+    // 블록이 굳고 다음 블록이 나오면 그 손짓은 끝
+    c.addEventListener('pointermove', e => { if (!p || !G || G.cur !== p.cur) return; const step = cell * 0.9; let dx = e.clientX - p.x;
+      while (Math.abs(dx) >= step) { act(dx > 0 ? 'r' : 'l'); p.x += dx > 0 ? step : -step; dx = e.clientX - p.x; p.moved = true; }
+      const dy = e.clientY - p.y0, dxa = Math.abs(e.clientX - p.x0); if (dy > cell * 1.2 && dy > dxa) { const n = Math.floor((dy - cell * 0.6) / cell); while (p.soft < n) { act('down'); p.soft++; } p.moved = true; } });
+    const end = e => { if (!p || !G || G.cur !== p.cur) { p = null; return; } const dt = performance.now() - p.t, dy = e.clientY - p.y0, dx = e.clientX - p.x0, v = dy / Math.max(1, dt);
+      if (!p.moved && Math.abs(dx) < cell * 0.6 && Math.abs(dy) < cell * 0.6 && dt < 300) { const r = c.getBoundingClientRect(); act(e.clientX < r.left + r.width / 3 ? 'ccw' : 'rot'); }
+      else if (dy > cell * 2 && v > 0.9 && dt < 260) act('drop');
+      else if (-dy > cell * 2 && -dy > Math.abs(dx) && dt < 320) act('hold');
+      p = null; };
+    c.addEventListener('pointerup', end); c.addEventListener('pointercancel', () => { p = null; }); }
   function drawSide() {
     const o = them();
     side.replaceChildren(...[h('small', null, '다음'), ...G.next.slice(0, 3).map(mini), h('small', null, '보관'), h('button', { class: 'tt-hold', onClick: () => act('hold') }, mini(G.hold)),
@@ -130,7 +148,7 @@ export function mount(el, ctx) {
   function act(k) {
     if (!G || G.over || paused || phase() !== 'play') return;
     if (k === 'l' || k === 'r') { if (G.move(k === 'l' ? -1 : 1)) sfx('tock'); }
-    else if (k === 'rot') { if (G.rotate()) sfx('flip'); }
+    else if (k === 'rot' || k === 'ccw') { if (G.rotate(k === 'ccw')) sfx('flip'); }
     else if (k === 'down') { landed(G.step(true)); acc = 0; }
     else if (k === 'drop') { sfx('jump'); landed(G.drop()); acc = 0; }
     else if (k === 'hold') { if (G.swap()) { sfx('flip'); drawSide(); } }

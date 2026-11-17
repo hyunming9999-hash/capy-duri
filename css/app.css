@@ -1189,3 +1189,16 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 .so-row.off { opacity: .5; }
 .so-row.gold { border-color: #E9C46A; background: #FFFBEA; }
 .so-row.on { border-color: #E9A23B; background: #FFF6E0; }
+
+/* 테트리스 조작키: 왼손 이동(◀ ▼ ▶ 위에 뚝!), 오른손 돌리기(⟲ ⟳ 위에 보관) */
+.tt-keys2 { display: grid; grid-template-columns: 3fr 2fr; gap: 14px; margin-top: 8px; touch-action: none; user-select: none; -webkit-user-select: none; }
+.tt-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; } .tt-ab { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.tt-keys2 .tt-key.wide { grid-column: 1 / -1; height: 40px; flex-direction: row; gap: 6px; border-radius: 14px; }
+.tt-keys2 .tt-key.wide .tt-ic { width: 22px; height: 22px; } .tt-keys2 .tt-key.wide small { font-size: 12px; }
+.tt-keys2 .tt-key.drop { height: 40px; }
+.tt-keys2 .tt-key.mv, .tt-keys2 .tt-key.dn { height: 60px; }
+.tt-keys2 .tt-key.rot { height: 60px; border-radius: 50%/46%; }
+.tt-keys2 .tt-key.rot.b { color: #8A3A6A; border-color: #E59BC6; background: linear-gradient(180deg, #FFF4FA, #FFD3EA 60%, #FFB9DD); box-shadow: 0 5px 0 #E59BC6, inset 0 2px 0 rgba(255, 255, 255, .9); }
+.tt-keys2 .tt-key.hd { color: #5A4A8A; border-color: #B8A8E8; background: linear-gradient(180deg, #FBF8FF, #E6DDFF 60%, #D5C8FF); box-shadow: 0 5px 0 #B8A8E8, inset 0 2px 0 rgba(255, 255, 255, .9); }
+.tt-keys2 .tt-key.rot small { font-size: 10.5px; }
+.tt-board { touch-action: none; }
