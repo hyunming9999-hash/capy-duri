@@ -38,7 +38,14 @@ const OLD_N = { 1: 25, 2: 25, 3: 30 }, BASE_COMMON = { 1: 25, 2: 20, 3: 28 };
 const sigOf = (z, n) => `${(z === 3 ? DEEP[n % DEEP.length] : z === 2 ? (n % 3 ? PAL[(n * 5) % PAL.length] : DEEP[n % DEEP.length]) : PAL[n % PAL.length])[0]}|${n % 5}|${n % 3}|${(n >> 1) % 4}`;
 { const used = new Set(); FISH.forEach(f => { if (f.k < OLD_N[f.z]) used.add(sigOf(f.z, f.k * 7 + f.z * 13)); });
   FISH.forEach(f => { if (f.k < OLD_N[f.z]) return; let n = f.k * 7 + f.z * 13; while (used.has(sigOf(f.z, n))) n++; f.seed = n; used.add(sigOf(f.z, n)); }); }
-export function fishSvg(f, big) {
+// 물고기 그림: 힉스필드로 새로 그린 그림(img/fish/<id>.webp). 그림이 없으면 예전 손그림으로 그린다
+const FISH_IMG = true, OLD_LOOK = new Set();
+export const SHINY_P = 1 / 40, SHINY_X = 1.5; // 이로치(색이 다른 물고기): 중급부터 아주 가끔, 값은 1.5배
+const shinyHue = f => 110 + ((f.k * 53 + f.z * 31) % 140);
+export function fishSvg(f, big, shiny) { const sv = fishSvg0(f, big); if (!shiny) return sv;
+  return sv.replace('<svg ', `<svg style="filter:hue-rotate(${shinyHue(f)}deg) saturate(1.35) brightness(1.06)" `).replace('</svg>', '<g fill="#fff" stroke="#FFE066" stroke-width="1"><path d="M14 8l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M104 60l1.5 3.500 3.500 1.500-3.500 1.500-1.500 3.500-1.500-3.500-3.500-1.500 3.500-1.500z"/><path d="M98 6l1.200 3 3 1.200-3 1.200-1.200 3-1.200-3-3-1.200 3-1.200z"/></g></svg>'); }
+function fishSvg0(f, big) {
+  if (f.id && !f.pearl && !f.icon && !OLD_LOOK.has(f.id) && FISH_IMG) return `<svg viewBox="0 0 120 80"><image href="img/fish/${f.id}.webp" x="0" y="0" width="120" height="80" preserveAspectRatio="xMidYMid meet"/></svg>`;
   if (f.pearl) return `<svg viewBox="0 0 120 80"><ellipse cx="60" cy="58" rx="40" ry="14" fill="#F3D9E4" stroke="#C99AB0" stroke-width="2.5"/><path d="M22 54 Q60 8 98 54" fill="#FFEAF2" stroke="#C99AB0" stroke-width="2.5"/><circle cx="60" cy="50" r="15" fill="#fff" stroke="#E9C46A" stroke-width="2.5"/><circle cx="54" cy="44" r="5" fill="#FFF6D6"/><path d="M96 14l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#FFE066"/></svg>`;
   if (f.icon) return `<svg viewBox="0 0 120 80"><text x="60" y="58" font-size="52" text-anchor="middle">${f.icon}</text></svg>`;
   const seed = f.seed != null ? f.seed : f.k * 7 + f.z * 13, [c, l] = f.z === 3 ? DEEP[seed % DEEP.length] : f.z === 2 ? (seed % 3 ? PAL[(seed * 5) % PAL.length] : DEEP[seed % DEEP.length]) : PAL[seed % PAL.length], d = 'rgba(0,0,0,.28)';
@@ -63,7 +70,8 @@ export function rollCatch(zone, rodT, isPearl, power) {
   const t = Math.min(1, Math.pow(Math.random(), 1.6 - power * 0.6)), cm = Math.round((f.cm[0] + (f.cm[1] - f.cm[0]) * t) * 10) / 10; // 멀리 던질수록 큰 놈이 잘 문다
   const price = Math.round(f.price[0] + (f.price[1] - f.price[0]) * Math.pow(t, 1.3));
   const d = zone === 1 ? 1 + t * 2 : zone === 2 ? 4 + t * 2 + (f.rare ? 1 : 0) : 6.5 + t * 2 + (f.king ? 1 : 0); // 낚싯대 차이는 '끊어짐 칸을 몇 번 버티나'로 따로 매긴다
-  return { f, cm, price, d, p: power };
+  const shiny = zone >= 2 && Math.random() < SHINY_P;
+  return { f, cm, price: shiny ? Math.round(price * SHINY_X) : price, d, p: power, shiny };
 }
 // 물고기가 화내며 팔짝 뛸 때: 줄이 한순간에 확 팽팽해진다(누르고 있으면 그대로, 손을 뗐으면 절반). [초급, 중급, 고급]
 const SPIKE = [0, 14, 20, 26], SPIKE_GAP = [[0, 0], [5, 8], [4, 6.5], [3, 5]], TELE = 400;
@@ -132,9 +140,9 @@ export function openFishing(o) {
   }
   function fail(text) { sfx(/끊어/.test(text) ? 'snap' : 'bad'); ready(text); }
   function landed() {
-    const { f, cm, price } = cur; sfx(price <= 0 ? 'bad' : f.king || f.rare || f.pearl ? 'bigfish' : 'coin'); if (price > 0) splash(34, true); phase = 'done'; patEl.hidden = true; pearlTxt.hidden = true; if (!f.pearl) wrap.classList.remove('pearl'); wrap.classList.remove('fight', 'reel'); float.style.display = rl.style.display = hook.style.display = 'none'; fishEl.className = 'fs-fish';
-    const keep = price > 0 && o.keep; if (keep) o.keep({ id: f.id, cm, p: price }); else o.coins(price); if (!f.icon) o.dex(f.id, cm); // 물고기는 바로 돈이 아니라 가방에 담아 카피마켓에 판다
-    const w = weightOf(f, cm), card = h('div', { class: 'fs-card' + (f.pearl ? ' pearl' : f.king ? ' king' : f.rare ? ' rare' : f.icon ? ' trash' : '') }, h('div', { class: 'fs-pic', html: fishSvg(f, true) }),
+    const { f, cm, price, shiny } = cur; sfx(price <= 0 ? 'bad' : f.king || f.rare || f.pearl || shiny ? 'bigfish' : 'coin'); if (price > 0) splash(34, true); phase = 'done'; patEl.hidden = true; pearlTxt.hidden = true; if (!f.pearl) wrap.classList.remove('pearl'); wrap.classList.remove('fight', 'reel'); float.style.display = rl.style.display = hook.style.display = 'none'; fishEl.className = 'fs-fish';
+    const keep = price > 0 && o.keep; if (keep) o.keep({ id: f.id, cm, p: price, ...(shiny ? { shiny: 1 } : {}) }); else o.coins(price); if (!f.icon) o.dex(f.id, cm, shiny); // 물고기는 바로 돈이 아니라 가방에 담아 카피마켓에 판다
+    const w = weightOf(f, cm), card = h('div', { class: 'fs-card' + (f.pearl ? ' pearl' : f.king ? ' king' : f.rare || shiny ? ' rare' : f.icon ? ' trash' : '') + (shiny ? ' shiny' : '') }, h('div', { class: 'fs-pic', html: fishSvg(f, true, shiny) }), shiny && h('em', { class: 'fs-shiny' }, '✨ 이로치! 색이 다른 귀한 녀석 · 값 1.5배 ✨'),
       h('b', null, f.pearl ? '✨ 바다 진주! ✨' : f.king ? `👑 ${f.name}` : f.name), !f.icon && !f.pearl && h('p', null, `${cm}cm · ${kg(w)}`), keep ? h('p', { class: 'fs-won kept' }, '🧺 가방에 담았어요 · 카피수퍼 물고기 판매에서 팔아요') : h('p', { class: 'fs-won' }, price > 0 ? `+${price.toLocaleString('ko-KR')} 🪙` : `${price} 🪙`), o.trial && h('small', null, '체험 중이라 돈과 도감은 저장되지 않아요.'),
       f.icon && h('small', null, '바다 쓰레기를 건졌어요. 처리 비용이 나갔어요.'),
       h('div', { class: 'fs-acts' }, h('button', { class: 'btn primary', onClick: () => { card.remove(); ready(); } }, '또 던지기'), h('button', { class: 'btn', onClick: () => { card.remove(); close(); } }, '그만하기')));
