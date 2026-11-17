@@ -121,7 +121,7 @@ export function openFishing(o) {
   const say = (t, cls = '') => { msg.className = 'fs-msg ' + cls; msg.textContent = t; };
   const drawInfo = () => { const b = o.bag(), r = rod(); info.textContent = r ? `${r.name.slice(0, 2)} ${b.rodD || 0}/${r.dur} · 미끼 ${b.bait || 0}` : '낚싯대 없음'; };
   const setBar = (v, cls = '') => { v = Math.max(0, Math.min(100, v)); const pow = cls.startsWith('pow'), ten = cls.startsWith('ten'); bar.className = 'fs-bar ' + cls; bar.firstChild.style.width = v + '%'; bar.lastChild.style.left = v + '%'; gl.firstChild.textContent = pow ? '던지는 힘' : ten ? '줄 팽팽함' : '낚싯대'; gl.lastChild.textContent = pow || ten ? Math.round(v) : ''; const tk = bar.nextSibling; tk.firstChild.textContent = pow ? '가까이' : ten ? '느슨(안 끌려옴)' : ''; tk.lastChild.textContent = pow ? '멀리 ★' : ten ? '끊어짐!' : ''; };
-  function close() { if (!alive) return; alive = false; cancelAnimationFrame(raf); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); wrap.remove(); o.onClose && o.onClose(); }
+  function close() { if (!alive) return; if (phase === 'fight' && cur && cur.f.icon && cur.price < 0) o.coins(cur.price); alive = false; cancelAnimationFrame(raf); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); wrap.remove(); o.onClose && o.onClose(); }
   function ready(text) {
     phase = 'ready'; hold = false; strikes = 0; patEl.hidden = true; tele = 0; wrap.classList.remove('pearl'); pearlTxt.hidden = true; wrap.classList.remove('reel'); rodEl.className = 'fs-rod'; rodEl.dataset.t = rodT(); hook.classList.remove('up'); fishEl.className = 'fs-fish'; fishEl.innerHTML = ''; mark.textContent = ''; float.style.display = rl.style.display = hook.style.display = 'none'; setBar(0); wrap.classList.remove('fight'); drawInfo();
     const b = o.bag(), r = rod();
@@ -186,7 +186,7 @@ export function openFishing(o) {
     const g = cur.g; let gEl = null; // 등급은 '등급 확인하기'를 누르기 전까지 ?로 가려 둔다
     const w = weightOf(f, cm), card = h('div', { class: 'fs-card' + (f.pearl ? ' pearl' : f.king ? ' king' : f.rare || shiny ? ' rare' : f.icon ? ' trash' : '') + (shiny ? ' shiny' : '') }, h('div', { class: 'fs-pic', html: fishSvg(f, true, shiny) }), shiny && h('em', { class: 'fs-shiny' }, '✨ 이로치! 색이 다른 귀한 녀석 · 값 1.5배 ✨'),
       h('b', null, f.pearl ? '✨ 바다 진주! ✨' : f.king ? `👑 ${f.name}` : f.name), cur.g && (gEl = h('span', { class: g === 'F' ? 'fs-grade gF' : 'fs-grade hide' }, g === 'F' ? 'F등급' : '?등급')), !f.pearl && cm > 0 && h('p', null, f.icon ? `${cm}cm` : `${cm}cm · ${kg(w)}`), keep ? h('p', { class: 'fs-won kept' }, '🧺 가방에 담았어요 · 카피수퍼 물고기 판매에서 팔아요') : h('p', { class: 'fs-won' }, price > 0 ? `+${price.toLocaleString('ko-KR')} 🪙` : `${price} 🪙`), o.trial && h('small', null, '체험 중이라 돈과 도감은 저장되지 않아요.'),
-      f.icon && h('small', null, '바다 쓰레기를 건졌어요. 클수록 처리 비용이 커요(50~250코인).'),
+      f.icon && h('small', null, '바다 쓰레기가 걸려서 수거했어요. 한번 걸리면 놓아줄 수 없고, 클수록 처리 비용이 커요(50~250코인).'),
       cur.g && g !== 'F' && h('button', { class: 'btn sm fs-gbtn', onClick: () => { if (gEl.classList.contains('hide')) { gEl.className = 'fs-grade pop g' + g; gEl.textContent = `${g}등급`; sfx(g === 'S' || g === 'A' ? 'bigfish' : 'point'); setTimeout(() => gradeInfo(f, cm, g), 650); } else gradeInfo(f, cm, g); } }, h('i', { class: 'fs-gico', html: '<svg viewBox="0 0 20 20"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12.6 12.6 L17 17" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>' }), '등급 확인하기'),
       h('div', { class: 'fs-acts' }, h('button', { class: 'btn primary', onClick: () => { if (safe()) { card.remove(); ready(); } } }, '또 던지기'), h('button', { class: 'btn', onClick: () => { if (safe()) { card.remove(); close(); } } }, '그만하기')));
     wrap.append(card); say(''); btn.textContent = '…'; btn.onclick = null; card.classList.add('wait'); setTimeout(() => card.classList.remove('wait'), 1200);
@@ -225,13 +225,14 @@ export function openFishing(o) {
       if (hold) { dist -= (cur.f.icon ? 34 : Math.max(7, 27 - d * 1.5) * ZONE_REEL[zone] * (ten >= LO ? 1 : 0.15)) * (1 + cur.p * 0.2) * dt * (B ? 0.5 : 1); ten += (25 + d * 1.1) * 1.12 * TM * (1 - cur.p * 0.25) * (B ? 1.35 : 1) * dt; } // 멀리 던졌으면 더 잘 감기고 줄이 덜 팽팽해진다
       else { ten -= (50 - d * 0.8) * dt; dist += (0.8 + d * 0.42) * 1.2 * (B ? 1.4 : 1) * dt; }
       // 끊어짐 칸(80)을 건드리면 한 번으로 센다. 줄이 튕기며 물고기가 조금 달아나고, 정해진 횟수를 다 쓰면 놓친다
-      if (ten >= 80) { strikes++; drawPips(true); if (strikes >= lim()) { delete fishEl.dataset.rev; return void fail('줄이 끊어졌어요! 끊어짐 칸을 두 번 건드렸어요.'); }
+      if (ten >= 80) { strikes++; drawPips(true); if (strikes >= lim()) { delete fishEl.dataset.rev; return void (cur.f.icon ? landed() : fail('줄이 끊어졌어요! 끊어짐 칸을 두 번 건드렸어요.')); }
         ten = Math.max(LO + 2, 58); dist += 6; hold = false; sfx('strain'); wrap.classList.add('jolt'); setTimeout(() => wrap.classList.remove('jolt'), 300); say('줄이 끊어질 뻔! 한 번만 더 건드리면 놓쳐요. 손을 뗐다가 다시 감으세요.', 'warn'); }
       ten = Math.max(0, ten); slack = ten < 6 && !B ? slack + dt : 0;
       setBar(ten, 'ten' + (ten >= LO ? ' hot' : '') + (B ? ' burst' : '')); setFloat(34 + Math.max(0, Math.min(130, dist)) * 0.45, 8, true); fishEl.style.left = fx + '%'; fishEl.classList.toggle('burst', B); mark.textContent = tele ? '💥' : B ? '💢' : now < eyeAt ? '👀' : '';
-      if (dist < 45 && cur.f.icon && !fishEl.dataset.rev) { fishEl.dataset.rev = 1; fishEl.innerHTML = fishSvg(cur.f); say('어… 쓰레기 같아요. 손을 떼고 놓아주면 돈이 안 나가요.', 'warn'); }
-      if (dist >= 130) { delete fishEl.dataset.rev; return void fail(cur.f.icon ? '쓰레기를 놓아줬어요.' : '물고기가 멀리 달아났어요.'); }
-      if (slack > 2.4 - Math.min(1.2, d * 0.1)) { delete fishEl.dataset.rev; return void fail(cur.f.icon ? '쓰레기를 놓아줬어요.' : '줄이 느슨해져서 바늘이 빠졌어요.'); }
+      if (dist < 45 && cur.f.icon && !fishEl.dataset.rev) { fishEl.dataset.rev = 1; fishEl.innerHTML = fishSvg(cur.f); say('어… 쓰레기 같아요. 걸린 이상 꼭 수거해야 해요!', 'warn'); }
+      if (cur.f.icon && (dist >= 130 || strikes >= lim() || slack > 2.4 - Math.min(1.2, d * 0.1))) { delete fishEl.dataset.rev; return void landed(); } // 쓰레기는 걸리면 놓아줄 수 없다: 놓치려 해도 그대로 끌어올려 수거(돈이 빠진다)
+      if (dist >= 130) { delete fishEl.dataset.rev; return void fail('물고기가 멀리 달아났어요.'); }
+      if (slack > 2.4 - Math.min(1.2, d * 0.1)) { delete fishEl.dataset.rev; return void fail('줄이 느슨해져서 바늘이 빠졌어요.'); }
       if (dist <= 0) { delete fishEl.dataset.rev; landed(); }
     }
     raf = requestAnimationFrame(step);
