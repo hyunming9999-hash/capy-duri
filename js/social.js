@@ -185,7 +185,7 @@ export function mount(el, ctx) {
 
   function scene() {
     const top = h('div', { class: 'so-top' }, h('span', { class: 'coin-chip', 'data-coins': 1 }, won(ctx.coins())), h('span', { class: 'so-sp' }),
-      h('button', { class: 'btn sm', onClick: openBag }, '🎒 가방'), h('button', { class: 'btn sm', onClick: openShop }, '🏪 카피수퍼'), h('button', { class: 'btn sm', onClick: openMarket }, '🐟 카피마켓'));
+      h('button', { class: 'btn sm', onClick: openBag }, '🎒 가방'), h('button', { class: 'btn sm', onClick: () => openShop() }, '🏪 카피수퍼'));
     if (vit && vit.px > 0) { me.x = Math.max(40, Math.min(FISH_X - 40, vit.px * WIDTH)); me.y = me.dy = Math.max(0, Math.min(Y_MAX, vit.py || 0)); me.ds = 1 - me.y * 0.7; } // 다시 들어오면 마지막에 있던 자리에서 시작
     endSorry(); tiles.length = 0; spots.length = 0; me.ride = null; me.kb = 0; keys.clear(); rideState = ''; playing = true;
     hpEl = h('u'); potEl = h('button', { class: 'btn sm so-pot', onClick: drink }, '🧪 0');
@@ -586,7 +586,7 @@ export function mount(el, ctx) {
     const jong = w => { const c = w.charCodeAt(w.length - 1) - 0xAC00; return c >= 0 && c <= 11171 && c % 28 !== 0; }, nm = f.name, eun = nm + (jong(nm) ? '은' : '는'), ine = nm + (jong(nm) ? '이네' : '네'), igu = nm + (jong(nm) ? '이구먼' : '구먼');
     return `${f.king ? `어이쿠, 이게 그 ${nm}!? 이건 ${x.cm}cm짜리여.` : f.rare ? `오호, 귀한 ${igu}! 이건 ${x.cm}cm짜리여.` : `오~ 이건 ${x.cm}cm짜리 ${ine}.`} ${big} ${eun} ${c0}~${c1}cm 사이에서 클수록 값이 올라. ${x.cm}cm면 상위 ${Math.max(1, 100 - pct)}%라… 센치로 환산하면 이 가격이여, ${p}!`; }
   const GRANDPA = capy({ color: 'choco', face: 'happy', head: true }).replace('</svg>', '<path d="M14 33 q10 -9 20 -1" fill="none" stroke="#F4F1EA" stroke-width="5" stroke-linecap="round"/><path d="M86 32 q10 -8 20 1" fill="none" stroke="#F4F1EA" stroke-width="5" stroke-linecap="round"/><circle cx="24" cy="42" r="10" fill="rgba(255,255,255,.25)" stroke="#C9A24A" stroke-width="2.6"/><circle cx="96" cy="42" r="10" fill="rgba(255,255,255,.25)" stroke="#C9A24A" stroke-width="2.6"/><path d="M34 42 q26 -8 52 0" fill="none" stroke="#C9A24A" stroke-width="2.2"/><path d="M38 66 q10 -8 22 -1 q12 -7 22 1 q-10 9 -22 3 q-12 6 -22 -3z" fill="#F4F1EA" stroke="#D8D2C4" stroke-width="1.5"/><path d="M22 18 q38 -26 76 0 q-38 -8 -76 0z" fill="#6B4A2F"/><rect x="18" y="13" width="84" height="8" rx="4" fill="#7E5A3A"/></svg>');
-  function openMarket() {
+  function marketPane() { // 카피수퍼의 '물고기 판매' 탭: 할아버지 주인장이 센치로 값을 매긴다
     const talk = h('p', { class: 'mk-say' }), body = h('div', { class: 'so-list' });
     const say = t => { talk.textContent = t; talk.classList.remove('pop'); void talk.offsetWidth; talk.classList.add('pop'); };
     const list = () => Object.entries(bag.fish || {}).filter(([, v]) => v).sort((a, b) => (b[1].t || 0) - (a[1].t || 0));
@@ -600,11 +600,11 @@ export function mount(el, ctx) {
       body.querySelectorAll('.mk-fish').forEach((b, n) => { const [k, v] = L[n]; b.onclick = () => { say(appraise(v)); body.querySelectorAll('.mk-fish').forEach(x => x.classList.remove('on')); b.classList.add('on');
         const old = body.querySelector('.mk-deal'); if (old) old.remove(); b.after(h('div', { class: 'mk-deal' }, h('button', { class: 'btn', onClick: () => { say('그려, 더 키워서 가져와도 좋지. 허허.'); draw(); } }, '안 팔래요'), h('button', { class: 'btn primary', onClick: async () => { await sell([[k, v]]); say(`거래 고맙구먼! ${won(v.p)} 여기 있네.`); draw(); } }, `${won(v.p)}에 팔기`))); }; }); };
     say(list().length ? '어서 오게, 젊은이. 오늘은 뭘 잡아 왔나? 물고기를 하나 눌러 보게. 허허.' : '어서 오게. 오늘은 빈손이구먼? 낚시터에서 한 마리 잡아 오게나.');
-    draw(); modal({ title: '🐟 카피마켓', body, actions: [{ label: '닫기', primary: true }] });
+    draw(); return body;
   }
   // ----- 카피수퍼·가방 -----
-  function openShop() {
-    const body = h('div', { class: 'so-list' }), draw = () => body.replaceChildren(h('p', { class: 'center' }, '내 돈 ', h('b', { 'data-coins': 1 }, won(ctx.coins()))),
+  function openShop(tab = 'buy') {
+    const body = h('div', { class: 'so-list' }), draw = () => tab === 'buy' &&  body.replaceChildren(h('p', { class: 'center' }, '내 돈 ', h('b', { 'data-coins': 1 }, won(ctx.coins()))),
       ...Object.entries(GIFTS).map(([k, [ic, nm, price, up]]) => h('button', { class: 'so-row', onClick: async () => { if (!(await ctx.spend(price))) return; bag = { ...bag, [k]: (bag[k] || 0) + 1 }; await ctx.store.update('bag/' + ctx.uid, { [k]: bag[k] }).catch(() => {}); toast(`${nm} 샀어요`); draw(); } }, h('span', null, ic), h('b', null, nm), h('small', null, `${won(price)} · 친밀도 +${up} · 가진 것 ${bag[k] || 0}개`))),
       h('button', { class: 'so-row', onClick: async () => { if (!(await ctx.spend(POTION[0]))) return; bag = { ...bag, potion: (bag.potion || 0) + 1 }; await ctx.store.update('bag/' + ctx.uid, { potion: bag.potion }).catch(() => {}); toast('회복 포션 샀어요'); draw(); drawHp(); } }, h('span', null, '🧪'), h('b', null, '회복 포션'), h('small', null, `${won(POTION[0])} · 체력 +${POTION[1]} · 가진 것 ${bag.potion || 0}개`)),
       h('button', { class: 'so-row', disabled: !!bag.boat, onClick: async () => { if (bag.boat || !(await ctx.spend(BOAT_PRICE))) return; bag = { ...bag, boat: true }; await ctx.store.update('bag/' + ctx.uid, { boat: true }).catch(() => {}); toast('카피보트를 샀어요! 바닷가 물에서 탈 수 있어요', 2600); draw(); } }, h('span', null, '🚤'), h('b', null, '카피보트'), h('small', null, bag.boat ? '가지고 있어요 · 바닷가 물에서 🚤 내 보트' : `${won(BOAT_PRICE)} · 바닷가에서 타면 파도가 일어요`)),
@@ -634,7 +634,10 @@ export function mount(el, ctx) {
       return [...pins.map(i => h('button', { class: 'so-row', onClick: () => ask(`${ANIMALS[i].name}의 증표 ${PERSONA[i].pin}`, sellPin(i), '판 증표는 선물로 다시 못 받고, 그 동물에게 500코인에 다시 사야 해요.', async () => { bag = { ...bag, pins: { ...(bag.pins || {}), [i]: null } }; await ctx.store.update('bag/' + ctx.uid + '/pins', { [i]: null }).catch(() => {}); if (pinOf(ctx.uid) === i) await wearPin(null); }) }, h('span', null, PERSONA[i].pin), h('b', null, `${ANIMALS[i].name}의 증표`), h('small', null, `${won(sellPin(i))}에 팔기`))),
         ...hats.map(i => { const w = wareOf(i); return h('button', { class: 'so-row big', onClick: () => ask(w.name, sellHat(i), '다시 사려면 그 동물에게 할인 없이 300코인을 내야 해요.', async () => { if (wearing(w.id)) await wearCloth(w.id, false); ctx.owned[ctx.uid] = { ...(ctx.owned[ctx.uid] || {}), [w.id]: null }; await ctx.store.set(`owned/${ctx.uid}/${w.id}`, null).catch(() => {}); bag = { ...bag, resold: { ...(bag.resold || {}), [i]: true } }; await ctx.store.update('bag/' + ctx.uid + '/resold', { [i]: true }).catch(() => {}); }) }, tryOn(w.id), h('b', null, w.name), h('small', null, `${won(sellHat(i))}에 팔기`)); })];
     }
-    draw(); modal({ title: '🏪 카피수퍼', body, actions: [{ label: '닫기', primary: true }] });
+    const pane = h('div'), nFish = () => Object.values(bag.fish || {}).filter(Boolean).length, tabs = h('div', { class: 'so-tabs' });
+    const show = t => { tab = t; tabs.replaceChildren(...[['buy', '🛒 사기·팔기'], ['fish', `🐟 물고기 판매${nFish() ? ' ' + nFish() : ''}`]].map(([k, l]) => h('button', { class: 'so-tab' + (tab === k ? ' on' : ''), onClick: () => show(k) }, l)));
+      if (t === 'buy') { draw(); pane.replaceChildren(body); } else pane.replaceChildren(marketPane()); };
+    show(tab); modal({ title: '🏪 카피수퍼', body: h('div', null, tabs, pane), actions: [{ label: '닫기', primary: true }] });
   }
   function openBag() {
     const body = h('div', { class: 'so-list' }); let cl;
