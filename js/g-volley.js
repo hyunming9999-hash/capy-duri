@@ -138,14 +138,14 @@ export function mount(el, ctx) {
   // 스파이크 가능한 위치: 공이 머리와 같은 높이이거나 머리보다 조금 위, 머리 앞쪽 가까이
   const spikeOk = p => p.y < standY - 18 && ball.y < p.y + 60 && ball.y > p.y - 260; // 점프해서 공중에 있을 때만, 공이 머리 언저리면
   function trySpike(i) { const p = ps[i]; if (chg[i] < SPK_N || !live() || (ball.x < NETX ? 0 : 1) !== i || Math.abs(ball.x - p.x) > 165 || !spikeOk(p)) return false;
-    chg[i] = 0; armAt[i] = 0; lastTouch = i; lastHit = i; flash = 12; shake = 34; try { navigator.vibrate && navigator.vibrate([60, 30, 120]); } catch {} spikeTxt = 50; sfx('hit'); setTimeout(() => sfx('pop'), 60); spikeBall(ball, i); drawPips(); return true; }
+    chg[i] = 0; armAt[i] = 0; lastTouch = i; lastHit = i; if (i === my() && mode === 'online') setTimeout(sendHit, 0); flash = 12; shake = 34; try { navigator.vibrate && navigator.vibrate([60, 30, 120]); } catch {} spikeTxt = 50; sfx('hit'); setTimeout(() => sfx('pop'), 60); spikeBall(ball, i); drawPips(); return true; }
   function onHit(i, p) {
     lastTouch = i;
     const mine = i === my(), cpu = mode === 'cpu' && i === 1;
     if (!mine && !cpu) return; // 온라인에서 상대가 친 건 상대 화면이 계산한다
     const armed = performance.now() - armAt[i] < ARM_MS || (mine && inp.s), air = spikeOk(p);
-    if (chg[i] >= SPK_N && armed && air) { chg[i] = 0; armAt[i] = 0; flash = 12; shake = 34; try { navigator.vibrate && navigator.vibrate([60, 30, 120]); } catch {} spikeTxt = 50; sfx('hit'); setTimeout(() => sfx('pop'), 60); drawPips(); return 'spike'; }
-    lastHit = i; // 충전은 공이 내 손을 떠나 상대 진영으로 넘어갔을 때 1회(tick에서 센다)
+    if (chg[i] >= SPK_N && armed && air) { if (mine) hitNow = true; chg[i] = 0; armAt[i] = 0; flash = 12; shake = 34; try { navigator.vibrate && navigator.vibrate([60, 30, 120]); } catch {} spikeTxt = 50; sfx('hit'); setTimeout(() => sfx('pop'), 60); drawPips(); return 'spike'; }
+    lastHit = i; if (mine) hitNow = true; // 충전은 공이 내 손을 떠나 상대 진영으로 넘어갔을 때 1회(tick에서 센다)
   }
 
   function setGame(v) { const fresh = !v || v.n !== game.n || v.phase !== game.phase || v.at !== game.at;
@@ -170,23 +170,25 @@ export function mount(el, ctx) {
     const opp = 1 - ctx.idx;
     offs.push(ctx.store.on('games/volley', setGame));
     offs.push(ctx.store.on('rt/volley/p' + opp, v => { if (!v) return; const lag = oppSeen ? 0 : 1; oppSeen = Date.now(); ghost = { x: v.x, y: v.y, vx: v.vx, vy: v.vy }; if (lag) Object.assign(ps[opp], ghost); chg[opp] = v.c || 0; dsh[opp] = v.d || 0; }));
-    offs.push(ctx.store.on('rt/volley/ball', v => {
-      if (!v || v.side === ctx.idx || v.n !== game.n) return;
-      const senderSide = (v.x < NETX ? 0 : 1) === v.side, mine = (ball.x < NETX ? 0 : 1) === ctx.idx;
-      if ((!senderSide && mine) || deadMine) return;
-      dead = false;
-      if (v.sp && !ball.spike) { flash = 10; shake = 30; try { navigator.vibrate && navigator.vibrate(80); } catch {} spikeTxt = 50; sfx('hit'); }
-      Object.assign(ball, { x: v.x, y: v.y, vx: v.vx, vy: v.vy, spike: v.sp || 0 });
-      const k = Math.max(0, Math.min(20, Math.round((ctx.store.now() - v.t) / 16.7)));
+    // 상대가 공을 친 순간의 상태만 받는다. 그동안 늦게 도착한 만큼 앞으로 굴려서 맞추고, 화면에서는 어긋난 만큼을 몇 프레임에 걸쳐 부드럽게 메운다
+    offs.push(ctx.store.on('rt/volley/hit', v => {
+      if (!v || v.side === ctx.idx || v.n !== game.n || v.q === seenHit || deadMine) return; seenHit = v.q;
+      dead = false; const ox = ball.x, oy = ball.y;
+      if (v.sp && !ball.spike) { flash = 10; shake = 30; try { navigator.vibrate && navigator.vibrate(80); } catch {} spikeTxt = 50; sfx('hit'); } else sfx('pop');
+      Object.assign(ball, { x: v.x, y: v.y, vx: v.vx, vy: v.vy, spike: v.sp || 0, cd: [14, 14] }); lastHit = v.side; lastTouch = v.side;
+      const k = Math.max(0, Math.min(30, Math.round((ctx.store.now() - v.t) / 16.7)));
       for (let i = 0; i < k; i++) if (stepBall(ball, [])) { ball.y = GROUND - BR; break; }
+      rOff.x += ox - ball.x; rOff.y += oy - ball.y; if (Math.hypot(rOff.x, rOff.y) > 160) rOff.x = rOff.y = 0;
     }));
   }
+  // 공 동기화: 내가 친 순간의 공 상태(위치·속도·스파이크)만 한 번 보낸다
+  const FAR = { x: -99999, y: -99999, vx: 0, vy: 0 }, rOff = { x: 0, y: 0 }; let hitNow = false, seenHit = 0, hitSeq = 0;
+  function sendHit() { const r = n => Math.round(n * 100) / 100; ctx.store.set('rt/volley/hit', { x: r(ball.x), y: r(ball.y), vx: r(ball.vx), vy: r(ball.vy), sp: ball.spike || 0, side: ctx.idx, n: game.n, q: ctx.idx + '-' + (++hitSeq) + '-' + Date.now(), t: ctx.store.now() }).catch(() => {}); }
   function send(t) {
     if (mode !== 'online' || t - sendT < 40) return; sendT = t;
     const p = ps[ctx.idx], r = n => Math.round(n * 10) / 10;
     const pv = { x: r(p.x), y: r(p.y), vx: r(p.vx), vy: r(p.vy), c: chg[ctx.idx], d: dsh[ctx.idx] }, key = JSON.stringify(pv);
     if (key !== lastP || t - lastPT > 1000) { lastP = key; lastPT = t; ctx.store.set('rt/volley/p' + ctx.idx, { ...pv, k: Math.round(t) }).catch(() => {}); }
-    if (live() && (ball.x < NETX ? 0 : 1) === ctx.idx) ctx.store.set('rt/volley/ball', { x: r(ball.x), y: r(ball.y), vx: r(ball.vx), vy: r(ball.vy), sp: ball.spike || 0, side: ctx.idx, n: game.n, t: ctx.store.now() }).catch(() => {});
   }
   // 컴퓨터 난이도: 하·중·상 [이동 속도, 판단 오차(px), 다시 판단하는 간격(ms), 받으러 뛰는 확률, 스파이크 쓰는 확률, 대쉬 쓰는 확률]
   const LV = { e: [3.9, 170, 800, 0.15, 0.12, 0.01], m: [4.9, 110, 600, 0.3, 0.3, 0.03], h: [5.8, 60, 420, 0.5, 0.5, 0.05] }; // 상 = 예전 중
@@ -223,7 +225,9 @@ export function mount(el, ctx) {
     if (flash) flash--; if (shake) shake--; if (spikeTxt) spikeTxt--;
     if (!live()) return;
     if ((ball.x < NETX) !== (prevSide === 0) && live()) { lastTouch = prevSide; } prevSide = ball.x < NETX ? 0 : 1;
-    const bx0 = ball.x, bvx = ball.vx, bvy = ball.vy, landed = stepBall(ball, ps, onHit);
+    hitNow = false; const hitters = mode === 'online' ? ps.map((p, i) => (i === ctx.idx ? p : FAR)) : ps;
+    const bx0 = ball.x, bvx = ball.vx, bvy = ball.vy, landed = stepBall(ball, hitters, onHit);
+    if (hitNow && mode === 'online') sendHit();
     // 스파이크 충전: 내가 친 공이 네트를 넘어 상대 진영으로 가면 1회(스파이크로 넘긴 건 빼고)
     // 대쉬도 같은 조건으로 1회씩 쌓인다(최대 2회)
     if (lastHit >= 0 && (bx0 < NETX) !== (ball.x < NETX) && (ball.x < NETX ? 1 : 0) === lastHit) { const i = lastHit; lastHit = -1; if (!ball.spike && (i === my() || (mode === 'cpu' && i === 1))) { if (chg[i] < SPK_N) { chg[i]++; if (i === my() && chg[i] === SPK_N) sfx('point'); } if (dsh[i] < DSH_MAX) dsh[i]++; if (i === my()) drawPips(); } }
@@ -304,7 +308,8 @@ export function mount(el, ctx) {
       if (im) { if (i === 1) { g.save(); g.translate(p.x, 0); g.scale(-1, 1); g.drawImage(im, -50, p.y - 59, 100, 131.7); g.restore(); } else g.drawImage(im, p.x - 50, p.y - 59, 100, 131.7); } else { g.fillStyle = '#BC8C60'; g.beginPath(); g.arc(p.x, p.y, PR, 0, 7); g.fill(); } });
     // 스파이크 꼬리
     trail.forEach(([x, y], k) => { g.globalAlpha = (k + 1) / trail.length * 0.5; g.fillStyle = '#FF8A00'; g.beginPath(); g.arc(x, y, BR * (0.4 + k / trail.length * 0.6), 0, 7); g.fill(); }); g.globalAlpha = 1;
-    { g.save(); g.translate(ball.x, ball.y); g.rotate(ball.rot); const im = yz.complete && yz.naturalWidth ? yz : yz0; if (im.complete && im.naturalWidth) g.drawImage(im, -BR - 3, -BR - 3, BR * 2 + 6, BR * 2 + 6); else { g.fillStyle = '#FFC93C'; g.beginPath(); g.arc(0, 0, BR, 0, 7); g.fill(); } g.restore(); }
+    rOff.x *= 0.82; rOff.y *= 0.82; if (Math.abs(rOff.x) + Math.abs(rOff.y) < 0.3) rOff.x = rOff.y = 0;
+    { g.save(); g.translate(ball.x + rOff.x, ball.y + rOff.y); g.rotate(ball.rot); const im = yz.complete && yz.naturalWidth ? yz : yz0; if (im.complete && im.naturalWidth) g.drawImage(im, -BR - 3, -BR - 3, BR * 2 + 6, BR * 2 + 6); else { g.fillStyle = '#FFC93C'; g.beginPath(); g.arc(0, 0, BR, 0, 7); g.fill(); } g.restore(); }
     if (flash) { g.fillStyle = `rgba(255,255,255,${flash / 14})`; g.fillRect(-W * 2, -H * 3, W * 5, H * 5); }
     g.setTransform(VK, 0, 0, VK, VX, VY);
     // 점수판
