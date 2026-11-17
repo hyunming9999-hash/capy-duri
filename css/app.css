@@ -1413,3 +1413,8 @@ body.vb-on { overflow: hidden; }
 .vb-btn.dsh { width: 62px; height: 62px; background: rgba(110,115,122,.7); align-self: flex-end; } .vb-btn.dsh b { font-size: 14px; } .vb-btn.dsh small { font-size: 10px; font-weight: 700; margin-top: 2px; }
 .vb-btn.dsh.ready { background: linear-gradient(#5EE0A0, #1FA868); }
 .vb-start em { margin-top: 6px; font-style: normal; font-size: 12px; font-weight: 800; color: #fff; background: rgba(91,58,0,.75); padding: 3px 10px; border-radius: 10px; white-space: nowrap; }
+.vb-lv { position: absolute; left: 50%; top: 25%; transform: translateX(-50%); z-index: 4; display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,.32); padding: 5px 8px; border-radius: 18px; }
+.vb-lv[hidden] { display: none; }
+.vb-lv span { color: #fff; font-weight: 800; font-size: 13px; padding: 0 4px; }
+.vb-lv button { border: 2px solid #fff; background: rgba(255,255,255,.2); color: #fff; font-weight: 900; font-size: 15px; width: 46px; height: 32px; border-radius: 14px; cursor: pointer; }
+.vb-lv button.on { background: #fff; color: #E8453C; }

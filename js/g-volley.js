@@ -59,7 +59,7 @@ export function mount(el, ctx) {
   const modeBtn = h('button', { class: 'vb-tb' }), newBtn = h('button', { class: 'vb-start' }, h('b', null, '▶ 시작'), h('small', null, '7점 먼저 내면 승리'), h('em', null, '🏃 신속한 움직임을 위해 장신구를 모두 벗었어요!'));
   const inp = { l: false, r: false, j: false, s: false };
   // 스파이크 충전: [나, 상대] 기본 공격 횟수(0~3). 3이면 스파이크 준비 완료
-  const chg = [0, 0], dsh = [0, 0], armAt = [0, 0]; let dHeld = false; let flash = 0, shake = 0, spikeTxt = 0, lastHit = -1, camZ = 1, camTop = 0, ghost = null;
+  const chg = [0, 0], dsh = [0, 0], armAt = [0, 0]; let dHeld = false; let flash = 0, shake = 0, spikeTxt = 0, outTxt = 0, lastTouch = 0, prevSide = 0, lastHit = -1, camZ = 1, camTop = 0, ghost = null;
   const btn = (k, cls, label, sub) => { const b = h('button', { class: 'vb-btn ' + cls }, h('b', null, label), sub && h('small', null, sub)); holdBtn(b, () => { inp[k] = true; if (k === 's') armAt[my()] = performance.now(); }, () => { inp[k] = false; }); return b; };
   const spkBtn = btn('s', 'spk', '스파이크', '0/3'); spkBtn.append(h('em', { class: 'vb-now' }, '눌러!')); const pips = h('div', { class: 'vb-pips' });
   const left = h('div', { class: 'vb-pad l' }, btn('l', 'mv', '◀'), btn('r', 'mv', '▶'));
@@ -68,8 +68,9 @@ export function mount(el, ctx) {
   const exit = h('button', { class: 'vb-tb x', onClick: () => ctx.go('game') }, '✕ 나가기');
   const bar = el.querySelector('.bet-bar');
   const top = h('div', { class: 'vb-top' }, exit, info, bar || '', modeBtn);
+  const lvRow = h('div', { class: 'vb-lv', hidden: true }), drawLv = () => lvRow.replaceChildren(h('span', null, '컴퓨터'), ...[['e', '하'], ['m', '중'], ['h', '상']].map(([k, t]) => h('button', { class: k === lvKey ? 'on' : '', onClick: () => { lvKey = k; try { localStorage.setItem('capy.volleyLv', k); } catch {} drawLv(); } }, t)));
   const spk = h('div', { class: 'vb-spk' }, pips);
-  const rot = h('div', { class: 'vb-rot' }, canvas, top, spk, left, right, newBtn), wrap = h('div', { class: 'vb' }, rot);
+  const rot = h('div', { class: 'vb-rot' }, canvas, top, spk, left, right, newBtn, lvRow), wrap = h('div', { class: 'vb' }, rot);
   let VK = 1, VX = 0, VY = 0; // 화면 전체를 쓰는 캔버스 안에서 코트(800×450)를 그릴 배율과 위치
   el.append(wrap); document.body.classList.add('vb-on');
   // 세로로 들고 있으면 화면을 90도 돌려 가로로 보여 준다. 조작 버튼은 코트를 가리지 않게 양옆에 둔다
@@ -95,7 +96,7 @@ export function mount(el, ctx) {
   let game = { sc0: 0, sc1: 0, serve: 0, phase: 'idle', at: 0, n: 0 }, dead = false, deadMine = false, oppSeen = 0, sendT = 0, lastP = '', lastPT = 0, aiErr = 0, aiT = 0;
   const now = () => mode === 'online' ? ctx.store.now() : Date.now();
   const live = () => game.phase === 'serve' && now() >= game.at + 1000 && !dead;
-  const placeBall = () => { lastHit = -1; Object.assign(ball, { x: game.serve ? 600 : 200, y: 150, vx: 0, vy: 0, rot: 0, spike: 0 }); trail.length = 0; dead = false; deadMine = false; };
+  const placeBall = () => { lastHit = -1; prevSide = game.serve ? 1 : 0; lastTouch = game.serve; Object.assign(ball, { x: game.serve ? 600 : 200, y: 150, vx: 0, vy: 0, rot: 0, spike: 0 }); trail.length = 0; dead = false; deadMine = false; };
   const sprites = [null, null], yz = new Image(), bg = new Image(); yz.src = 'img/volley/ball.webp'; bg.src = 'img/volley/bg.webp';
   const yz0 = new Image(); yz0.src = yuzuUrl;
   const loadSprites = () => [0, 1].forEach(i => { const uid = mode === 'online' ? ctx.order[i] : (i ? null : ctx.uid); loadImg(capyUrl(uid ? ctx.capyOf(uid, { face: 'happy', rare: null, pin: '', hat: '', acc: 'none' }) : { color: 'choco', acc: 'towel', face: 'wink' })).then(im => { sprites[i] = im; }); });
@@ -103,6 +104,7 @@ export function mount(el, ctx) {
 
   // 공을 쳤을 때: 스파이크 준비 + 버튼을 막 눌렀고 + 공중이면 스파이크, 아니면 기본 공격 1번 충전
   function onHit(i, p) {
+    lastTouch = i;
     const mine = i === my(), cpu = mode === 'cpu' && i === 1;
     if (!mine && !cpu) return; // 온라인에서 상대가 친 건 상대 화면이 계산한다
     const armed = performance.now() - armAt[i] < ARM_MS || (mine && inp.s), air = p.y < standY - 40;
@@ -111,7 +113,7 @@ export function mount(el, ctx) {
   }
 
   function setGame(v) { const fresh = !v || v.n !== game.n || v.phase !== game.phase || v.at !== game.at;
-    if (v && v.phase === 'over' && game.phase === 'serve') { const won = (v.sc0 > v.sc1 ? 0 : 1) === my(); ctx.earnMatch(PAY.volley(won) * (mode === 'online' ? 1 : 0.6), '배구', [`${won ? '승리' : '패배'} = ${PAY.volley(won)}코인`, ...(mode === 'online' ? [] : [`컴퓨터전 60% = ${Math.round(PAY.volley(won) * 0.6)}코인`])], won ? 'win' : 'lose', 'volley', mode === 'online'); gameFx(won ? 'win' : 'lose', `${v.sc0} : ${v.sc1}`); } // 방금 끝났을 때만
+    if (v && v.phase === 'over' && game.phase === 'serve') { const won = (v.sc0 > v.sc1 ? 0 : 1) === my(); const cx = { e: 0.4, m: 0.6, h: 0.8 }[lvKey] || 0.6, ln = { e: '하', m: '중', h: '상' }[lvKey] || '중'; ctx.earnMatch(PAY.volley(won) * (mode === 'online' ? 1 : cx), '배구', [`${won ? '승리' : '패배'} = ${PAY.volley(won)}코인`, ...(mode === 'online' ? [] : [`컴퓨터전(${ln}) ${Math.round(cx * 100)}% = ${Math.round(PAY.volley(won) * cx)}코인`])], won ? 'win' : 'lose', 'volley', mode === 'online'); gameFx(won ? 'win' : 'lose', `${v.sc0} : ${v.sc1}`); } // 방금 끝났을 때만
     if (v && v.n === 1 && v.phase === 'serve' && game.n !== 1) { chg[0] = chg[1] = dsh[0] = dsh[1] = 0; drawPips(); }
     game = v || { sc0: 0, sc1: 0, serve: 0, phase: 'idle', at: 0, n: 0 }; if (fresh) placeBall(); }
   function newGame() { const v = { sc0: 0, sc1: 0, serve: 0, phase: 'serve', at: now(), n: (game.n || 0) + 1 }; chg[0] = chg[1] = dsh[0] = dsh[1] = 0; drawPips(); mode === 'online' ? ctx.store.set('games/volley', v) : setGame(v); ps[0].x = 200; ps[1].x = 600; }
@@ -148,14 +150,26 @@ export function mount(el, ctx) {
     if (key !== lastP || t - lastPT > 1000) { lastP = key; lastPT = t; ctx.store.set('rt/volley/p' + ctx.idx, { ...pv, k: Math.round(t) }).catch(() => {}); }
     if (live() && (ball.x < NETX ? 0 : 1) === ctx.idx) ctx.store.set('rt/volley/ball', { x: r(ball.x), y: r(ball.y), vx: r(ball.vx), vy: r(ball.vy), sp: ball.spike || 0, side: ctx.idx, n: game.n, t: ctx.store.now() }).catch(() => {});
   }
+  // 컴퓨터 난이도: 하·중·상 [이동 속도, 판단 오차(px), 다시 판단하는 간격(ms), 받으러 뛰는 확률, 스파이크 쓰는 확률, 대쉬 쓰는 확률]
+  const LV = { e: [4.6, 120, 650, 0.25, 0.25, 0.02], m: [5.8, 60, 420, 0.5, 0.5, 0.05], h: [6.8, 22, 240, 0.8, 0.8, 0.1] };
+  let lvKey = (() => { try { return localStorage.getItem('capy.volleyLv') || 'm'; } catch { return 'm'; } })(), aiPred = 610, aiPT = 0;
+  // 공이 내 쪽으로 오면, 받을 높이까지 내려오는 자리를 미리 계산해 둔다(벽이 없어 코트 뒤로 흐르는 공도 쫓아간다)
+  function predict() { const b = { ...ball, cd: [9, 9] }; for (let k = 0; k < 260; k++) { if (stepBall(b, [])) break; if (b.vy > 0 && b.y >= standY - 50) break; } return b.x; }
   function ai(p) {
-    const lv = ctx.streakLv('volley'); // 연승할수록 컴퓨터가 공을 더 정확히 따라가고 더 자주 뛴다
-    if (Date.now() > aiT) { aiT = Date.now() + 900 - lv * 120; aiErr = (Math.random() - 0.5) * 130 * (1 - lv * 0.25); }
-    const tx = ball.x > NETX - 20 ? ball.x + 20 + aiErr : 610, o = { l: p.x > tx + 8, r: p.x < tx - 8, j: false };
-    o.j = ball.x > NETX && Math.abs(ball.x - p.x) < 70 && ball.y < p.y - 70 && ball.y > 170 && ball.vy > 0 && Math.random() < 0.15 + lv * 0.08;
+    const L = LV[lvKey] || LV.m, lv = ctx.streakLv('volley'); // 연승할수록 조금 더 정확해진다
+    const now = performance.now();
+    if (now > aiT) { aiT = now + L[2] * (1 - lv * 0.1); aiErr = (Math.random() - 0.5) * L[1] * (1 - lv * 0.2); }
+    if (now > aiPT) { aiPT = now + 90; aiPred = predict(); }
+    const coming = ball.x > NETX - 30 || (ball.vx > 0 && aiPred > NETX);
+    // 공 떨어질 자리보다 살짝 뒤(오른쪽)에 서야 공이 네트 쪽으로 튄다
+    const outBall = aiPred > W + EXT + 20; // 깃발 밖으로 나갈 공은 그냥 둔다(아웃)
+    const tx = coming && !outBall ? Math.max(NETX + 50, aiPred + 35 + aiErr) : 610, o = { l: p.x > tx + 6, r: p.x < tx - 6, j: false };
+    const dx = ball.x - p.x;
+    if (coming && !outBall && Math.abs(dx) < 70 && ball.vy > 0 && ball.y > p.y - 150 && Math.random() < L[3] + 0.2) { o.l = true; o.r = false; } // 닿기 직전 네트 쪽으로 밀어 쳐서 넘긴다
+    o.j = coming && Math.abs(dx) < 75 && ball.y < p.y - 40 && ball.y > p.y - 190 && ball.vy > -1 && Math.random() < L[3] * 0.25 + lv * 0.04;
     // 스파이크가 준비되면 네트 가까이에서 뛰어올라 내리꽂으려 한다
-    if (chg[1] >= SPK_N && p.y < standY - 20 && ball.x > NETX && ball.x < NETX + 200 && Math.abs(ball.x - p.x) < 80 && Math.random() < 0.5 + lv * 0.1) armAt[1] = performance.now();
-    if (dsh[1] > 0 && p.y >= standY && !(p.dT > 0) && Math.abs(tx - p.x) > 170 && Math.random() < 0.05) { p.dT = 12; p.dDir = tx > p.x ? 1 : -1; dsh[1]--; }
+    if (chg[1] >= SPK_N && p.y < standY - 40 && ball.x > NETX && ball.x < NETX + 220 && Math.abs(dx) < 80 && Math.random() < L[4]) armAt[1] = now;
+    if (dsh[1] > 0 && p.y >= standY && !(p.dT > 0) && Math.abs(tx - p.x) > 150 && Math.random() < L[5]) { p.dT = 12; p.dDir = tx > p.x ? 1 : -1; dsh[1]--; }
     return o;
   }
   function tick() {
@@ -164,10 +178,11 @@ export function mount(el, ctx) {
     stepPlayer(ps[me], me, inp);
     if (mode === 'online') { // 상대: 마지막으로 받은 상태를 물리로 계속 진행시킨 '유령'을 부드럽게 따라간다(받을 때마다 순간이동하면 뚝뚝 끊겨 보인다)
       const o = ps[1 - me]; if (ghost) { if (Date.now() - oppSeen > 300) ghost.vx = 0; stepPlayer(ghost, 1 - me, null); o.x += (ghost.x - o.x) * 0.3; o.y += (ghost.y - o.y) * 0.35; o.vx = ghost.vx; o.vy = ghost.vy; } }
-    else stepPlayer(ps[1], 1, ai(ps[1]), CPU_SPEED * (1 + ctx.streakLv('volley') * 0.1));
+    else stepPlayer(ps[1], 1, ai(ps[1]), (LV[lvKey] || LV.m)[0] * (1 + ctx.streakLv('volley') * 0.05));
     if (inp.j && ps[me].y >= standY - 1 && ps[me].vy < 0 && !ps[me].jf) sfx('jump'); ps[me].jf = ps[me].vy < 0;
     if (flash) flash--; if (shake) shake--; if (spikeTxt) spikeTxt--;
     if (!live()) return;
+    if ((ball.x < NETX) !== (prevSide === 0) && live()) { lastTouch = prevSide; } prevSide = ball.x < NETX ? 0 : 1;
     const bx0 = ball.x, bvx = ball.vx, bvy = ball.vy, landed = stepBall(ball, ps, onHit);
     // 스파이크 충전: 내가 친 공이 네트를 넘어 상대 진영으로 가면 1회(스파이크로 넘긴 건 빼고)
     // 대쉬도 같은 조건으로 1회씩 쌓인다(최대 2회)
@@ -176,8 +191,9 @@ export function mount(el, ctx) {
     if (Math.abs(ball.vx - bvx) > 1.2 || ball.vy - bvy < -2) sfx('pop'); // 공이 튕길 때
     if (landed) {
       ball.y = GROUND - BR; ball.vy = 0; ball.vx *= 0.5; if (ball.spike) { shake = 26; try { navigator.vibrate && navigator.vibrate(150); } catch {} }
-      const side = ball.x < NETX ? 0 : 1;
-      if (mode === 'cpu' || side === ctx.idx) point(side); else dead = true;
+      const side = ball.x < NETX ? 0 : 1, out = ball.x < -EXT || ball.x > W + EXT; // 코트 끝(깃발) 밖에 떨어지면 아웃: 마지막에 친 쪽 실점
+      if (out) outTxt = 60;
+      if (mode === 'cpu' || side === ctx.idx) point(out ? lastTouch : side); else dead = true;
     }
   }
   function draw() {
@@ -192,6 +208,8 @@ export function mount(el, ctx) {
     g.setTransform(K, 0, 0, K, OX + sx * K, OY + sy * K);
     // 배경은 화면 가로에 꽉 맞게 키우고, 그림 속 모래선(높이의 400/450)이 코트 바닥에 오도록 맞춘다(위아래는 잘려도 된다)
     if (bg.complete && bg.naturalWidth) { const bw = canvas.width / K + 12, bh = bw * H / W, bx = -OX / K - 6, by = GROUND - bh * GROUND / H; if (by > -OY / K) { g.fillStyle = '#5DB9EE'; g.fillRect(bx, -OY / K - 4, bw, by - (-OY / K) + 8); } g.drawImage(bg, bx, by, bw, bh); } else { g.fillStyle = '#9DD6F0'; g.fillRect(0, 0, W, H); g.fillStyle = '#E8C98F'; g.fillRect(0, GROUND, W, H - GROUND); }
+    // 코트 끝 표시(이 밖에 떨어지면 아웃)
+    for (const fx of [-EXT, W + EXT]) { g.fillStyle = '#fff'; g.fillRect(fx - 2, GROUND - 2, 4, 10); g.fillStyle = '#8A5E3B'; g.fillRect(fx - 2, GROUND - 70, 4, 70); g.fillStyle = '#E8453C'; g.beginPath(); g.moveTo(fx + 2, GROUND - 70); g.lineTo(fx + 30 * (fx < 0 ? 1 : -1) + 2, GROUND - 60); g.lineTo(fx + 2, GROUND - 50); g.fill(); }
     // 네트: 기둥 + 그물 + 흰 띠
     g.fillStyle = '#8A5E3B'; g.fillRect(NETX - 4, NETTOP - 6, 8, GROUND - NETTOP + 6);
     g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 1.2; for (let y = NETTOP + 10; y < GROUND - 6; y += 12) { g.beginPath(); g.moveTo(NETX - NETW / 2, y); g.lineTo(NETX + NETW / 2, y); g.stroke(); }
@@ -211,6 +229,7 @@ export function mount(el, ctx) {
     // 점수판
     g.font = '700 40px Jua, sans-serif'; g.textAlign = 'center'; g.lineWidth = 6; g.strokeStyle = '#fff';
     [[game.sc0, NETX - 70, '#E8453C'], [game.sc1, NETX + 70, '#2B8FD6']].forEach(([v, x, c]) => { g.strokeText(v, x, 50); g.fillStyle = c; g.fillText(v, x, 50); });
+    if (outTxt) { outTxt--; g.save(); g.translate(NETX, 120); g.font = '900 50px Jua, sans-serif'; g.textAlign = 'center'; g.lineWidth = 9; g.strokeStyle = '#fff'; g.strokeText('아웃!', 0, 0); g.fillStyle = '#E8453C'; g.fillText('아웃!', 0, 0); g.restore(); }
     if (spikeTxt) { const k = Math.min(1, (50 - spikeTxt) / 8); g.save(); g.translate(NETX, 140); g.scale(.6 + k * .5, .6 + k * .5); g.font = '900 56px Jua, sans-serif'; g.lineWidth = 10; g.strokeStyle = '#7A2E00'; g.strokeText('스파이크!!', 0, 0); g.fillStyle = '#FFD23F'; g.fillText('스파이크!!', 0, 0); g.restore(); }
     let msg = '';
     if (game.phase === 'idle') msg = '';
@@ -223,6 +242,7 @@ export function mount(el, ctx) {
     acc += Math.min(100, t - (lastT || t)); lastT = t;
     while (acc >= 16.67) { tick(); acc -= 16.67; }
     send(t); draw();
+    const showLv = game.phase !== 'serve' && mode === 'cpu'; if (lvRow.hidden === showLv) { lvRow.hidden = !showLv; if (showLv) drawLv(); }
     const showStart = game.phase !== 'serve'; if (newBtn.hidden === showStart) { newBtn.hidden = !showStart; newBtn.firstChild.textContent = game.phase === 'over' ? '▶ 한 판 더' : '▶ 시작'; }
     const pm = ps[my()], go = chg[my()] >= SPK_N && pm.y < standY - 40 && live(); if (go !== spkBtn.classList.contains('now')) spkBtn.classList.toggle('now', go); // 스파이크 준비된 채 점프하면 '눌러!'
     const here = mode !== 'online' || Date.now() - oppSeen < 3000;
