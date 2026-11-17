@@ -510,15 +510,18 @@ export function mount(el, ctx) {
       }
       if (!paused && i !== held && (o.st === 'idle' || o.st === 'walk') && (mx || my) && (A(i) >= 30 || (shiny && A(i) >= 0)) && Math.abs(me.x - o.x) < (shiny ? 110 : 85) && now > o.greetAt) { o.greetAt = now + (shiny ? 9000 : 14000) + Math.random() * 9000;
         const near100 = A(i) >= 90 && A(i) < 100;
+        // 황금 장비 칭찬: 같은 동물은 한 번 칭찬하면 10분 동안 다시 안 한다(대왕 세금·절은 따로). 칭찬 말은 지난번과 겹치지 않게 돌아가며
+        const goldOk = wall - ((mine[i] || {}).gp || 0) >= 600000, gold = (kind, list) => { setRel(i, { gp: wall }); const prev = o.lastGold, pool = list.filter(t => t !== prev), t = pool.length ? pool[Math.floor(Math.random() * pool.length)] : list[0]; o.lastGold = t; return line(i, kind, t, shineN); };
+        const goldPool = base => [base, ...RAREGREET.map(f => toned(i, f(ctx.me.name)))];
         if (bag.rumorAt && shiny && !(mine[i] || {}).rumor) { setRel(i, { rumor: 1 }); pop(o.e, line(i, 'rumor', toned(i, pick(RUMOR)(ctx.me.name))), 'say long'); } // 첫 황금템 소문을 듣고 달려온다(동물마다 한 번)
         else if (near100 && now > (o.cakeAt || 0)) { o.cakeAt = now + 60000; pop(o.e, line(i, 'cake', toned(i, pick(CAKE_HINT))), 'say long'); } // 단짝 직전: 케이크가 필요하다고 알려 준다
-        else if (shineN >= 6) { // 대왕 폐하: 10분에 한 번 절을 하고, 30분에 한 번 세금 1코인을 바친다
-          const r = mine[i] || {}, due = !kingTrial && wall - (r.taxAt || 0) >= TAX_MS, bow = kingTrial ? now > (o.tbow || 0) : wall - (r.bowAt || 0) >= BOW_MS; if (kingTrial) o.tbow = now + 12000; pop(o.e, due ? '대왕 폐하! 세금 1코인 바치옵니다 🪙' : line(i, 'king', KING[(i + Math.floor(now / 9000)) % KING.length]), 'say long');
+        else if (shineN >= 6 && (goldOk || (!kingTrial && (wall - ((mine[i] || {}).taxAt || 0) >= TAX_MS || wall - ((mine[i] || {}).bowAt || 0) >= BOW_MS)) || kingTrial)) { // 대왕 폐하: 10분에 한 번 절을 하고, 30분에 한 번 세금 1코인을 바친다
+          const r = mine[i] || {}, due = !kingTrial && wall - (r.taxAt || 0) >= TAX_MS, bow = kingTrial ? now > (o.tbow || 0) : wall - (r.bowAt || 0) >= BOW_MS; if (kingTrial) o.tbow = now + 12000; pop(o.e, due ? '대왕 폐하! 세금 1코인 바치옵니다 🪙' : gold('king', KING), 'say long');
           if (bow) { o.e.style.setProperty('--bd', me.x < o.x ? -1 : 1); o.e.classList.add('bow'); setTimeout(() => o.e.classList.remove('bow'), 2400); } // 선 채로 내 쪽을 향해 허리를 깊이 숙였다 일어난다
           if (!kingTrial && (due || bow)) setRel(i, { ...(due ? { taxAt: wall } : {}), ...(bow ? { bowAt: wall } : {}) }); if (due) { addCoins(1); sfx('coin'); } }
-        else if (shineN >= 4) { pop(o.e, line(i, 'hero', AWE2[i], shineN), 'say long'); o.e.classList.add('cry'); setTimeout(() => o.e.classList.remove('cry'), 2600); } // 눈물을 흘리며 영웅이라고
-        else if (shineN >= 2) pop(o.e, line(i, 'awe', AWE1[i], shineN), 'say long');
-        else { const sh = shiny && (A(i) < 30 || Math.random() < 0.6); pop(o.e, line(i, sh ? 'shine' : 'greet', toned(i, pick(sh ? RAREGREET : GREET)(ctx.me.name))), 'say long'); } }
+        else if (shineN >= 4 && goldOk) { pop(o.e, gold('hero', goldPool(AWE2[i])), 'say long'); o.e.classList.add('cry'); setTimeout(() => o.e.classList.remove('cry'), 2600); } // 눈물을 흘리며 영웅이라고
+        else if (shineN >= 2 && goldOk) pop(o.e, gold('awe', goldPool(AWE1[i])), 'say long');
+        else { const sh = shiny && goldOk && (A(i) < 30 || Math.random() < 0.6); if (sh) pop(o.e, gold('shine', RAREGREET.map(f => toned(i, f(ctx.me.name)))), 'say long'); else if (A(i) >= 30) pop(o.e, line(i, 'greet', toned(i, pick(GREET)(ctx.me.name))), 'say long'); } }
       const k = Math.min(1, dt * 5); o.y += (ty - o.y) * k; o.s += (ts - o.s) * k;
       o.e.style.left = o.x + 'px'; o.e.style.bottom = (o.y * 100).toFixed(2) + '%'; o.e.style.transform = `scale(${o.s.toFixed(3)})`; });
     crowTick(now, paused, wet); charmTick(now, paused, wet); sRumorTick(now, paused, wet);
