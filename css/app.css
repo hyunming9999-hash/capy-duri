@@ -1211,3 +1211,17 @@ html.fixed-page,html.fixed-page body{overflow:hidden;height:100%;overscroll-beha
 
 .earn-card.hot { border-color: #FF8A3D; box-shadow: 0 0 0 3px rgba(255,138,61,.25), 0 10px 30px rgba(0,0,0,.18); } .earn-card.lost { border-color: #E5484D; } .earn-card.lost p.sum { color: #D9364A; } .earn-card .btn { margin-top: 8px; width: 100%; }
 .g-streak { margin: 0 0 10px; padding: 10px 12px; border-radius: 14px; background: #FFF3E6; border: 2px solid #FFC59A; } .g-streak b { display: block; font: 800 14px/1.3 var(--head); color: #C2410C; } .g-streak small { font-size: 12px; color: #7A4A2A; line-height: 1.45; }
+
+/* 카피 버블 */
+.bb { display: flex; flex-direction: column; gap: 8px; }
+.bb-hero-ic { display: flex; gap: 2px; } .bb-dot { width: 22px; height: 22px; }
+.bb-stages { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.bb-st { aspect-ratio: 1; border-radius: 12px; border: 2px solid var(--line); background: var(--card); font: 800 15px var(--head); color: #5A3A22; }
+.bb-st.done { background: #E6F7EA; border-color: #8FD19E; } .bb-st.hard { color: #C2410C; } .bb-st.hard.done { background: #FFE9DC; border-color: #FFB085; }
+.bb-st.on { background: var(--yuzu); border-color: var(--yuzu-d); box-shadow: 0 3px 0 var(--yuzu-d); } .bb-st.lock { opacity: .45; }
+.bb-play { position: relative; display: flex; justify-content: center; }
+.bb-board { width: min(100%, 380px); height: auto; border-radius: 16px; border: 4px solid #8A5A2B; box-shadow: 0 5px 0 #6B4220; touch-action: none; background: #EFE4FF; }
+.bb-keys { display: grid; grid-template-columns: 1fr 1.6fr 1fr; gap: 8px; max-width: 380px; width: 100%; margin: 0 auto; touch-action: none; user-select: none; -webkit-user-select: none; }
+.bb-keys .tt-key { height: 56px; font: 900 22px var(--head); }
+.bb-keys .bb-fire b { font-size: 18px; }
+.bb-end-ic { font-size: 44px; }

@@ -283,7 +283,7 @@ function render() {
       ctx.partnerId && h('button', { class: 'call', title: '상대를 이 화면으로 부르기', onClick: () => ctx.call() }, '📣 부르기'), partnerBadge()), body));
   ctx.setTitle = t => { title.textContent = t; };
   cleanup = item.mod.mount(body, ctx, sub) || null;
-  if (SCENE[name] && (name !== 'game' || sub)) bgm.start(SCENE[name]); // 게임 목록에서는 조용히, 게임 안에서만
+  if (SCENE[name] && (name !== 'game' || sub)) bgm.start(name === 'game' && sub === 'bubble' ? 'carnival' : SCENE[name]); // 게임 목록에서는 조용히, 게임 안에서만
 }
 // 배경음이 나오는 곳과 소리 켜기/끄기 버튼
 const SCENE = { walk: 'bath', gallery: 'gallery', game: 'game', social: 'social' };

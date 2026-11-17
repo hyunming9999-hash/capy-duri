@@ -1,4 +1,4 @@
-// 오늘 무슨 게임하지? — 카피바라 게임 8종
+// 오늘 무슨 게임하지? — 카피바라 게임 9종
 import { h } from './ui.js';
 import { capyEl } from './capy.js';
 import { omok, four, match } from './g-board.js';
@@ -7,6 +7,7 @@ import * as yuzu from './g-yuzu.js';
 import * as burger from './g-burger.js';
 import * as tetris from './g-tetris.js';
 import * as mahjong from './g-mahjong.js';
+import * as bubble from './g-bubble.js';
 import { RATE } from './money.js';
 
 const HOTTEOK = 'https://hyunming9999-hash.github.io/hotteok-tekken/';
@@ -19,6 +20,7 @@ export const GAMES = [
   { id: 'yuzu', mod: yuzu, title: '유자 받기', sub: '30초 점수 대결', face: 'love', acc: 'ribbon' },
   { id: 'burger', mod: burger, title: '카피 버거', sub: '굽고 튀기고 쌓기 · 경쟁·기록·컴퓨터', face: 'happy', acc: 'yuzu' },
   { id: 'tetris', mod: tetris, title: '카피 테트리스', sub: '줄 지우기 · 경쟁·기록', face: 'wow', acc: 'leaf' },
+  { id: 'bubble', mod: bubble, title: '카피 버블', sub: '같은 동물 구슬 3개 펑! · 기록·스테이지·경쟁', face: 'love', acc: 'ribbon' },
   { id: 'mahjong', mod: mahjong, title: '동물 마작', sub: '같은 동물 짝 없애기 · 경쟁·컴퓨터', face: 'smile', acc: 'flower' },
 ];
 
