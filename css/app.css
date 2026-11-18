@@ -2003,3 +2003,4 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .kb-btns .sm { width: auto; padding: 12px 10px; font-size: 13px; white-space: nowrap; }
 .kb-warn { text-align: center; } .kb-warnic { font-size: 52px; animation: kbPoint 1s ease-in-out infinite; } .kb-warn p { margin: 6px 0; font-size: 14px; line-height: 1.5; } .kb-warn i { font-style: normal; font-weight: 800; padding: 1px 6px; border-radius: 8px; background: #FFE9B8; } .kb-warn i.hot { background: #FFE0CC; color: #C2410C; } .kb-warnx { color: #C2410C; font-weight: 900; }
 .kb-riceadd { display: flex; align-items: center; gap: 6px; } .kb-riceadd img { width: 70px; height: 56px; object-fit: contain; } img.kb-warnic { width: 96px; height: 76px; object-fit: contain; }
+.kb-more { display: inline-block; margin-top: 5px; padding: 4px 10px; border-radius: 10px; background: #5B4636; color: #fff; font-size: 11.5px; font-weight: 900; box-shadow: 0 2px 0 #3B2A1E; }
