@@ -12,7 +12,7 @@ export const RODS = [null, { t: 1, name: '초급 낚싯대', price: 500, dur: 50
 export const BAIT2 = 30, BAIT3 = 60, BAIT_KEY = ['', 'bait', 'bait2', 'bait3'], BAIT_NAME = ['', '미끼', '중급 미끼', '고급 미끼'];
 const BAIT_COL = [null, ['#F28BA8', '#B4466A'], ['#5EB8FF', '#1E5E92'], ['#FFD24A', '#B07A00']];
 export const baitIc = t => { const [f, d] = BAIT_COL[t] || BAIT_COL[1]; return `<svg viewBox="0 0 48 48"><path d="M10 34 C4 26 12 18 20 22 C28 26 32 14 40 18 C46 21 44 30 38 30" fill="none" stroke="${d}" stroke-width="11" stroke-linecap="round"/><path d="M10 34 C4 26 12 18 20 22 C28 26 32 14 40 18 C46 21 44 30 38 30" fill="none" stroke="${f}" stroke-width="7.5" stroke-linecap="round"/><path d="M15 22 v6 M22 22.5 v6 M29 19 v6 M35 16.5 v6" stroke="${d}" stroke-width="1.6" stroke-linecap="round" opacity=".6"/><circle cx="38.5" cy="29" r="1.6" fill="#3A2210"/>${t === 3 ? '<path d="M41 8 l1.4 3 3 1.4 -3 1.4 -1.4 3 -1.4 -3 -3 -1.4 3 -1.4z" fill="#FFF3B0"/>' : ''}</svg>`; };
-export const BAIT = 10, BALL = 10, CANNON = 1000, WBOAT = 3000, PEARL_PRICE = 20000, PEARL_P = 0.002; // 진주: 고급 바다에서 던질 때마다 0.2% · 진주부적(3장)을 쓰면 10번 안에 한 번 걸리고 90%로 낚는다
+export const BAIT = 10, BALL = 50, CANNON = 1500, CANNON2 = 3500, WBOAT = 3000, PEARL_PRICE = 20000, PEARL_P = 0.002; // 진주: 고급 바다에서 던질 때마다 0.2% · 진주부적(3장)을 쓰면 10번 안에 한 번 걸리고 90%로 낚는다
 
 // 물고기 80종: [이름, 최소cm, 최대cm, 최소값, 최대값, 표시(r=귀한 것, k=대장)]
 // 값은 가게 시세에 맞췄다(옷 한 벌 200~310, 게임 한 판 50쯤, 한 번 던지는 데 미끼·낚싯대 값 13쯤): 초급 평균 85, 중급 165, 고급 300쯤
@@ -298,7 +298,7 @@ export function openFishing(o) {
 const SHIP_SVG = `<svg viewBox="0 0 170 130"><path d="M96 74 V8" stroke="#5A3B22" stroke-width="5" stroke-linecap="round"/><path d="M93 12 L44 38 L93 62z" fill="#3A3A44" stroke="#1F1F26" stroke-width="2" stroke-linejoin="round"/><circle cx="74" cy="36" r="7" fill="#fff"/><circle cx="71.6" cy="35" r="1.6" fill="#1F1F26"/><circle cx="76.4" cy="35" r="1.6" fill="#1F1F26"/><path d="M66 43 l16 5M82 43 l-16 5" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><path d="M96 8 h20 q-4 6 0 12 h-20z" fill="#1F1F26"/><path d="M6 72 H164 Q160 112 132 116 H40 Q12 112 6 72z" fill="#6B4A32" stroke="#2E1E12" stroke-width="2.4" stroke-linejoin="round"/><path d="M9 86 H161" stroke="#C0392B" stroke-width="7"/><circle cx="60" cy="100" r="5" fill="#2E1E12"/><circle cx="90" cy="100" r="5" fill="#2E1E12"/><circle cx="120" cy="100" r="5" fill="#2E1E12"/><g class="gun-b" style="transform-origin:42px 56px"><rect x="2" y="45" width="52" height="21" rx="9" fill="#3E3E48" stroke="#1F1F26" stroke-width="2"/><rect x="1" y="42" width="9" height="27" rx="4" fill="#2A2A33" stroke="#1F1F26" stroke-width="1.5"/></g><circle cx="40" cy="67" r="11" fill="#3A2A1E" stroke="#1F140C" stroke-width="2"/><path d="M-2 118 q14 -9 28 0 t28 0 t28 0 t28 0 t28 0 t28 0 t28 0" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".8"/></svg>`;
 export function seaBattle(e) {
   const G = 520, me = e.me, dir = e.foeX > me.x ? 1 : -1, D0 = Math.abs(e.foeX - me.x), VMAX = Math.sqrt((D0 + 400) * G), // 서로 멀어져도 힘 100이면 닿는다
-     HITR = 68 * me.s, HITH = 80 * me.s, HITS = 4, // 배 반 너비와 높이: 포탄이 배나 캐릭터에 닿으면 무조건 맞은 것이다
+     HITR = 68 * me.s, HITH = 80 * me.s, HITS = 4, FOE_HITS = e.gun2 ? 2 : HITS, // 신형 대포(카피 별빛포)는 2방이면 해적선이 가라앉는다. 배 반 너비와 높이: 포탄이 배나 캐릭터에 닿으면 무조건 맞은 것이다
      BALL_PX = Math.round(20 * me.s), A0 = 45, P0 = 60;
   const PX = 41 * me.s, PY = 46 * me.s, BL = 36 * me.s, DROP = 16 * me.s; // 포신 축(배 가운데에서)과 포신 길이, 배 바닥이 기준선보다 내려간 만큼
   const my0 = me.x, foe0 = e.foeX, BUDGET = 160, RANGE = 240, NEAR = 320; let foeX = e.foeX, foeTo = foeX, moved = 0;
@@ -307,11 +307,12 @@ export function seaBattle(e) {
   // 배가 파도에 흔들리는 만큼(기울기·높이) 포구와 쏘는 각도도 같이 움직인다
   const sway = el => { const cs = getComputedStyle(el), r = parseFloat(cs.rotate) || 0, t = cs.translate && cs.translate !== 'none' ? parseFloat(cs.translate.split(' ')[1]) || 0 : 0; return { r, up: -t }; };
   const muzzle = (el, x0, d, a) => { const w = sway(el), ph = -w.r * Math.PI / 180, rx = d * (PX + BL * Math.cos(a)), ry = PY + DROP + BL * Math.sin(a); return { x: x0 + rx * Math.cos(ph) - ry * Math.sin(ph), y: -DROP + rx * Math.sin(ph) + ry * Math.cos(ph) + w.up, a: a - w.r * d * Math.PI / 180 }; };
-  let alive = true, raf = 0, last = 0, turn = 'intro', shot = null, wind = 0, myHp = HITS, foeHp = HITS, camX = me.x, camTo = me.x, timer = 0, next = null, round = 0, still = 0, sailing = 0;
-  const pips = () => h('div', { class: 'sb-hp' }, ...Array.from({ length: HITS }, () => h('i')));
+  let alive = true, raf = 0, last = 0, turn = 'intro', shot = null, wind = 0, myHp = HITS, foeHp = FOE_HITS, camX = me.x, camTo = me.x, timer = 0, next = null, round = 0, still = 0, sailing = 0;
+  const pips = n => h('div', { class: 'sb-hp' }, ...Array.from({ length: n }, () => h('i')));
   const foeEl = h('div', { class: 'so-boat sb-foe hv' + e.zone, style: { left: foeX + 'px', bottom: me.y + 'px', transform: `scale(${(dir * me.s).toFixed(3)}, ${me.s.toFixed(3)})`, zIndex: 12 } }, h('div', { class: 'sb-crew a', html: gullSvg(true) }), h('div', { class: 'sb-crew b', html: gullSvg(false) }), h('div', { class: 'sb-ship', html: SHIP_SVG }));
-  const fHp = pips(), mHp = pips(), ball = h('i', { class: 'sb-ball', style: { display: 'none', width: BALL_PX + 'px', height: BALL_PX + 'px', margin: `0 0 ${-BALL_PX / 2}px ${-BALL_PX / 2}px` } }), dots = [0, 1, 2, 3, 4, 5].map(() => h('i', { class: 'sb-dot' }));
+  const fHp = pips(FOE_HITS), mHp = pips(HITS), ball = h('i', { class: 'sb-ball', style: { display: 'none', width: BALL_PX + 'px', height: BALL_PX + 'px', margin: `0 0 ${-BALL_PX / 2}px ${-BALL_PX / 2}px` } }), dots = [0, 1, 2, 3, 4, 5].map(() => h('i', { class: 'sb-dot' }));
   fHp.style.bottom = me.y + 132 * me.s + 'px'; mHp.style.bottom = me.y + 122 * me.s + 'px'; e.world.append(foeEl, fHp, mHp, ball, ...dots);
+  if (e.gun2 && /[?&]sbtest/.test(location.search)) window.__sbHit = () => { starHit(foeX, 20); foeHp--; hp(); }; // 별빛포 명중 이펙트 확인용
   const place = () => { foeEl.style.left = fHp.style.left = foeX + 'px'; mHp.style.left = me.x + 'px'; };
   const myGun = () => e.boatEl.querySelector('.gun-b'), foeGun = foeEl.querySelector('.gun-b'), setGun = (g, deg, sgn = 1) => { if (g) g.style.transform = `rotate(${-deg * sgn}deg)`; }; // 해적 포신은 왼쪽을 보고 있어서 반대로 돌린다
   const ang = h('input', { type: 'range', min: 10, max: 80, value: A0 }), pow = h('input', { type: 'range', min: 20, max: 100, value: P0 }), aV = h('b'), pV = h('b'), msg = h('p', { class: 'sb-msg' }), info = h('span', { class: 'sb-info' }), fire = h('button', { class: 'sb-fire', onClick: shoot }, h('span', null, '💣'), h('b', null, '발사'));
@@ -347,9 +348,22 @@ export function seaBattle(e) {
   // 한 발 쏘고 난 틈에 해적선이 앞뒤로 조금 움직일 수 있다. 움직이면 화면이 해적선을 비춘다
   function foeDrift(then) { if (Math.random() > 0.55) return then(); const to = Math.max(Math.min(foe0 - 140, foe0 + 140), Math.min(Math.max(foe0 - 140, foe0 + 140), Math.max(e.minX, Math.min(e.maxX, foeX + (Math.random() < 0.5 ? -1 : 1) * rnd(50, 130))))); if (Math.abs(to - foeX) < 20 || Math.abs(to - me.x) < NEAR + 40) return then();
     const closer = Math.abs(to - me.x) < dist(); foeTo = to; turn = 'drift'; camTo = to - dir * 60; setGun(foeGun, 0, -1); msg.textContent = `해적선이 ${closer ? '다가와요' : '물러나요'}! (${Math.round(Math.abs(to - foeX) / 4)}m)`; next = then; timer = 0; }
+  // 카피 별빛포 명중: 분홍 번쩍 + 충격파 → 큰 불꽃·별빛 조각·나무 파편·깃털·"명중!" → 맞은 자리에 구멍과 연기·불씨가 남고 갈매기가 펄쩍
+  function starHit(x, y) {
+    const fl = h('div', { class: 'sb-starflash' }); e.stage.append(fl); setTimeout(() => fl.remove(), 700);
+    const at = (cls, kids = []) => { const n = h('div', { class: 'sb-fx ' + cls, style: { left: x + 'px', bottom: me.y + y + 'px' } }, ...kids); e.world.append(n); setTimeout(() => n.remove(), 1400); return n; };
+    at('sb-ring'); at('sb-boom2');
+    const bits = [...Array.from({ length: 10 }, (_, k) => h('i', { class: 'st', style: { '--a': (k * 36 + rnd(-10, 10)).toFixed(0) + 'deg', '--d': rnd(60, 110).toFixed(0) + 'px', color: ['#FF9BE0', '#C9A0FF', '#FFE066', '#fff'][k % 4] } }, '✦')),
+      ...Array.from({ length: 6 }, (_, k) => h('i', { class: 'ch', style: { '--a': (k * 60 + rnd(-20, 20)).toFixed(0) + 'deg', '--d': rnd(50, 90).toFixed(0) + 'px', '--r': rnd(-300, 300).toFixed(0) + 'deg' } })),
+      ...Array.from({ length: 3 }, (_, k) => h('i', { class: 'fe', style: { '--a': (240 + k * 30).toFixed(0) + 'deg', '--d': rnd(50, 80).toFixed(0) + 'px', '--r': rnd(-90, 90).toFixed(0) + 'deg' } }))];
+    at('sb-bits', bits); at('sb-hitword', [h('b', null, '명중!')]);
+    foeEl.classList.remove('sb-tilt'); void foeEl.offsetWidth; foeEl.classList.add('sb-tilt'); setTimeout(() => foeEl.classList.remove('sb-tilt'), 900);
+    foeEl.querySelectorAll('.sb-crew').forEach(c => { c.classList.remove('sb-jump'); void c.offsetWidth; c.classList.add('sb-jump'); });
+    const ship = foeEl.querySelector('.sb-ship'); setTimeout(() => { if (!alive) return; ship.append(h('i', { class: 'sb-hole', style: { left: rnd(28, 62).toFixed(0) + '%', bottom: rnd(14, 28).toFixed(0) + '%', rotate: rnd(-30, 30).toFixed(0) + 'deg' } }, h('i', { class: 'sm' }), h('i', { class: 'em' }))); }, 350); }
   function fx(cls, x, n, y = 0) { const f = h('div', { class: 'sb-fx ' + cls, style: { left: x + 'px', bottom: me.y + y + 'px' } }, ...Array.from({ length: n }, (_, k) => h('i', { style: { '--a': (k / n * 360 + rnd(-12, 12)).toFixed(0) + 'deg', '--d': rnd(26, 62).toFixed(0) + 'px', '--t': rnd(0, 0.12).toFixed(2) + 's' } }))); e.world.append(f); setTimeout(() => f.remove(), 1100); }
   function land(s, touched) { const mine = s.by === 'me', tx = mine ? foeX : me.x, d = Math.abs(s.x - tx), hit = !!touched || d < HITR; ball.style.display = 'none'; const ix = s.x;
     if (hit) { sfx('boom'); fx('sb-bang', ix, 10, Math.max(0, s.y - 20)); e.stage.classList.add('sb-quake'); setTimeout(() => e.stage.classList.remove('sb-quake'), 420); const els = mine ? [foeEl] : [e.boatEl, e.meEl]; els.forEach(n => n.classList.add('sb-hit')); setTimeout(() => els.forEach(n => n.classList.remove('sb-hit')), 600);
+      if (mine && e.gun2) starHit(ix, Math.max(0, s.y - 20));
       if (mine) foeHp--; else myHp--; hp(); }
     else { sfx('splash'); fx('sb-water', ix, 9); }
     const off = Math.round(d / 4), short = (s.x - tx) * dir < 0;
