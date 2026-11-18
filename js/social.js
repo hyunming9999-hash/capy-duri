@@ -223,7 +223,12 @@ export function mount(el, ctx) {
   // 대왕 체험: 1분 동안 황금 장신구 여섯 개를 걸친 것처럼 보이고, 동물들이 지나갈 때마다 절을 한다(저장하지 않고, 세금도 없다)
   let kingTrial = 0; const KING_SET = [10, 7, 9, 13, 25, 19];
   const myRares = () => (kingTrial ? KING_SET : rareList((ctx.members[ctx.uid] || {}).rare)), myRare = () => (myRares().length ? myRares()[0] : -1);
-  const refreshMe = () => { if (meEl) meEl.innerHTML = capy(ctx.capyOf(ctx.uid, { face: 'happy', rare: rareOf(myRares()) })); };
+  // 황금사자 스쿠터: 메인 퀘스트 최종 보상. 가방에서 타고 내린다(육지·농장). 뒤에 동물 하나를 태울 수 있다
+  let scoot = false, scPas = -1, scAskAt = performance.now() + 120000, scFwAt = 0, scGainT = 0, scGain = 0;
+  try { scoot = localStorage.getItem('capy-scoot') === '1'; scFwAt = +localStorage.getItem('capy-scfw') || 0; } catch {}
+  const meCapy = () => capy(ctx.capyOf(ctx.uid, { face: 'happy', rare: rareOf(myRares()) }));
+  const scootHtml = () => `<div class="sc-rig b"><img class="sc-img" src="img/scooter-b.webp" alt="">${scPas >= 0 ? `<div class="sc-pas">${animalSvg(scPas, true, 'happy')}</div>` : ''}<div class="sc-me">${meCapy()}</div></div>`;
+  const refreshMe = () => { if (meEl) meEl.innerHTML = scoot ? scootHtml() : meCapy(); };
   function startKing() { if (kingTrial) return; kingTrial = performance.now() + 60000; refreshMe(); toast('👑 대왕 체험 1분 시작! 동물들 곁을 지나가 보세요', 3200); }
   function endKing() { if (!kingTrial) return; kingTrial = 0; refreshMe(); toast('대왕 체험이 끝났어요', 2600); }
   async function saveRares(list) { const v = list.length ? list : null; await ctx.store.update('members/' + ctx.uid, { rare: v }).catch(() => {}); ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), rare: v }; refreshMe(); scores(); }
@@ -318,10 +323,13 @@ export function mount(el, ctx) {
   // 가방 고치기·돈 넣고 빼기·도감(낚시에서 쓴다)
   // 낚싯배 체험: 10분 동안 장비를 빌린다. 빌린 장비와 체험 중 번 돈·잃은 돈·도감은 저장하지 않는다
   const TRIAL_MS = 600000, TRIAL_KEYS = ['boat', 'wboat', 'cannon', 'boatD', 'rod', 'rodD', 'bait', 'balls', 'casts', 'pearlAt', 'casts3', 'pearlAt3', 'pcasts', 'pirAt', 'pirNext']; let trial = null, rawBag = {};
-  function startTrial() { trial = { until: performance.now() + TRIAL_MS, g: { boat: true, wboat: true, cannon: true, boatD: 100, rod: 3, rodD: 200, bait: 40, balls: 20, casts: 0, pearlAt: 999, pcasts: 0, pirNext: 4 } }; bag = { ...rawBag, ...trial.g }; toast('🧪 낚싯배 체험 시작! 10분 동안 흰 배·대포·고급 낚싯대를 빌려요. 바다에서 "내 보트"를 누르세요', 4200); }
-  function endTrial(why) { if (!trial) return; trial = null; bag = rawBag; if (battle) { battle.stop(); battle = null; camX = null; } const f = document.querySelector('.fs .fs-quit'); if (f) f.click();
+  // 퀘스트 해적전: 흰 배·대포를 퀘스트 동안만 빌려준다(저장하지 않는 덮어쓰기)
+  const QLOAN = { boat: true, wboat: true, cannon: true, boatD: 100, balls: 20 }; let qloan = null;
+  const mergeBag = () => ({ ...rawBag, ...(qloan ? qloan.g : {}), ...(trial ? trial.g : {}) });
+  function startTrial() { trial = { until: performance.now() + TRIAL_MS, g: { boat: true, wboat: true, cannon: true, boatD: 100, rod: 3, rodD: 200, bait: 40, balls: 20, casts: 0, pearlAt: 999, pcasts: 0, pirNext: 4 } }; bag = mergeBag(); toast('🧪 낚싯배 체험 시작! 10분 동안 흰 배·대포·고급 낚싯대를 빌려요. 바다에서 "내 보트"를 누르세요', 4200); }
+  function endTrial(why) { if (!trial) return; trial = null; bag = mergeBag(); if (battle) { battle.stop(); battle = null; camX = null; } const f = document.querySelector('.fs .fs-quit'); if (f) f.click();
     if (me.boat && me.boat.own && !bag.boat) { leaveBoat(); if (me.x > FISH_X - 40) me.x = FISH_X - 60; } else if (me.boat && me.boat.own && me.x > FISH_X + TILE - 30 && !(bag.wboat && bag.cannon)) me.x = FISH_X + TILE - 60; toast(why || '낚싯배 체험이 끝났어요', 3000); drawHp(); }
-  const saveBag = patch => { bag = { ...bag, ...patch }; drawHp(); if (trial) { const rest = {}; Object.keys(patch).forEach(k => { if (TRIAL_KEYS.includes(k)) trial.g[k] = patch[k]; else rest[k] = patch[k]; }); if (!Object.keys(rest).length) return Promise.resolve(); patch = rest; } return ctx.store.update('bag/' + ctx.uid, patch).catch(() => {}); };
+  const saveBag = patch => { bag = { ...bag, ...patch }; drawHp(); if (!trial && qloan) { const rest = {}; Object.keys(patch).forEach(k => { if (k in QLOAN) qloan.g[k] = patch[k]; else rest[k] = patch[k]; }); if (!Object.keys(rest).length) return Promise.resolve(); patch = rest; } if (trial) { const rest = {}; Object.keys(patch).forEach(k => { if (TRIAL_KEYS.includes(k)) trial.g[k] = patch[k]; else rest[k] = patch[k]; }); if (!Object.keys(rest).length) return Promise.resolve(); patch = rest; } return ctx.store.update('bag/' + ctx.uid, patch).catch(() => {}); };
   const addCoins = n => trial ? Promise.resolve() : ctx.store.tx('money/' + ctx.uid, c => ({ ...(c || {}), c: Math.max(0, ((c && c.c) || 0) + n), total: ((c && c.total) || 0) + Math.max(0, n) })).catch(() => {});
   let farmBarn = {}, fishOpen = false, hintAt = 0, fishBtn = null, fishMode = -1, dex = {}, rockKey = '', battle = null, battleDir = 1, camX = null, sbPanel = null, heave = 0;
   const boatD = () => (bag.boatD == null ? 100 : bag.boatD), BOAT_MIN = 20;
@@ -335,7 +343,7 @@ export function mount(el, ctx) {
       coins: addCoins, cropName: id => (cropOf(id) || { name: id }).name, cropImg, fishSvg, onClose: () => { fishOpen = false; lastT = performance.now(); } }); }
   let farmOpen = false;
   function goFarm() { if (farmOpen) return; if (fishOpen || battle) return toast('하던 걸 끝내고 농장에 갈 수 있어요'); if (me.boat) return toast('배에서 내린 뒤에 농장에 갈 수 있어요'); fishOpen = true; farmOpen = true; keys.clear(); sfx('pop');
-    openFarm({ ctx, onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); } }); }
+    openFarm({ ctx, scoot: () => (scoot ? scootHtml() : null), onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); } }); }
   const fcrow = farmCrow(ctx, { goFarm: () => goFarm() });
   // 메인 퀘스트: 동물 머리 위 ! ? 표시와 동물 창의 📜 퀘스트 버튼
   let vnOn = false;
@@ -352,6 +360,29 @@ export function mount(el, ctx) {
     sfx('point'); modal({ title: '📜 섬에 사건이 일어났어요!', body: [h('div', { class: 'qn' }, h('span', { class: 'qn-an', html: animalSvg(10) }), h('div', null, h('b', null, `"${toned(10, '짐의 황금 왕관이 사라졌도다! 누가 좀 도와다오!')}"`), h('p', null, '사자가 엉엉 울고 있어요. 부엉이 탐정의 조수가 되어 범인을 찾아볼래요?'))),
       h('p', { class: 'dim center qn-tip' }, '메인 퀘스트 「누가 왕관을 훔쳤나」 · 언제든 사자를 눌러 시작할 수 있어요')],
       actions: [{ label: '나중에' }, { label: '🦁 사자 도와주기', primary: true, onClick: c => { c(); quest.open(10); } }] }); }
+  // 해적 퀘스트 동안만 빌린 배를 쓰고, 끝나거나 기회를 다 쓰면 돌려준다. 빌린 흰 배로 중급 바다에 들어서면 해적단이 나온다
+  let qPirAt = 0;
+  function loanTick(now) { const on = quest.pirateOn() && !trial;
+    if (on && !qloan) { qloan = { g: { ...QLOAN } }; bag = mergeBag(); drawHp(); }
+    else if (!on && qloan) { qloan = null; bag = mergeBag(); drawHp(); if (me.boat && me.boat.own && !bag.boat) { leaveBoat(); if (me.x > FISH_X - 40) me.x = FISH_X - 60; } else if (me.boat && me.boat.own && me.x > FISH_X + TILE - 30 && !(bag.wboat && bag.cannon)) me.x = FISH_X + TILE - 60; toast('빌린 흰 배와 대포를 거북이에게 돌려줬어요', 2600); }
+    if (qloan && !battle && !fishOpen && me.boat && me.boat.own && me.x > FISH_X + TILE + 40 && now > qPirAt) { qPirAt = now + 5000; pirates(2, true); } }
+  function setScoot(on, why) { if (on && !bag.scooter) return; if (on && (me.boat || me.x > WATER_X)) return toast('스쿠터는 육지와 농장에서만 탈 수 있어요'); if (on) getOff(); scoot = on; if (!on) dropPas(); if (meEl) meEl.classList.toggle('scoot', on); try { localStorage.setItem('capy-scoot', on ? '1' : '0'); } catch {} refreshMe(); sfx(on ? 'jump' : 'pop'); if (why) toast(why, 2200); }
+  function dropPas() { if (scPas < 0) return; const o = actors[scPas]; if (o) { o.e.style.visibility = ''; o.st = 'idle'; o.x = me.x - 50; o.until = performance.now() + 1500; pop(o.e, toned(scPas, pick(['재밌었다! 또 태워 줘!', '고마워, 최고야!', '바람이 시원했어!'])), 'say'); } scPas = -1; refreshMe(); }
+  function takePas(i) { if (!scoot || scPas >= 0) return; const o = actors[i]; if (!o) return; scPas = i; o.wantRide = 0; leave(o); o.st = 'scoot'; scGainT = 0; scGain = 0; refreshMe(); sfx('jump'); pop(mePop, toned(i, '출발!'), 'say'); }
+  // 지나가면 칭찬, 30분에 한 번 한두 마리가 폭죽, 가끔 "태워 줘!", 부딪히면 밀려나기만(친밀도 그대로)
+  function scootTick(now, paused, wet, mx) { if (!scoot || !meEl) return; meEl.classList.add('scoot');
+    if (wet || me.boat || me.ride) return setScoot(false, '물가에서는 스쿠터에서 내려요');
+    if (paused) return;
+    const near = (o, r) => o && Math.abs(o.x - me.x) < r && ['idle', 'walk'].includes(o.st);
+    actors.forEach((o, i) => { if (i === scPas || !near(o, 520)) return;
+      if (mx && Math.abs(o.x - me.x) < 46 && Math.abs(o.y - me.dy) < 0.08 && now > (o.scBump || 0)) { o.scBump = now + 2500; o.st = 'stun'; o.until = now + 700; o.kb = (o.x >= me.x ? 1 : -1) * 90; pop(o.e, toned(i, pick(['우왓, 조심해!', '깜짝이야!', '휘익~ 빠르다!'])), 'say'); }
+      else if (Math.abs(o.x - me.x) < 150 && A(i) > -30 && now > (o.scPraise || 0) && Math.random() < 0.02) { o.scPraise = now + 180000; pop(o.e, toned(i, pick(['황금사자 스쿠터다! 멋지다!', '우와, 번쩍번쩍해!', '나도 타 보고 싶다!', '사자 대장님이 준 거래!', '진짜 빠르다!'])), 'say long'); } });
+    if (now > scFwAt && Date.now() > scFwAt) { const L = actors.map((o, i) => i).filter(i => i !== scPas && near(actors[i], 260)); if (L.length) { const n = Math.min(L.length, 1 + (Math.random() < 0.5 ? 1 : 0)); L.sort(() => Math.random() - 0.5).slice(0, n).forEach((i, k) => setTimeout(() => alive && fireworks(i), k * 700)); scFwAt = Date.now() + 1800000; try { localStorage.setItem('capy-scfw', scFwAt); } catch {} } }
+    if (scPas < 0 && now > scAskAt) { scAskAt = now + 180000 + Math.random() * 120000; const L = actors.map((o, i) => i).filter(i => near(actors[i], 300) && A(i) >= 10); if (L.length) { const i = L[Math.floor(Math.random() * L.length)]; actors[i].wantRide = now + 60000; pop(actors[i].e, toned(i, pick(['나도 뒤에 태워 줘!', '스쿠터 태워 주면 안 돼?', '한 번만 태워 줘~'])), 'say long'); } }
+    if (scPas >= 0) { scGainT += 1 / 60; if (scGainT >= 30 && scGain < 6) { scGainT = 0; scGain++; if (A(scPas) < 100) { setRel(scPas, { a: A(scPas) + 1 }); pop(mePop, '+1 💗', 'up'); scores(); } } } }
+  function fireworks(i) { const o = actors[i]; if (!o) return; const w = h('div', { class: 'sc-fw' }), cols = ['#FF4D6D', '#FFD23F', '#4DD0FF', '#7BC74D', '#B57BFF'];
+    w.innerHTML = '<b>🎉</b>' + Array.from({ length: 22 }, (_, k) => { const an = k / 22 * Math.PI * 2, r = 40 + (k % 3) * 14; return `<i style="--x:${(Math.cos(an) * r).toFixed(0)}px;--y:${(Math.sin(an) * r).toFixed(0)}px;background:${cols[k % 5]}"></i>`; }).join('');
+    o.e.append(w); sfx('bpop'); pop(o.e, toned(i, pick(['축하 폭죽이다! 펑펑!', '멋진 스쿠터 기념 폭죽!', '와아, 축하해!'])), 'say long'); setTimeout(() => w.remove(), 1400); }
   let qmAt = 0, chatAt = performance.now() + 20000;
   // 이야기에 맞춰 근처 동물끼리 수군거린다(30~60초마다 한 번, 화면 근처에 있을 때만)
   function chatTick(now, paused, wet) { if (now < chatAt || paused || wet || me.boat || trial) return; chatAt = now + 30000 + Math.random() * 30000;
@@ -379,9 +410,9 @@ export function mount(el, ctx) {
     if (n === 1 || n === 2 || n === 4 || n === 6) goldFx(i, n); else gameFx('win', rareName(i));
     if (n !== 1) return; // 소문은 첫 황금템을 샀을 때 한 번만 퍼진다
     bag = { ...bag, rumorAt: ctx.store.now() }; ctx.store.update('bag/' + ctx.uid, { rumorAt: bag.rumorAt }).catch(() => {}); setRel(i, { rumor: 1 }); }
-  function pirates(zone) { if (battle || !alive) return; keys.clear(); const D = Math.max(620, scroller.clientWidth * 1.9), foeX = me.x + D <= WIDTH - 90 ? me.x + D : me.x - D; me.f = foeX > me.x ? 1 : -1; sfx('bad');
-    battleDir = me.f; battle = seaBattle({ world: scroller.firstElementChild, stage: scroller.parentNode, panel: sbPanel, zone, meEl, boatEl, shout: t => pop(mePop, t, 'say long'), flee: async () => (trial ? true : await ctx.spend(FLEE_FEE)), minX: FISH_X + 60, maxX: WIDTH - 70, move: x => { me.x = x; }, me: { x: me.x, y: me.dy * H, s: me.ds }, foeX, balls: () => bag.balls || 0, useBall: () => saveBag({ balls: Math.max(0, (bag.balls || 0) - 1) }), cam: x => { camX = x; },
-      onEnd: win => { battle = null; camX = null; lastT = performance.now(); if (win === 'flee') return void toast(trial ? '해적단에게서 도망쳤어요 (체험이라 돈은 안 나가요)' : `해적단에게 ${FLEE_FEE} 🪙 내고 도망쳤어요`, 3200); if (win) { const loot = PIRATE_LOOT; addCoins(loot); lootFx(loot); }
+  function pirates(zone, qst) { if (battle || !alive) return; if (qst) toast('⚔️ 갈매기 해적단이 나타났다! 퀘스트 해적전이에요', 2600); keys.clear(); const D = Math.max(620, scroller.clientWidth * 1.9), foeX = me.x + D <= WIDTH - 90 ? me.x + D : me.x - D; me.f = foeX > me.x ? 1 : -1; sfx('bad');
+    battleDir = me.f; battle = seaBattle({ world: scroller.firstElementChild, stage: scroller.parentNode, panel: sbPanel, zone, meEl, boatEl, shout: t => pop(mePop, t, 'say long'), flee: async () => (trial || qst ? true : await ctx.spend(FLEE_FEE)), minX: FISH_X + 60, maxX: WIDTH - 70, move: x => { me.x = x; }, me: { x: me.x, y: me.dy * H, s: me.ds }, foeX, balls: () => bag.balls || 0, useBall: () => saveBag({ balls: Math.max(0, (bag.balls || 0) - 1) }), cam: x => { camX = x; },
+      onEnd: win => { battle = null; camX = null; lastT = performance.now(); if (qst) { if (win && win !== 'flee') { addCoins(PIRATE_LOOT); lootFx(PIRATE_LOOT); } quest.pirateResult(!!win && win !== 'flee'); return; } if (win === 'flee') return void toast(trial ? '해적단에게서 도망쳤어요 (체험이라 돈은 안 나가요)' : `해적단에게 ${FLEE_FEE} 🪙 내고 도망쳤어요`, 3200); if (win) { const loot = PIRATE_LOOT; addCoins(loot); lootFx(loot); }
         else { const d = Math.floor(boatD() / 2); saveBag({ boatD: d }); addCoins(-500); toast(`해적단에게 500 🪙 뺏기고 배 내구도가 ${d}로 줄었어요${d < BOAT_MIN ? '. 수리해야 중급 바다에 나갈 수 있어요' : ''}`, 4200); } } }); }
   function makeWave(now) { const B = me.boat, hard = B.wave >= 70, w = h('i', { class: 'so-wave' + (hard ? ' hard' : ''), style: { left: me.x + 'px', bottom: (me.dy * 100).toFixed(1) + '%' } }); meEl.parentNode.append(w); setTimeout(() => w.remove(), 1300); sfx(hard ? 'swing' : 'tock');
     actors.forEach((o, i) => { if (i === held || o.x <= WATER_X || Math.abs(o.x - me.x) > 230 || ['chase', 'boat', 'palboat', 'offer', 'stun'].includes(o.st)) return;
@@ -479,7 +510,7 @@ export function mount(el, ctx) {
     // 낚시터 문턱: 배가 없으면 못 넘고, 중급부터는 대포를 단 흰 배가 있어야 한다
     const own = !!(me.boat && me.boat.own), lim = !own ? FISH_X - 14 : bag.wboat && bag.cannon && boatD() >= BOAT_MIN ? WIDTH - 40 : FISH_X + TILE - 18;
     if (own && me.boat.skin !== myBoatSkin()) { me.boat.skin = myBoatSkin(); boatEl.innerHTML = boatSvg(me.boat.skin); }
-    if (mx) { me.f = mx; const nx = me.x + mx * ME_SP * (own ? (bag.wboat ? 1.7 : 1.1) : me.boat ? 1.1 : wet ? 0.7 : 1) * dt; me.x = Math.max(40, Math.min(Math.max(lim, Math.min(me.x, WIDTH - 40)), nx));
+    if (mx) { me.f = mx; const nx = me.x + mx * ME_SP * (own ? (bag.wboat ? 1.7 : 1.1) : me.boat ? 1.1 : wet ? 0.7 : scoot ? 1.8 : 1) * dt; me.x = Math.max(40, Math.min(Math.max(lim, Math.min(me.x, WIDTH - 40)), nx));
       if (mx > 0 && nx > lim && now > hintAt) { hintAt = now + 3500; toast(!own ? '여기부터는 낚시터예요. 내 배(카피수퍼)를 타야 갈 수 있어요' : !bag.wboat ? '중급 낚시터부터는 흰 배(2,000코인)가 있어야 해요' : !bag.cannon ? '중급 낚시터부터는 대포(500코인)를 달아야 해요. 갈매기 해적단이 나와요' : '배가 너무 상했어요. 카피수퍼에서 배를 수리해야 중급 바다에 나갈 수 있어요', 3000); } }
     if (trial && now > trial.until && !fishOpen && !battle) endTrial('낚싯배 체험 10분이 끝났어요');
     if (kingTrial && now > kingTrial) endKing();
@@ -538,6 +569,7 @@ export function mount(el, ctx) {
     actors.forEach((o, i) => {
       const lane = LANES[o.lane]; let ty = lane[0], ts = lane[1]; const ow = o.x > WATER_X;
       o.e.classList.toggle('swim', ow && o.st !== 'boat' && o.st !== 'palboat'); o.e.classList.toggle('surf', now < (o.surfUntil || 0));
+      if (i === scPas) { o.x = me.x; o.e.style.visibility = 'hidden'; return; } else if (o.e.style.visibility) o.e.style.visibility = '';
       if (i === held) { /* 붙잡혀서 얘기하는 중 */ }
       else if (o.st === 'boat') { if (!me.boat || me.boat.i !== i) { o.st = 'idle'; o.until = now + 500; } else { o.x = me.x + 24 * me.ds; o.y = ty = me.dy; o.s = ts = me.ds; } }
       else if (palBoatI === i && o.st !== 'chase' && o.st !== 'stun') { if (o.st !== 'palboat') { leave(o); o.st = 'palboat'; o.e.classList.remove('walk', 'left'); } o.x = pal.dx + 24 * pal.ds; o.y = ty = pal.dy; o.s = ts = pal.ds; }
@@ -581,7 +613,7 @@ export function mount(el, ctx) {
         else { const sh = shiny && goldOk && (A(i) < 30 || Math.random() < 0.6); if (sh) pop(o.e, gold('shine', RAREGREET.map(f => toned(i, f(ctx.me.name)))), 'say long'); else if (A(i) >= 30) pop(o.e, line(i, 'greet', toned(i, pick(GREET)(ctx.me.name))), 'say long'); } }
       const k = Math.min(1, dt * 5); o.y += (ty - o.y) * k; o.s += (ts - o.s) * k;
       o.e.style.left = o.x + 'px'; o.e.style.bottom = (o.y * 100).toFixed(2) + '%'; o.e.style.transform = `scale(${o.s.toFixed(3)})`; });
-    fcrow.tick(now, farmOpen ? 'farm' : !trial && !paused && !wet && !me.boat ? 'land' : null); if (now > qmAt) { qmAt = now + 1500; drawQMarks(); } chatTick(now, paused, wet); nudgeTick(now);
+    fcrow.tick(now, farmOpen ? 'farm' : !trial && !paused && !wet && !me.boat ? 'land' : null); if (now > qmAt) { qmAt = now + 1500; drawQMarks(); } chatTick(now, paused, wet); nudgeTick(now); loanTick(now); scootTick(now, paused, wet, mx);
     crowTick(now, paused, wet); charmTick(now, paused, wet); sRumorTick(now, paused, wet); loveTick(now, paused, wet);
     raf = requestAnimationFrame(step);
   }
@@ -592,14 +624,14 @@ export function mount(el, ctx) {
       s.className = 'so-score' + (a < 0 ? ' neg' : a >= PIN_AT ? ' hi' : ''); s.replaceChildren(h('b', null, `${lv[2]} ${a}`), t != null && h('i', null, `${ctx.nameOf(pid()).slice(0, 3)} ${t}`) || '');
       if (e.dataset.mood !== mood) { e.dataset.mood = mood; e.querySelector('.so-body').innerHTML = animalSvg(i, true, mood); }
       if (+e.dataset.hearts !== hearts) { e.dataset.hearts = hearts; e.querySelector('.so-hearts').replaceChildren(...Array.from({ length: hearts }, (_, k) => h('i', { style: { animationDelay: k * 0.7 + 's', left: [50, 22, 78][k] + '%' } }, '💗'))); } });
-    const face = h('div', { html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) }); if (meEl) meEl.innerHTML = face.innerHTML; drawPal();
+    refreshMe(); drawPal();
   }
 
   // ----- 까마귀 악당: 친목회에 있을 때만, 하루 두 번(5분째 한 번, 그 뒤 랜덤 한 번), 나타날 때마다 육지에서 내 근처에 나타나 친한 동물(50~100점) 둘에게 이간질한다 -----
   // 퇴치 버튼 → 악귀퇴치부적 3장 중 진짜 1장(1/3)을 10초 안에 고르면 퇴치. 못 고르거나 시간이 다 되면 두 동물이 각각 -15~-20
   const CROW_N = 2, CROW_MS = 25000, CROW_STAY = 300000, PICK_MS = 10000; // 하루 2번: 첫 번째는 친목회 5분째, 두 번째는 그 뒤 아무 때나(2~25분 더 놀다 보면)
   let crow = null, crowStay = 0, crowLast = 0, worldEl = null, stageEl = null, charmSnooze = 0;
-  if (isMock) window.capyDebug = { crow: () => { crowStay = 1e9; }, charm: () => { charmSnooze = 0; window.capyDebug.charmNow = true; }, fx: n => charmFx(n), love: () => { loveNext = 0; }, fcrow: () => fcrow.debug() }; // 연습 모드에서만: 시험용으로 바로 부르기
+  if (isMock) window.capyDebug = { crow: () => { crowStay = 1e9; }, charm: () => { charmSnooze = 0; window.capyDebug.charmNow = true; }, fx: n => charmFx(n), love: () => { loveNext = 0; }, fcrow: () => fcrow.debug(), scAsk: () => { scAskAt = 0; }, scFw: () => { scFwAt = 0; }, bag: () => bag, qwin: () => quest.pirateResult(true), qlose: () => quest.pirateResult(false) }; // 연습 모드에서만: 시험용으로 바로 부르기
   // 까마귀는 화·금요일에만: 그날 친목회 육지에 2분 머물면 딱 1번 나와 한 마리만 이간질. 다른 요일은 안 나온다
   const crowBig = () => [2, 5].includes(new Date().getDay()), crowMax = () => (crowBig() ? 1 : 0), crowWho = () => 1;
   const crowUsed = () => (bag.crowDay === ymd() ? bag.crowN || 0 : 0);
@@ -803,7 +835,7 @@ export function mount(el, ctx) {
     close = modal({ title: `${a.name} · ${p.trait}`, body: h('div', { class: 'so-meet' },
       h('div', { class: 'so-face' }, faceEl, bubble), meter, fedNote, quick,
       h('div', { class: 'so-say' }, input, h('button', { class: 'btn primary', onClick: () => talk(input.value) }, '말하기')),
-      h('div', { class: 'so-acts' }, h('button', { class: 'btn so-qbtn', 'data-m': quest.markOf(i), onClick: () => quest.open(i) }, '📜 퀘스트', quest.markOf(i) && h('i', null, quest.markOf(i))), h('button', { class: 'btn', onClick: give }, '🎁 선물'), h('button', { class: 'btn', onClick: trade }, '🤝 거래'), h('button', { class: 'btn', onClick: memBtn }, '📜 기억'))), actions: [{ label: '닫기' }], onClose: () => { if (demand && actors[i]) actors[i].rage = true; if (held === i) held = -1; const o = actors[i]; if (o && o.st === 'walk') o.e.classList.add('walk'); } });
+      h('div', { class: 'so-acts' }, scoot && scPas < 0 && (actors[i].wantRide || 0) > performance.now() && h('button', { class: 'btn so-ridebtn', onClick: () => { close(); takePas(i); } }, '🛴 태우기'), h('button', { class: 'btn so-qbtn', 'data-m': quest.markOf(i), onClick: () => quest.open(i) }, '📜 퀘스트', quest.markOf(i) && h('i', null, quest.markOf(i))), h('button', { class: 'btn', onClick: give }, '🎁 선물'), h('button', { class: 'btn', onClick: trade }, '🤝 거래'), h('button', { class: 'btn', onClick: memBtn }, '📜 기억'))), actions: [{ label: '닫기' }], onClose: () => { if (demand && actors[i]) actors[i].rage = true; if (held === i) held = -1; const o = actors[i]; if (o && o.st === 'walk') o.e.classList.add('walk'); } });
     const v = A(i); say(v <= ROB_AT ? pick(LINES.cold) : v >= PIN_AT ? `${ctx.me.name}! 왔구나, 보고 싶었어!` : v >= 10 ? `안녕, ${ctx.me.name}! 또 만났네.` : `안녕? 난 ${a.name}야. ${p.likes[0]} 좋아해.`); drawMeter(); drawQuick();
   }
 
@@ -929,7 +961,8 @@ export function mount(el, ctx) {
   function openBag() {
     const body = h('div', { class: 'so-list' }); let cl;
     const draw = () => { const pins = Object.keys(bag.pins || {}).filter(k => bag.pins[k]).map(Number), worn = pinOf(ctx.uid), wares = ANIMALS.map((_, i) => i).filter(i => ctx.owns(wareOf(i).id) && priceOf(wareOf(i).id) > 0);
-      body.replaceChildren(eqBoard(ctx, { worn: myRares(), center: capy(ctx.capyOf(ctx.uid, { face: 'happy', rare: rareOf(myRares()) })), wear: async k => { await wearRare(k); draw(); } }), eqInv({ owned: Object.keys(bag.rares || {}).filter(k => bag.rares[k]).map(Number), worn: myRares(), wear: async k => { await wearRare(k); draw(); } }),
+      body.replaceChildren(bag.scooter && h('div', { class: 'sc-bag' }, h('img', { src: 'img/scooter-b.webp', alt: '' }), h('div', null, h('b', null, '🦁 전설의 황금사자 스쿠터'), h('small', null, scoot ? (scPas >= 0 ? `타는 중 · 뒤에 ${ANIMALS[scPas].name} 태움` : '타는 중 · 이동 속도 1.8배') : '육지·농장에서 타요 · 이동 속도 1.8배 · 부딪혀도 친밀도 그대로')),
+        h('div', { class: 'sc-bagb' }, h('button', { class: 'btn primary', onClick: () => { cl(); setScoot(!scoot, scoot ? '스쿠터에서 내렸어요' : '🛴 황금사자 스쿠터 출발!'); } }, scoot ? '내리기' : '타기'), scPas >= 0 && h('button', { class: 'btn sm', onClick: () => { dropPas(); draw(); } }, `${ANIMALS[scPas].name} 내려 주기`))), eqBoard(ctx, { worn: myRares(), center: capy(ctx.capyOf(ctx.uid, { face: 'happy', rare: rareOf(myRares()) })), wear: async k => { await wearRare(k); draw(); } }), eqInv({ owned: Object.keys(bag.rares || {}).filter(k => bag.rares[k]).map(Number), worn: myRares(), wear: async k => { await wearRare(k); draw(); } }),
         h('p', { class: 'center' }, Object.entries(GIFTS).map(([k, [ic, nm]]) => `${ic} ${nm} ${bag[k] || 0}개`).join(' · ')),
         h('p', { class: 'center so-charm' }, h('img', { src: 'img/crow/pearl-win.webp', alt: '' }), ` 진주부적 ${bag.pcharm || 0}장`, h('small', { class: 'dim' }, (bag.pcharm || 0) >= 3 ? ' · 진주가 걸리면 3장으로 성공률 90%' : ' · 3장 모으면 진주 성공률 90%')),
         h('b', null, `동물에게 받은 액세서리 ${pins.length} / ${ANIMALS.length}`),
@@ -947,7 +980,7 @@ export function mount(el, ctx) {
 
   const offs = [
     ctx.store.on('social', v => { v = v || {}; mine = v[ctx.uid] || {}; theirs = (pid() && v[pid()]) || {}; scores(); }),
-    ctx.store.on('bag/' + ctx.uid, v => { rawBag = v || {}; bag = trial ? { ...rawBag, ...trial.g } : rawBag; drawHp(); }),
+    ctx.store.on('bag/' + ctx.uid, v => { rawBag = v || {}; bag = mergeBag(); drawHp(); }),
     ctx.store.on('socialchat', onChat, { limit: 20 }),
     ctx.store.on('fishdex/' + ctx.uid, v => { dex = v || {}; }),
     ctx.store.on('farm/' + ctx.uid + '/barn', v => { farmBarn = v || {}; }),

@@ -57,7 +57,7 @@ export function openFarm(o) {
   const plotEls = Array.from({ length: PLOTS }, (_, k) => { const e = h('button', { class: 'fm-plot', style: { left: plotX(k) + 'px', width: PW + 'px', height: PH + 'px' }, onClick: () => goPlot(k) }); world.append(e); return e; });
   const shop = h('button', { class: 'fm-shop', style: { left: HX + 'px', width: HW * 1.46 + 'px' }, onClick: () => { walkTo(HX + HW * 0.7, openShop); } }, h('img', { src: 'img/farm/hardware.webp', alt: '카피철물' }), h('b', { class: 'fm-shop-t' }, '카피철물'));
   const exitSign = h('button', { class: 'fm-exit', style: { left: WIDTH - Math.round(TW * 0.11) + 'px' }, onClick: () => close() }, '놀이터로 →');
-  const meEl = h('div', { class: 'fm-me', html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) });
+  const sc = o.scoot ? o.scoot() : null, meEl = h('div', { class: 'fm-me' + (sc ? ' scoot' : ''), html: sc || capy(ctx.capyOf(ctx.uid, { face: 'happy' })) }); // 스쿠터를 타고 왔으면 농장에서도 탄 채로, 1.8배 빠르게
   world.append(shop, exitSign, meEl);
   const scroller = h('div', { class: 'fm-scroll' }, world);
   // 방향키(◀ ▶)로 걷는다. 밭 앞에 서면 그 밭이 열리고, 카피철물 앞에 서면 들어가기 버튼이 뜬다
@@ -190,10 +190,10 @@ export function openFarm(o) {
   let lastT = performance.now(), tick = 0;
   function step(t) { if (!alive) return; const dt = Math.min(0.05, (t - lastT) / 1000); lastT = t;
     const dir = (keys.has('R') ? 1 : 0) - (keys.has('L') ? 1 : 0);
-    if (dir && !document.querySelector('.modal-wrap')) { me.x = Math.max(30, Math.min(WIDTH - 30, me.x + dir * 280 * dt)); me.tx = me.x; me.then = null; meEl.classList.add('walk'); meEl.classList.toggle('left', dir < 0); me.keyed = true; }
+    if (dir && !document.querySelector('.modal-wrap')) { me.x = Math.max(30, Math.min(WIDTH - 30, me.x + dir * 280 * (sc ? 1.8 : 1) * dt)); me.tx = me.x; me.then = null; meEl.classList.add('walk'); meEl.classList.toggle('left', dir < 0); me.keyed = true; }
     else if (me.keyed) { me.keyed = false; meEl.classList.remove('walk'); const k = plotEls.findIndex((_, i) => Math.abs(me.x - (plotX(i) + PW / 2)) < PW / 2); if (k >= 0 && k !== sel) { sel = k; pickRow = -1; drawPlots(); } }
     const atShop = me.x < HX + SW + GAP; if (enterBtn.hidden === atShop) enterBtn.hidden = !atShop;
-    const d = me.tx - me.x; if (Math.abs(d) > 2) me.x += Math.sign(d) * Math.min(Math.abs(d), Math.max(320, Math.abs(d) * 2.2) * dt); else if (me.then) { const f = me.then; me.then = null; meEl.classList.remove('walk'); f(); } else meEl.classList.remove('walk');
+    const d = me.tx - me.x; if (Math.abs(d) > 2) me.x += Math.sign(d) * Math.min(Math.abs(d), Math.max(320 * (sc ? 1.8 : 1), Math.abs(d) * 2.2) * dt); else if (me.then) { const f = me.then; me.then = null; meEl.classList.remove('walk'); f(); } else meEl.classList.remove('walk');
     meEl.style.left = me.x + 'px';
     const want = me.x - scroller.clientWidth / 2; if (Math.abs(scroller.scrollLeft - want) > 4 && (meEl.classList.contains('walk') || dir)) scroller.scrollLeft += (want - scroller.scrollLeft) * Math.min(1, dt * 6);
     if ((tick += dt) > 1) { tick = 0; drawPlots(); }
