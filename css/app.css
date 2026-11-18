@@ -1620,7 +1620,7 @@ body.vb-on .modal-wrap { z-index: 4600; }
 .patch-farm { margin: 2px -6px 14px; border-radius: 18px; overflow: hidden; box-shadow: 0 6px 18px rgba(76,160,60,.35), 0 0 0 3px #FFE27A; position: relative; } .patch-farm img { display: block; width: 100%; animation: pfZoom 6s ease-in-out infinite alternate; } @keyframes pfZoom { to { transform: scale(1.05); } }
 .patch-farm::after { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.45) 45%, transparent 60%); background-size: 250% 100%; animation: pfShine 3.2s ease-in-out infinite; pointer-events: none; } @keyframes pfShine { from { background-position: 120% 0; } to { background-position: -120% 0; } }
 
-/* ===== 👩‍🍳 카피요리교실 ===== */
+/* ===== 👩‍🍳 카피백반 ===== */
 .so-cook { position: absolute; z-index: 1; padding: 0; border: 0; background: none; cursor: pointer; aspect-ratio: 568 / 600; }
 .so-cook img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 2px 2px rgba(0,0,0,.15)); }
 .so-cook b { position: absolute; left: 30%; right: 9%; top: 25%; height: 9%; display: flex; align-items: center; justify-content: center; font: 900 clamp(7px, 2vw, 13px)/1 var(--head); color: #D9532B; white-space: nowrap; text-shadow: 1.5px 0 #fff, -1.5px 0 #fff, 0 1.5px #fff, 0 -1.5px #fff; }
@@ -1688,3 +1688,5 @@ body.vb-on .modal-wrap { z-index: 4600; }
 .fc-msg { position: absolute; left: 0; right: 0; bottom: 120px; text-align: center; font-weight: 900; font-size: 15px; color: #3E2A1E; text-shadow: 0 1px 0 #fff, 0 0 6px #fff; pointer-events: none; }
 .fc-sling { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 6px); width: 70px; margin-left: -35px; pointer-events: none; } .fc-sling.pull { animation: fcPull .3s ease-out; } @keyframes fcPull { 30% { transform: translateY(8px) scaleY(.92); } }
 .fc-lost { position: relative; width: 160px; margin: 0 auto; } .fc-lost img { width: 120px; display: block; margin: 0 auto; } .fc-lost .fc-loot { position: absolute; width: 54px; right: 6px; bottom: 6px; }
+.ck-rent { display: flex; align-items: center; gap: 8px; margin: 6px 0; padding: 8px 10px; border-radius: 14px; background: #2E2433; color: #fff; } .ck-rent > span { font-size: 24px; } .ck-rent > div { flex: 1; display: flex; flex-direction: column; } .ck-rent small { font-size: 11px; opacity: .85; }
+.ck-rent.paid { background: #E6F4DA; color: #2F5A1A; } .ck-order.shut { opacity: .5; }

@@ -201,7 +201,7 @@ function leave() { LS.del('room'); location.hash = ''; location.reload(); }
 const PATCH_UNTIL = Date.parse('2026-11-20T23:59:00+09:00'); // 이 시각까지만, 들어올 때마다 보여 준다
 function patchNote() { if (Date.now() >= PATCH_UNTIL) return;
   const li = (ic, t, d) => h('li', null, h('span', null, ic), h('div', null, h('b', null, t), h('small', null, d)));
-  // 카피 농장 오픈 공지(요리교실이 열리면 다음 장에 붙인다)
+  // 카피 농장 오픈 공지(카피백반이 열리면 다음 장에 붙인다)
   const pages = [
     () => [h('div', { class: 'patch-farm' }, h('img', { src: 'img/farm/patch.webp', alt: '카피 농장 오픈' })),
       h('ul', null,
@@ -210,10 +210,11 @@ function patchNote() { if (Date.now() >= PATCH_UNTIL) return;
         li('💧', '물 주고 잡초 베면 S급', '컨디션 85% 넘으면 A급(가끔 S급), 60% 넘으면 B급, 안 돌봐도 C급. 다 자란 뒤 3일 넘게 안 거두면 시들어 F! 고랑 하나에서 2개씩 거둬요.'),
         li('🐦‍⬛', '까마귀 출몰! 1분 안에 농장으로', '하루 한 번, 친목회 육지나 농장에 있을 때 아무 때나 까마귀가 밭에 나타나요. 1분 안에 농장에 가서 새총으로 맞혀 쫓아내요(초·중·고급 랜덤). 못 쫓아내면 고랑 하나를 통째로 가져가요.'),
         li('💑', '두두네 밭에 물 주기', '위의 "두두네 농장"에서 구경하고 물을 주고 올 수 있어요. 거둔 작물은 카피수퍼에서 팔아요(S×2 · A×1.5 · B×1.2).')),
-      h('button', { class: 'patch-next cookn', onClick: () => go(1) }, h('img', { src: 'img/cook/fishdish.webp', alt: '' }), h('span', null, h('b', null, '다음 장: 카피요리교실 오픈!'), h('small', null, '눌러서 넘겨 보세요 👉')))],
-    () => [h('div', { class: 'patch-farm' }, h('img', { src: 'img/cook/patch.webp', alt: '카피요리교실 오픈' })),
+      h('button', { class: 'patch-next cookn', onClick: () => go(1) }, h('img', { src: 'img/cook/fishdish.webp', alt: '' }), h('span', null, h('b', null, '다음 장: 카피백반 오픈!'), h('small', null, '눌러서 넘겨 보세요 👉')))],
+    () => [h('div', { class: 'patch-farm' }, h('img', { src: 'img/cook/patch.webp', alt: '카피백반 오픈' })),
       h('ul', null,
-        li('🏠', '카피수퍼 바로 옆 카피요리교실', '놀이터 맨 오른쪽 끝, 카피수퍼 옆 건물을 누르면 들어가요. 요리는 여기서만 할 수 있어요.'),
+        li('🏠', '카피수퍼 바로 옆 카피백반', '놀이터 맨 오른쪽 끝, 카피수퍼 옆 건물을 누르면 들어가요. 요리는 여기서만 할 수 있어요.'),
+        li('🏪', '하루 임대료 100코인', '장사를 하려면 그날 처음 들어갈 때 임대료 100코인을 내고 가게 문을 열어요. 하루 한 번만 내요.'),
         li('📋', '오늘의 주문 3개', '동물들이 날마다 요리를 주문해요. "덜 익혀서", "알맞게", "푹 익혀서"처럼 동물마다 좋아하는 익힘이 달라요.'),
         li('🐟', '생선찜: 손질된 살로 바로 찜', '낚시로 잡은 물고기는 「레몬전어의 흰살생선」처럼 손질된 살로 나와요. 물고기마다 특징을 살린 곁들임(레몬·도토리·왕관…)이 올라가고, 희귀·A·S급은 반짝여요. 냄비에 넣고 뚜껑 덮어 찌다가 ★ 칸에서 불을 꺼요.'),
         li('🥕', '채소 수프 · 감자옥수수찜', '농장에서 거둔 작물 2개로 끓여요. 딱 맞추면 돈 + 친밀도 듬뿍, 익힘이 다르면 절반, 날것이거나 타면 보상이 없어요.'))]];
@@ -222,7 +223,7 @@ function patchNote() { if (Date.now() >= PATCH_UNTIL) return;
   function go(n) { at = n; box.replaceChildren(...pages[n]()); box.scrollTop = 0; const m = box.closest('.modal'); if (m) m.scrollTop = 0;
     dots.replaceChildren(...pages.map((_, k) => h('i', { class: k === n ? 'on' : '' }))); if (nextBtn) { nextBtn.textContent = n === pages.length - 1 ? '확인' : '다음 장 👉'; prevBtn.style.visibility = n ? 'visible' : 'hidden'; } }
   go(0);
-  const close = modal({ title: '✨ 패치 소식 · 카피 농장 & 요리교실', body: h('div', null, box, dots),
+  const close = modal({ title: '✨ 패치 소식 · 카피 농장 & 카피백반', body: h('div', null, box, dots),
     actions: [{ label: '👈 이전', onClick: () => at && go(at - 1) }, { label: '다음 장 👉', primary: true, onClick: c => (at < pages.length - 1 ? go(at + 1) : c()) }] });
   const btns = [...document.querySelectorAll('.modal-wrap:last-child .modal-actions .btn')]; [prevBtn, nextBtn] = btns; go(0); return close; }
 function enter() {

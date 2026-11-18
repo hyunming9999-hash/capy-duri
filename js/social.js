@@ -259,9 +259,9 @@ export function mount(el, ctx) {
     palEl = h('div', { class: 'so-me so-pal', style: { display: 'none' } }); pal.spot = null; pal.dx = -1; world.append(palEl); drawPal();
     // 놀이터 왼쪽 끝: '농장 가는 길' 팻말 → 따로 된 카피 농장
     world.append(h('button', { class: 'so-farmsign', 'aria-label': '농장 가는 길', style: { left: Math.round(TILE * 0.012) + 'px', height: Math.round(H * 0.34) + 'px' }, onClick: () => goFarm() }, h('img', { src: 'img/farm/sign.webp', alt: '' }), h('b', null, '농장 가는 길')));
-    // 카피요리교실: 놀이터 맨 오른쪽(카피수퍼 바로 옆) 가게 자리에 요리교실 건물
+    // 카피백반: 놀이터 맨 오른쪽(카피수퍼 바로 옆) 가게 자리에 카피백반 건물
     { const cx0 = (TILES - 1) * TILE + 985 / 1213 * TILE, cw = 205 / 1213 * TILE;
-      world.append(h('button', { class: 'so-cook', 'aria-label': '카피요리교실 들어가기', style: { left: cx0 + 'px', width: cw + 'px', bottom: (1 - 324 / 520) * 100 + '%' }, onClick: () => goCook() }, h('img', { src: 'img/cook/house.webp', alt: '' }), h('b', null, '카피요리교실'))); }
+      world.append(h('button', { class: 'so-cook', 'aria-label': '카피백반 들어가기', style: { left: cx0 + 'px', width: cw + 'px', bottom: (1 - 324 / 520) * 100 + '%' }, onClick: () => goCook() }, h('img', { src: 'img/cook/house.webp', alt: '' }), h('b', null, '카피백반'))); }
     // 카피수퍼: 바닷가 그림 속 매점 건물. 이 건물을 눌러야 들어간다(간판에 카피바라 얼굴, 아래에 '수퍼')
     const bx = (x, y) => [PW + x / 1213 * TILE, y / 520 * H], [mx0, my0] = bx(218, 176), [mx1, my1] = bx(392, 316);
     const [gx0, gy0] = bx(257, 241), [gx1, gy1] = bx(354, 272), gw = gx1 - gx0, gh = gy1 - gy0; // 유리창 칸: 글씨는 이 안에만
@@ -323,7 +323,7 @@ export function mount(el, ctx) {
   const addCoins = n => trial ? Promise.resolve() : ctx.store.tx('money/' + ctx.uid, c => ({ ...(c || {}), c: Math.max(0, ((c && c.c) || 0) + n), total: ((c && c.total) || 0) + Math.max(0, n) })).catch(() => {});
   let farmBarn = {}, fishOpen = false, hintAt = 0, fishBtn = null, fishMode = -1, dex = {}, rockKey = '', battle = null, battleDir = 1, camX = null, sbPanel = null, heave = 0;
   const boatD = () => (bag.boatD == null ? 100 : bag.boatD), BOAT_MIN = 20;
-  function goCook() { if (fishOpen || battle) return; if (me.boat) return toast('배에서 내린 뒤에 들어갈 수 있어요'); if (trial) return toast('체험 중에는 요리교실에 못 들어가요'); fishOpen = true; keys.clear(); sfx('pop');
+  function goCook() { if (fishOpen || battle) return; if (me.boat) return toast('배에서 내린 뒤에 들어갈 수 있어요'); if (trial) return toast('체험 중에는 카피백반에 못 들어가요'); fishOpen = true; keys.clear(); sfx('pop');
     openCook({ ctx, animals: ANIMALS.map((a, i) => ({ i, name: a.name, svg: animalSvg(i) })), A, affinity: (i, d) => setRel(i, { a: A(i) + d }), toned,
       fish: () => Object.entries(bag.fish || {}).filter(([, v]) => v).map(([k, v]) => [k, v, fishOf(v.id)]),
       useFish: key => { const left = { ...(bag.fish || {}) }; delete left[key]; bag = { ...bag, fish: left }; ctx.store.update('bag/' + ctx.uid + '/fish', { [key]: null }).catch(() => {}); },

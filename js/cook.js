@@ -1,8 +1,9 @@
-// 카피요리교실 — 카피수퍼 옆. 동물들이 주문한 요리는 여기서만 만든다
+// 카피백반 — 카피수퍼 옆. 동물들이 주문한 요리는 여기서만 만든다
 // 하루 주문 3개(동물·요리·익힘 취향) → 재료 고르기(생선은 손질된 살) → 냄비에 넣고 끓이기/찌기 → 원하는 익힘에서 불 끄기
 import { h, toast, modal, ymd } from './ui.js';
 import { sfx } from './sound.js';
 
+const RENT = 100;
 export const DISHES = {
   fish: { name: '생선찜', img: 'img/cook/fishdish.webp', need: '물고기 1마리', base: 140, ms: 9000 },
   soup: { name: '채소 수프', img: 'img/cook/soup.webp', need: '작물 아무거나 2개', base: 90, ms: 7500 },
@@ -42,7 +43,7 @@ export function openCook(o) {
   const R = rnd(hash(ctx.uid + day)), pool = o.animals.filter(a => o.A(a.i) >= 0);
   const orders = Array.from({ length: 3 }, (_, k) => { const a = pool.length ? pool[Math.floor(R() * pool.length)] : o.animals[k], dish = ['fish', 'soup', 'steam'][Math.floor(R() * 3)], pref = DONE[Math.floor(R() * 3)].k; return { k, a, dish, pref }; });
   const coinsEl = h('span', { class: 'ck-coins' }), stage = h('div', { class: 'ck-stage' }), panel = h('div', { class: 'ck-panel' });
-  const wrap = h('div', { class: 'ck' }, h('div', { class: 'ck-top' }, h('b', null, '👩‍🍳 카피요리교실'), coinsEl, h('button', { class: 'top-x', 'aria-label': '닫기', onClick: () => close() }, '✕')), stage, panel);
+  const wrap = h('div', { class: 'ck' }, h('div', { class: 'ck-top' }, h('b', null, '🍚 카피백반'), coinsEl, h('button', { class: 'top-x', 'aria-label': '닫기', onClick: () => close() }, '✕')), stage, panel);
   document.body.append(wrap);
   const off = ctx.store.on(ref, v => { st = v || {}; if (phase === 'orders') draw(); });
   const prefOf = k => DONE.find(d => d.k === k);
@@ -61,12 +62,15 @@ export function openCook(o) {
   }
   function drawOrders() {
     const done = st.done || {};
-    panel.replaceChildren(h('b', { class: 'ck-h' }, '📋 오늘의 주문'), ...orders.map(od => { const d = DISHES[od.dish], p = prefOf(od.pref), fin = done[od.k];
-      return h('button', { class: 'ck-order' + (fin ? ' done' : ''), onClick: () => fin ? toast('이미 만들어 준 주문이에요') : start(od) }, h('span', { class: 'ck-an', html: od.a.svg }),
+    const open = !!st.rent, rent = h('div', { class: 'ck-rent' + (open ? ' paid' : '') }, h('span', null, '🏪'), h('div', null, h('b', null, open ? '오늘 장사 중' : '오늘 가게 문 열기'), h('small', null, open ? '오늘 임대료 100코인을 냈어요. 내일 다시 내요.' : `장사를 하려면 하루 임대료 ${RENT}코인을 내야 해요.`)),
+      !open && h('button', { class: 'btn primary sm', onClick: payRent }, `${RENT}코인 내기`));
+    panel.replaceChildren(h('b', { class: 'ck-h' }, '📋 오늘의 주문'), rent, ...orders.map(od => { const d = DISHES[od.dish], p = prefOf(od.pref), fin = done[od.k];
+      return h('button', { class: 'ck-order' + (fin ? ' done' : '') + (open ? '' : ' shut'), onClick: () => fin ? toast('이미 만들어 준 주문이에요') : !open ? toast(`먼저 오늘 임대료 ${RENT}코인을 내고 가게 문을 열어요`) : start(od) }, h('span', { class: 'ck-an', html: od.a.svg }),
         h('div', null, h('b', null, `${od.a.name} · ${d.name}`), h('small', null, fin ? (fin === 'ok' ? '완성! 맛있게 먹었어요 😋' : '만들어 줬어요') : `"${o.toned(od.a.i, `${d.name} ${p.n} 부탁해!`)}"`), !fin && h('em', null, `재료: ${d.need}`)),
         h('img', { src: d.img, alt: '' })); }),
       h('p', { class: 'dim ck-tip' }, '주문은 하루에 3개, 날마다 바뀌어요. 원하는 익힘에 딱 맞추면 돈과 친밀도를 더 받아요. 생선은 낚시로 잡은 물고기, 채소는 농장에서 거둔 작물을 써요.'));
   }
+  async function payRent() { if (st.rent) return; if (!(await ctx.spend(RENT))) return toast(`돈이 모자라요 (${RENT}코인 필요)`); st = { ...st, rent: ctx.store.now() }; await ctx.store.update(ref, { rent: st.rent }).catch(() => {}); sfx('coin'); toast('가게 문을 열었어요! 오늘 하루 장사해요 🍚', 1800); draw(); }
   function start(od) { order = od; pick = []; cut = false; phase = 'prep'; draw(); }
   function drawPrep() {
     const d = DISHES[order.dish], p = prefOf(order.pref), kids = [h('b', { class: 'ck-h' }, `${order.a.name}의 주문 · ${d.name} (${p.n})`)];
