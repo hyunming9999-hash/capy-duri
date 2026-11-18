@@ -1580,7 +1580,7 @@ body.vb-on .modal-wrap { z-index: 4600; }
 .fm-bub { position: absolute; right: 6%; top: 4%; font-size: 20px; animation: fmBob2 1s ease-in-out infinite; pointer-events: none; } @keyframes fmBob2 { 50% { transform: translateY(-4px); } }
 .fm-shop { position: absolute; bottom: 10%; padding: 0; border: 0; background: none; cursor: pointer; z-index: 1; aspect-ratio: 600 / 412; }
 .fm-shop img { width: 100%; height: 100%; display: block; }
-.fm-shop-t { position: absolute; left: 22%; right: 6%; top: 3.5%; height: 8.5%; display: flex; align-items: center; justify-content: center; font: 900 clamp(11px, 3.4vw, 22px)/1 var(--head); color: #3E7D2A; text-shadow: 2px 0 #fff, -2px 0 #fff, 0 2px #fff, 0 -2px #fff; }
+.fm-shop-t { position: absolute; left: 22%; right: 6%; top: 3.5%; height: 8.5%; display: flex; align-items: center; justify-content: center; font: 900 9.5cqw/1 var(--head); color: #3E7D2A; text-shadow: 2px 0 #fff, -2px 0 #fff, 0 2px #fff, 0 -2px #fff; }
 .fm-exit { position: absolute; bottom: 18%; z-index: 3; padding: 8px 12px; border-radius: 12px; border: 3px solid #8B5A2B; background: #F5D7A1; font: 900 13px/1 var(--head); color: #5A3A1E; cursor: pointer; box-shadow: 0 3px 0 #8B5A2B; white-space: nowrap; }
 .fm-me { position: absolute; bottom: 1%; width: 74px; transform: translateX(-50%); z-index: 4; pointer-events: none; }
 .fm-me svg { width: 100%; display: block; } .fm-me.left svg { transform: scaleX(-1); } .fm-me.walk svg { animation: fmStep .35s ease-in-out infinite; } @keyframes fmStep { 50% { translate: 0 -4px; } }
@@ -1623,7 +1623,7 @@ body.vb-on .modal-wrap { z-index: 4600; }
 /* ===== 👩‍🍳 카피백반 ===== */
 .so-cook { position: absolute; z-index: 1; padding: 0; border: 0; background: none; cursor: pointer; aspect-ratio: 568 / 600; }
 .so-cook img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 2px 2px rgba(0,0,0,.15)); }
-.so-cook b { position: absolute; left: 30%; right: 9%; top: 25%; height: 9%; display: flex; align-items: center; justify-content: center; font: 900 clamp(7px, 2vw, 13px)/1 var(--head); color: #D9532B; white-space: nowrap; text-shadow: 1.5px 0 #fff, -1.5px 0 #fff, 0 1.5px #fff, 0 -1.5px #fff; }
+.so-cook b { position: absolute; left: 25%; right: 16%; top: 29.5%; height: 11%; display: flex; align-items: center; justify-content: center; font: 900 10.5cqw/1 var(--head); color: #D9532B; white-space: nowrap; text-shadow: 1.5px 0 #fff, -1.5px 0 #fff, 0 1.5px #fff, 0 -1.5px #fff; }
 .so-cook:active { transform: scale(.97); }
 .ck { position: fixed; inset: 0; z-index: 4500; background: #FFF4DE; display: flex; flex-direction: column; }
 .ck ~ .modal-wrap { z-index: 4600; }
@@ -1690,3 +1690,12 @@ body.vb-on .modal-wrap { z-index: 4600; }
 .fc-lost { position: relative; width: 160px; margin: 0 auto; } .fc-lost img { width: 120px; display: block; margin: 0 auto; } .fc-lost .fc-loot { position: absolute; width: 54px; right: 6px; bottom: 6px; }
 .ck-rent { display: flex; align-items: center; gap: 8px; margin: 6px 0; padding: 8px 10px; border-radius: 14px; background: #2E2433; color: #fff; } .ck-rent > span { font-size: 24px; } .ck-rent > div { flex: 1; display: flex; flex-direction: column; } .ck-rent small { font-size: 11px; opacity: .85; }
 .ck-rent.paid { background: #E6F4DA; color: #2F5A1A; } .ck-order.shut { opacity: .5; }
+
+.fm-scene { position: relative; flex: none; }
+.fm-pad { position: absolute; left: 8px; right: 8px; bottom: 8px; display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; pointer-events: none; z-index: 5; }
+.fm-pad > * { pointer-events: auto; }
+.fm-dp { width: 58px; height: 58px; border-radius: 18px; font-size: 22px; background: rgba(255,255,255,.88); border: 3px solid #E8D3AE; box-shadow: 0 3px 0 #D9C29A; color: #7A5236; touch-action: none; user-select: none; }
+.fm-dp.held { transform: translateY(2px); background: #FFE9B8; box-shadow: 0 1px 0 #D9C29A; }
+.fm-enter { align-self: center; padding: 10px 14px; border-radius: 14px; border: 3px solid #3E7D2A; background: #E6F4DA; font: 900 15px/1 var(--head); color: #2F5A1A; box-shadow: 0 3px 0 #3E7D2A; animation: fmBob 1.2s ease-in-out infinite; } @keyframes fmBob { 50% { transform: translateY(-3px); } }
+
+.so-cook, .fm-shop { container-type: inline-size; }

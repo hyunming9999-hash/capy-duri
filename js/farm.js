@@ -1,7 +1,7 @@
 // 카피 농장 — 놀이터 왼쪽 '농장 가는 길' 팻말로 들어가는 따로 된 공간. 사람마다 밭 5칸(처음엔 1칸만 열림)
 // 씨앗 심기 → 물 주기·잡초 뽑기(컨디션) → 다 자라면 수확(S·A·B·C·F). 상대 농장은 구경하고 물만 줄 수 있다
 // 앱을 오래 꺼 둬도 괜찮게: 물은 자라는 시간의 절반 동안 버티고, 잡초는 한 번만 나고, 다 자란 뒤로는 컨디션이 줄지 않는다(3일 넘게 안 거두면 시든다)
-import { h, toast, modal } from './ui.js';
+import { h, toast, modal, holdBtn } from './ui.js';
 import { capy } from './capy.js';
 import { sfx } from './sound.js';
 
@@ -49,7 +49,7 @@ export function openFarm(o) {
   const { ctx } = o; let who = ctx.uid, data = {}, mine = {}, alive = true, sel = -1, raf = 0, off = null;
   const H = Math.max(280, Math.min(Math.round(innerHeight * 0.52), 520)), TW = Math.round(H * BG_W / BG_H);
   const PH = Math.round(H * 0.34), PW = Math.round(PH * 900 / 356), GAP = Math.round(PW * 0.08), X0 = Math.round(TW * 0.03);
-  const plotX = k => X0 + k * (PW + GAP), HW = Math.round(H * 0.44), HX = plotX(PLOTS) + GAP, WIDTH = HX + Math.round(HW * 1.46) + Math.round(TW * 0.12);
+  const HW = Math.round(H * 0.44), SW = Math.round(HW * 1.46), HX = X0, plotX = k => HX + SW + GAP * 2 + k * (PW + GAP), WIDTH = plotX(PLOTS) + Math.round(TW * 0.14); // 카피철물은 첫 밭 왼쪽
   const now = () => ctx.store.now();
   const me = { x: plotX(0) + PW / 2, tx: plotX(0) + PW / 2 };
   const world = h('div', { class: 'fm-world', style: { width: WIDTH + 'px', height: H + 'px' } });
@@ -60,9 +60,15 @@ export function openFarm(o) {
   const meEl = h('div', { class: 'fm-me', html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) });
   world.append(shop, exitSign, meEl);
   const scroller = h('div', { class: 'fm-scroll' }, world);
+  // 방향키(◀ ▶)로 걷는다. 밭 앞에 서면 그 밭이 열리고, 카피철물 앞에 서면 들어가기 버튼이 뜬다
+  const keys = new Set(), padBtn = (k, t) => { const b = h('button', { class: 'dp fm-dp', 'aria-label': k === 'L' ? '왼쪽' : '오른쪽' }, t); holdBtn(b, () => keys.add(k), () => keys.delete(k)); return b; };
+  const enterBtn = h('button', { class: 'fm-enter', hidden: true, onClick: () => openShop() }, '🔨 카피철물 들어가기');
+  const scene = h('div', { class: 'fm-scene' }, scroller, h('div', { class: 'fm-pad' }, padBtn('L', '◀'), enterBtn, padBtn('R', '▶')));
+  const onKey = e => { const k = e.key === 'ArrowLeft' ? 'L' : e.key === 'ArrowRight' ? 'R' : ''; if (!k || document.querySelector('.modal-wrap')) return; e.preventDefault(); if (e.type === 'keydown') keys.add(k); else keys.delete(k); };
+  window.addEventListener('keydown', onKey); window.addEventListener('keyup', onKey);
   const title = h('b'), coinsEl = h('span', { class: 'fm-coins' }), visitBtn = h('button', { class: 'btn sm' }), barnBtn = h('button', { class: 'btn sm', onClick: () => openBarn() }, '🧺 헛간');
   const sheet = h('div', { class: 'fm-sheet' });
-  const wrap = h('div', { class: 'fm' }, h('div', { class: 'fm-top' }, title, coinsEl, barnBtn, visitBtn, h('button', { class: 'top-x', 'aria-label': '닫기', onClick: () => close() }, '✕')), scroller, sheet);
+  const wrap = h('div', { class: 'fm' }, h('div', { class: 'fm-top' }, title, coinsEl, barnBtn, visitBtn, h('button', { class: 'top-x', 'aria-label': '닫기', onClick: () => close() }, '✕')), scene, sheet);
   document.body.append(wrap);
 
   const plotOf = k => (data.plots || {})[k] || null, isOpen = k => k < (data.open || 1), tool = () => mine.tool || 1;
@@ -114,7 +120,7 @@ export function openFarm(o) {
         return rs.map(r => `${cropOf(r.c).name} ${ripe(r, t) ? '수확!' : left(r.at + r.ms - t)}${!ripe(r, t) && dryNow(r, t) ? '💧' : ''}${weedNow(r, t) ? '🌿' : ''}`).join(' · '); });
       const seeds = Object.values(mine.seeds || {}).reduce((a, n) => a + (n || 0), 0), barn = Object.values(mine.barn || {}).reduce((a, n) => a + (n || 0), 0);
       rc(sheet, h('b', null, visit ? `${ctx.nameOf(who)}네 밭` : '내 밭'), h('div', { class: 'fm-list' }, ...L.map((x, i) => h('button', { class: 'fm-li', onClick: () => goPlot(i) }, h('span', null, `${i + 1}번`), h('b', null, x)))),
-        h('p', { class: 'dim fm-tip' }, visit ? '구경 중이에요. 물이 마른 밭(💧)에 물을 주고 올 수 있어요.' : `씨앗 ${seeds}개 · 헛간 ${barn}개 · ${TOOLS[tool()].name} · 밭 한 칸은 고랑 3줄이고, 씨앗 하나로 한 고랑을 채워요. 씨앗·농기구·땅 문서는 오른쪽 끝 카피철물에서 사요.`),
+        h('p', { class: 'dim fm-tip' }, visit ? '구경 중이에요. 물이 마른 밭(💧)에 물을 주고 올 수 있어요.' : `씨앗 ${seeds}개 · 헛간 ${barn}개 · ${TOOLS[tool()].name} · 밭 한 칸은 고랑 3줄이고, 씨앗 하나로 한 고랑을 채워요. 씨앗·농기구·땅 문서는 맨 왼쪽 카피철물에서 사요.`),
         !visit && h('div', { class: 'fm-row' }, h('button', { class: 'btn', onClick: () => walkTo(HX + HW * 0.7, openShop) }, '🔨 카피철물 가기'), h('button', { class: 'btn', onClick: () => openBarn() }, '🧺 헛간 보기')));
       return; }
     const closeB = h('button', { class: 'btn sm fm-x', onClick: () => { sel = -1; drawPlots(); } }, '닫기');
@@ -183,13 +189,17 @@ export function openFarm(o) {
   // 화면: 내 카피바라가 걸어가고, 1초마다 밭 시간 표시를 고친다
   let lastT = performance.now(), tick = 0;
   function step(t) { if (!alive) return; const dt = Math.min(0.05, (t - lastT) / 1000); lastT = t;
+    const dir = (keys.has('R') ? 1 : 0) - (keys.has('L') ? 1 : 0);
+    if (dir && !document.querySelector('.modal-wrap')) { me.x = Math.max(30, Math.min(WIDTH - 30, me.x + dir * 280 * dt)); me.tx = me.x; me.then = null; meEl.classList.add('walk'); meEl.classList.toggle('left', dir < 0); me.keyed = true; }
+    else if (me.keyed) { me.keyed = false; meEl.classList.remove('walk'); const k = plotEls.findIndex((_, i) => Math.abs(me.x - (plotX(i) + PW / 2)) < PW / 2); if (k >= 0 && k !== sel) { sel = k; pickRow = -1; drawPlots(); } }
+    const atShop = me.x < HX + SW + GAP; if (enterBtn.hidden === atShop) enterBtn.hidden = !atShop;
     const d = me.tx - me.x; if (Math.abs(d) > 2) me.x += Math.sign(d) * Math.min(Math.abs(d), Math.max(320, Math.abs(d) * 2.2) * dt); else if (me.then) { const f = me.then; me.then = null; meEl.classList.remove('walk'); f(); } else meEl.classList.remove('walk');
     meEl.style.left = me.x + 'px';
-    const want = me.x - scroller.clientWidth / 2; if (Math.abs(scroller.scrollLeft - want) > 4 && meEl.classList.contains('walk')) scroller.scrollLeft += (want - scroller.scrollLeft) * Math.min(1, dt * 6);
+    const want = me.x - scroller.clientWidth / 2; if (Math.abs(scroller.scrollLeft - want) > 4 && (meEl.classList.contains('walk') || dir)) scroller.scrollLeft += (want - scroller.scrollLeft) * Math.min(1, dt * 6);
     if ((tick += dt) > 1) { tick = 0; drawPlots(); }
     raf = requestAnimationFrame(step); }
-  function close() { if (!alive) return; alive = false; cancelAnimationFrame(raf); if (off) off(); offMine(); wrap.remove(); o.onClose && o.onClose(); }
-  listen(); raf = requestAnimationFrame(step); scroller.scrollLeft = 0;
+  function close() { if (!alive) return; alive = false; window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKey); cancelAnimationFrame(raf); if (off) off(); offMine(); wrap.remove(); o.onClose && o.onClose(); }
+  listen(); raf = requestAnimationFrame(step); requestAnimationFrame(() => { scroller.scrollLeft = Math.max(0, me.x - scroller.clientWidth / 2); });
   // 상대가 내 밭에 물을 주고 갔으면 알려 준다
   ctx.store.get ? ctx.store.get('farm/' + ctx.uid + '/note').then(v => { if (v && v.by && v.by !== ctx.uid && v.at > ((mine.noteSeen) || 0)) { toast(`${ctx.nameOf(v.by)}가 내 밭에 물을 주고 갔어요 💧`, 2600); save({ noteSeen: v.at }); } }).catch(() => {}) : 0;
   return { close };
