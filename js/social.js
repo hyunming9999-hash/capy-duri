@@ -369,6 +369,22 @@ export function mount(el, ctx) {
     setTimeout(() => mem.set(`cook/${ctx.uid}/${ymd()}`, { rent: 1, next: [od] }), 60); // 로비가 먼저 다른 손님을 정해도 연습 손님으로 덮는다
     toast(`🍳 요리 연습 · ${r.n} (돈·평점·재료에는 영향 없어요)`, 2600); }
   try { const ct = new URLSearchParams(location.search).get('cooktest'); if (ct != null) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); if (!fishOpen && !battle) cookTest(ct || 'maeun'); }, 1400); } catch {}
+  // 농장 체험 링크(?farmtest): 진짜 농장·돈과 따로 노는 연습 농장(코인 5,000 · 스프링클러 2개 · 자라는 작물). 닫으면 사라져요
+  function farmTest() { if (farmOpen || fishOpen || battle) return; farmOpen = true; fishOpen = true; keys.clear();
+    const root = {}, subs = [], seg = k => k.split('/').filter(Boolean);
+    const getP = k => seg(k).reduce((o, x) => (o == null ? undefined : o[x]), root);
+    const setP = (k, v) => { const ps = seg(k); let o = root; ps.slice(0, -1).forEach(x => { if (typeof o[x] !== 'object' || o[x] == null) o[x] = {}; o = o[x]; }); if (v == null) delete o[ps[ps.length - 1]]; else o[ps[ps.length - 1]] = JSON.parse(JSON.stringify(v)); };
+    const fire = k => subs.forEach(([p, f]) => { if (k.startsWith(p) || p.startsWith(k)) setTimeout(() => f(JSON.parse(JSON.stringify(getP(p) ?? null)))); });
+    const mem = { on: (k, f) => { const e = [k, f]; subs.push(e); setTimeout(() => f(JSON.parse(JSON.stringify(getP(k) ?? null)))); return () => { const i = subs.indexOf(e); if (i >= 0) subs.splice(i, 1); }; },
+      update: (k, patch) => { Object.entries(patch).forEach(([x, v]) => setP(k + '/' + x, v)); fire(k); return Promise.resolve(); }, set: (k, v) => { setP(k, v); fire(k); return Promise.resolve(); },
+      get: k => Promise.resolve(getP(k) ?? null), now: () => Date.now(), tx: () => Promise.resolve() };
+    let coins = 5000; const t = Date.now(), M = 60000, row = (c, ms, ago, wetIn) => ({ c, at: t - ago, ms, wet: t + wetIn, calc: t - ago, dry: 0, wd: 0, weedAt: t + 9e9, cut: 0 });
+    setP('farm/' + ctx.uid, { open: 2, tool: 2, sprkInv: 2, seeds: { lettuce: 3, cucumber: 3, corn: 2 },
+      plots: { 0: { rows: { 0: row('cucumber', 40 * M, 15 * M, -2 * M), 1: row('corn', 30 * M, 5 * M, -M), 2: row('scallion', 90 * M, 30 * M, 20 * M) } }, 1: { rows: { 0: row('tomato', 40 * M, 10 * M, -3 * M) } } } });
+    const tctx = Object.create(ctx, { store: { value: mem }, partnerId: { value: null }, coins: { value: () => coins }, spend: { value: async n => { if (coins < n) return false; coins -= n; return true; } } });
+    toast('🧪 농장 체험판이에요 · 진짜 농장과 돈에는 영향이 없어요', 2600);
+    openFarm({ ctx: tctx, scoot: () => (scoot ? scootHtml() : null), onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); } }); }
+  try { if (new URLSearchParams(location.search).has('farmtest')) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); farmTest(); }, 1200); } catch {}
   // 까마귀 연습 링크(?crowtest): 친목회에 들어오면 바로 농장으로 데려간다
   try { if (new URLSearchParams(location.search).has('crowtest')) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); if (!farmOpen && !me.boat && !fishOpen && !battle) goFarm(); setTimeout(() => fcrow.practice(), 900); }, 1200); } catch {}
   // 메인 퀘스트: 동물 머리 위 ! ? 표시와 동물 창의 🔍 퀘스트 버튼
