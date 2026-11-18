@@ -198,7 +198,7 @@ export function openCook(o) {
       kids.push(board.some(b => b.t !== 'prep') ? h('span', { class: 'kb-cut', onClick: e => { e.stopPropagation(); prepBoard(); } }, '🔪 손질하기') : h('span', { class: 'kb-lb' }, board.length ? '✋ 손질 완료 · 아래 번호 칸으로 끌어요' : '🔪 도마 · 아래에서 재료를 눌러 올려요')); }
     else { if (s) { const tint = k === 'pot' && brothOf(merge(s.parts).sauce); if (tint) kids.push(h('i', { class: 'kb-water', style: { background: tint } }, ...[0, 1, 2, 3, 4, 5].map(n => h('em', { style: { left: (12 + n * 15) + '%', animationDelay: (n * 0.27) + 's' } }))));
         kids.push(h('div', { class: 'kb-cooking kb-inpot' }, picsEl(merge(s.parts).pics, 6)), h('i', { class: 'kb-gauge' }, h('b'))); }
-      if (!S.fixed) kids.push(h('span', { class: 'kb-fire' }, ...[1, 2, 3].map(f => h('button', { class: (fire[k] === f ? 'on' : '') + (sess && sess.cs[sess.i] && sess.cs[sess.i].fire === f && recOf(sess.cs[sess.i].rec).st === k ? ' want' : ''), onClick: e => { e.stopPropagation(); fire[k] = f; draw(); } }, FIRE_N[f]))));
+      if (!S.fixed) kids.push(h('span', { class: 'kb-fire' }, ...[1, 2, 3].map(f => h('button', { class: (fire[k] === f ? 'on' : ''), onClick: e => { e.stopPropagation(); fire[k] = f; draw(); } }, FIRE_N[f]))));
       kids.push(h('span', { class: 'kb-lb' }, s ? h('b', { class: 'kb-z' }) : `${S.ic} ${S.n} · ${S.job}${od.fire && r.st === k ? ` · 손님은 ${FIRE_N[od.fire]}!` : ''}`)); }
     const el = h('button', { class: 'kb-s ' + k + (s ? ' busy' : '') + (focusK === k ? ' kb-focus' : ''), onClick: () => useStation(k) }, ...kids); stEls[k] = el; return el; }
   const picEl = (p, j) => { const st = { transform: `rotate(${[-14, 9, -4, 15, -8, 11][j % 6]}deg) translateY(${[2, -3, 1, -2, 3, -1][j % 6]}px)` };
