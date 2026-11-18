@@ -337,6 +337,7 @@ export function mount(el, ctx) {
     openCook({ ctx, animals: ANIMALS.map((a, i) => ({ i, name: a.name, svg: animalSvg(i) })), svgFull: (i, m) => animalSvg(i, true, m), A, affinity: (i, d) => setRel(i, { a: A(i) + d }), toned,
       fish: () => Object.entries(bag.fish || {}).filter(([, v]) => v).map(([k, v]) => [k, v, fishOf(v.id)]),
       useFish: key => { const left = { ...(bag.fish || {}) }; delete left[key]; bag = { ...bag, fish: left }; ctx.store.update('bag/' + ctx.uid + '/fish', { [key]: null }).catch(() => {}); },
+      giveFish: (key, v) => { bag = { ...bag, fish: { ...(bag.fish || {}), [key]: v } }; ctx.store.update('bag/' + ctx.uid + '/fish', { [key]: v }).catch(() => {}); }, // 다 못 쓴 생선 돌려받기
       barn: () => farmBarn, useCrops: use => ctx.store.update('farm/' + ctx.uid + '/barn', Object.fromEntries(Object.entries(use).map(([k, n]) => { const v = (farmBarn[k] || 0) - n; return [k, v > 0 ? v : null]; }))).catch(() => {}),
       sauces: () => bag.sauce || {}, useSauce: use => { const cur = { ...(bag.sauce || {}) }, patch = {}; Object.entries(use).forEach(([k, n]) => { const v = (cur[k] || 0) - n; cur[k] = v > 0 ? v : 0; patch[k] = v > 0 ? v : null; }); bag = { ...bag, sauce: cur }; return ctx.store.update('bag/' + ctx.uid + '/sauce', patch).catch(() => {}); },
       quests: () => (quest ? quest.cooks() : []), questDone: q => quest && quest.cooked(q),
@@ -360,7 +361,7 @@ export function mount(el, ctx) {
     const od = { a: 9, rec: r.id, pref: r.st === 'board' ? 'raw' : 'mid', sauce: r.sauce, sn: 1, no: null, fid: null, fany: z, fire: r.st === 'pot' || r.st === 'pan' ? (+new URLSearchParams(location.search).get('fire') || 0) % 4 : 0 }; // &fire=1|2|3: 약불·중불·강불 요청
     data[`cook/${ctx.uid}/${ymd()}`] = { rent: 1, next: [od] };
     openCook({ ctx: tctx, animals: ANIMALS.map((a, i) => ({ i, name: a.name, svg: animalSvg(i) })), svgFull: (i, m) => animalSvg(i, true, m), A, affinity: () => {}, toned,
-      fish: () => Object.entries(tf).map(([k, v]) => [k, v, fishOf(v.id)]), useFish: key => { delete tf[key]; },
+      fish: () => Object.entries(tf).map(([k, v]) => [k, v, fishOf(v.id)]), useFish: key => { delete tf[key]; }, giveFish: (key, v) => { tf[key] = v; },
       barn: () => tb, useCrops: use => { Object.entries(use).forEach(([k, n]) => { tb[k] = Math.max(0, (tb[k] || 0) - n); }); return Promise.resolve(); },
       sauces: () => ts, useSauce: use => { Object.entries(use).forEach(([k, n]) => { ts[k] = Math.max(0, (ts[k] || 0) - n); }); return Promise.resolve(); },
       quests: () => [], questDone: () => {}, coins: () => {}, cropName: id => (cropOf(id) || { name: id }).name, cropImg, fishSvg,
