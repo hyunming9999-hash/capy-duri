@@ -343,6 +343,13 @@ export function mount(el, ctx) {
     useFish: key => { const left = { ...(bag.fish || {}) }; delete left[key]; bag = { ...bag, fish: left }; ctx.store.update('bag/' + ctx.uid + '/fish', { [key]: null }).catch(() => {}); },
     barn: () => farmBarn, useCrops: use => ctx.store.update('farm/' + ctx.uid + '/barn', Object.fromEntries(Object.entries(use).map(([k, n]) => { const v = (farmBarn[k] || 0) - n; return [k, v > 0 ? v : null]; }))).catch(() => {}),
     cropName: id => (cropOf(id) || { name: id }).name, recName: id => (recOf(id) || { n: id }).n, onChange: () => setTimeout(drawQMarks) });
+  // 퀘스트를 아직 안 시작했으면 하루 한 번 슬쩍 권한다(✕나 나중에로 닫아도 된다)
+  let nudgeAt = performance.now() + 3500;
+  function nudgeTick(now) { if (!nudgeAt || now < nudgeAt) return; if (document.querySelector('.modal-wrap') || fishOpen || battle || trial) { nudgeAt = now + 3000; return; } nudgeAt = 0;
+    let seen = ''; try { seen = localStorage.getItem('capy-qnudge') || ''; } catch {} if (!quest.fresh() || seen === ymd()) return; try { localStorage.setItem('capy-qnudge', ymd()); } catch {}
+    sfx('point'); modal({ title: '📜 섬에 사건이 일어났어요!', body: [h('div', { class: 'qn' }, h('span', { class: 'qn-an', html: animalSvg(10) }), h('div', null, h('b', null, `"${toned(10, '짐의 황금 왕관이 사라졌도다! 누가 좀 도와다오!')}"`), h('p', null, '사자가 엉엉 울고 있어요. 부엉이 탐정의 조수가 되어 범인을 찾아볼래요?'))),
+      h('p', { class: 'dim center qn-tip' }, '메인 퀘스트 「누가 왕관을 훔쳤나」 · 언제든 사자를 눌러 시작할 수 있어요')],
+      actions: [{ label: '나중에' }, { label: '🦁 사자 도와주기', primary: true, onClick: c => { c(); quest.open(10); } }] }); }
   let qmAt = 0, chatAt = performance.now() + 20000;
   // 이야기에 맞춰 근처 동물끼리 수군거린다(30~60초마다 한 번, 화면 근처에 있을 때만)
   function chatTick(now, paused, wet) { if (now < chatAt || paused || wet || me.boat || trial) return; chatAt = now + 30000 + Math.random() * 30000;
@@ -572,7 +579,7 @@ export function mount(el, ctx) {
         else { const sh = shiny && goldOk && (A(i) < 30 || Math.random() < 0.6); if (sh) pop(o.e, gold('shine', RAREGREET.map(f => toned(i, f(ctx.me.name)))), 'say long'); else if (A(i) >= 30) pop(o.e, line(i, 'greet', toned(i, pick(GREET)(ctx.me.name))), 'say long'); } }
       const k = Math.min(1, dt * 5); o.y += (ty - o.y) * k; o.s += (ts - o.s) * k;
       o.e.style.left = o.x + 'px'; o.e.style.bottom = (o.y * 100).toFixed(2) + '%'; o.e.style.transform = `scale(${o.s.toFixed(3)})`; });
-    fcrow.tick(now, farmOpen ? 'farm' : !trial && !paused && !wet && !me.boat ? 'land' : null); if (now > qmAt) { qmAt = now + 1500; drawQMarks(); } chatTick(now, paused, wet);
+    fcrow.tick(now, farmOpen ? 'farm' : !trial && !paused && !wet && !me.boat ? 'land' : null); if (now > qmAt) { qmAt = now + 1500; drawQMarks(); } chatTick(now, paused, wet); nudgeTick(now);
     crowTick(now, paused, wet); charmTick(now, paused, wet); sRumorTick(now, paused, wet); loveTick(now, paused, wet);
     raf = requestAnimationFrame(step);
   }

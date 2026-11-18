@@ -179,5 +179,6 @@ export function createQuest(d) {
   const stage = () => { const c = cur(); return c ? c.ci : STORY.length; };
   const chatter = () => { const [a, b] = CHAT_AT[Math.min(stage(), CHAT_AT.length - 1)]; return CHATTER.slice(a, b); };
   const gossip = () => GOSSIP[Math.min(stage(), GOSSIP.length - 1)];
-  return { open, markOf, cooks, cooked, chatter, gossip, dispose: () => off && off() };
+  const fresh = () => ready && !(q.s || 0) && !q.on;
+  return { open, markOf, cooks, cooked, chatter, gossip, fresh, dispose: () => off && off() };
 }
