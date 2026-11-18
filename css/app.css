@@ -2005,3 +2005,7 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .kb-riceadd { display: flex; align-items: center; gap: 6px; } .kb-riceadd img { width: 70px; height: 56px; object-fit: contain; } img.kb-warnic { width: 96px; height: 76px; object-fit: contain; }
 .kb-more { display: inline-block; margin-top: 5px; padding: 4px 10px; border-radius: 10px; background: #5B4636; color: #fff; font-size: 11.5px; font-weight: 900; box-shadow: 0 2px 0 #3B2A1E; }
 .kb-cust:not(.lobby) { height: 216px; } .kb-bub > div { min-width: 0; } .kb-bub .kb-more { margin-top: 4px; }
+.kb-fire button { width: auto; padding: 0 6px; font-size: 11px; }
+.kb-warnlead { font-weight: 900; color: #6B2A00; } .kb-wrow { display: flex; align-items: flex-start; gap: 10px; text-align: left; padding: 8px; margin: 6px 0; border-radius: 12px; background: #FFF6E3; }
+.kb-wrow .kb-wic { flex: none; width: 46px; height: 40px; object-fit: contain; font-size: 30px; line-height: 40px; text-align: center; } .kb-wrow b { font-size: 14.5px; } .kb-wrow p { margin: 2px 0 0; font-size: 12.5px; line-height: 1.55; }
+.kb-warn i.fire { background: #FFE3D6; color: #B4321B; }

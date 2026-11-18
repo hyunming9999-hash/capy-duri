@@ -164,7 +164,12 @@ export function openCook(o) {
     const cs = Array.isArray(st.next) && st.next.length ? st.next.slice(0, PER) : newCust(); st = { ...st, next: null }; ctx.store.update(ref, { next: null }).catch(() => {});
     sess = { cs, i: 0 }; resetKitchen(); ctx.store.update(ref, { cur: { ...sess } }).catch(() => {}); sfx('point'); draw(); riceWarn(); }
   // 장사를 시작할 때마다: 공깃밥 유무를 꼭 확인하라는 경고
-  function riceWarn() { modal({ title: '⚠️ 공깃밥 꼭 확인!', body: h('div', { class: 'kb-warn' }, h('img', { class: 'kb-warnic', src: RICE_IMG, alt: '' }), h('p', null, h('b', null, '손님마다 공깃밥 요청이 달라요.'), h('br'), '말풍선의 ', h('i', { class: 'hot' }, '🍚 공깃밥 추가'), ' / ', h('i', null, '🍚 공깃밥 없이'), '를 보고,'), h('p', null, '요리가 완성되면 나오는 ', h('b', null, '"공깃밥도 추가할까요?"'), '에서 요청대로 골라요.'), h('p', { class: 'kb-warnx' }, '틀리면 요청 하나를 놓친 걸로 쳐서 값이 깎여요!')), noX: true, actions: [{ label: '알겠어요!', primary: true }] }); }
+  function riceWarn() { const row = (ic, t, d) => h('div', { class: 'kb-wrow' }, ic, h('div', null, h('b', null, t), h('p', null, ...d)));
+    modal({ title: '⚠️ 손님 요청 꼭 확인!', body: h('div', { class: 'kb-warn' }, h('p', { class: 'kb-warnlead' }, '손님마다 요청이 달라요. 요리 전에 말풍선을 꼭 보세요!'),
+      row(h('img', { class: 'kb-wic', src: RICE_IMG, alt: '' }), '공깃밥', [h('i', { class: 'hot' }, '🍚 공깃밥 추가'), ' / ', h('i', null, '🍚 공깃밥 없이'), ' — 완성 뒤 "공깃밥도 추가할까요?"에서 요청대로 골라요.']),
+      row(h('span', { class: 'kb-wic' }, '🔥'), '불 세기', [h('i', { class: 'fire' }, '약불·중불·강불로 ○○ 게 좋아'), ' — 요청이 있으면 모든 단계를 그 불로 익혀요.']),
+      row(h('span', { class: 'kb-wic' }, '🍳'), '익힘 정도', [h('i', null, '덜익힘·알맞게·바싹'), ' — 중간 단계는 알맞게, 마지막 단계는 손님이 원한 익힘에서 눌러요.']),
+      h('p', { class: 'kb-warnx' }, '하나라도 틀리면 값이 깎이고, 두 개 이상 틀리면 0원이에요!')), noX: true, actions: [{ label: '알겠어요!', primary: true }] }); }
   function startQuest(q) { sess = { cs: [makeOrder(q.i, q)], i: 0, quest: 1 }; resetKitchen(); draw(); }
   function resetKitchen() { board = []; tray = []; slots = []; slotsFor = null; selT = -1; sel = null; Object.keys(stn).forEach(k => { stn[k] = null; }); }
 
@@ -193,7 +198,7 @@ export function openCook(o) {
       kids.push(board.some(b => b.t !== 'prep') ? h('span', { class: 'kb-cut', onClick: e => { e.stopPropagation(); prepBoard(); } }, '🔪 손질하기') : h('span', { class: 'kb-lb' }, board.length ? '✋ 손질 완료 · 아래 번호 칸으로 끌어요' : '🔪 도마 · 아래에서 재료를 눌러 올려요')); }
     else { if (s) { const tint = k === 'pot' && brothOf(merge(s.parts).sauce); if (tint) kids.push(h('i', { class: 'kb-water', style: { background: tint } }, ...[0, 1, 2, 3, 4, 5].map(n => h('em', { style: { left: (12 + n * 15) + '%', animationDelay: (n * 0.27) + 's' } }))));
         kids.push(h('div', { class: 'kb-cooking kb-inpot' }, picsEl(merge(s.parts).pics, 6)), h('i', { class: 'kb-gauge' }, h('b'))); }
-      if (!S.fixed) kids.push(h('span', { class: 'kb-fire' }, ...[1, 2, 3].map(f => h('button', { class: (fire[k] === f ? 'on' : '') + (sess && sess.cs[sess.i] && sess.cs[sess.i].fire === f && recOf(sess.cs[sess.i].rec).st === k ? ' want' : ''), onClick: e => { e.stopPropagation(); fire[k] = f; draw(); } }, FIRE_N[f][0]))));
+      if (!S.fixed) kids.push(h('span', { class: 'kb-fire' }, ...[1, 2, 3].map(f => h('button', { class: (fire[k] === f ? 'on' : '') + (sess && sess.cs[sess.i] && sess.cs[sess.i].fire === f && recOf(sess.cs[sess.i].rec).st === k ? ' want' : ''), onClick: e => { e.stopPropagation(); fire[k] = f; draw(); } }, FIRE_N[f]))));
       kids.push(h('span', { class: 'kb-lb' }, s ? h('b', { class: 'kb-z' }) : `${S.ic} ${S.n} · ${S.job}${od.fire && r.st === k ? ` · 손님은 ${FIRE_N[od.fire]}!` : ''}`)); }
     const el = h('button', { class: 'kb-s ' + k + (s ? ' busy' : '') + (focusK === k ? ' kb-focus' : ''), onClick: () => useStation(k) }, ...kids); stEls[k] = el; return el; }
   const picEl = (p, j) => { const st = { transform: `rotate(${[-14, 9, -4, 15, -8, 11][j % 6]}deg) translateY(${[2, -3, 1, -2, 3, -1][j % 6]}px)` };
