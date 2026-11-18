@@ -133,7 +133,7 @@ const CARE = ['너무 깊은 곳은 조심해.', '넌 소중한 존재야. 다�
 const PASS = 96, SEAT = 19; // 상대 카피바라의 배에 같이 탄 손님(SEAT: 운전석 바로 뒤, 배 안쪽에 앉는다)
 const MY_WBOAT = 98, MY_WBOAT_GUN = 97; // 흰 배(더 빠르다), 대포를 단 흰 배
 const boatSvg = i => { const mine = i >= MY_WBOAT_GUN, white = mine && i !== MY_BOAT, a = white ? { body: '#FFFFFF', light: '#4C8FE0', ear: '#DDE6F2' } : mine ? { body: '#C08F62', light: '#F0D2A8', ear: '#8A5A3B' } : ANIMALS[i], pin = mine ? '🍊' : PERSONA[i].pin, gun = i === MY_WBOAT_GUN ? '<g class="gun-b" style="transform-origin:128px 50px"><rect x="116" y="38" width="52" height="21" rx="9" fill="#3E3E48" stroke="#1F1F26" stroke-width="2"/><rect x="160" y="35" width="9" height="27" rx="4" fill="#2A2A33" stroke="#1F1F26" stroke-width="1.5"/><rect x="118" y="42" width="34" height="4" rx="2" fill="#6A6A78"/></g><circle cx="130" cy="61" r="11" fill="#5A4632" stroke="#3E2A1B" stroke-width="2"/><circle cx="130" cy="61" r="3.5" fill="#3E2A1B"/>' : ''; return `<svg viewBox="0 0 170 120"><path d="M92 62 V8" stroke="#8A5A2B" stroke-width="4" stroke-linecap="round"/><path d="M95 10 L142 34 L95 54z" fill="#FFFDF7" stroke="#C9B28A" stroke-width="2" stroke-linejoin="round"/><text x="111" y="42" font-size="19" text-anchor="middle">${pin}</text>${mine ? '' : `<circle cx="14" cy="60" r="8" fill="${a.ear || a.body}" stroke="rgba(0,0,0,.25)" stroke-width="1.5"/><circle cx="30" cy="54" r="8" fill="${a.ear || a.body}" stroke="rgba(0,0,0,.25)" stroke-width="1.5"/>`}<path d="M6 66 H164 Q160 106 132 108 H40 Q12 106 6 66z" fill="${a.body}" stroke="rgba(0,0,0,.3)" stroke-width="2.4" stroke-linejoin="round"/><path d="M9 78 H161" stroke="${a.light}" stroke-width="7"/><circle cx="26" cy="74" r="2.6" fill="#3E2A1B"/>${gun}<path d="M-2 110 q14 -9 28 0 t28 0 t28 0 t28 0 t28 0 t28 0 t28 0" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".8"/></svg>`; };
-export const GIFTS = { candy: ['🍬', '사탕', 30, 3], flower: ['💐', '꽃다발', 120, 8], cake: ['🎂', '케이크', 400, 20] }; // [그림, 이름, 값, 친밀도]
+export const GIFTS = { candy: ['🍬', '사탕', 150, 2], flower: ['💐', '꽃다발', 600, 4], cake: ['🎂', '케이크', 2000, 8] }; // [그림, 이름, 값, 친밀도]
 const GOOD = ['귀여', '귀엽', '귀요', '멋지', '멋져', '멋있', '좋아', '좋은', '최고', '사랑', '고마', '고맙', '감사', '예쁘', '예뻐', '예쁜', '이쁘', '이뻐', '이뿌', '착하', '착해', '착한', '대단', '잘생', '잘했', '잘한', '반가', '보고 싶', '보고싶', '친구', '훌륭', '똑똑', '재밌', '재미있', '행복', '든든', '응원', '칭찬', '짱', '덕분', '소중', '자랑', '완벽', '존경', '부럽'];
 const BAD = ['바보', '못생', '싫어', '꺼져', '멍청', '뚱뚱', '냄새', '미워', '짜증', '나빠', '더러', '재수', '찌질', '한심', '쓰레기', '죽어', '닥쳐', '시끄러워', '별로', '못난', '돼지야', '거지'];
 const LINES = {
@@ -199,7 +199,7 @@ export function mount(el, ctx) {
   let meTubeB = null, palTubeB = null; const tubeBack = (f, b, z) => { b.style.display = f.style.display; if (f.style.display === 'none') return; b.style.left = f.style.left; b.style.bottom = f.style.bottom; b.style.transform = f.style.transform; b.style.zIndex = z; b.className = f.className; };
   let meTube = null, palTube = null, boatEl = null, palBoat = null, palBoatI = -1, palBoatDrawn = -1, offer = null, calmChk = 0; // 물놀이: 튜브·보트, 보트 제안
   const tiles = [], spots = []; let vit = null, hpEl, potEl, lockT = 0, playing = false;
-  const HP_MAX = 100, HIT_DMG = 5, POTION = [10, 20], // 한 대 맞으면 -5, 포션은 10코인에 HP +20
+  const HP_MAX = 100, HIT_DMG = 5, POTION = [50, 20], // 한 대 맞으면 -5, 포션은 50코인에 HP +20
   CALM_MS = 300000, // 화는 5분에 1점씩 저절로 풀린다
   BRIBE = [50, 5], // 돈으로 풀기: 50코인에 +5
   CHASE_AT = -10, TEN_MIN = 600000, SORRY = /미안|죄송|사과|잘못했|용서/, moodOf = v => (v <= CHASE_AT ? 'mad' : v < 0 ? 'angry' : '');
@@ -297,7 +297,7 @@ export function mount(el, ctx) {
   function lock() {
     leavePos(); playing = false; cancelAnimationFrame(raf); clearInterval(lockT); const left = h('b', { class: 'so-lockt' });
     const tick = () => { const ms = TEN_MIN - (ctx.store.now() - (vit.deadAt || 0)); if (ms <= 0) { clearInterval(lockT); saveVit({ hp: HP_MAX, deadAt: 0 }).then(() => alive && scene()); return; } left.textContent = `${Math.floor(ms / 60000)}분 ${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}초`; };
-    el.replaceChildren(h('div', { class: 'so-lock' }, h('div', { class: 'so-lockc', html: capy(ctx.capyOf(ctx.uid, { face: 'sleepy' })) }), h('h3', null, '😵 너무 많이 맞아서 쓰러졌어요'), h('p', null, '10분 동안 쉬어야 친목회에 다시 들어올 수 있어요.'), left, h('p', { class: 'dim' }, '다음에는 카피수퍼에서 회복 포션(🧪 10코인)을 미리 사 두세요. 사이가 나쁜 동물에게는 사과하면 조금 풀려요.'), h('button', { class: 'btn', onClick: () => ctx.go('home') }, '홈으로')));
+    el.replaceChildren(h('div', { class: 'so-lock' }, h('div', { class: 'so-lockc', html: capy(ctx.capyOf(ctx.uid, { face: 'sleepy' })) }), h('h3', null, '😵 너무 많이 맞아서 쓰러졌어요'), h('p', null, '10분 동안 쉬어야 친목회에 다시 들어올 수 있어요.'), left, h('p', { class: 'dim' }, `다음에는 카피수퍼에서 회복 포션(🧪 ${POTION[0]}코인)을 미리 사 두세요. 사이가 나쁜 동물에게는 사과하면 조금 풀려요.`), h('button', { class: 'btn', onClick: () => ctx.go('home') }, '홈으로')));
     tick(); lockT = setInterval(() => alive && tick(), 1000);
   }
   function die() { document.querySelectorAll('.modal-wrap').forEach(w => w.remove()); held = -1; sfx('lose'); saveVit({ hp: 0, deadAt: ctx.store.now() }).then(() => alive && lock()); }
