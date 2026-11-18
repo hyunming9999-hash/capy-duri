@@ -345,6 +345,8 @@ export function mount(el, ctx) {
   function goFarm() { if (farmOpen) return; if (fishOpen || battle) return toast('하던 걸 끝내고 농장에 갈 수 있어요'); if (me.boat) return toast('배에서 내린 뒤에 농장에 갈 수 있어요'); fishOpen = true; farmOpen = true; keys.clear(); sfx('pop');
     openFarm({ ctx, scoot: () => (scoot ? scootHtml() : null), onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); } }); }
   const fcrow = farmCrow(ctx, { goFarm: () => goFarm() });
+  // 까마귀 연습 링크(?crowtest): 친목회에 들어오면 바로 농장으로 데려간다
+  try { if (new URLSearchParams(location.search).has('crowtest')) setTimeout(() => { if (!farmOpen) goFarm(); }, 1200); } catch {}
   // 메인 퀘스트: 동물 머리 위 ! ? 표시와 동물 창의 🔍 퀘스트 버튼
   let vnOn = false;
   const quest = createQuest({ ctx, names: ANIMALS.map(a => a.name), svg: i => animalSvg(i), svgFull: (i, mood) => animalSvg(i, true, mood || undefined), meSvg: face => capy(ctx.capyOf(ctx.uid, { face })), meName: ctx.me.name,
