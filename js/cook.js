@@ -6,8 +6,8 @@ import { FISH, TIERS } from './fishing.js';
 import { cropOf } from './farm.js';
 
 const RENT = 100, SESSIONS = 3, PER = 1; // 원테이블 식당: 한 번 장사에 손님 한 명
-// 가게 평점: 날마다 5점 만점에서 시작(하루가 지나면 회복). 손님 요청을 못 맞추면 -0.5, 다 맞추면 +0.1. 3점 이하가 되면 하루 영업정지, 풀리면 다시 5점
-const RATE_MAX = 5, RATE_MISS = 0.5, RATE_GOOD = 0.1, RATE_BAN = 3, RATE_BACK = 5, BAN_MS = 86400000;
+// 가게 평점: 날마다 5점 만점에서 시작(하루가 지나면 회복). 손님 요청을 1개 못 맞추면 -0.5, 2개 이상(또는 다른 요리·날것·탄 것)은 -1, 다 맞추면 +0.1. 3점 이하가 되면 하루 영업정지, 풀리면 다시 5점
+const RATE_MAX = 5, RATE_MISS = 0.5, RATE_MISS2 = 1, RATE_GOOD = 0.1, RATE_BAN = 3, RATE_BACK = 5, BAN_MS = 86400000;
 // 생선은 머리 없이 손질된 살로만 보여 준다. 이름 속 낱말로 곁들임 소품을 고른다
 const FIL_KEY = [['흑진주','bpearl'],['흑요석','bpearl'],['심해등불','firefly'],['심해등대','firefly'],['반딧불','firefly'],['비눗방울','drop'],['물방울','drop'],['은방울','pearl'],['방울','drop'],['민트','mint'],['붕어빵','bungeo'],['호박엿','caramel'],['청동','metal'],['흑철갑','metal'],['성게','acorn'],['불가사리','shell'],['망치','hammer'],['얼음','ice'],['빙하','ice'],['쇄빙','ice'],['서리','ice'],['유리','ice'],
   ['젤리','jelly'],['무지개','jelly'],['오로라','jelly'],['해파리','jelly'],['솜사탕','cotton'],['솜방망이','cotton'],['구름','cotton'],['마시멜로','ghost'],['몽글','ghost'],['유령','ghost'],['해골','ghost'],['가면','ghost'],['별','star'],['은하','star'],['유성','star'],
@@ -143,7 +143,7 @@ export function openCook(o) {
         h('button', { class: 'btn sm kb-skip', onClick: skipNext }, `🔄 이 손님 넘기기 · 장사 기회 1번 써요 (남은 기회 ${SESSIONS - n}번)`)); }
     if (qs.length) kids.push(h('b', { class: 'kb-h' }, '🔍 퀘스트 요리'), ...qs.map(q => { const r = recOf(q.rec); return h('button', { class: 'kb-qrow', onClick: () => startQuest(q) }, h('img', { src: r.img, alt: '' }), h('div', null, h('b', null, `${an(q.i).name}에게 ${r.n}`), h('small', null, '임대료 없이 만들 수 있어요 · 다 만들면 그 동물에게 가서 퀘스트 완료')), h('span', null, '만들기 ›')); }));
     kids.push(h('div', { class: 'kb-row2' }, h('button', { class: 'btn', onClick: recipeBook }, '📖 레시피북'), h('button', { class: 'btn', onClick: pantry }, '🧂 내 양념')));
-    kids.push(h('p', { class: 'dim kb-tip' }, `가게 평점은 5점 만점이고 하루가 지나면 회복돼요. 손님 요청을 못 맞추면 -${RATE_MISS}, 다 맞추면 +${RATE_GOOD}. ${RATE_BAN}점 이하가 되면 하루 영업정지예요. 손님마다 원하는 익힘·양념·뺄 재료가 달라요.` + ' 생선은 낚시로, 작물은 농장에서, 양념은 카피수퍼에서 구해요. 재료가 없으면 "다음에 다시 오세요"로 돌려보내요(평점은 그대로).'));
+    kids.push(h('p', { class: 'dim kb-tip' }, `가게 평점은 5점 만점이고 하루가 지나면 회복돼요. 손님 요청을 1개 못 맞추면 -${RATE_MISS}, 2개 이상 못 맞추면 -${RATE_MISS2}(0코인), 다 맞추면 +${RATE_GOOD}. ${RATE_BAN}점 이하가 되면 하루 영업정지예요. 손님마다 원하는 익힘·양념·뺄 재료가 달라요.` + ' 생선은 낚시로, 작물은 농장에서, 양념은 카피수퍼에서 구해요. 재료가 없으면 "다음에 다시 오세요"로 돌려보내요(평점은 그대로).'));
     body.replaceChildren(...kids); }
   async function payRent() { if (st.rent) return; if (!(await ctx.spend(RENT))) return toast(`돈이 모자라요 (${RENT}코인 필요)`); st = { ...st, rent: ctx.store.now() }; await ctx.store.update(ref, { rent: st.rent }).catch(() => {}); sfx('coin'); toast('가게 문을 열었어요! 🍚', 1600); draw(); }
   // 다음 장사에 올 손님을 미리 정해 둔다(로비에서 메뉴·재료를 보고 미리 준비할 수 있게). 장사를 시작하면 이 손님들이 그대로 온다
@@ -245,9 +245,9 @@ export function openCook(o) {
       modal({ title: ok ? `${r.n} 완성! 🔍` : '다시 만들어야 해요', body: [h('div', { class: 'ck-res' + (ok ? '' : ' bad') }, h('img', { src: d.img, alt: '' }), h('span', { class: 'ck-an', html: a.svg })),
         h('p', { class: 'center' }, h('b', null, `${a.name}: "${o.toned(od.a, ok ? `고마워! ${r.n} 잘 받았어. 이따 나한테 와 줘!` : wrong ? `이건 ${r.n}이(가) 아닌데…?` : '앗, 제대로 익지 않았어…')}"`)),
         h('p', { class: 'center dim' }, ok ? '퀘스트 요리를 완성했어요. 동물에게 가서 퀘스트를 완료하세요.' : '맞는 요리를, 날것이나 타지 않게 다시 만들어 주세요.')], actions: [{ label: '다음', primary: true }], onClose: () => nextCust(!ok) }); return; }
-    const dv = stars >= 5 ? RATE_GOOD : -RATE_MISS, ban = await rateBy(dv);
+    const dv = fail ? -RATE_MISS2 : why.length ? -RATE_MISS : RATE_GOOD, ban = await rateBy(dv);
     if (aff) o.affinity(od.a, aff);
-    const rateLine = h('p', { class: 'center kb-rd' + (dv < 0 ? ' down' : '') }, dv < 0 ? `손님 요청을 못 맞췄어요 · 가게 평점 -${RATE_MISS} → ★ ${rateV().toFixed(1)}` : `요청을 다 맞췄어요 · 가게 평점 +${RATE_GOOD} → ★ ${rateV().toFixed(1)}`);
+    const rateLine = h('p', { class: 'center kb-rd' + (dv < 0 ? ' down' : '') }, dv < 0 ? `${fail ? (why.length >= 2 ? `요청을 ${why.length}개 못 맞췄어요` : '요리를 망쳤어요') : '요청을 1개 못 맞췄어요'} · 가게 평점 ${dv} → ★ ${rateV().toFixed(1)}` : `요청을 다 맞췄어요 · 가게 평점 +${RATE_GOOD} → ★ ${rateV().toFixed(1)}`);
     const after = () => (ban ? closeShop() : nextCust(false));
     if (fail) { sfx('bad'); const say = wrong ? `이건 ${r.n}이(가) 아닌데…?` : ruined ? (d.zone === 'burnt' ? '콜록콜록… 다 탔잖아…' : '으앗, 아직 날것이잖아…') : `음… ${why.join(', ')}. 이건 돈 못 내겠어.`;
       modal({ title: `${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}`, body: [h('div', { class: 'ck-res bad' }, h('img', { src: d.img, alt: '' }), h('span', { class: 'ck-an', html: o.svgFull ? o.svgFull(od.a, 'sad') : a.svg })), h('p', { class: 'center' }, h('b', null, `${a.name}: "${o.toned(od.a, say)}"`)), rateLine,
