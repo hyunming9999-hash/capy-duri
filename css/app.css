@@ -1784,3 +1784,18 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .kb-rr.skip { opacity: .75; } .kb-rr.skip b { text-decoration: line-through; }
 .kb-steps { margin: 4px 0; padding-left: 20px; font-size: 13px; line-height: 1.6; word-break: keep-all; }
 .kb-can { font-size: 13px; font-weight: 800; border-radius: 10px; padding: 6px 8px; } .kb-can.ok { background: #E6F4DA; color: #2F5A1A; } .kb-can.no { background: #FFF2C9; color: #8A5A00; }
+/* ===== 📜 퀘스트 대화 (게임 화면 위) ===== */
+.vn { position: absolute; left: 0; right: 0; bottom: 0; top: 0; z-index: 60; cursor: pointer; background: linear-gradient(transparent 35%, rgba(40,28,20,.18)); }
+.vn-pf { position: absolute; bottom: -6px; width: 44%; max-width: 230px; filter: drop-shadow(0 4px 6px rgba(0,0,0,.25)); animation: vnIn .28s ease-out; pointer-events: none; }
+.vn-pf svg { width: 100%; height: auto; display: block; } .vn.r .vn-pf { right: -3%; } .vn.l .vn-pf { left: -3%; }
+.vn-box { position: absolute; bottom: 10px; width: 70%; max-height: calc(100% - 40px); overflow-y: auto; z-index: 2; background: rgba(255,253,247,.97); border: 3px solid #5B4636; border-radius: 18px; padding: 10px 12px 24px; box-shadow: 0 0 0 3px #E8D3AE, 0 6px 14px rgba(0,0,0,.25); color: #3E2A1E; word-break: keep-all; animation: vnIn .2s ease-out; }
+.vn.r .vn-box { left: 8px; } .vn.l .vn-box { right: 8px; }
+.vn-tx { margin: 0; font-size: 15px; line-height: 1.55; }
+.vn-nm { display: inline-block; margin: 0 0 5px; padding: 3px 12px; border-radius: 12px; background: #5B4636; color: #fff; font-weight: 900; font-size: 14px; }
+.vn.l .vn-nm { background: #3E7D2A; }
+.vn-x { position: absolute; right: 6px; top: 6px; width: 26px; height: 26px; border-radius: 50%; border: 2px solid #E8D3AE; background: #fff; color: #7A5236; font-weight: 900; font-size: 12px; padding: 0; display: grid; place-items: center; }
+.vn-ch { position: absolute; left: 8px; top: 8px; font-style: normal; font-size: 11px; font-weight: 900; background: #FFD23F; color: #5B3A00; border-radius: 10px; padding: 3px 9px; box-shadow: 0 2px 0 #C98A00; z-index: 3; }
+.vn-nx { position: absolute; right: 12px; bottom: 5px; font-size: 11.5px; color: #9C8160; animation: vnNx .8s infinite; } @keyframes vnNx { 50% { transform: translateY(3px); } }
+.vn-bt { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 6px; margin-top: 8px; } .vn-bt .btn { padding: 9px 4px; font-size: 14px; }
+.vn-sub { margin: 6px 0 0; font-size: 12px; color: #7A5236; } .vn .qw-goal, .vn .qw-rw { font-size: 12px; } .vn .qw-clue { max-height: 110px; overflow-y: auto; }
+@keyframes vnIn { from { transform: translateY(16px); opacity: 0; } }

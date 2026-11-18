@@ -67,13 +67,25 @@ export const ANIMALS = [
 ];
 // full = true면 카피바라와 같은 2등신 몸까지 그린다
 // mood: 'angry'면 눈썹을 찌푸리고, 'mad'면 화난 표시까지 붙는다
+// 퀘스트 대화용 표정: 눈·눈썹·눈물만 바꿔 그린다(입·코는 동물마다 그대로)
+const MOOD_EYES = {
+  happy: c => mir(`<path d="M18.5 43 q5.5 -7 11 0" fill="none" stroke="${c}" stroke-width="3.2" stroke-linecap="round"/>`),
+  love: () => mir('<path d="M24 46 l-6 -6 a3.4 3.4 0 0 1 6 -3.6 a3.4 3.4 0 0 1 6 3.6z" fill="#FF4D6D"/>'),
+  sad: c => mir(`<circle cx="24" cy="42" r="3.4" fill="${c}"/><path d="M15 33 L31 29" stroke="${c}" stroke-width="2.8" stroke-linecap="round"/>`) + '<path d="M22 48 q-3.5 6 0 8.5 q3.5 -2.5 0 -8.5z" fill="#6EC6FF"/>',
+  cry: c => mir(`<path d="M18.5 40 q5.5 6 11 0" fill="none" stroke="${c}" stroke-width="3.2" stroke-linecap="round"/><path d="M15 32 L31 28" stroke="${c}" stroke-width="2.8" stroke-linecap="round"/><path d="M21 45 q-2 10 1 22" fill="none" stroke="#6EC6FF" stroke-width="3.6" stroke-linecap="round" opacity=".9"/>`),
+  wow: c => mir(`<circle cx="24" cy="41" r="5.6" fill="#fff" stroke="${c}" stroke-width="2"/><circle cx="24" cy="41" r="2.6" fill="${c}"/><path d="M16 29 q8 -5 15 -1" fill="none" stroke="${c}" stroke-width="2.6" stroke-linecap="round"/>`) + '<path d="M104 22 q-4 6 0 8 q4 -2 0 -8z" fill="#8FD3FF"/>',
+  smug: c => mir(`<path d="M18 39 h12" stroke="${c}" stroke-width="2.6" stroke-linecap="round"/><path d="M19 39.5 a5 4.2 0 0 0 10 0z" fill="${c}"/>`),
+  think: c => mir(`<circle cx="25.5" cy="38.5" r="3.4" fill="${c}"/><path d="M16 31 L31 32" stroke="${c}" stroke-width="2.6" stroke-linecap="round"/>`),
+  shy: c => mir(`<path d="M18.5 43 q5.5 -7 11 0" fill="none" stroke="${c}" stroke-width="3.2" stroke-linecap="round"/><ellipse cx="18.5" cy="54" rx="7" ry="4.6" fill="#FF6F8F" opacity=".7"/>`) };
+export const MOODS = Object.keys(MOOD_EYES).concat(['angry']);
 export function animalSvg(i, full, mood) {
   const a = typeof i === 'object' ? i : ANIMALS[i % ANIMALS.length], d = a.dark || shade(a.body, -0.38), ey = a.eyeY || 0;
   const ear = EAR[a.ear](a.earC || a.body, a.inner, a.es || 1);
-  const eyeCol = a.eye || INK, e = a.eye === '#fff' ? mir(`<circle cx="24" cy="41" r="4" fill="#fff"/><circle cx="24.6" cy="41.4" r="2.2" fill="${INK}"/>`) : eyes(eyeCol);
+  const eyeCol = a.eye && a.eye !== '#fff' ? a.eye : INK, e0 = a.eye === '#fff' ? mir(`<circle cx="24" cy="41" r="4" fill="#fff"/><circle cx="24.6" cy="41.4" r="2.2" fill="${INK}"/>`) : eyes(eyeCol);
+  const e = MOOD_EYES[mood] ? MOOD_EYES[mood](INK) : e0;
   const bc = a.earC && a.name === '판다' ? '#3B3B44' : a.body, bd = shade(bc, -0.3), belly = a.name === '펭귄' ? '#FFFDF7' : a.muz === 'beak' || a.muz === 'bill' ? shade(bc, a.body === '#FFFDF7' ? -0.06 : 0.45) : a.light;
   const body = full ? `<ellipse cx="45" cy="128" rx="12" ry="6.5" fill="${bd}"/><ellipse cx="75" cy="128" rx="12" ry="6.5" fill="${bd}"/><rect x="31" y="76" width="58" height="50" rx="24" fill="${bc}"/><ellipse cx="60" cy="105" rx="17" ry="15" fill="${belly}"/><ellipse cx="29" cy="99" rx="8" ry="12" fill="${bc}" transform="rotate(14 29 99)"/><ellipse cx="91" cy="99" rx="8" ry="12" fill="${bc}" transform="rotate(-14 91 99)"/>` : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 ${full ? 158 : 112}">${a.back ? a.back(a.body) : ''}${body}<g class="an-head">${ear}${head(a.body)}${a.over ? a.over(a.body) : ''}${a.pre ? a.pre(a.body) : ''}${mood === 'angry' || mood === 'mad' ? `<rect x="9" y="15" width="102" height="69" rx="25" fill="#E5383B" opacity="${mood === 'mad' ? 0.46 : 0.24}"/>` : ''}${MUZ[a.muz](a.light, d, a.nose)}<g transform="translate(0 ${ey})">${e}${mood === 'angry' || mood === 'mad' ? `<path d="M14 30 L34 37M106 30 L86 37" stroke="${INK}" stroke-width="3.6" stroke-linecap="round"/>` : ''}</g>${mood === 'mad' ? '<g stroke="#E5484D" stroke-width="3" stroke-linecap="round" fill="none"><path d="M92 -2 q5 3 4 9M104 -4 q-3 5 2 9M96 14 q5 -3 9 1M108 12 q-5 -1 -6 -6"/></g>' : ''}${mood ? '' : blush}</g></svg>`; // 머리(귀·얼굴)는 한 묶음: 절할 때 발과 몸은 그대로 두고 머리만 숙인다
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 ${full ? 158 : 112}">${a.back ? a.back(a.body) : ''}${body}<g class="an-head">${ear}${head(a.body)}${a.over ? a.over(a.body) : ''}${a.pre ? a.pre(a.body) : ''}${mood === 'angry' || mood === 'mad' ? `<rect x="9" y="15" width="102" height="69" rx="25" fill="#E5383B" opacity="${mood === 'mad' ? 0.46 : 0.24}"/>` : ''}${MUZ[a.muz](a.light, d, a.nose)}<g transform="translate(0 ${ey})">${e}${mood === 'angry' || mood === 'mad' ? `<path d="M14 30 L34 37M106 30 L86 37" stroke="${INK}" stroke-width="3.6" stroke-linecap="round"/>` : ''}</g>${mood === 'mad' ? '<g stroke="#E5484D" stroke-width="3" stroke-linecap="round" fill="none"><path d="M92 -2 q5 3 4 9M104 -4 q-3 5 2 9M96 14 q5 -3 9 1M108 12 q-5 -1 -6 -6"/></g>' : ''}${!mood || ['happy', 'love', 'shy', 'smug'].includes(mood) ? blush : ''}</g></svg>`; // 머리(귀·얼굴)는 한 묶음: 절할 때 발과 몸은 그대로 두고 머리만 숙인다
 }
 
 // 갈매기 해적단: 친구들과 같은 그림체의 갈매기에 해적 모자(선장)나 두건(졸병), 안대, 찌푸린 눈썹을 얹는다

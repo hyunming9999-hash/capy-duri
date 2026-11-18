@@ -338,7 +338,9 @@ export function mount(el, ctx) {
     openFarm({ ctx, onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); } }); }
   const fcrow = farmCrow(ctx, { goFarm: () => goFarm() });
   // 메인 퀘스트: 동물 머리 위 ! ? 표시와 동물 창의 📜 퀘스트 버튼
-  const quest = createQuest({ ctx, names: ANIMALS.map(a => a.name), svg: i => animalSvg(i), A, affinity: (i, d) => setRel(i, { a: A(i) + d }), toned, coins: addCoins, bag: () => bag, saveBag,
+  let vnOn = false;
+  const quest = createQuest({ ctx, names: ANIMALS.map(a => a.name), svg: i => animalSvg(i), svgFull: (i, mood) => animalSvg(i, true, mood || undefined), meSvg: face => capy(ctx.capyOf(ctx.uid, { face })), meName: ctx.me.name,
+    host: () => (worldEl && worldEl.parentElement && worldEl.isConnected ? worldEl.parentElement : null), pause: on => { vnOn = on; keys.clear(); }, A, affinity: (i, d) => setRel(i, { a: A(i) + d }), toned, coins: addCoins, bag: () => bag, saveBag,
     fish: () => Object.entries(bag.fish || {}).filter(([, v]) => v).map(([k, v]) => [k, v, fishOf(v.id)]),
     useFish: key => { const left = { ...(bag.fish || {}) }; delete left[key]; bag = { ...bag, fish: left }; ctx.store.update('bag/' + ctx.uid + '/fish', { [key]: null }).catch(() => {}); },
     barn: () => farmBarn, useCrops: use => ctx.store.update('farm/' + ctx.uid + '/barn', Object.fromEntries(Object.entries(use).map(([k, n]) => { const v = (farmBarn[k] || 0) - n; return [k, v > 0 ? v : null]; }))).catch(() => {}),
@@ -468,7 +470,7 @@ export function mount(el, ctx) {
     o.st = 'walk'; o.wait = 0; o.e.classList.add('walk'); o.e.classList.toggle('left', o.tx < o.x);
   }
   function step(now) {
-    if (!alive || !playing) return; const wall = ctx.store.now(), dt = Math.min(0.1, (now - lastT) / 1000), t = now / 1000, paused = fishOpen || !!battle || !!document.querySelector('.modal-wrap'); lastT = now;
+    if (!alive || !playing) return; const wall = ctx.store.now(), dt = Math.min(0.1, (now - lastT) / 1000), t = now / 1000, paused = fishOpen || !!battle || vnOn || !!document.querySelector('.modal-wrap'); lastT = now;
     // 나: 화살표로 걷고, 화면이 따라온다
     const mx = paused ? 0 : (keys.has('R') ? 1 : 0) - (keys.has('L') ? 1 : 0), my = paused ? 0 : (keys.has('U') ? 1 : 0) - (keys.has('D') ? 1 : 0);
     if (me.kb) { const k = me.kb * Math.min(1, dt * 9); me.x = Math.max(40, Math.min(WIDTH - 40, me.x + k)); me.kb = Math.abs(me.kb - k) < 1 ? 0 : me.kb - k; }
