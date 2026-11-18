@@ -120,7 +120,7 @@ export function openCook(o) {
     else kids.push(h('button', { class: 'btn primary big kb-start', disabled: !open || n >= SESSIONS, onClick: startSession }, n >= SESSIONS ? '오늘 장사는 끝! 내일 또 와요' : `🔔 장사 시작 (${n + 1}번째 · 손님 ${PER}명)`));
     if (qs.length) kids.push(h('b', { class: 'kb-h' }, '📜 퀘스트 요리'), ...qs.map(q => { const r = recOf(q.rec); return h('button', { class: 'kb-qrow', onClick: () => startQuest(q) }, h('img', { src: r.img, alt: '' }), h('div', null, h('b', null, `${an(q.i).name}에게 ${r.n}`), h('small', null, '임대료 없이 만들 수 있어요 · 다 만들면 그 동물에게 가서 퀘스트 완료')), h('span', null, '만들기 ›')); }));
     kids.push(h('div', { class: 'kb-row2' }, h('button', { class: 'btn', onClick: recipeBook }, '📖 레시피북'), h('button', { class: 'btn', onClick: pantry }, '🧂 내 양념')));
-    kids.push(h('p', { class: 'dim kb-tip' }, `가게 평점은 5점 만점이고 하루가 지나면 회복돼요. 손님 요청을 못 맞추면 -${RATE_MISS}, 다 맞추면 +${RATE_GOOD}. ${RATE_BAN}점 이하가 되면 하루 영업정지예요. 손님마다 원하는 익힘·양념·뺄 재료가 달라요.` + ' 생선은 낚시로, 작물은 농장에서, 양념은 카피수퍼에서 구해요. 재료가 없으면 손님이 별점을 낮게 주고 나가요.'));
+    kids.push(h('p', { class: 'dim kb-tip' }, `가게 평점은 5점 만점이고 하루가 지나면 회복돼요. 손님 요청을 못 맞추면 -${RATE_MISS}, 다 맞추면 +${RATE_GOOD}. ${RATE_BAN}점 이하가 되면 하루 영업정지예요. 손님마다 원하는 익힘·양념·뺄 재료가 달라요.` + ' 생선은 낚시로, 작물은 농장에서, 양념은 카피수퍼에서 구해요. 재료가 없으면 "다음에 다시 오세요"로 돌려보내요(평점은 그대로).'));
     body.replaceChildren(...kids); }
   async function payRent() { if (st.rent) return; if (!(await ctx.spend(RENT))) return toast(`돈이 모자라요 (${RENT}코인 필요)`); st = { ...st, rent: ctx.store.now() }; await ctx.store.update(ref, { rent: st.rent }).catch(() => {}); sfx('coin'); toast('가게 문을 열었어요! 🍚', 1600); draw(); }
   function startSession() { if (banned()) return toast('영업정지 중이에요'); if (!st.rent) return toast('먼저 임대료를 내요'); if ((st.n || 0) >= SESSIONS) return;
@@ -135,7 +135,7 @@ export function openCook(o) {
     const od = sess.cs[sess.i]; if (!od) { setTimeout(endSession); return; } const r = recOf(od.rec), a = an(od.a);
     const cust = h('div', { class: 'kb-cust' }, h('div', { class: 'kb-an', html: a.svg }), h('span', { class: 'kb-nm' }, `${a.name} ${TASTE_TAG[tasteOf(od.a)].split(' ')[0]}`),
       h('button', { class: 'kb-bub', onClick: () => recipeFor(od) }, h('i', { class: 'kb-bubhint' }, '📖 눌러서 레시피'), h('img', { src: r.img, alt: '' }), h('div', null, h('b', null, r.n), h('div', { class: 'kb-tags' }, ...reqTags(od).map(([c, t]) => h('i', { class: c }, t))))),
-      !od.quest && h('button', { class: 'kb-nope', onClick: () => noStock() }, '😢 재료가 없어요'), h('div', { class: 'kb-counter' }));
+      !od.quest && h('button', { class: 'kb-nope', onClick: () => noStock() }, '🙇 다음에 다시 오세요'), h('div', { class: 'kb-counter' }));
     const status = h('div', { class: 'kb-status' }, h('span', null, sess.quest ? '📜 퀘스트 요리' : `🔔 ${(st.n || 0) + 1}번째 장사 · 손님 ${sess.i + 1}/${sess.cs.length}`), h('button', { class: 'kb-mini', onClick: recipeBook }, '📖'));
     const trayEl = h('div', { class: 'kb-tray' }, ...[0, 1, 2].map(k => { const d = tray[k]; return d ? h('button', { class: 'kb-dish' + (selT === k ? ' on' : ''), onClick: () => { selT = selT === k ? -1 : k; draw(); } }, h('img', { src: d.img, alt: '' }), h('small', null, `${d.name}${d.rec && d.zone !== 'raw' ? ' · ' + ZN[d.zone] : ''}`)) : h('div', { class: 'kb-slot' }, k ? '' : '완성 요리'); }));
     const grid = h('div', { class: 'kb-st' }, ...Object.keys(STATIONS).map(stationEl));
@@ -220,10 +220,11 @@ export function openCook(o) {
       !quest && h('p', { class: 'center kb-rd' + (dv < 0 ? ' down' : '') }, dv < 0 ? `손님 요청을 못 맞췄어요 · 가게 평점 -${RATE_MISS} → ★ ${rateV().toFixed(1)}` : `요청을 다 맞췄어요 · 가게 평점 +${RATE_GOOD} → ★ ${rateV().toFixed(1)}`),
       h('p', { class: 'center dim' }, quest ? (ok ? '퀘스트 요리를 완성했어요. 동물에게 가서 퀘스트를 완료하세요.' : '맞는 요리를, 날것이나 타지 않게 다시 만들어 주세요.') : price ? `+${won(price)}${aff ? ` · 친밀도 ${aff > 0 ? '+' : ''}${aff}` : ''}` : `재료만 쓰고 돈은 못 받았어요${aff < 0 ? ' · 친밀도 -1' : ''}.`)].filter(Boolean),
       actions: [{ label: '다음', primary: true }], onClose: () => (ban ? closeShop() : nextCust(quest && !ok)) }); }
-  function noStock() { const od = sess.cs[sess.i], a = an(od.a), r = recOf(od.rec), fond = A(od.a) >= 60, stars = fond ? 2 : 1;
-    if (!fond) o.affinity(od.a, -1); sfx('bad'); rateBy(-RATE_MISS).then(ban => { banNow = ban; });
-    const say = fond ? pick([`에이… ${r.n}이(가) 안 된다고? 아쉽다. 그래도 다음엔 꼭 해 줘…`, '재료가 없구나… 괜찮아, 다음에 또 올게. 조금 아쉽긴 하다…']) : pick([`뭐? ${r.n} 재료가 없어? 별점 1개 줘야지, 흥!`, '재료도 없이 장사를 해? 별점 테러다!', '실망이야! 별 하나 남기고 간다!']);
-    modal({ title: '★'.repeat(stars) + '☆'.repeat(5 - stars), body: [h('div', { class: 'ck-res bad' }, h('span', { class: 'ck-an', html: a.svg })), h('p', { class: 'center' }, h('b', null, `${a.name}: "${o.toned(od.a, say)}"`)), h('p', { class: 'center dim' }, fond ? '친한 사이라 살짝 실망만 하고 갔어요.' : '친밀도 -1'), h('p', { class: 'center kb-rd down' }, `가게 평점 -${RATE_MISS}`)], actions: [{ label: '다음', primary: true }], onClose: () => (banNow ? closeShop() : nextCust()) }); }
+  // "다음에 다시 오세요": 재료가 없을 때 손님을 정중히 돌려보낸다. 평점은 깎이지 않는다(친하지 않으면 친밀도만 -1)
+  function noStock() { const od = sess.cs[sess.i], a = an(od.a), r = recOf(od.rec), fond = A(od.a) >= 60;
+    if (!fond) o.affinity(od.a, -1); sfx('pop');
+    const say = fond ? pick([`에이… ${r.n}이(가) 안 된다고? 아쉽다. 다음엔 꼭 해 줘…`, '재료가 없구나… 괜찮아, 다음에 또 올게. 조금 아쉽긴 하다…']) : pick([`뭐? ${r.n}이(가) 안 된다고? 쳇, 다음에 올게.`, '헛걸음했네… 다음엔 꼭 준비해 둬!', '알겠어, 다음에 다시 올게. 흥!']);
+    modal({ title: '🙇 다음에 다시 오세요', body: [h('div', { class: 'ck-res bad' }, h('span', { class: 'ck-an', html: a.svg })), h('p', { class: 'center' }, h('b', null, `${a.name}: "${o.toned(od.a, say)}"`)), h('p', { class: 'center dim' }, fond ? '친한 사이라 살짝 아쉬워만 하고 갔어요. 가게 평점은 그대로예요.' : '친밀도 -1 · 가게 평점은 그대로예요.')], actions: [{ label: '다음', primary: true }], onClose: () => nextCust() }); }
   let banNow = false;
   // 평점 3점 이하: 하루 영업정지. 장사 중이던 손님은 돌려보낸다
   function closeShop() { banNow = false; sess = null; resetKitchen(); st = { ...st, cur: null }; ctx.store.update(ref, { cur: null }).catch(() => {}); sfx('bad'); draw();
@@ -247,7 +248,7 @@ export function openCook(o) {
     const can = (!r.fz || fishN) && r.crops.every(c => c === od.no || cropN(c)) && sauceN >= od.sn;
     modal({ title: `📖 ${r.n} · ${an(od.a).name}의 주문`, body: [h('div', { class: 'kb-rhead' }, h('img', { src: r.img, alt: '' }), h('div', null, h('b', null, `${S.ic} ${S.n} · ${S.job}`), h('div', { class: 'kb-tags' }, ...reqTags(od).map(([c, t]) => h('i', { class: c }, t))), h('small', null, `기본가 ${won(r.base)}`))),
       h('div', { class: 'kb-rlist' }, ...rows), h('ol', { class: 'kb-steps' }, ...steps.map(t => h('li', null, t))),
-      h('p', { class: 'center kb-can ' + (can ? 'ok' : 'no') }, can ? '✅ 지금 가진 재료로 만들 수 있어요!' : '❌ 재료가 모자라요. 못 만들면 "😢 재료가 없어요"로 보내도 돼요(평점 -0.5).')], actions: [{ label: '닫기', primary: true }] }); }
+      h('p', { class: 'center kb-can ' + (can ? 'ok' : 'no') }, can ? '✅ 지금 가진 재료로 만들 수 있어요!' : '❌ 재료가 모자라요. 못 만들면 "🙇 다음에 다시 오세요"로 돌려보내요(평점은 그대로).')], actions: [{ label: '닫기', primary: true }] }); }
   function recipeBook() { modal({ title: '📖 카피백반 레시피북', body: h('div', { class: 'kb-book' }, ...Object.entries(STATIONS).map(([k, S]) => h('div', null, h('b', { class: 'kb-bh' }, `${S.ic} ${S.n} · ${S.job}${S.best ? ` · ${FIRE_N[S.best]}이 맛있어요` : ''}`),
     ...RECIPES.filter(r => r.st === k).map(r => h('div', { class: 'kb-bi' }, h('img', { src: r.img, alt: '' }), h('div', null, h('b', null, `${r.n} · ${won(r.base)}`), h('small', null, [r.fz ? (r.fz >= 2 ? '중급 바다 생선' : '초급 바다 생선') : '', ...r.crops.map(cropName), r.rice ? '공깃밥' : ''].filter(Boolean).join(' + ') + ` · 양념 ${SAUCES[r.sauce][0]} ${SAUCES[r.sauce][1]}`))))))),
     actions: [{ label: '닫기', primary: true }] }); }
