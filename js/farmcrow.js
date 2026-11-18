@@ -1,5 +1,5 @@
 // 농장 까마귀: 하루 한 번, 친목회 육지나 농장에 있을 때 아무 때나 나타난다.
-// 나타나면 1분 안에 농장에 가서 새총으로 쫓아내야 한다. 못 쫓아내면 자라는 고랑 하나를 통째로 가져간다.
+// 나타나면 1분 안에 농장에 가서 새총으로 쫓아내야 한다. 못 쫓아내면 자라는 이랑 하나를 통째로 가져간다.
 import { h, toast, modal, ymd } from './ui.js';
 import { sfx } from './sound.js';
 import { cropOf, cropImg } from './farm.js';
@@ -23,7 +23,7 @@ export function farmCrow(ctx, { goFarm }) {
     const v = L[Math.floor(Math.random() * L.length)], path = v.i == null ? `plots/${v.k}/lost` : `plots/${v.k}/rows/${v.i}/lost`;
     await ctx.store.update(ref, { [path]: true }).catch(() => {}); sfx('bad'); const cr = cropOf(v.r.c) || { name: '작물' };
     modal({ title: '🐦‍⬛ 까마귀가 가져갔어요…', body: [h('div', { class: 'fc-lost' }, h('img', { src: 'img/crow/crow.webp', alt: '' }), h('img', { class: 'fc-loot', src: cropImg(v.r.c), alt: '' })),
-      h('p', { class: 'center' }, `${why} ${Number(v.k) + 1}번 밭의 ${cr.name} 고랑 하나를 통째로 물고 날아갔어요.`), h('p', { class: 'center dim' }, '까마귀는 하루에 한 번 와요. 나타나면 1분 안에 농장으로!')], actions: [{ label: '확인', primary: true }] });
+      h('p', { class: 'center' }, `${why} ${Number(v.k) + 1}번 밭의 ${cr.name} 이랑 하나를 통째로 물고 날아갔어요.`), h('p', { class: 'center dim' }, '까마귀는 하루에 한 번 와요. 나타나면 1분 안에 농장으로!')], actions: [{ label: '확인', primary: true }] });
     busy = false; }
 
   function showBanner() { if (banner) return; const tm = h('b', { class: 'fc-t' }), go = h('button', { class: 'fc-go', onClick: () => goFarm() }, '🌾 농장으로 가기');
@@ -60,7 +60,7 @@ export function farmCrow(ctx, { goFarm }) {
       const st = h('i', { class: 'fc-stone' }); arena.append(st); shots.push({ st, sx, sy, tx, ty, at: performance.now(), dur }); reload = performance.now() + 330; sfx('swing'); sling.classList.remove('pull'); void sling.offsetWidth; sling.classList.add('pull'); });
     function end(win) { if (over) return; over = true; cancelAnimationFrame(raf);
       if (win) { crowEl.classList.add('flee'); msg.textContent = '까마귀가 도망갔어요! 밭을 지켰어요 🎉'; sfx('bigfish'); put({ res: 'win' }); data = { ...data, crow: { ...cw(), res: 'win' } }; setTimeout(() => { el.remove(); game = null; toast('오늘 까마귀는 다시 오지 않아요', 2200); }, 1700); }
-      else { msg.textContent = '놓쳤어요… 까마귀가 고랑을 노려요!'; crowEl.classList.add('grab'); setTimeout(() => { el.remove(); game = null; steal('새총을 피한 까마귀가'); }, 1400); } }
+      else { msg.textContent = '놓쳤어요… 까마귀가 이랑을 노려요!'; crowEl.classList.add('grab'); setTimeout(() => { el.remove(); game = null; steal('새총을 피한 까마귀가'); }, 1400); } }
     function frame(now) { if (dead) return; const dt = Math.min(0.05, (now - lastF) / 1000); lastF = now; const el2 = (now - t0) / 1000, w = W(), hh = H();
       bar.style.width = Math.max(0, 100 - el2 / GAME_S * 100) + '%';
       cr.turn -= dt; if (cr.turn <= 0) { aim(); cr.turn = lv.turn * (0.6 + Math.random() * 0.8); cr.dash = Math.random() < lv.dash ? 0.45 : 0; }
