@@ -8,8 +8,8 @@ import { sfx } from './sound.js';
 // 작물 30종: [id, 이름, 등급(농기구 단계), 자라는 분, 씨앗 값, 한 개 기본값]
 const C = [
   ['lettuce', '상추', 1, 10, 30, 12], ['radish', '무', 1, 15, 40, 15], ['potato', '감자', 1, 20, 50, 18], ['carrot', '당근', 1, 20, 50, 18], ['spinach', '시금치', 1, 25, 60, 22],
-  ['sweetpotato', '고구마', 1, 30, 70, 25], ['onion', '양파', 1, 30, 70, 25], ['cabbage', '배추', 1, 35, 80, 28], ['pea', '완두콩', 1, 40, 90, 32], ['tomato', '토마토', 1, 40, 90, 32],
-  ['corn', '옥수수', 2, 60, 200, 70], ['cucumber', '오이', 2, 70, 220, 75], ['eggplant', '가지', 2, 80, 240, 80], ['chili', '고추', 2, 90, 260, 88], ['squash', '단호박', 2, 100, 280, 95],
+  ['sweetpotato', '고구마', 1, 30, 70, 25], ['onion', '양파', 1, 30, 70, 25], ['cabbage', '배추', 1, 35, 80, 28], ['pea', '완두콩', 1, 40, 90, 32], ['tomato', '토마토', 1, 40, 90, 32], ['cucumber', '오이', 1, 40, 90, 32],
+  ['corn', '옥수수', 2, 60, 200, 70], ['eggplant', '가지', 2, 80, 240, 80], ['chili', '고추', 2, 90, 260, 88], ['squash', '단호박', 2, 100, 280, 95],
   ['strawberry', '딸기', 2, 110, 300, 100], ['broccoli', '브로콜리', 2, 120, 320, 108], ['paprika', '파프리카', 2, 140, 340, 115], ['garlic', '마늘', 2, 160, 360, 122], ['scallion', '대파', 2, 180, 380, 130],
   ['watermelon', '수박', 3, 240, 800, 260], ['melon', '멜론', 3, 270, 850, 275], ['grape', '포도', 3, 300, 900, 290], ['pineapple', '파인애플', 3, 330, 950, 305], ['blueberry', '블루베리', 3, 360, 1000, 320],
   ['ginseng', '인삼', 3, 420, 1100, 350], ['matsutake', '송이버섯', 3, 480, 1200, 380], ['apple', '사과', 3, 520, 1250, 395], ['banana', '바나나', 3, 560, 1300, 410], ['yuzu', '황금유자', 3, 600, 1400, 440],
@@ -178,7 +178,7 @@ export function openFarm(o) {
             h('img', { src: cropImg(c.id), alt: '' }), h('b', null, c.name), h('small', null, `${c.seed.toLocaleString('ko-KR')}코인 · 고랑 1줄 · ${left(c.ms)}`), h('small', null, `하나 ${c.base}~${c.base * 2}코인${n ? ` · 가진 씨앗 ${n}` : ''}`)); }))); });
       if (tab === 'tool') TOOLS.slice(1).forEach(tl => { const have = tool() >= tl.t;
         rows.push(h('button', { class: 'so-row big' + (have ? ' off' : '') , onClick: () => have ? toast('이미 가지고 있어요') : tl.t > tool() + 1 ? toast(`${TOOLS[tl.t - 1].name}부터 사야 해요`) : buy(tl.price, { tool: tl.t }, `${tl.name}를 샀어요! ${TIER_NAME[tl.t]} 작물을 심을 수 있어요`) },
-          h('span', { class: 'so-rodic' }, h('img', { src: tl.t === 3 ? 'img/farm/sickle.webp' : tl.t === 2 ? 'img/farm/can.webp' : 'img/farm/hoe.webp', alt: '', style: { width: '40px' } })), h('b', null, tl.name), h('small', null, have ? '가지고 있어요 · 한 번 사면 계속 써요' : `${tl.price.toLocaleString('ko-KR')}코인 · ${tl.note}`))); });
+          h('span', { class: 'so-rodic' }, h('img', { src: `img/farm/tool${tl.t}.webp`, alt: '', style: { width: '48px' } })), h('b', null, tl.name), h('small', null, have ? '가지고 있어요 · 한 번 사면 계속 써요' : `${tl.price.toLocaleString('ko-KR')}코인 · ${tl.note}`))); });
       if (tab === 'deed') { const n = data.open || 1; rows.push(h('p', { class: 'dim center' }, `지금 열린 밭 ${n} / ${PLOTS}칸 · 밭은 순서대로 열려요`));
         DEEDS.forEach((pr, i) => { const k = i + 1, have = n > k, next = n === k;
           rows.push(h('button', { class: 'so-row big' + (have || !next ? ' off' : ''), onClick: () => have ? toast('이미 연 밭이에요') : !next ? toast('앞의 밭부터 열어야 해요') : buy(pr, { open: k + 1 }, `${k + 1}번 밭이 열렸어요! 🌱`) },
