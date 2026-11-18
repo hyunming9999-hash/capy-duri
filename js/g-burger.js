@@ -130,7 +130,7 @@ export function mount(el, ctx) {
   function pickCust(qi) { if (qi === curIdx()) return; sfx('tock'); mySel = qi; paint(); }
   const curIdx = () => Q()[selI()], trayAt = qi => (L.trays[qi] = L.trays[qi] || { st: [], c: 0 }), curTray = () => trayAt(curIdx()); // 손님마다 쟁반이 따로 있어서 여러 손님 것을 같이 준비할 수 있다
   // 컴퓨터 상대: 판을 시작할 때 "몇 초에 몇 점"을 미리 정해 두고, 지난 시간만큼 점수가 오른다
-  function cpuPlan(run) { const r = rng(run.seed * 31 + 7), lv = ctx.streakLv('burger'), gap = CPU[run.diff][0] * (1 - 0.1 * lv), acc = Math.min(0.97, CPU[run.diff][1] + 0.06 * lv), plan = []; // 연승할수록 컴퓨터가 빨라지고 실수가 준다 let t = gap * (0.7 + r() * 0.4), i = 0;
+  function cpuPlan(run) { const r = rng(run.seed * 31 + 7), lv = ctx.streakLv('burger'), gap = CPU[run.diff][0] * (1 - 0.1 * lv), acc = Math.min(0.97, CPU[run.diff][1] + 0.06 * lv), plan = []; let t = gap * (0.7 + r() * 0.4), i = 0; // 연승할수록 컴퓨터가 빨라지고 실수가 준다
     while (t < run.dur) { const o = orderOf(run.seed, i++, run.diff), full = 60 + o.fills.length * 10 + 20 + (LEVEL[run.diff].only ? 0 : 80) + (run.calc ? 40 : 0); plan.push([t, r() < acc ? full : Math.round(full * (0.35 + r() * 0.4) / 10) * 10]); t += gap * (0.75 + r() * 0.5); }
     return plan; }
   const cpuScore = () => { if (!S || !S.plan) return 0; const e = (Math.min(now(), endAt(S)) - S.startAt) / 1000; return S.plan.reduce((a, [t, p]) => a + (t <= e ? p : 0), 0); };
