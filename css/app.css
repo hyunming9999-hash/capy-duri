@@ -1773,3 +1773,14 @@ body.vb-on .modal-wrap { z-index: 4600; }
 .qn { display: flex; gap: 10px; align-items: center; } .qn-an { width: 84px; flex: none; animation: qnCry 1.6s ease-in-out infinite; } .qn-an svg { width: 100%; display: block; } @keyframes qnCry { 50% { transform: rotate(-4deg) translateY(2px); } }
 .qn b { display: block; font-size: 15px; line-height: 1.4; color: #B8441F; } .qn p { margin: 6px 0 0; font-size: 13.5px; line-height: 1.45; word-break: keep-all; } .qn-tip { font-size: 11.5px; margin-top: 8px; }
 img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; margin: 0 auto; } .kb-it img.kb-sic.kb-emo { width: 44px; height: 40px; } .kb-chip img.kb-sic { width: 100%; height: 100%; } .kb-pi img.kb-sic { width: 32px; height: 32px; }
+.kb-bub { border: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; } .kb-bubhint { position: absolute; right: 8px; top: -9px; font-style: normal; font-size: 10px; font-weight: 800; background: #5B4636; color: #fff; border-radius: 8px; padding: 1px 6px; }
+.kb-rate.low { color: #E5484D; }
+.kb-rd { font-size: 12.5px; font-weight: 800; color: #3E7D2A; background: #E6F4DA; border-radius: 10px; padding: 4px 8px; } .kb-rd.down { color: #B4232A; background: #FFE3E5; }
+.kb-ban { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 14px; background: #3A1F22; color: #fff; border: 3px solid #E5484D; } .kb-ban > span { font-size: 26px; } .kb-ban b { display: block; color: #FFB3B8; } .kb-ban small { font-size: 12px; opacity: .9; word-break: keep-all; }
+.kb-rhead { display: flex; gap: 10px; align-items: center; } .kb-rhead > img { width: 96px; height: 80px; object-fit: contain; } .kb-rhead b { display: block; font-size: 14px; } .kb-rhead small { font-size: 12px; color: #7A5236; }
+.kb-rlist { display: flex; flex-direction: column; gap: 4px; margin: 10px 0 6px; }
+.kb-rr { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 10px; background: #FFF8EA; border: 1px solid #F0E2C6; } .kb-rr > img, .kb-rr > .kb-sic { width: 28px; height: 28px; object-fit: contain; margin: 0; } .kb-rr > span:first-child { font-size: 20px; width: 28px; text-align: center; }
+.kb-rr b { font-size: 13px; } .kb-rr em { font-style: normal; font-size: 11px; color: #C2410C; flex: 1; } .kb-rr > span:last-child { margin-left: auto; font-size: 11.5px; font-weight: 900; border-radius: 8px; padding: 1px 7px; } .kb-rr .ok { background: #E6F4DA; color: #2F5A1A; } .kb-rr .no { background: #FFE3E5; color: #B4232A; }
+.kb-rr.skip { opacity: .75; } .kb-rr.skip b { text-decoration: line-through; }
+.kb-steps { margin: 4px 0; padding-left: 20px; font-size: 13px; line-height: 1.6; word-break: keep-all; }
+.kb-can { font-size: 13px; font-weight: 800; border-radius: 10px; padding: 6px 8px; } .kb-can.ok { background: #E6F4DA; color: #2F5A1A; } .kb-can.no { background: #FFF2C9; color: #8A5A00; }
