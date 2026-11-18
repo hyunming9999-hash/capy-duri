@@ -95,6 +95,7 @@ export function gradeInfo(f, cm, g) {
     actions: [{ label: '확인', primary: true }] });
 }
 // 쓰레기: 던지는 힘 85 이상(10칸 중 8.5칸)이면 안 걸리고, 못 미치면 15~20%(가까이 던질수록 20%에 가깝다)
+const STORM_LOSS = 250; // 풍랑을 만나면 거센 파도에 돈을 빠뜨린다
 const TRASH_FAR = 0.85, trashP = power => 0.2 - 0.05 * Math.min(1, power / TRASH_FAR);
 // 풍랑: 바다마다 10번 던질 때 1~2번. 10번 묶음마다 몇 번째에 불지 미리 정하고, 그 판에 못 불었으면(진주였거나 일찍 끝나서) 다음 판으로 미룬다
 const stormPlan = () => { const k = Math.random() < 0.5 ? 1 : 2, at = []; while (at.length < k) { const x = 1 + Math.floor(Math.random() * 10); if (!at.includes(x)) at.push(x); } return at; };
@@ -187,14 +188,14 @@ export function openFishing(o) {
     say(cur.f.icon ? '누르고 있으면 감아요.' : `줄을 주황 칸에 맞춰야 끌려와요! 빨간 칸은 ${lim()}번 닿으면 끝이에요.`); btn.textContent = '꾹 눌러\n감기'; btn.onclick = null;
   }
   // 풍랑: 하늘이 어두워지고 비바람이 치며 배가 크게 흔들리다가 줄이 풀려 물고기가 달아난다
-  function storm() { stormAt = 0; phase = 'storm'; { const key = 'sp' + zone, sp = o.bag()[key] || {}; o.save({ [key]: { ...sp, due: false } }); } hold = false; wrap.classList.remove('reel'); wrap.classList.add('storm'); sfx('splash'); setTimeout(() => sfx('bad'), 500); // 이번 풍랑을 썼다(위) · 화면이 어두워지고 비바람이 친다(아래)
+  function storm() { stormAt = 0; phase = 'storm'; { const key = 'sp' + zone, sp = o.bag()[key] || {}; o.save({ [key]: { ...sp, due: false } }); } hold = false; o.coins(-STORM_LOSS); wrap.classList.remove('reel'); wrap.classList.add('storm'); sfx('splash'); setTimeout(() => sfx('bad'), 500); // 이번 풍랑을 썼다(위) · 화면이 어두워지고 비바람이 친다(아래)
     // 풍랑 연출: 먹구름이 몰려오고 하늘이 어두워지며, 장대비 · 번개 번쩍 · 높은 파도가 친다
     const view = wrap.querySelector('.fs-view'), fx = h('div', { class: 'fs-stormfx' }, h('div', { class: 'fs-clouds' }, ...[0, 1, 2, 3, 4].map(k => h('i', { style: { left: (k * 22 - 6) + '%', animationDelay: (k * 0.12) + 's' } }))), h('div', { class: 'fs-rain' }), h('div', { class: 'fs-rain far' }), h('div', { class: 'fs-waves' }, h('i'), h('i')), h('div', { class: 'fs-flash' }), h('b', { class: 'fs-bolt', html: '<svg viewBox="0 0 40 100"><path d="M24 0 L6 52 H20 L10 100 L36 40 H22 L32 0z" fill="#FFF6B0" stroke="#FFD43B" stroke-width="2.5" stroke-linejoin="round"/></svg>' }));
     if (view) view.append(fx); [700, 1700, 2500].forEach((ms, k) => setTimeout(() => { if (!alive || !fx.isConnected) return; fx.classList.remove('zap'); void fx.offsetWidth; fx.style.setProperty('--bx', (20 + Math.random() * 60).toFixed(0) + '%'); fx.classList.add('zap'); sfx(k === 1 ? 'snap' : 'splash'); }, ms)); say('🌊 풍랑이다! 배가 크게 흔들려요…', 'warn'); btn.textContent = '…'; btn.onclick = null;
     setTimeout(() => { if (!alive) return; wrap.classList.remove('storm'); fx.remove(); sfx('snap'); phase = 'done'; mark.textContent = ''; float.style.display = rl.style.display = hook.style.display = 'none'; fishEl.className = 'fs-fish'; patEl.hidden = true; wrap.classList.remove('fight', 'reel'); say('');
       // 카드로 알려 주고, 확인을 눌러야 닫힌다(뜬 직후 1.2초는 안 눌려서 연타로 바로 닫히지 않는다)
-      const at = performance.now(), card = h('div', { class: 'fs-card storm-card wait' }, h('div', { class: 'storm-pic' }, '⛈️', h('span', null, '🌊')), h('b', null, '풍랑 때문에 놓쳤어요'),
-        h('p', null, '갑자기 거센 바람과 파도가 몰아쳐 배가 크게 흔들렸어요. 줄이 풀려서 물고기가 달아났어요.'), h('small', null, '풍랑은 어느 바다에서나 가끔 불어요. 운이 나빴을 뿐이에요! (미끼 1개 사용)'),
+      const at = performance.now(), card = h('div', { class: 'fs-card storm-card wait' }, h('div', { class: 'storm-pic' }, '⛈️', h('span', null, '🌊')), h('b', null, '풍랑 때문에 놓쳤어요'), h('p', { class: 'storm-loss' }, `💸 -${STORM_LOSS}코인`),
+        h('p', null, '거센 파도에 갖고 있던 돈을 빠뜨려 버렸어요! 줄도 풀려서 물고기가 달아났어요.'), h('small', null, `풍랑은 어느 바다에서나 가끔 불어요. 운이 나빴을 뿐이에요! (미끼 1개 · ${STORM_LOSS}코인 잃음)`),
         h('div', { class: 'fs-acts' }, h('button', { class: 'btn primary', onClick: () => { if (performance.now() - at < 1200) return; card.remove(); ready(); } }, '확인')));
       wrap.append(card); setTimeout(() => card.classList.remove('wait'), 1200); }, 3200); } // 3.2초 동안 비바람이 친 뒤 카드
   function fail(text) { sfx(/끊어/.test(text) ? 'snap' : 'bad'); ready(text); }
