@@ -1921,3 +1921,5 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .kb-gt { width: 100%; border-collapse: collapse; font-size: 11.5px; margin-bottom: 4px; } .kb-gt th, .kb-gt td { padding: 4px 3px; text-align: right; border-bottom: 1px solid #EFE2CB; white-space: nowrap; } .kb-gt th:first-child, .kb-gt td:first-child { text-align: left; white-space: normal; } .kb-gt th { font-size: 12px; background: #FFF1D6; }
 .fm-weedt { position: absolute; transform: translate(-50%, -100%); font: 800 9px/1 var(--head); color: #fff; background: rgba(62, 125, 42, .85); padding: 2px 5px; border-radius: 6px; pointer-events: none; z-index: 3; white-space: nowrap; }
 .fm-qb.weed.on { border-color: #5FA846; background: #E6F4DA; box-shadow: 0 3px 0 #3E7D2A; animation: fmBob 1.2s ease-in-out infinite; } .fm-qb.weed small { color: #3E7D2A; }
+.fm-rowc.tapw { pointer-events: auto; cursor: pointer; }
+.fm-rwater { margin-top: 4px; align-self: flex-start; display: inline-flex; align-items: center; gap: 3px; } .fm-rwater img { width: 18px; height: 18px; } .fm-rwater.dry { border-color: #3BA7E5; background: #E3F2FC; color: #1F6EA6; }
