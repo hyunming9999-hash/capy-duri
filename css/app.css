@@ -1633,9 +1633,12 @@ body.vb-on .modal-wrap { z-index: 4600; }
 .ck-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 62%; }
 .ck-board { position: absolute; left: 3%; bottom: 7%; width: 34%; }
 .ck-board > img { width: 70%; display: block; margin: 0 auto; transform: rotate(-90deg); transform-origin: 50% 50%; }
-.ck-fish { position: absolute; left: -2%; right: -2%; top: 30%; } .ck-fish svg { width: 100%; display: block; }
-.ck-fish.cut span { display: block; clip-path: inset(0 0 0 30%); animation: ckCut .35s ease-out; } @keyframes ckCut { from { clip-path: inset(0 0 0 0); } }
-.ck-knife { position: absolute; left: 22%; top: -10%; font-size: 28px; font-style: normal; animation: ckKnife .5s ease-out; } @keyframes ckKnife { from { transform: translateY(-30px) rotate(-30deg); } }
+.ck-fish { position: absolute; left: 6%; right: 6%; top: 12%; }
+.ck-fil { position: relative; width: 64px; margin: 0 auto; } .ck-fil.big { width: 100%; } .ck-fil img { display: block; }
+.ck-plate { position: relative; z-index: 1; width: 100%; } .ck-ing .ck-fil img.ck-plate { width: 100%; height: auto; } .ck-ing .ck-fil img.ck-gar { height: auto; } .ck-gar { z-index: 2; position: absolute; width: 42%; right: -6%; top: -14%; filter: drop-shadow(0 2px 2px rgba(0,0,0,.18)); }
+.ck-fil.glow::before { content: ''; position: absolute; inset: -8%; border-radius: 50%; background: radial-gradient(circle, rgba(255,226,110,.75), rgba(255,226,110,0) 68%); animation: ckGlow 1.6s ease-in-out infinite; }
+.ck-fil.glow::after { content: '✨'; z-index: 3; position: absolute; left: -4%; top: -10%; font-size: 14px; animation: ckGlow 1.6s ease-in-out infinite reverse; } .ck-fil.big.glow::after { font-size: 22px; }
+@keyframes ckGlow { 50% { opacity: .35; transform: scale(.94); } }
 .ck-pot { position: absolute; right: 6%; bottom: 6%; width: 44%; }
 .ck-fire { width: 76%; display: block; margin: -14% auto 0; position: relative; z-index: 0; }
 .ck-potimg { width: 100%; display: block; position: relative; z-index: 1; }
@@ -1649,7 +1652,7 @@ body.vb-on .modal-wrap { z-index: 4600; }
 .ck-an { display: block; width: 52px; } .ck-an svg { width: 100%; display: block; }
 .ck-ings { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 6px 0; }
 .ck-ing { display: flex; flex-direction: column; align-items: center; padding: 6px 4px; border-radius: 12px; border: 2px solid #E8D3AE; background: #FFF8EA; cursor: pointer; } .ck-ing.on { border-color: #F5A524; background: #FFE9B8; }
-.ck-ing span { width: 64px; } .ck-ing span svg { width: 100%; } .ck-ing img { width: 44px; height: 44px; } .ck-ing small { font-size: 11px; font-weight: 800; text-align: center; }
+.ck-ing span { width: 64px; } .ck-ing span svg { width: 100%; } .ck-ing .ck-fil { margin-bottom: 2px; } .ck-ing img { width: 44px; height: 44px; } .ck-ing small { font-size: 11px; font-weight: 800; text-align: center; }
 .ck-row { display: flex; gap: 8px; margin-top: 8px; } .ck-row .btn { flex: 1; }
 .ck-gauge { position: relative; height: 34px; margin: 10px 0 4px; border-radius: 12px; background: #EFE6D8; overflow: hidden; border: 2px solid #D9B98B; }
 .ck-gauge .z { position: absolute; top: 0; bottom: 0; display: grid; place-items: center; font-style: normal; color: #fff; font-weight: 900; text-shadow: 0 1px 2px rgba(0,0,0,.4); }
@@ -1659,3 +1662,4 @@ body.vb-on .modal-wrap { z-index: 4600; }
 .ck-tip { font-size: 11.5px; word-break: keep-all; }
 .ck-res { position: relative; width: 170px; margin: 4px auto; } .ck-res > img { width: 100%; } .ck-res .ck-an { position: absolute; right: -28px; bottom: -6px; width: 64px; } .ck-res.bad > img { filter: grayscale(.7) brightness(.7); }
 .patch-next.cookn { border-color: #F5A27A; background: linear-gradient(135deg, #FFF1E6, #FFE0CC); } .patch-next.cookn b { color: #B8441F; } .patch-next.cookn small { color: #C0663F; } .patch-next.cookn img { filter: drop-shadow(0 0 8px #FFC9A3); }
+.ck-ing:has(.ck-fil.glow) { border-color: #F5C33B; background: linear-gradient(#FFF6D6, #FFF8EA); box-shadow: 0 0 0 2px rgba(245,195,59,.25), 0 0 12px rgba(245,195,59,.45); }

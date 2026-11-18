@@ -1,5 +1,5 @@
 // 카피요리교실 — 카피수퍼 옆. 동물들이 주문한 요리는 여기서만 만든다
-// 하루 주문 3개(동물·요리·익힘 취향) → 재료 고르기(생선은 손질해서 머리 떼기) → 냄비에 넣고 끓이기/찌기 → 원하는 익힘에서 불 끄기
+// 하루 주문 3개(동물·요리·익힘 취향) → 재료 고르기(생선은 손질된 살) → 냄비에 넣고 끓이기/찌기 → 원하는 익힘에서 불 끄기
 import { h, toast, modal, ymd } from './ui.js';
 import { sfx } from './sound.js';
 
@@ -16,6 +16,25 @@ const GRADE_ADD = { S: 1, A: 0.6, B: 0.35, C: 0.15, D: 0, F: 0 };
 // 날마다 같은 주문이 나오게(그날·사람마다 고정)
 const rnd = seed => () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
 const hash = s => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 2147483647, 7);
+
+// 생선은 머리 없이 손질된 살로만 보여 준다. 이름 속 낱말로 곁들임 소품을 고른다
+const FIL_KEY = [['흑진주','bpearl'],['흑요석','bpearl'],['심해등불','firefly'],['심해등대','firefly'],['반딧불','firefly'],['비눗방울','drop'],['물방울','drop'],['은방울','pearl'],['방울','drop'],['민트','mint'],['붕어빵','bungeo'],['호박엿','caramel'],['청동','metal'],['흑철갑','metal'],['성게','acorn'],['불가사리','shell'],['망치','hammer'],['얼음','ice'],['빙하','ice'],['쇄빙','ice'],['서리','ice'],['유리','ice'],
+  ['젤리','jelly'],['무지개','jelly'],['오로라','jelly'],['해파리','jelly'],['솜사탕','cotton'],['솜방망이','cotton'],['구름','cotton'],['마시멜로','ghost'],['몽글','ghost'],['유령','ghost'],['해골','ghost'],['가면','ghost'],['별','star'],['은하','star'],['유성','star'],
+  ['딸기','c:strawberry'],['콩','c:pea'],['유자','c:yuzu'],['감귤','c:yuzu'],['포도','c:grape'],['보라','c:grape'],['토끼귀','c:carrot'],['호박','c:squash'],['노을','c:chili'],['석양','c:chili'],['불꽃','c:chili'],['화산','c:chili'],['용암','c:chili'],['마그마','c:chili'],['열수구','c:chili'],
+  ['달','moon'],['초승달','moon'],['그믐','moon'],['월식','moon'],['밤하늘','moon'],['새벽','moon'],['호두','walnut'],['레몬','lemon'],['노랑','lemon'],['단추','button'],['얼룩','button'],['솜털','feather'],['깃털','feather'],['깨소금','cookie'],['쿠키','cookie'],['풍선','balloon'],['하늘','balloon'],
+  ['조약돌','pebble'],['모래','pebble'],['진흙','pebble'],['바위','pebble'],['꿀벌','honey'],['도토리','acorn'],['밤송이','acorn'],['우유','milk'],['초코','choco'],['마카롱','macaron'],['푸딩','pudding'],['카라멜','caramel'],['체리','cherry'],['팝콘','popcorn'],['바닐라','vanilla'],
+  ['구슬','pearl'],['진주','pearl'],['리본','ribbon'],['줄무늬','ribbon'],['비단','ribbon'],['꽃잎','petal'],['꽃무늬','petal'],['나비','petal'],['보리차','tea'],['청자','tea'],['솔잎','pine'],['솔방울','pine'],['가시','pine'],['천년','pine'],['방긋','sunflower'],['해바라기','sunflower'],
+  ['조개','shell'],['자개','shell'],['꽃게','shell'],['산호','coral'],['바람','pinwheel'],['회오리','pinwheel'],['소용돌이','pinwheel'],['폭풍','pinwheel'],['대나무','bamboo'],['갈대','bamboo'],['파도','seaweed'],['해초','seaweed'],['해마','seaweed'],['산갈치','seaweed'],['안개','drop'],['물보라','drop'],['거품','drop'],
+  ['나팔','flute'],['피리','flute'],['북소리','drum'],['장구','drum'],['번개','bolt'],['천둥','bolt'],['황금','coin'],['수정','gem'],['크리스탈','gem'],['비늘','gem'],['단풍','maple'],['은행잎','ginkgo'],['강철','metal'],['무쇠','metal'],['톱날','metal'],['창날','metal'],['도끼','hammer'],
+  ['그림자','ink'],['먹물','ink'],['먹구름','ink'],['심해','ink'],['왕관','crown'],['왕','crown'],['킹','crown'],['고래','shell']];
+const FIL_ANY = ['lemon', 'mint', 'seaweed', 'shell'];
+const RED = ['참치', '연어', '방어', '삼치', '고등어', '청새치', '황새치', '돛새치'];
+export const isRed = f => RED.some(k => f.name.includes(k)) && !f.name.includes('참돔');
+export function garnishOf(f) { const hit = FIL_KEY.find(([k]) => f.name.includes(k)); const g = hit ? hit[1] : FIL_ANY[[...f.name].reduce((a, c) => a + c.charCodeAt(0), 0) % FIL_ANY.length];
+  return g.startsWith('c:') ? `img/farm/crop/${g.slice(2)}.webp` : `img/cook/g/${g}.webp`; }
+export const filName = f => `${f.name}의 ${isRed(f) ? '붉은살' : '흰살'}생선`;
+export const filGlow = (f, v) => !!(f.rare || f.king || (f.tier || 1) >= 3 || (v && (v.g === 'A' || v.g === 'S')));
+export function filletEl(f, v, big) { return h('div', { class: 'ck-fil' + (big ? ' big' : '') + (filGlow(f, v) ? ' glow' : '') }, h('img', { class: 'ck-plate', src: `img/cook/fillet-${isRed(f) ? 'red' : 'white'}.webp`, alt: '' }), h('img', { class: 'ck-gar', src: garnishOf(f), alt: '' })); }
 
 // o = { ctx, animals:[{i,name,svg}], A(i), affinity(i, d), toned(i, t), fish: () => [[key, v, f]], useFish(key), coins(n), cropName(id), cropImg(id), fishSvg(f, big), onClose }
 export function openCook(o) {
@@ -35,7 +54,7 @@ export function openCook(o) {
     // 무대: 주방 그림 위에 도마·화구·냄비
     const potCls = 'ck-pot' + (phase === 'cook' ? ' boil' : '');
     stage.replaceChildren(...[h('img', { class: 'ck-bg', src: 'img/cook/kitchen.webp', alt: '' }),
-      h('div', { class: 'ck-board' }, h('img', { src: 'img/cook/board.webp', alt: '' }), order && order.dish === 'fish' && pick[0] ? h('div', { class: 'ck-fish' + (cut ? ' cut' : '') }, h('span', { html: o.fishSvg(pick[0][2], true) }), cut && h('i', { class: 'ck-knife' }, '🔪')) : null),
+      h('div', { class: 'ck-board' }, h('img', { src: 'img/cook/board.webp', alt: '' }), order && order.dish === 'fish' && pick[0] ? h('div', { class: 'ck-fish' }, filletEl(pick[0][2], pick[0][1], true)) : null),
       h('div', { class: potCls }, h('img', { class: 'ck-potimg', src: 'img/cook/pot.webp', alt: '' }), phase === 'cook' && h('img', { class: 'ck-lid', src: 'img/cook/lid.webp', alt: '' }), phase === 'cook' && h('i', { class: 'ck-steam' }, '♨️'), h('img', { class: 'ck-fire', src: 'img/cook/stove.webp', alt: '' }))].filter(Boolean));
     if (phase === 'orders') return drawOrders();
     if (phase === 'prep') return drawPrep();
@@ -53,9 +72,8 @@ export function openCook(o) {
     const d = DISHES[order.dish], p = prefOf(order.pref), kids = [h('b', { class: 'ck-h' }, `${order.a.name}의 주문 · ${d.name} (${p.n})`)];
     if (order.dish === 'fish') {
       const L = fishList();
-      if (!pick[0]) { kids.push(h('p', { class: 'dim' }, '가방에 있는 물고기 중 하나를 골라요. 등급이 좋을수록 보상이 커요.'), L.length ? h('div', { class: 'ck-ings' }, ...L.map(x => { const [key, v, f] = x; return h('button', { class: 'ck-ing', onClick: () => { pick = [x]; draw(); } }, h('span', { html: o.fishSvg(f) }), h('small', null, `${f.name}${v.g ? ' ' + v.g + '급' : ''}`)); })) : h('p', { class: 'dim' }, '가방에 물고기가 없어요. 낚시로 잡아 오세요.')); }
-      else if (!cut) kids.push(h('p', null, `${pick[0][2].name}을(를) 도마에 올렸어요. 손질하면 머리를 떼고 몸통만 남겨요.`), h('div', { class: 'ck-row' }, h('button', { class: 'btn', onClick: () => { pick = []; draw(); } }, '다른 물고기'), h('button', { class: 'btn primary', onClick: () => { cut = true; sfx('tock'); draw(); } }, '🔪 손질하기')));
-      else kids.push(h('p', null, '손질 끝! 몸통을 냄비에 넣고 뚜껑을 덮어 쪄요.'), h('div', { class: 'ck-row' }, h('button', { class: 'btn primary', onClick: cook }, '🍲 냄비에 넣고 불 켜기')));
+      if (!pick[0]) { kids.push(h('p', { class: 'dim' }, '낚시로 잡은 물고기는 손질된 살로 나와요. 하나를 골라요. 등급이 좋을수록 보상이 커요.'), L.length ? h('div', { class: 'ck-ings' }, ...L.map(x => { const [key, v, f] = x; return h('button', { class: 'ck-ing', onClick: () => { pick = [x]; draw(); } }, filletEl(f, v), h('small', null, `${filName(f)}${v.g ? ' ' + v.g + '급' : ''}`)); })) : h('p', { class: 'dim' }, '가방에 물고기가 없어요. 낚시로 잡아 오세요.')); }
+      else kids.push(h('p', null, `${filName(pick[0][2])}을 도마에 올렸어요. 냄비에 넣고 뚜껑을 덮어 쪄요.`), h('div', { class: 'ck-row' }, h('button', { class: 'btn', onClick: () => { pick = []; draw(); } }, '다른 생선'), h('button', { class: 'btn primary', onClick: cook }, '🍲 냄비에 넣고 불 켜기')));
     } else {
       const ok = order.dish === 'soup' ? SOUP_OK : STEAM_OK, L = barn().filter(b => ok(b.id)), n = id => pick.filter(x => x.key === id).length;
       kids.push(h('p', { class: 'dim' }, `헛간 작물 2개를 골라요 (${pick.length}/2).`), L.length ? h('div', { class: 'ck-ings' }, ...L.map(b => h('button', { class: 'ck-ing' + (n(b.key) ? ' on' : ''), onClick: () => { if (n(b.key)) pick = pick.filter(x => x.key !== b.key); else if (pick.length < 2) pick = [...pick, b]; else if (b.n >= 2 && n(b.key) < 2) pick = [...pick.slice(1), b]; draw(); } }, h('img', { src: o.cropImg(b.id), alt: '' }), h('small', null, `${o.cropName(b.id)} ${b.g}급 ×${b.n}`))))
