@@ -1,11 +1,11 @@
-// 카피백반 — 카피수퍼 옆 백반집. 하루 세 번 장사, 한 번에 손님 둘. 퀘스트 요리도 여기서 만든다
+// 카피백반 — 카피수퍼 옆 백반집. 하루 세 번 장사, 한 번에 손님 한 명(원테이블 식당). 퀘스트 요리도 여기서 만든다
 // 재료(생선 살·작물·밥·양념)를 도마에 올리고 → 도마(날것)·냄비·프라이팬·튀김기 중 하나로 조리 → 원하는 익힘에서 꺼내 → 손님에게 바로 판다
 import { h, toast, modal, ymd } from './ui.js';
 import { sfx } from './sound.js';
 import { FISH } from './fishing.js';
 import { cropOf } from './farm.js';
 
-const RENT = 100, SESSIONS = 3, PER = 2;
+const RENT = 100, SESSIONS = 3, PER = 1; // 원테이블 식당: 한 번 장사에 손님 한 명
 // 가게 평점: 날마다 5점 만점에서 시작(하루가 지나면 회복). 손님 요청을 못 맞추면 -0.5, 다 맞추면 +0.1. 3점 이하가 되면 하루 영업정지, 풀리면 다시 5점
 const RATE_MAX = 5, RATE_MISS = 0.5, RATE_GOOD = 0.1, RATE_BAN = 3, RATE_BACK = 5, BAN_MS = 86400000;
 // 생선은 머리 없이 손질된 살로만 보여 준다. 이름 속 낱말로 곁들임 소품을 고른다
@@ -48,8 +48,8 @@ export const RECIPES = [
   R('jjin', '감자옥수수찜', 'pot', 0, ['potato', 'corn'], 0, 'salt', 170), R('hobakjuk', '단호박죽', 'pot', 0, ['squash', 'pea'], 0, 'honey', 240),
   R('ssam', '생선 상추쌈', 'pan', 1, ['lettuce'], 0, 'ssamjang', 180), R('gui', '대파 생선구이', 'pan', 2, ['scallion', 'garlic'], 0, 'salt', 520), R('gamjajeon', '감자전', 'pan', 0, ['potato', 'onion'], 0, 'soy', 120), R('gaji', '가지 대파볶음', 'pan', 0, ['eggplant', 'scallion'], 0, 'soy', 360),
   R('croq', '생선 고로케', 'fry', 1, ['potato'], 0, 'tartar', 250), R('kkaseu', '생선까스', 'fry', 1, ['cabbage'], 0, 'tartar', 210), R('mattang', '고구마 맛탕', 'fry', 0, ['sweetpotato'], 0, 'honey', 130), R('tempura', '채소튀김', 'fry', 0, ['carrot', 'sweetpotato', 'onion'], 0, 'soy', 150)];
-// 메뉴 값 = 기본 900 + (생선 시세 + 작물 시세 + 양념 1번 값 + 인건비 + 조리 시간 값) × 1.6. 생선 시세는 그 바다 흔한 물고기 평균값, 작물은 B급 값(기본값 ×1.2)
-const LABOR = { board: 40, pot: 70, pan: 60, fry: 70 }, TIME = { board: 20, pot: 50, pan: 40, fry: 40 }, MARGIN = 1.6, BASE_FEE = 900;
+// 메뉴 값 = 기본 600 + (생선 시세 + 작물 시세 + 양념 1번 값 + 인건비 + 조리 시간 값) × 1.6. 생선 시세는 그 바다 흔한 물고기 평균값, 작물은 B급 값(기본값 ×1.2)
+const LABOR = { board: 40, pot: 70, pan: 60, fry: 70 }, TIME = { board: 20, pot: 50, pan: 40, fry: 40 }, MARGIN = 1.6, BASE_FEE = 600;
 const fishAvg = z => { const L = FISH.filter(f => f.z === z && !f.king && !f.pearl && !f.icon && (f.tier || 1) <= 2); return L.length ? Math.round(L.reduce((t, f) => t + (f.price[0] + f.price[1]) / 2, 0) / L.length) : 0; };
 RECIPES.forEach(r => { const fish = r.fz ? fishAvg(r.fz) : 0, crop = Math.round(r.crops.reduce((t, id) => t + ((cropOf(id) || {}).base || 0) * 1.2, 0)), sauce = Math.round(SAUCES[r.sauce][2] / SAUCE_PACK), labor = LABOR[r.st], time = TIME[r.st];
   r.cost = { fish, crop, sauce, labor, time, sum: fish + crop + sauce + labor + time }; r.base = BASE_FEE + Math.round(r.cost.sum * MARGIN / 10) * 10; });
@@ -133,13 +133,13 @@ export function openCook(o) {
     if (banned()) { const left = Math.max(0, rate.ban - ctx.store.now()), tm = Math.ceil(left / 60000), hh = Math.floor(tm / 60), mm = tm % 60;
       kids.push(h('div', { class: 'kb-ban' }, h('span', null, '🚫'), h('div', null, h('b', null, '영업정지 중'), h('small', null, `가게 평점이 ${RATE_BAN}점 이하로 떨어졌어요. ${hh ? hh + '시간 ' : ''}${mm ? mm + '분 ' : ''}뒤에 평점 5점으로 회복되고 다시 열어요.`)))); }
     else kids.push(h('button', { class: 'btn primary big kb-start', disabled: !open || n >= SESSIONS, onClick: startSession }, n >= SESSIONS ? '오늘 장사는 끝! 내일 또 와요' : `🔔 장사 시작 (${n + 1}번째 · 손님 ${PER}명)`));
-    if (!banned() && n < SESSIONS) { ensureNext(); const nx = Array.isArray(st.next) ? st.next : [];
+    if (!banned() && n < SESSIONS) { ensureNext(); const nx = Array.isArray(st.next) ? st.next.slice(0, PER) : [];
       if (nx.length) stage.append(h('div', { class: 'kb-wq' }, ...nx.map(od => h('div', { class: 'kb-wqa', html: an(od.a).svg }, h('i', null, '💭')))));
       if (nx.length) kids.push(h('b', { class: 'kb-h' }, `⏳ 기다리는 손님 · ${n + 1}번째 장사`), h('p', { class: 'dim kb-wtip' }, '장사를 시작하면 이 손님들이 와요. 재료를 미리 준비하세요! 눌러서 레시피 보기'),
         ...nx.map(od => { const r = recOf(od.rec), a = an(od.a), fishN = fishNeed(od), cropN = id => Object.entries(o.barn() || {}).filter(([k, v]) => k.split('|')[0] === id && v > 0).reduce((t, [, v]) => t + v, 0), sN = ((o.sauces() || {})[od.sauce] || 0);
           const need = [r.fz && h('i', { class: fishN ? 'ok' : 'no' }, od.fid && fishOf(od.fid) ? `🐟 ${fishOf(od.fid).name} (${r.fz >= 2 ? '중급' : '초급'})` : `🐟 ${fishLabel(od)} 아무거나`), ...r.crops.filter(c => c !== od.no).map(c => h('i', { class: cropN(c) ? 'ok' : 'no' }, h('img', { src: o.cropImg(c), alt: '' }), cropName(c))), r.rice && h('i', { class: 'ok' }, '🍚 밥'), h('i', { class: sN >= od.sn ? 'ok' : 'no' }, sauceIc(od.sauce), `${SAUCES[od.sauce][1]}${od.sn > 1 ? ' ×2' : ''}`)].filter(Boolean);
           const ready = (!r.fz || fishN) && r.crops.every(c => c === od.no || cropN(c)) && sN >= od.sn;
-          return h('button', { class: 'kb-wait' + (ready ? ' ready' : ''), onClick: () => recipeFor(od) }, h('div', { class: 'kb-wan', html: a.svg }), h('div', { class: 'kb-wbody' }, h('b', null, `${a.name} · ${r.n}`), h('div', { class: 'kb-tags' }, ...reqTags(od).map(([c, t]) => h('i', { class: c }, t))), h('div', { class: 'kb-need' }, ...need), h('small', { class: ready ? 'ok' : 'no' }, ready ? '✅ 준비 완료' : '❌ 재료가 모자라요')), h('div', { class: 'kb-wpr' }, h('img', { class: 'kb-wimg', src: r.img, alt: '' }), h('b', null, `💰 ${won(r.base)}`), h('small', null, `다 맞추면 ~${won(bestPrice(r))}`))); })); }
+          return h('button', { class: 'kb-wait' + (ready ? ' ready' : ''), onClick: () => recipeFor(od) }, h('div', { class: 'kb-wan', html: a.svg }), h('div', { class: 'kb-wbody' }, h('b', null, `${a.name} · ${r.n}`), h('div', { class: 'kb-tags' }, ...reqTags(od).map(([c, t]) => h('i', { class: c }, t))), h('div', { class: 'kb-need' }, ...need), h('small', { class: ready ? 'ok' : 'no' }, ready ? '✅ 준비 완료' : '❌ 재료가 모자라요')), h('div', { class: 'kb-wpr' }, h('img', { class: 'kb-wimg', src: r.img, alt: '' }), h('b', null, `💰 ${won(bestPrice(r))}`), h('small', null, '요청을 다 맞추면'))); })); }
     if (qs.length) kids.push(h('b', { class: 'kb-h' }, '🔍 퀘스트 요리'), ...qs.map(q => { const r = recOf(q.rec); return h('button', { class: 'kb-qrow', onClick: () => startQuest(q) }, h('img', { src: r.img, alt: '' }), h('div', null, h('b', null, `${an(q.i).name}에게 ${r.n}`), h('small', null, '임대료 없이 만들 수 있어요 · 다 만들면 그 동물에게 가서 퀘스트 완료')), h('span', null, '만들기 ›')); }));
     kids.push(h('div', { class: 'kb-row2' }, h('button', { class: 'btn', onClick: recipeBook }, '📖 레시피북'), h('button', { class: 'btn', onClick: pantry }, '🧂 내 양념')));
     kids.push(h('p', { class: 'dim kb-tip' }, `가게 평점은 5점 만점이고 하루가 지나면 회복돼요. 손님 요청을 못 맞추면 -${RATE_MISS}, 다 맞추면 +${RATE_GOOD}. ${RATE_BAN}점 이하가 되면 하루 영업정지예요. 손님마다 원하는 익힘·양념·뺄 재료가 달라요.` + ' 생선은 낚시로, 작물은 농장에서, 양념은 카피수퍼에서 구해요. 재료가 없으면 "다음에 다시 오세요"로 돌려보내요(평점은 그대로).'));
@@ -149,7 +149,7 @@ export function openCook(o) {
   const newCust = () => { const all = o.animals.map(a => a.i).filter(i => A(i) > -30), cs = []; while (cs.length < PER) { const i = pick(all); if (!cs.some(c => c.a === i)) cs.push(makeOrder(i)); } return cs; };
   let nextBusy = false; function ensureNext() { if (nextBusy || st.next || banned() || (st.n || 0) >= SESSIONS) return; nextBusy = true; st = { ...st, next: newCust() }; ctx.store.update(ref, { next: st.next }).catch(() => {}).finally(() => { nextBusy = false; }); }
   function startSession() { if (banned()) return toast('영업정지 중이에요'); if (!st.rent) return toast('먼저 임대료를 내요'); if ((st.n || 0) >= SESSIONS) return;
-    const cs = Array.isArray(st.next) && st.next.length ? st.next : newCust(); st = { ...st, next: null }; ctx.store.update(ref, { next: null }).catch(() => {});
+    const cs = Array.isArray(st.next) && st.next.length ? st.next.slice(0, PER) : newCust(); st = { ...st, next: null }; ctx.store.update(ref, { next: null }).catch(() => {});
     sess = { cs, i: 0 }; resetKitchen(); ctx.store.update(ref, { cur: { ...sess } }).catch(() => {}); sfx('point'); draw(); }
   function startQuest(q) { sess = { cs: [makeOrder(q.i, q)], i: 0, quest: 1 }; resetKitchen(); draw(); }
   function resetKitchen() { board = []; tray = []; selT = -1; Object.keys(stn).forEach(k => { stn[k] = null; }); }
@@ -274,7 +274,7 @@ export function openCook(o) {
     const steps = [`재료를 모두 도마에 올려요${od.sn > 1 ? ` (양념은 ${od.sn}번 눌러요)` : ''}`, r.st === 'board' ? '도마를 눌러 날것 그대로 담아요' : `${S.ic} ${S.n}을(를) 눌러 조리를 시작해요${S.best ? ` · ${FIRE_N[S.best]}이 맛있어요` : ''}`,
       r.st === 'board' ? '완성 칸의 요리를 골라 손님에게 팔아요' : `고리가 ${zone ? `${zone.n}(${zone.lo}~${zone.hi}%)` : ''}일 때 눌러서 꺼내요`, '🍽 손님에게 팔기'];
     const can = (!r.fz || fishNeed(od)) && r.crops.every(c => c === od.no || cropN(c)) && sauceN >= od.sn;
-    modal({ title: `📖 ${r.n} · ${an(od.a).name}의 주문`, body: [h('div', { class: 'kb-rhead' }, h('img', { src: r.img, alt: '' }), h('div', null, h('b', null, `${S.ic} ${S.n} · ${S.job}`), h('div', { class: 'kb-tags' }, ...reqTags(od).map(([c, t]) => h('i', { class: c }, t))), h('small', null, `기본가 ${won(r.base)} · 다 맞추면 ~${won(bestPrice(r))}`), h('small', { class: 'kb-cost' }, `원가 ${r.cost.fish ? `생선 ${r.cost.fish} + ` : ''}작물 ${r.cost.crop} + 양념 ${r.cost.sauce} + 인건비 ${r.cost.labor} + 조리 시간 ${r.cost.time} = ${r.cost.sum}코인 → 기본 ${BASE_FEE} + 원가×${MARGIN}`))),
+    modal({ title: `📖 ${r.n} · ${an(od.a).name}의 주문`, body: [h('div', { class: 'kb-rhead' }, h('img', { src: r.img, alt: '' }), h('div', null, h('b', null, `${S.ic} ${S.n} · ${S.job}`), h('div', { class: 'kb-tags' }, ...reqTags(od).map(([c, t]) => h('i', { class: c }, t))), h('small', null, `💰 요청을 다 맞추면 ${won(bestPrice(r))}`), h('small', { class: 'kb-cost' }, `원가 ${r.cost.fish ? `생선 ${r.cost.fish} + ` : ''}작물 ${r.cost.crop} + 양념 ${r.cost.sauce} + 인건비 ${r.cost.labor} + 조리 시간 ${r.cost.time} = ${r.cost.sum}코인 → 기본 ${BASE_FEE} + 원가×${MARGIN}`))),
       h('div', { class: 'kb-rlist' }, ...rows), h('ol', { class: 'kb-steps' }, ...steps.map(t => h('li', null, t))),
       h('p', { class: 'center kb-can ' + (can ? 'ok' : 'no') }, can ? '✅ 지금 가진 재료로 만들 수 있어요!' : '❌ 재료가 모자라요. 못 만들면 "🙇 다음에 다시 오세요"로 돌려보내요(평점은 그대로).')], actions: [{ label: '닫기', primary: true }] }); }
   function recipeBook() { modal({ title: '📖 카피백반 레시피북', body: h('div', { class: 'kb-book' }, ...Object.entries(STATIONS).map(([k, S]) => h('div', null, h('b', { class: 'kb-bh' }, `${S.ic} ${S.n} · ${S.job}${S.best ? ` · ${FIRE_N[S.best]}이 맛있어요` : ''}`),
