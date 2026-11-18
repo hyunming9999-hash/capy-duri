@@ -73,7 +73,7 @@ const pick = a => a[Math.floor(Math.random() * a.length)], rnd = (a, b) => a + M
 // 무엇이 물었나: 진주 차례면 진주, 가끔 쓰레기, 아니면 그 구역 물고기(귀한 것은 드물게). 한 단계 낮은 낚싯대로는 귀한 것·대장은 안 문다
 export function rollCatch(zone, rodT, isPearl, power) {
   if (isPearl) return { f: PEARL, cm: 0, price: PEARL_PRICE, d: 9.5, p: power };
-  if (power < TRASH_FAR && Math.random() < TRASH_P) { const t = pick(TRASH), k = Math.random(), cm = Math.round((t.cm[0] + (t.cm[1] - t.cm[0]) * k) * 10) / 10; return { f: t, cm, g: 'F', price: -Math.round(50 + 200 * k), d: 1, p: power }; }
+  if (power < TRASH_FAR && Math.random() < trashP(power)) { const t = pick(TRASH), k = Math.random(), cm = Math.round((t.cm[0] + (t.cm[1] - t.cm[0]) * k) * 10) / 10; return { f: t, cm, g: 'F', price: -Math.round(50 + 200 * k), d: 1, p: power }; }
   const under = rodT < zone, pool = FISH.filter(f => f.z === zone && !(under && (f.rare || f.king)));
   const w = pool.map(f => TIERS[f.tier || 1].w * (f.tier >= 3 ? 1 + power * 1.2 : 1)), tot = w.reduce((a, b) => a + b, 0); let r = Math.random() * tot, f = pool[0]; for (let i = 0; i < pool.length; i++) { r -= w[i]; if (r <= 0) { f = pool[i]; break; } }
   // 등급(크기): 같은 물고기라도 D~S. S일수록 드물고 크고 비싸다. 멀리 던질수록 높은 등급이 조금 더 잘 문다
@@ -94,8 +94,8 @@ export function gradeInfo(f, cm, g) {
     h('p', { class: 'dim center' }, 'S에 가까울수록 드물고, 크고, 비싸요. 멀리 던질수록 S·A가 조금 더 잘 물어요.')),
     actions: [{ label: '확인', primary: true }] });
 }
-// 쓰레기: 던지는 힘 70 이상(10칸 중 7칸)이면 안 걸리고, 못 미치면 15%. 풍랑: 던질 때마다 1/20 꼴(쓰레기·진주 판엔 안 불어서 조금 보정)
-const TRASH_FAR = 0.7, TRASH_P = 0.15;
+// 쓰레기: 던지는 힘 85 이상(10칸 중 8.5칸)이면 안 걸리고, 못 미치면 15~20%(가까이 던질수록 20%에 가깝다)
+const TRASH_FAR = 0.85, trashP = power => 0.2 - 0.05 * Math.min(1, power / TRASH_FAR);
 // 풍랑: 바다마다 10번 던질 때 1~2번. 10번 묶음마다 몇 번째에 불지 미리 정하고, 그 판에 못 불었으면(진주였거나 일찍 끝나서) 다음 판으로 미룬다
 const stormPlan = () => { const k = Math.random() < 0.5 ? 1 : 2, at = []; while (at.length < k) { const x = 1 + Math.floor(Math.random() * 10); if (!at.includes(x)) at.push(x); } return at; };
 // 등급표: 확률(기본) · 크기 구간(물고기 크기 범위 안에서) · 값 배수
@@ -143,7 +143,7 @@ export function openFishing(o) {
     if (!r) { say('낚싯대가 없어요. 카피수퍼에서 사 오세요.', 'warn'); btn.textContent = '닫기'; btn.onclick = close; return; }
     if (!(b.rodD > 0)) { say('낚싯대가 다 닳았어요. 카피수퍼에서 수리하세요.', 'warn'); btn.textContent = '닫기'; btn.onclick = close; return; }
     if (!(b.bait > 0)) { say('미끼가 없어요. 카피수퍼에서 사 오세요(1개 10코인).', 'warn'); btn.textContent = '닫기'; btn.onclick = close; return; }
-    drawPips(true); say(text || (r.t < zone ? `낚싯대보다 깊은 바다예요. 귀한 물고기는 안 물어요. 끊어짐 칸을 ${lim()}번 건드리면 놓쳐요.` : `끊어짐 칸을 ${lim()}번 건드리면 놓쳐요. 릴을 눌러 힘을 모으고 한 번 더 눌러 던지세요.`)); btn.textContent = '던질\n준비'; btn.onclick = () => { if (!armed) return; phase = 'power'; power = 0; pdir = 1; say('멀리 던질수록 큰 물고기·귀한 물고기가 잘 물고, 줄도 덜 끊어져요. 70 넘게 던지면 쓰레기도 안 걸려요!'); btn.textContent = '던지기!'; btn.onclick = cast; };
+    drawPips(true); say(text || (r.t < zone ? `낚싯대보다 깊은 바다예요. 귀한 물고기는 안 물어요. 끊어짐 칸을 ${lim()}번 건드리면 놓쳐요.` : `끊어짐 칸을 ${lim()}번 건드리면 놓쳐요. 릴을 눌러 힘을 모으고 한 번 더 눌러 던지세요.`)); btn.textContent = '던질\n준비'; btn.onclick = () => { if (!armed) return; phase = 'power'; power = 0; pdir = 1; say('멀리 던질수록 큰 물고기·귀한 물고기가 잘 물고, 줄도 덜 끊어져요. 85 넘게 던지면 쓰레기도 안 걸려요!'); btn.textContent = '던지기!'; btn.onclick = cast; };
   }
   function cast() {
     const b = o.bag(), deep = zone === 3, n = (b.casts3 || 0) + (deep ? 1 : 0), at = b.pearlAt3 || (1 + Math.floor(Math.random() * 100));
