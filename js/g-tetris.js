@@ -11,7 +11,8 @@ const SHAPES = {
 };
 const KINDS = Object.keys(SHAPES);
 const COLOR = { I: '#8FCB5C', O: '#FFE06B', T: '#E88BB0', S: '#F6B66A', Z: '#F08A3C', J: '#8E97A6', L: '#C9A27A', G: '#B9B2A6' };
-const LEVELS = { e: { name: '하', sub: '느긋하게', ms: 850, junk: 0 }, m: { name: '중', sub: '보통 빠르기', ms: 520, junk: 0 }, h: { name: '상', sub: '빠르고 바닥에 방해 줄', ms: 300, junk: 4 } };
+// ms 처음 떨어지는 간격 · tx 30초마다 빨라지는 비율 · lx 10줄마다 빨라지는 비율 · min 가장 빠른 한계(초급일수록 한계가 느리다)
+const LEVELS = { e: { name: '하', sub: '느긋하게 시작해서 점점 빨라져요', ms: 700, tx: 0.93, lx: 0.85, min: 160, junk: 0 }, m: { name: '중', sub: '보통 빠르기 · 금방 빨라져요', ms: 450, tx: 0.9, lx: 0.82, min: 110, junk: 0 }, h: { name: '상', sub: '빠르고 바닥에 방해 줄 · 확확 빨라져요', ms: 280, tx: 0.86, lx: 0.78, min: 70, junk: 4 } };
 const LINE_PTS = [0, 100, 300, 500, 800], ATTACK = [0, 0, 1, 2, 4]; // 한 번에 지운 줄 수 → 점수, 상대에게 보내는 방해 줄
 const rot = m => m[0].map((_, c) => m.map(r => r[c]).reverse());
 function rng(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -29,7 +30,7 @@ export function makeGame(seed, diff) {
   const take = () => { const k = g.next.shift(); g.next.push(draw7()); return k; };
   spawn(take());
   // 진행될수록 조금씩 빨라진다: 지운 줄 수만큼(10줄에 14%) + 버틴 시간만큼(30초에 4%)
-  g.t = 0; g.speed = () => Math.max(70, LV.ms * Math.pow(0.86, g.lines / 10) * Math.pow(0.96, g.t / 30000));
+  g.t = 0; g.speed = () => Math.max(LV.min, LV.ms * Math.pow(LV.lx, g.lines / 10) * Math.pow(LV.tx, g.t / 30000));
   g.move = dx => { if (g.over || !fits(g.cur.m, g.cur.x + dx, g.cur.y)) return false; g.cur.x += dx; return true; };
   g.rotate = (ccw) => { if (g.over) return false; const m = ccw ? rot(rot(rot(g.cur.m))) : rot(g.cur.m); for (const [dx, dy] of [[0, 0], [-1, 0], [1, 0], [-2, 0], [2, 0], [0, -1]]) if (fits(m, g.cur.x + dx, g.cur.y + dy)) { g.cur.m = m; g.cur.x += dx; g.cur.y += dy; return true; } return false; };
   g.ghostY = () => { let y = g.cur.y; while (fits(g.cur.m, g.cur.x, y + 1)) y++; return y; };
