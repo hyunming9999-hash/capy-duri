@@ -188,7 +188,7 @@ export function openCook(o) {
       kids.push(h('span', { class: 'kb-lb' }, s ? h('b', { class: 'kb-z' }) : `${S.ic} ${S.n} · ${S.job}${od.fire && r.st === k ? ` · 손님은 ${FIRE_N[od.fire]}!` : S.best ? ` · ${FIRE_N[S.best]} 추천` : ''}`)); }
     const el = h('button', { class: 'kb-s ' + k + (s ? ' busy' : ''), onClick: () => useStation(k) }, ...kids); stEls[k] = el; return el; }
   const SPOT = [[30, 34, -8], [58, 30, 6], [42, 56, 4], [70, 54, -5], [24, 62, 10], [54, 72, -3], [78, 30, 8], [36, 22, -4]]; // 도마 위 재료 자리
-  const rawFace = b => b.t === 'fish' ? h('img', { class: 'kb-rawi fish', src: `img/cook/fillet-${isRed(b.f) ? 'red' : 'white'}.webp`, alt: '', draggable: 'false' }) : b.t === 'crop' ? h('img', { class: 'kb-rawi', src: o.cropImg(b.id), alt: '', draggable: 'false' }) : b.t === 'rice' ? h('b', { class: 'kb-rawe' }, '🍚') : (SAUCE_IMG[b.key] ? h('img', { class: 'kb-rawi', src: SAUCE_IMG[b.key], alt: '', draggable: 'false' }) : h('b', { class: 'kb-rawe' }, SAUCES[b.key][0]));
+  const rawFace = b => b.t === 'fish' ? h('img', { class: 'kb-rawi fish', src: `img/cook/fil-${isRed(b.f) ? 'red' : 'white'}.webp`, alt: '', draggable: 'false' }) : b.t === 'crop' ? h('img', { class: 'kb-rawi', src: o.cropImg(b.id), alt: '', draggable: 'false' }) : b.t === 'rice' ? h('b', { class: 'kb-rawe' }, '🍚') : (SAUCE_IMG[b.key] ? h('img', { class: 'kb-rawi', src: SAUCE_IMG[b.key], alt: '', draggable: 'false' }) : h('b', { class: 'kb-rawe' }, SAUCES[b.key][0]));
   const wantAt = k => { const od = sess && sess.cs[sess.i], z = od && ZONES.find(x => x.k === od.pref); return z ? (z.lo + z.hi) / 2 : -99; };
   const chipFace = b => b.t === 'fish' ? h('img', { src: `img/cook/fillet-${isRed(b.f) ? 'red' : 'white'}.webp`, alt: '' }) : b.t === 'crop' ? h('img', { src: o.cropImg(b.id), alt: '' }) : b.t === 'rice' ? h('span', null, '🍚') : sauceIc(b.key);
   function itemList() {
@@ -220,7 +220,7 @@ export function openCook(o) {
     if (fish) o.useFish(fish.key); if (crops.length) await o.useCrops(Object.fromEntries(crops.map(c => [c.key, 1]))); if (Object.keys(sauce).length) await o.useSauce(sauce);
     const ing = { fish: fish ? fish.f : null, crops: crops.map(c => c.id), rice }, grades = [fish && fish.v.g, ...crops.map(c => c.g)].filter(Boolean), gx = grades.length ? grades.reduce((t, g) => t + (GRADE_X[g] || 1), 0) / grades.length : 1;
     const guess = ['pot', 'pan', 'fry', 'board'].map(st => identifyFrom(ing, st)).find(Boolean);
-    const pics = [...(fish ? [`img/cook/fillet-${isRed(fish.f) ? 'red' : 'white'}.webp`] : []), ...crops.map(c => o.cropImg(c.id))];
+    const pics = [...(fish ? [`img/cook/fil-${isRed(fish.f) ? 'red' : 'white'}.webp`] : []), ...crops.map(c => o.cropImg(c.id))];
     prep.push({ ing, sauce, gx, tx: fish ? TIER_X[fish.f.tier || 1] : 1, pics: pics.length ? pics : ['img/cook/fishdish.webp'], label: guess ? `${guess.r.n} 재료` : '손질한 재료' });
     board = []; selP = prep.length - 1; sfx('tock'); setTimeout(() => sfx('tock'), 120); draw(); }
   // 손질한 재료를 조리도구에 넣는다(날것 요리는 완성 칸에 바로 담는다)
