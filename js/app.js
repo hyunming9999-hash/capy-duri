@@ -198,28 +198,23 @@ function showRulesHelp() {
 function leave() { LS.del('room'); location.hash = ''; location.reload(); }
 
 // 패치 소식
-const PATCH_UNTIL = Date.parse('2026-11-18T02:00:00+09:00'); // 이 시각까지만, 들어올 때마다 보여 준다
+const PATCH_UNTIL = Date.parse('2026-11-20T23:59:00+09:00'); // 이 시각까지만, 들어올 때마다 보여 준다
 function patchNote() { if (Date.now() >= PATCH_UNTIL) return;
   const li = (ic, t, d) => h('li', null, h('span', null, ic), h('div', null, h('b', null, t), h('small', null, d)));
-  // 두 장짜리 공지: 1장 까마귀 악당 → 2장 전설의 진주부적(다음 장으로 넘기도록 유도)
+  // 카피 농장 오픈 공지(요리교실이 열리면 다음 장에 붙인다)
   const pages = [
-    () => [h('div', { class: 'patch-crow' }, h('i', { class: 'pc-fog' }), h('i', { class: 'pc-fog f2' }), h('img', { src: 'img/crow/crow.webp', alt: '까마귀 악당' })),
+    () => [h('div', { class: 'patch-farm' }, h('img', { src: 'img/farm/patch.webp', alt: '카피 농장 오픈' })),
       h('ul', null,
-        li('🐦‍⬛', '까마귀 악당 등장!', '하루 2번 나타나요. 친목회에 들어와 5분이 되면 한 번, 그 뒤 아무 때나 한 번 더. 나타날 때마다 내 근처 땅 위에서 친한 동물 둘에게 "OO이 너 바보래" 하고 이간질해요. 경고가 뜨면 바로 퇴치하세요.'),
-        li('🧿', '퇴치부적 3장 중 진짜 1장', '퇴치 버튼을 누르고 10초 안에 부적을 한 장 고르세요. 진짜면 퇴치! 꽝이거나 10초가 지나면 두 동물의 친밀도가 15~20 깎여요.'),
-        li('🙅', '억울하면 해명하기', '삐진 동물에게 말을 걸어 "까마귀가 꾸민 거짓말이야"를 누르면 최대 5점 풀려요.')),
-      h('button', { class: 'patch-next', onClick: () => go(1) }, h('img', { src: 'img/crow/pearl-back.webp', alt: '' }), h('span', null, h('b', null, '다음 장에 전설의 진주부적이!'), h('small', null, '눌러서 넘겨 보세요 👉')))],
-    () => [h('div', { class: 'patch-pearl' }, h('i', { class: 'pp-rays' }), ...Array.from({ length: 10 }, (_, k) => h('em', { style: { left: (6 + (k * 37) % 88) + '%', top: (8 + (k * 53) % 80) + '%', animationDelay: (k % 5) * 0.2 + 's' } }, k % 2 ? '✦' : '🫧')), h('img', { src: 'img/crow/pearl-win.webp', alt: '진주부적' }), h('b', null, '전설의 진주부적')),
-      h('ul', null,
-        li('🦪', '진주부적 (화·금요일)', '친밀도 100(만렙) 동물을 3마리 이상 유지하면, 그날 한 번 단짝이 진주부적을 줘요(2장 중 진짜 1장).'),
-        li('🎣', '3장 모으면 진주 성공률 90%', '진주는 이제 고급 바다에서만, 100번쯤 던지면 한 번 걸려요. 진주가 걸리면 "앗, 진주 같아!" 하고 쓸지 물어봐요. 쓰면 부적 3장이 사라져요. 까마귀에게 당해 만렙이 깨지지 않게 조심!'),
-        li('👢', '황금 구두 & 신발 9켤레', '돼지는 황금 모피 부츠, 개구리는 황금 수정구슬 구두로 바뀌었어요(옷과 함께 신어요). 옷입히기에 운동화·구두·장화 등 신발 탭이 생겼어요.'))]];
+        li('🪧', '놀이터 왼쪽 끝 "농장 가는 길"', '팻말을 누르면 나만의 카피 농장으로 들어가요. 울타리 텃밭 5칸 중 첫 칸은 공짜, 나머지는 카피철물에서 땅 문서(300·700·1,400·2,000코인)로 열어요.'),
+        li('🌱', '씨앗 하나 = 고랑 한 줄', '밭 한 칸은 고랑 3줄. 고랑마다 다른 작물을 심어도 돼요. 작물 30종: 초급 10~40분, 중급 1~3시간, 고급 4~10시간(중급·고급은 그 등급 농기구가 필요해요).'),
+        li('💧', '물 주고 잡초 베면 S급', '컨디션 85% 넘으면 A급(가끔 S급), 60% 넘으면 B급, 안 돌봐도 C급. 다 자란 뒤 3일 넘게 안 거두면 시들어 F! 고랑 하나에서 2개씩 거둬요.'),
+        li('💑', '두두네 밭에 물 주기', '위의 "두두네 농장"에서 구경하고 물을 주고 올 수 있어요. 거둔 작물은 카피수퍼에서 팔아요(S×2 · A×1.5 · B×1.2).'))]];
   const box = h('div', { class: 'patch' }), dots = h('div', { class: 'patch-dots' });
   let at = 0, nextBtn, prevBtn;
   function go(n) { at = n; box.replaceChildren(...pages[n]()); box.scrollTop = 0; const m = box.closest('.modal'); if (m) m.scrollTop = 0;
     dots.replaceChildren(...pages.map((_, k) => h('i', { class: k === n ? 'on' : '' }))); if (nextBtn) { nextBtn.textContent = n === pages.length - 1 ? '확인' : '다음 장 👉'; prevBtn.style.visibility = n ? 'visible' : 'hidden'; } }
   go(0);
-  const close = modal({ title: '✨ 패치 소식 · 까마귀 악당과 진주부적', body: h('div', null, box, dots),
+  const close = modal({ title: '✨ 패치 소식 · 카피 농장 오픈', body: h('div', null, box, dots),
     actions: [{ label: '👈 이전', onClick: () => at && go(at - 1) }, { label: '다음 장 👉', primary: true, onClick: c => (at < pages.length - 1 ? go(at + 1) : c()) }] });
   const btns = [...document.querySelectorAll('.modal-wrap:last-child .modal-actions .btn')]; [prevBtn, nextBtn] = btns; go(0); return close; }
 function enter() {

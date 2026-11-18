@@ -14,13 +14,13 @@ const C = [
   ['watermelon', '수박', 3, 240, 800, 260], ['melon', '멜론', 3, 270, 850, 275], ['grape', '포도', 3, 300, 900, 290], ['pineapple', '파인애플', 3, 330, 950, 305], ['blueberry', '블루베리', 3, 360, 1000, 320],
   ['ginseng', '인삼', 3, 420, 1100, 350], ['matsutake', '송이버섯', 3, 480, 1200, 380], ['apple', '사과', 3, 520, 1250, 395], ['banana', '바나나', 3, 560, 1300, 410], ['yuzu', '황금유자', 3, 600, 1400, 440],
 ];
-export const CROPS = C.map(([id, name, t, min, seed, base]) => ({ id, name, t, ms: min * 60000, seed, base }));
+export const CROPS = C.map(([id, name, t, min, seed, base]) => ({ id, name, t, ms: min * 60000, seed: Math.max(10, Math.round(seed / 3 / 5) * 5), base })); // 씨앗 하나 = 고랑 한 줄(밭 한 칸은 3줄)
 export const cropOf = id => CROPS.find(c => c.id === id);
 export const cropImg = id => `img/farm/crop/${id}.webp`;
 export const TOOLS = [null, { t: 1, name: '초급 농기구', price: 0, note: '호미·물뿌리개 · 처음부터 있어요' }, { t: 2, name: '중급 농기구', price: 1500, note: '쇠 호미·큰 물뿌리개 · 중급 작물을 심어요' }, { t: 3, name: '고급 농기구', price: 4000, note: '황금 낫·스프링클러 · 고급 작물을 심어요' }];
 export const TIER_NAME = ['', '초급', '중급', '고급'];
 export const DEEDS = [300, 700, 1400, 2000]; // 2~5번째 밭 땅 문서
-export const PLOTS = 5, YIELD = 6, ROT_MS = 3 * 86400000;
+export const PLOTS = 5, YIELD_ROW = 2, ROT_MS = 3 * 86400000; // 고랑 한 줄에서 2개, 밭 한 칸(3줄)이면 6개
 export const GRADE_X = { S: 2, A: 1.5, B: 1.2, C: 1, F: 0 };
 export const cropPrice = (id, g) => Math.round((cropOf(id) || { base: 0 }).base * (GRADE_X[g] || 0));
 
@@ -70,18 +70,26 @@ export function openFarm(o) {
   const save = patch => ctx.store.update(myRef(), patch).catch(() => {});
   const savePlot = (k, p) => ctx.store.set(`${curRef()}/plots/${k}`, p).catch(() => {});
 
+  // 밭 한 칸 = 고랑 3줄. 씨앗 하나로 한 고랑을 채운다(고랑마다 다른 작물도 된다)
+  const rowsOf = k => { const p = plotOf(k); if (!p) return [null, null, null]; if (p.c) return [p, null, null]; const r = p.rows || {}; return [0, 1, 2].map(i => r[i] || null); };
+  const live = r => r && r.c && !r.lost;
+  const ROWBOX = [{ t: 2, h: 24, l: 13, r: 13, n: 7 }, { t: 20, h: 27, l: 10, r: 10, n: 8 }, { t: 40, h: 29, l: 8, r: 8, n: 9 }];
+  const SPROUT = '<svg viewBox="0 0 40 40"><path d="M20 38 V20" stroke="#4E8A2E" stroke-width="3" stroke-linecap="round"/><path d="M20 22 C10 22 6 14 7 8 C14 8 20 13 20 22Z" fill="#7BC74D" stroke="#4E8A2E" stroke-width="2"/><path d="M20 20 C29 20 34 13 33 6 C25 6 20 11 20 20Z" fill="#8FD45A" stroke="#4E8A2E" stroke-width="2"/></svg>';
   function drawPlots() {
     const t = now();
-    plotEls.forEach((e, k) => { const p = plotOf(k), open = isOpen(k);
+    plotEls.forEach((e, k) => { const open = isOpen(k), rows = rowsOf(k), any = rows.some(live);
       e.className = 'fm-plot' + (sel === k ? ' on' : '');
-      const st = !open ? 'locked' : !p || !p.c ? 'empty' : ripe(p, t) ? 'ripe' : 'sprout';
-      e.dataset.st = st; e.dataset.dry = dryNow(p, t) ? 1 : 0; e.dataset.rot = rotten(p, t) ? 1 : 0;
-      const kids = [h('img', { class: 'fm-pimg', src: `img/farm/plot-${st === 'ripe' ? 'empty' : st}.webp`, alt: '' })];
-      if (st === 'ripe') { const c = cropOf(p.c); kids.push(h('div', { class: 'fm-crops' }, ...Array.from({ length: 3 * 7 }, () => h('img', { src: cropImg(c.id), alt: '' })))); }
-      if (open && weedNow(p, t)) kids.push(h('img', { class: 'fm-weed', src: 'img/farm/weed.webp', alt: '잡초' }), h('img', { class: 'fm-weed w2', src: 'img/farm/weed.webp', alt: '' }));
-      const lab = !open ? `🔒 땅 문서 ${DEEDS[k - 1].toLocaleString('ko-KR')}코인` : !p || !p.c ? (who === ctx.uid ? '빈 밭 · 눌러서 씨앗 심기' : '빈 밭') : ripe(p, t) ? (rotten(p, t) ? `${cropOf(p.c).name} · 시들었어요` : `${cropOf(p.c).name} · 수확!`) : `${cropOf(p.c).name} · ${left(p.at + p.ms - t)}`;
-      kids.push(h('span', { class: 'fm-lab' + (st === 'ripe' ? ' ripe' : '') }, lab));
-      if (open && p && p.c && !ripe(p, t)) kids.push(h('span', { class: 'fm-bub' }, [dryNow(p, t) && '💧', weedNow(p, t) && '🌿'].filter(Boolean).join('')));
+      e.dataset.dry = rows.some(r => live(r) && dryNow(r, t)) ? 1 : 0;
+      const kids = [h('img', { class: 'fm-pimg', src: `img/farm/plot-${open ? 'empty' : 'locked'}.webp`, alt: '' })];
+      if (open) rows.forEach((r, i) => { if (!live(r)) return; const b = ROWBOX[i], rp = ripe(r, t), c = cropOf(r.c);
+        kids.push(h('div', { class: 'fm-rowc' + (rp ? ' ripe' : ' grow') + (rotten(r, t) ? ' rot' : ''), style: { top: b.t + '%', height: b.h + '%', left: b.l + '%', right: b.r + '%', gridTemplateColumns: `repeat(${b.n}, 1fr)` } },
+          ...Array.from({ length: b.n }, () => rp ? h('img', { src: cropImg(c.id), alt: '' }) : h('span', { html: SPROUT, style: { transform: `scale(${(0.45 + 0.55 * Math.min(1, (t - r.at) / r.ms)).toFixed(2)})` } }))));
+        if (weedNow(r, t)) kids.push(h('img', { class: 'fm-weed', src: 'img/farm/weed.webp', alt: '잡초', style: { top: b.t + 4 + '%', left: 22 + i * 22 + '%' } })); });
+      const ripeN = rows.filter(r => live(r) && ripe(r, t)).length, growing = rows.filter(r => live(r) && !ripe(r, t)), emptyN = rows.filter(r => !live(r)).length;
+      const soon = growing.length ? Math.min(...growing.map(r => r.at + r.ms - t)) : 0;
+      const lab = !open ? `🔒 땅 문서 ${DEEDS[k - 1].toLocaleString('ko-KR')}코인` : !any ? (who === ctx.uid ? '빈 밭 · 눌러서 씨앗 심기' : '빈 밭') : ripeN ? `수확! ${ripeN}고랑${growing.length ? ` · 남은 것 ${left(soon)}` : ''}` : `${left(soon)} 남음${emptyN && who === ctx.uid ? ` · 빈 고랑 ${emptyN}` : ''}`;
+      kids.push(h('span', { class: 'fm-lab' + (ripeN ? ' ripe' : '') }, lab));
+      if (open && growing.length) kids.push(h('span', { class: 'fm-bub' }, [growing.some(r => dryNow(r, t)) && '💧', growing.some(r => weedNow(r, t)) && '🌿'].filter(Boolean).join('')));
       rc(e, kids); });
     coinsEl.textContent = '🪙 ' + ctx.coins().toLocaleString('ko-KR');
     const pn = ctx.nameOf(ctx.partnerId);
@@ -95,50 +103,55 @@ export function openFarm(o) {
   const offMine = ctx.store.on(myRef(), v => { mine = v || {}; if (who === ctx.uid) { data = mine; drawPlots(); } }); // 내 농기구·씨앗·헛간은 상대 농장 구경 중에도 알아야 한다
 
   function walkTo(x, then) { me.tx = Math.max(30, Math.min(WIDTH - 30, x)); me.then = then; meEl.classList.add('walk'); meEl.classList.toggle('left', me.tx < me.x); }
-  function goPlot(k) { walkTo(plotX(k) + PW / 2, () => { sel = k; drawSheet(); drawPlots(); }); }
+  function goPlot(k) { walkTo(plotX(k) + PW / 2, () => { sel = k; pickRow = -1; drawPlots(); }); }
+  let pickRow = -1;
 
-  // 밭 아래 창: 밭 상태와 할 수 있는 일
+  // 밭 아래 창
   function drawSheet() {
-    const k = sel, p = plotOf(k), t = now(), visit = who !== ctx.uid;
-    if (k < 0) { // 아무 밭도 안 골랐을 때: 한눈에 보기
-      const L = Array.from({ length: PLOTS }, (_, i) => { const q = plotOf(i); return !isOpen(i) ? '🔒' : !q || !q.c ? '빈 밭' : ripe(q, t) ? `${cropOf(q.c).name} 수확!` : `${cropOf(q.c).name} ${left(q.at + q.ms - t)}${dryNow(q, t) ? ' 💧' : ''}${weedNow(q, t) ? ' 🌿' : ''}`; });
+    const k = sel, t = now(), visit = who !== ctx.uid;
+    if (k < 0) { // 한눈에 보기
+      const L = Array.from({ length: PLOTS }, (_, i) => { if (!isOpen(i)) return '🔒'; const rs = rowsOf(i).filter(live); if (!rs.length) return '빈 밭';
+        return rs.map(r => `${cropOf(r.c).name} ${ripe(r, t) ? '수확!' : left(r.at + r.ms - t)}${!ripe(r, t) && dryNow(r, t) ? '💧' : ''}${weedNow(r, t) ? '🌿' : ''}`).join(' · '); });
       const seeds = Object.values(mine.seeds || {}).reduce((a, n) => a + (n || 0), 0), barn = Object.values(mine.barn || {}).reduce((a, n) => a + (n || 0), 0);
       rc(sheet, h('b', null, visit ? `${ctx.nameOf(who)}네 밭` : '내 밭'), h('div', { class: 'fm-list' }, ...L.map((x, i) => h('button', { class: 'fm-li', onClick: () => goPlot(i) }, h('span', null, `${i + 1}번`), h('b', null, x)))),
-        visit ? h('p', { class: 'dim fm-tip' }, `구경 중이에요. 물이 마른 밭(💧)에 물을 주고 올 수 있어요.`) : h('p', { class: 'dim fm-tip' }, `씨앗 ${seeds}개 · 헛간 ${barn}개 · ${TOOLS[tool()].name} · 밭을 누르면 심기·물 주기·잡초 베기·수확을 해요. 씨앗과 농기구·땅 문서는 오른쪽 끝 카피철물에서 사요.`),
+        h('p', { class: 'dim fm-tip' }, visit ? '구경 중이에요. 물이 마른 밭(💧)에 물을 주고 올 수 있어요.' : `씨앗 ${seeds}개 · 헛간 ${barn}개 · ${TOOLS[tool()].name} · 밭 한 칸은 고랑 3줄이고, 씨앗 하나로 한 고랑을 채워요. 씨앗·농기구·땅 문서는 오른쪽 끝 카피철물에서 사요.`),
         !visit && h('div', { class: 'fm-row' }, h('button', { class: 'btn', onClick: () => walkTo(HX + HW * 0.7, openShop) }, '🔨 카피철물 가기'), h('button', { class: 'btn', onClick: () => openBarn() }, '🧺 헛간 보기')));
       return; }
-    const row = (...x) => h('div', { class: 'fm-row' }, ...x), closeB = h('button', { class: 'btn sm fm-x', onClick: () => { sel = -1; drawPlots(); } }, '닫기');
-    if (!isOpen(k)) { rc(sheet, closeB, h('b', null, `🔒 ${k + 1}번 밭`), h('p', { class: 'dim' }, visit ? '아직 열지 않은 밭이에요.' : `카피철물에서 땅 문서(${DEEDS[k - 1].toLocaleString('ko-KR')}코인)를 사면 열려요. 밭은 순서대로 열어요.`), !visit && row(h('button', { class: 'btn primary', onClick: () => walkTo(HX + HW * 0.7, () => openShop('deed')) }, '카피철물 가기'))); return; }
-    if (!p || !p.c) { if (visit) { rc(sheet, closeB, h('b', null, `${k + 1}번 밭 · 비어 있어요`)); return; }
+    const closeB = h('button', { class: 'btn sm fm-x', onClick: () => { sel = -1; drawPlots(); } }, '닫기');
+    if (!isOpen(k)) { rc(sheet, closeB, h('b', null, `🔒 ${k + 1}번 밭`), h('p', { class: 'dim' }, visit ? '아직 열지 않은 밭이에요.' : `카피철물에서 땅 문서(${DEEDS[k - 1].toLocaleString('ko-KR')}코인)를 사면 열려요. 밭은 순서대로 열어요.`), !visit && h('div', { class: 'fm-row' }, h('button', { class: 'btn primary', onClick: () => walkTo(HX + HW * 0.7, () => openShop('deed')) }, '카피철물 가기'))); return; }
+    const rows = rowsOf(k), growing = rows.filter(r => live(r) && !ripe(r, t)), ripeRows = rows.filter(r => live(r) && ripe(r, t));
+    if (pickRow >= 0 && !visit) { // 빈 고랑에 심을 씨앗 고르기
       const have = CROPS.filter(c => ((mine.seeds || {})[c.id] || 0) > 0);
-      rc(sheet, closeB, h('b', null, `${k + 1}번 밭 · 씨앗 심기`), have.length ? h('div', { class: 'fm-seeds' }, ...have.map(c => { const can = c.t <= tool();
-        return h('button', { class: 'fm-seed' + (can ? '' : ' off'), onClick: () => can ? doPlant(k, c) : toast(`${TIER_NAME[c.t]} 작물은 ${TOOLS[c.t].name}가 있어야 심어요`) }, h('img', { src: cropImg(c.id), alt: '' }), h('small', null, `${c.name} ×${mine.seeds[c.id]}`), h('em', null, left(c.ms))); }))
-        : h('p', { class: 'dim' }, '가진 씨앗이 없어요. 카피철물에서 씨앗을 사 오세요.'), !have.length && row(h('button', { class: 'btn primary', onClick: () => walkTo(HX + HW * 0.7, () => openShop('seed')) }, '카피철물 가기'))); return; }
-    const c = cropOf(p.c), s = scoreOf(p, t), done = ripe(p, t), wetLeft = Math.max(0, p.wet - t), wetP = Math.min(1, wetLeft / (p.ms * 0.5));
+      rc(sheet, closeB, h('b', null, `${k + 1}번 밭 ${pickRow + 1}번째 고랑 · 씨앗 고르기`), have.length ? h('div', { class: 'fm-seeds' }, ...have.map(c => { const can = c.t <= tool();
+        return h('button', { class: 'fm-seed' + (can ? '' : ' off'), onClick: () => can ? doPlant(k, pickRow, c) : toast(`${TIER_NAME[c.t]} 작물은 ${TOOLS[c.t].name}가 있어야 심어요`) }, h('img', { src: cropImg(c.id), alt: '' }), h('small', null, `${c.name} ×${mine.seeds[c.id]}`), h('em', null, left(c.ms))); }))
+        : h('p', { class: 'dim' }, '가진 씨앗이 없어요. 카피철물에서 씨앗을 사 오세요.'), h('div', { class: 'fm-row' }, h('button', { class: 'btn', onClick: () => { pickRow = -1; drawSheet(); } }, '← 고랑 목록'), !have.length && h('button', { class: 'btn primary', onClick: () => walkTo(HX + HW * 0.7, () => openShop('seed')) }, '카피철물 가기'))); return; }
     const gauge = (label, v, cls) => h('div', { class: 'fm-g ' + cls }, h('span', null, label), h('i', null, h('u', { style: { width: Math.round(v * 100) + '%' } })), h('small', null, Math.round(v * 100) + '%'));
-    const grow = Math.min(1, (t - p.at) / p.ms);
+    const rowCard = (r, i) => { if (!live(r)) return h('div', { class: 'fm-rcard empty' }, h('span', { class: 'fm-rn' }, `${i + 1}`), h('b', null, r && r.lost ? '까마귀가 가져갔어요 🐦‍⬛' : '빈 고랑'), !visit && h('button', { class: 'btn sm primary', onClick: () => { pickRow = i; drawSheet(); } }, '🌱 심기'));
+      const c = cropOf(r.c), rp = ripe(r, t), s = scoreOf(r, t);
+      return h('div', { class: 'fm-rcard' }, h('span', { class: 'fm-rn' }, `${i + 1}`), h('img', { src: cropImg(c.id), alt: '' }), h('div', { class: 'fm-rbody' }, h('b', null, `${c.name} · ${rp ? (rotten(r, t) ? '시들었어요' : '수확!') : left(r.at + r.ms - t) + ' 남음'}`),
+        rp ? h('small', null, rotten(r, t) ? '3일 넘게 안 거둬서 F' : `컨디션 ${Math.round(s * 100)}% · ${left(r.at + r.ms + ROT_MS - t)} 안에 거두기`) : [gauge('자람', Math.min(1, (t - r.at) / r.ms), 'grow'), gauge('컨디션', s, s >= 0.85 ? 'good' : s >= 0.6 ? 'ok' : 'bad'), gauge('물', Math.min(1, Math.max(0, r.wet - t) / (r.ms * 0.5)), 'water')])); };
     const acts = [];
-    if (done) { if (!visit) acts.push(h('button', { class: 'btn primary', onClick: () => doHarvest(k) }, rotten(p, t) ? '🗑️ 치우기 (시들었어요)' : `🧺 수확하기 (${YIELD}개)`)); }
-    else {
-      acts.push(h('button', { class: 'btn' + (dryNow(p, t) ? ' primary' : ''), onClick: () => doWater(k) }, h('img', { class: 'fm-ic', src: 'img/farm/can.webp', alt: '' }), visit ? '물 주고 오기' : '물 주기'));
-      if (!visit && weedNow(p, t)) acts.push(h('button', { class: 'btn primary', onClick: () => doWeed(k) }, h('img', { class: 'fm-ic', src: 'img/farm/sickle.webp', alt: '' }), '잡초 베기'));
-    }
-    rc(sheet, closeB, h('div', { class: 'fm-head' }, h('img', { src: cropImg(c.id), alt: '' }), h('div', null, h('b', null, `${k + 1}번 밭 · ${c.name}`), h('small', null, done ? (rotten(p, t) ? '수확할 때를 놓쳐서 시들었어요 (F)' : `다 자랐어요! ${left(p.at + p.ms + ROT_MS - t)} 안에 거두면 돼요`) : `다 자라기까지 ${left(p.at + p.ms - t)}`))),
-      gauge('🌱 자람', grow, 'grow'), gauge('💪 컨디션', s, s >= 0.85 ? 'good' : s >= 0.6 ? 'ok' : 'bad'), !done && gauge('💧 물', wetP, 'water'),
-      h('p', { class: 'dim fm-tip' }, done ? '컨디션 85% 이상이면 A급(가끔 S급), 60% 이상 B급, 그 아래는 C급이에요. 다 자란 뒤 3일 넘게 안 거두면 시들어 F(폐기)예요.' : `물은 한 번 주면 ${left(p.ms * 0.5)} 버텨요. ${weedNow(p, t) ? (visit ? '잡초가 났어요. 잡초는 밭 주인만 벨 수 있어요.' : '잡초가 났어요! 베어 주세요.') : p.cut ? '잡초는 베었어요.' : '자라는 동안 잡초가 한 번 나요.'} 컨디션이 높을수록 좋은 등급이 나와요.`),
-      row(...acts));
+    if (growing.length) { acts.push(h('button', { class: 'btn' + (growing.some(r => dryNow(r, t)) ? ' primary' : ''), onClick: () => doWater(k) }, h('img', { class: 'fm-ic', src: 'img/farm/can.webp', alt: '' }), visit ? '물 주고 오기' : '물 주기'));
+      if (!visit && growing.some(r => weedNow(r, t))) acts.push(h('button', { class: 'btn primary', onClick: () => doWeed(k) }, h('img', { class: 'fm-ic', src: 'img/farm/sickle.webp', alt: '' }), '잡초 베기')); }
+    if (ripeRows.length && !visit) acts.push(h('button', { class: 'btn primary', onClick: () => doHarvest(k) }, `🧺 수확하기 (${ripeRows.length}고랑)`));
+    rc(sheet, closeB, h('b', null, `${k + 1}번 밭`), ...rows.map(rowCard),
+      h('p', { class: 'dim fm-tip' }, `물은 한 번 주면 자라는 시간의 절반 동안 버텨요(물 주기는 밭 전체에). 고랑마다 잡초가 한 번 나요${visit ? '(잡초는 밭 주인만 벨 수 있어요)' : ''}. 컨디션 85% 이상 A급(가끔 S), 60% 이상 B급, 그 아래 C급, 다 자란 뒤 3일 넘게 안 거두면 F.`),
+      h('div', { class: 'fm-row' }, acts));
   }
-  async function doPlant(k, c) { const t = now(), n = (mine.seeds || {})[c.id] || 0; if (n <= 0) return; sfx('pop');
-    await ctx.store.update(myRef(), { [`seeds/${c.id}`]: n - 1 >= 1 ? n - 1 : null, [`plots/${k}`]: plant(c.id, t) }).catch(() => {}); toast(`${c.name}을(를) 심었어요. 물도 줬어요 💧`, 1800); }
-  async function doWater(k) { const p = plotOf(k); if (!p) return; sfx('splash'); const q = water(p, now()); await savePlot(k, q);
-    if (who !== ctx.uid) { ctx.store.set(`farm/${who}/note`, { by: ctx.uid, at: now(), k }).catch(() => {}); toast(`${ctx.nameOf(who)}네 ${cropOf(p.c).name}에 물을 줬어요 💧`, 2000); } else toast('물을 줬어요 💧', 1200); }
-  async function doWeed(k) { const p = plotOf(k); if (!p) return; sfx('tock'); await savePlot(k, weed(p, now())); toast('잡초를 베었어요 🌿', 1200); }
-  async function doHarvest(k) { const p = plotOf(k), t = now(); if (!p || !ripe(p, t)) return; const g = gradeOf(p, t), c = cropOf(p.c), n = p.lost ? YIELD - Math.round(YIELD / 3) : YIELD;
-    const patch = { [`plots/${k}`]: null }; if (g !== 'F') patch[`barn/${c.id}|${g}`] = ((mine.barn || {})[`${c.id}|${g}`] || 0) + n;
-    await ctx.store.update(myRef(), patch).catch(() => {}); sfx(g === 'S' ? 'bigfish' : g === 'F' ? 'bad' : 'coin');
-    sel = -1; drawPlots();
-    modal({ title: g === 'F' ? '시들어 버렸어요…' : `${c.name} ${n}개 수확!`, body: [h('div', { class: 'fm-harv g' + g }, h('img', { src: cropImg(c.id), alt: '' }), h('b', { class: 'fm-gr g' + g }, g === 'F' ? 'F' : g + '급')),
-      h('p', { class: 'center' }, g === 'F' ? '다 자란 뒤 3일 넘게 거두지 않아 시들었어요. 이번 작물은 버려야 해요.' : `헛간에 담았어요. 하나에 ${cropPrice(c.id, g).toLocaleString('ko-KR')}코인 · 카피수퍼에서 팔 수 있어요.`)], actions: [{ label: '확인', primary: true }] }); }
+  const setRows = (k, rows) => ctx.store.set(`${curRef()}/plots/${k}`, rows.some(Boolean) ? { rows: Object.fromEntries(rows.map((r, i) => [i, r]).filter(([, r]) => r)) } : null).catch(() => {});
+  async function doPlant(k, i, c) { const t = now(), n = (mine.seeds || {})[c.id] || 0; if (n <= 0) return; sfx('pop'); const rows = rowsOf(k); rows[i] = plant(c.id, t);
+    await ctx.store.update(myRef(), { [`seeds/${c.id}`]: n - 1 >= 1 ? n - 1 : null }).catch(() => {}); await setRows(k, rows); pickRow = -1; toast(`${c.name}을(를) ${i + 1}번째 고랑에 심었어요. 물도 줬어요 💧`, 1800); }
+  async function doWater(k) { const t = now(), rows = rowsOf(k).map(r => (live(r) && !ripe(r, t) ? water(r, t) : r)); sfx('splash'); await setRows(k, rows);
+    if (who !== ctx.uid) { ctx.store.set(`farm/${who}/note`, { by: ctx.uid, at: t, k }).catch(() => {}); toast(`${ctx.nameOf(who)}네 ${k + 1}번 밭에 물을 줬어요 💧`, 2000); } else toast('물을 줬어요 💧', 1200); }
+  async function doWeed(k) { const t = now(), rows = rowsOf(k).map(r => (live(r) && weedNow(r, t) ? weed(r, t) : r)); sfx('tock'); await setRows(k, rows); toast('잡초를 베었어요 🌿', 1200); }
+  async function doHarvest(k) { const t = now(), rows = rowsOf(k), got = [], add = {}; const patch = {};
+    rows.forEach((r, i) => { if (!live(r) || !ripe(r, t)) { if (r && r.lost && ripe(r, t)) rows[i] = null; return; } const g = gradeOf(r, t); got.push([r.c, g]); rows[i] = null;
+      if (g !== 'F') { const key = `${r.c}|${g}`; add[key] = (add[key] || 0) + YIELD_ROW; } });
+    Object.entries(add).forEach(([key, n]) => { patch[`barn/${key}`] = ((mine.barn || {})[key] || 0) + n; });
+    if (!got.length) return; await ctx.store.update(myRef(), patch).catch(() => {}); await setRows(k, rows);
+    const best = got.some(([, g]) => g === 'S') ? 'bigfish' : got.every(([, g]) => g === 'F') ? 'bad' : 'coin'; sfx(best); sel = -1; drawPlots();
+    modal({ title: `${k + 1}번 밭 수확!`, body: [h('div', { class: 'fm-hlist' }, ...got.map(([id, g]) => h('div', { class: 'fm-harv g' + g }, h('img', { src: cropImg(id), alt: '' }), h('b', { class: 'fm-gr g' + g }, g === 'F' ? 'F' : g + '급'), h('small', null, g === 'F' ? '시들었어요' : `${cropOf(id).name} ×${YIELD_ROW}`)))),
+      h('p', { class: 'center' }, got.some(([, g]) => g !== 'F') ? '헛간에 담았어요. 카피수퍼에서 팔 수 있어요.' : '다 자란 뒤 3일 넘게 거두지 않아 시들었어요.')], actions: [{ label: '확인', primary: true }] }); }
 
   // 헛간: 거둔 작물
   function openBarn() { const L = Object.entries(mine.barn || {}).filter(([, n]) => n > 0).sort();
@@ -156,7 +169,7 @@ export function openFarm(o) {
       if (tab === 'seed') [1, 2, 3].forEach(tr => { rows.push(h('b', { class: 'so-sellh' }, `${TIER_NAME[tr]} 작물${tr > tool() ? ` · ${TOOLS[tr].name} 필요` : ''}`));
         rows.push(h('div', { class: 'fm-sgrid' }, ...CROPS.filter(c => c.t === tr).map(c => { const lock = c.t > tool(), n = (mine.seeds || {})[c.id] || 0;
           return h('button', { class: 'fm-sbuy' + (lock ? ' off' : ''), onClick: () => lock ? toast(`${TOOLS[c.t].name}를 먼저 사야 해요`) : buy(c.seed, { [`seeds/${c.id}`]: n + 1 }, `${c.name} 씨앗을 샀어요 (가진 것 ${n + 1})`) },
-            h('img', { src: cropImg(c.id), alt: '' }), h('b', null, c.name), h('small', null, `${c.seed.toLocaleString('ko-KR')}코인 · ${left(c.ms)}`), h('small', null, `하나 ${c.base}~${c.base * 2}코인${n ? ` · 가진 씨앗 ${n}` : ''}`)); }))); });
+            h('img', { src: cropImg(c.id), alt: '' }), h('b', null, c.name), h('small', null, `${c.seed.toLocaleString('ko-KR')}코인 · 고랑 1줄 · ${left(c.ms)}`), h('small', null, `하나 ${c.base}~${c.base * 2}코인${n ? ` · 가진 씨앗 ${n}` : ''}`)); }))); });
       if (tab === 'tool') TOOLS.slice(1).forEach(tl => { const have = tool() >= tl.t;
         rows.push(h('button', { class: 'so-row big' + (have ? ' off' : '') , onClick: () => have ? toast('이미 가지고 있어요') : tl.t > tool() + 1 ? toast(`${TOOLS[tl.t - 1].name}부터 사야 해요`) : buy(tl.price, { tool: tl.t }, `${tl.name}를 샀어요! ${TIER_NAME[tl.t]} 작물을 심을 수 있어요`) },
           h('span', { class: 'so-rodic' }, h('img', { src: tl.t === 3 ? 'img/farm/sickle.webp' : tl.t === 2 ? 'img/farm/can.webp' : 'img/farm/hoe.webp', alt: '', style: { width: '40px' } })), h('b', null, tl.name), h('small', null, have ? '가지고 있어요 · 한 번 사면 계속 써요' : `${tl.price.toLocaleString('ko-KR')}코인 · ${tl.note}`))); });
