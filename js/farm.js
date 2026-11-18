@@ -81,9 +81,12 @@ export function openFarm(o) {
   // 밭 앞에 서면 화면 아래에 💧 물 주기·🧺 수확 버튼이 뜬다(농기구 등급만큼 한 번에)
   const quickEl = h('div', { class: 'fm-quick' }); let quickKey = '', quickAt = 0;
   // 물 주기 안내: 초급은 'N번 이랑 차례에요'(물이 가장 먼저 마를 이랑부터 한 줄씩), 중급은 2줄씩·남으면 '한 번 더', 고급은 밭 전체
+  // 물 줄 차례(밭마다): 다음에 줄 이랑 번호를 기억해 두고, 자라는 이랑만 그 번호부터 차례로 돈다
+  const turnKey = k => `capy-wturn-${who}-${k}`, getTurn = k => { try { return +localStorage.getItem(turnKey(k)) || 0; } catch { return 0; } }, setTurn = (k, v) => { try { localStorage.setItem(turnKey(k), String(v % 3)); } catch {} };
+  const turnOrder = (k, idx) => { const st = getTurn(k), a = idx.filter(i => i >= st), b = idx.filter(i => i < st); return [...a, ...b]; };
   function waterHint(k) { const t = now(), cur = rowsOf(k), idx = cur.map((r, i) => i).filter(i => live(cur[i]) && !ripe(cur[i], t)); if (!idx.length) return '';
     const T = tool(); if (T >= 3) return '한 번에 밭을 적셔요';
-    const order = idx.slice().sort((a, b) => (cur[a].wet || 0) - (cur[b].wet || 0)), lw = lastWater[k];
+    const order = turnOrder(k, idx), lw = lastWater[k];
     if (T === 1) return `${order[0] + 1}번 이랑 차례에요`;
     return lw && lw.left > 0 && t - lw.t < 300000 ? '한 번 더 줘요' : '한 번에 2이랑씩 물줘요'; }
   const lastWater = {}; // 밭마다 방금 물 준 때와 아직 못 적신 이랑 수(중급 '한 번 더' 안내용)
@@ -188,9 +191,9 @@ export function openFarm(o) {
   async function doPlant(k, i, c) { const t = now(), n = (mine.seeds || {})[c.id] || 0; if (n <= 0) return; sfx('pop'); const rows = rowsOf(k); rows[i] = plant(c.id, t);
     await ctx.store.update(myRef(), { [`seeds/${c.id}`]: n - 1 >= 1 ? n - 1 : null }).catch(() => {}); await setRows(k, rows); pickRow = -1; toast(`${c.name}을(를) ${i + 1}번째 이랑에 심었어요. 물도 줬어요 💧`, 1800); }
   async function doWater(k) { const t = now(), cur = rowsOf(k), n = Math.min(3, tool());
-    // 농기구 등급만큼 이랑을 적신다: 물이 마른 이랑부터, 그다음 가장 먼저 마를 이랑부터
-    const order = cur.map((r, i) => i).filter(i => live(cur[i]) && !ripe(cur[i], t)).sort((a, b) => (cur[a].wet || 0) - (cur[b].wet || 0)), pick = order.slice(0, n);
-    if (!pick.length) return; const rows = cur.map((r, i) => (pick.includes(i) ? water(r, t) : r)); sfx('splash'); useHeld('can'); await setRows(k, rows);
+    // 농기구 등급만큼 이랑을 적신다: 1→2→3번 이랑 차례대로, 물을 주면 무조건 다음 이랑으로 넘어간다
+    const order = turnOrder(k, cur.map((r, i) => i).filter(i => live(cur[i]) && !ripe(cur[i], t))), pick = order.slice(0, n);
+    if (!pick.length) return; setTurn(k, pick[pick.length - 1] + 1); const rows = cur.map((r, i) => (pick.includes(i) ? water(r, t) : r)); sfx('splash'); useHeld('can'); await setRows(k, rows);
     const more = order.length - pick.length; lastWater[k] = { t, left: lastWater[k] && lastWater[k].left > 0 ? 0 : more }; const what = n >= 3 ? '밭 전체에' : `${pick.map(i => i + 1).join('·')}번째 이랑에`;
     if (who !== ctx.uid) { ctx.store.set(`farm/${who}/note`, { by: ctx.uid, at: t, k }).catch(() => {}); toast(`${ctx.nameOf(who)}네 ${k + 1}번 밭 ${what} 물을 줬어요 💧`, 2000); } else toast(`${what} 물을 줬어요 💧${more > 0 ? ` (남은 이랑 ${more}줄은 한 번 더)` : ''}`, 1600); }
   async function doWeed(k) { const t = now(), rows = rowsOf(k).map(r => (live(r) && weedNow(r, t) ? weed(r, t) : r)); sfx('tock'); useHeld('hoe', true); await setRows(k, rows); toast('잡초를 베었어요 🌿', 1200); }
