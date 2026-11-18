@@ -255,7 +255,7 @@ export function openFarm(o) {
     if (dir && !document.querySelector('.modal-wrap')) { me.x = Math.max(30, Math.min(WIDTH - 30, me.x + dir * WALK_SP * (sc ? 1.8 : 1) * dt)); me.tx = me.x; me.then = null; meEl.classList.add('walk'); meEl.classList.toggle('left', dir < 0); me.keyed = true; }
     else if (me.keyed) { me.keyed = false; meEl.classList.remove('walk'); const k = plotEls.findIndex((_, i) => Math.abs(me.x - (plotX(i) + PW / 2)) < PW / 2); if (k >= 0 && k !== sel) { sel = k; pickRow = -1; drawPlots(); } }
     const atShop = me.x < HX + SW + GAP; if (enterBtn.hidden === atShop) enterBtn.hidden = !atShop; if (t - quickAt > 250) { quickAt = t; quickEl.hidden = atShop; if (!atShop) drawQuick(); }
-    const d = me.tx - me.x; if (Math.abs(d) > 2) me.x += Math.sign(d) * Math.min(Math.abs(d), WALK_SP * (sc ? 1.8 : 1) * dt); else if (me.then) { const f = me.then; me.then = null; meEl.classList.remove('walk'); f(); } else meEl.classList.remove('walk');
+    const d = me.tx - me.x; if (Math.abs(d) > 2) me.x += Math.sign(d) * Math.min(Math.abs(d), WALK_SP * (sc ? 1.8 : 1) * dt); else if (me.then) { const f = me.then; me.then = null; meEl.classList.remove('walk'); f(); } else if (!dir) meEl.classList.remove('walk'); // 방향키로 걷는 중엔 걸음 모션을 끊지 않는다(매 프레임 지웠다 붙이면 뒤뚱거림이 안 보인다)
     meEl.style.left = me.x + 'px';
     const want = me.x - scroller.clientWidth / 2; if (Math.abs(scroller.scrollLeft - want) > 4 && (meEl.classList.contains('walk') || dir)) scroller.scrollLeft += (want - scroller.scrollLeft) * Math.min(1, dt * 6);
     if ((tick += dt) > 1) { tick = 0; drawPlots(); }
