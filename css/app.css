@@ -1970,3 +1970,7 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .kb-bflow { display: block; color: #A86A00 !important; font-weight: 700; margin-top: 2px; line-height: 1.35; }
 .kb-tags i.fire { background: #FFE3D6; color: #B4321B; font-weight: 800; }
 .kb-fire button.want { box-shadow: 0 0 0 2px #FFD23F, 0 0 8px #FFB800; animation: kbWant 1s ease-in-out infinite; } @keyframes kbWant { 50% { transform: scale(1.12); } }
+.kb-bubtip { margin: 4px 0 0; font-size: 12px; font-weight: 800; color: #1F6EA6; line-height: 1.25; } .kb-bubmust { display: block; margin-top: 2px; font-size: 11px; font-weight: 900; color: #C2410C; }
+.kb-cooking.kb-inpot { display: grid; place-items: center; pointer-events: none; } .kb-inpot .kb-pimgs { height: 60px; flex-wrap: wrap; max-width: 150px; } .kb-inpot .kb-cutp { transform-origin: center; animation: kbBob 1.4s ease-in-out infinite; } @keyframes kbBob { 50% { translate: 0 -3px; } }
+.kb-rawp .kb-pimgs { height: 40px; } .kb-rawp .kb-cutp { width: 34px; height: 34px; margin: 0 -7px; } .kb-rawp .kb-cutp img { width: 34px; height: 34px; }
+.kb-cutp .w { clip-path: none; } .kb-cutp.emo { display: grid; place-items: center; font-size: 30px; line-height: 1; }
