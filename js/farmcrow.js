@@ -5,7 +5,7 @@ import { sfx } from './sound.js';
 import { cropOf, cropImg } from './farm.js';
 
 const LIMIT = 60000;
-const LV = [null, { n: '초급', need: 2, sp: 150, turn: 1.6, dash: 0, r: 46 }, { n: '중급', need: 3, sp: 230, turn: 1.0, dash: 0.15, r: 40 }, { n: '고급', need: 3, sp: 320, turn: 0.55, dash: 0.35, r: 34 }];
+const LV = [null, { n: '초급', need: 2, sp: 150, turn: 1.6, dash: 0, r: 46 }, { n: '중급', need: 2, sp: 230, turn: 1.0, dash: 0.15, r: 40 }, { n: '고급', need: 2, sp: 320, turn: 0.55, dash: 0.35, r: 34 }];
 const GAME_S = 20;
 
 export function farmCrow(ctx, { goFarm }) {
@@ -48,7 +48,10 @@ export function farmCrow(ctx, { goFarm }) {
   function startGame(lvN) { const lv = LV[lvN] || LV[1]; let hits = 0, shots = [], reload = 0, t0 = performance.now(), lastF = t0, raf = 0, over = false;
     const crowEl = h('img', { class: 'fc-crow', src: 'img/crow/crow.webp', alt: '까마귀' }), arena = h('div', { class: 'fc-arena' }, crowEl);
     const dots = h('span', { class: 'fc-dots' }), bar = h('i', { class: 'fc-bar' }), msg = h('div', { class: 'fc-msg' }, '까마귀를 눌러서 새총을 쏘세요!');
-    const sling = h('div', { class: 'fc-sling', html: '<svg viewBox="0 0 80 100"><path d="M40 98 V56 M40 58 L16 14 M40 58 L64 14" stroke="#8B5A2B" stroke-width="10" stroke-linecap="round" fill="none"/><path d="M16 16 Q40 46 64 16" stroke="#C2410C" stroke-width="4" fill="none"/><circle cx="40" cy="36" r="7" fill="#9CA3AF" stroke="#4B5563" stroke-width="2"/></svg>' });
+    // 새총: 누르면 고무줄이 뒤로 쭉 늘어났다가(0.14초) 놓으면 탁 튕기며 돌이 주머니에서 날아간다
+    const sling = h('div', { class: 'fc-sling', html: '<svg viewBox="0 -10 80 110" style="overflow:visible"><path d="M40 98 V56 M40 58 L16 14 M40 58 L64 14" stroke="#8B5A2B" stroke-width="10" stroke-linecap="round" fill="none"/><path class="fc-band" d="M16 16 Q40 46 64 16" stroke="#C2410C" stroke-width="4.5" fill="none" stroke-linecap="round"/><circle class="fc-pouch" cx="40" cy="31" r="8" fill="#9CA3AF" stroke="#4B5563" stroke-width="2"/></svg>' });
+    let pull = 0, pullTo = null; // pull: 0(그대로)~1(끝까지 당김). pullTo = 당기는 중인 한 발
+    const drawSling = () => { const band = sling.querySelector('.fc-band'), pouch = sling.querySelector('.fc-pouch'), y = 31 + pull * 52; band.setAttribute('d', `M16 16 Q40 ${(46 + pull * 70).toFixed(1)} 64 16`); pouch.setAttribute('cy', y.toFixed(1)); pouch.setAttribute('r', pull > 0.05 ? 8 : 8); pouch.style.display = pull > 0.02 || !pullTo ? '' : ''; };
     const el = h('div', { class: 'fc lv' + lvN }, h('div', { class: 'fc-top' }, h('b', null, `🐦‍⬛ 까마귀 쫓아내기 · ${lv.n}`), dots, h('div', { class: 'fc-time' }, bar)), arena, msg, sling);
     document.body.append(el); game = { el };
     const W = () => arena.clientWidth, H = () => arena.clientHeight, CS = 92;
@@ -56,8 +59,9 @@ export function farmCrow(ctx, { goFarm }) {
     const aim = () => { const a = Math.random() * Math.PI * 2; cr.vx = Math.cos(a); cr.vy = Math.sin(a) * 0.7; };
     const drawDots = () => { dots.textContent = '●'.repeat(hits) + '○'.repeat(Math.max(0, lv.need - hits)); }; drawDots(); aim();
     arena.addEventListener('pointerdown', e => { if (over || reload > performance.now()) return; e.preventDefault(); const r = arena.getBoundingClientRect(), tx = e.clientX - r.left, ty = e.clientY - r.top;
-      const sx = W() / 2, sy = H() + 30, d = Math.hypot(tx - sx, ty - sy), dur = Math.max(160, Math.min(420, d * 0.6));
-      const st = h('i', { class: 'fc-stone' }); arena.append(st); shots.push({ st, sx, sy, tx, ty, at: performance.now(), dur }); reload = performance.now() + 330; sfx('swing'); sling.classList.remove('pull'); void sling.offsetWidth; sling.classList.add('pull'); });
+      const sr = sling.getBoundingClientRect(), sx = sr.left + sr.width / 2 - r.left, sy = sr.top + sr.height * 0.37 - r.top; // 새총 주머니 자리(화면 기준)에서 쏜다
+      sling.style.transform = `rotate(${Math.max(-25, Math.min(25, Math.atan2(tx - sx, sy - ty) * 57))}deg)`; // 겨눈 쪽으로 새총을 살짝 기울인다
+      pullTo = { sx, sy, tx, ty, t: performance.now() }; reload = performance.now() + 420; sfx('tock'); });
     function end(win) { if (over) return; over = true; cancelAnimationFrame(raf);
       if (win) { crowEl.classList.add('flee'); msg.textContent = '까마귀가 도망갔어요! 밭을 지켰어요 🎉'; sfx('bigfish'); put({ res: 'win' }); data = { ...data, crow: { ...cw(), res: 'win' } }; setTimeout(() => { el.remove(); game = null; toast('오늘 까마귀는 다시 오지 않아요', 2200); }, 1700); }
       else { msg.textContent = '놓쳤어요… 까마귀가 이랑을 노려요!'; crowEl.classList.add('grab'); setTimeout(() => { el.remove(); game = null; steal('새총을 피한 까마귀가'); }, 1400); } }
@@ -69,7 +73,12 @@ export function farmCrow(ctx, { goFarm }) {
       if (cr.x < CS / 2) { cr.x = CS / 2; cr.vx = Math.abs(cr.vx); } if (cr.x > w - CS / 2) { cr.x = w - CS / 2; cr.vx = -Math.abs(cr.vx); }
       if (cr.y < CS / 2) { cr.y = CS / 2; cr.vy = Math.abs(cr.vy); } if (cr.y > hh * 0.72) { cr.y = hh * 0.72; cr.vy = -Math.abs(cr.vy); }
       crowEl.style.transform = `translate(${cr.x - CS / 2}px, ${cr.y - CS / 2}px) scaleX(${cr.vx < 0 ? -1 : 1})`; crowEl.classList.toggle('hit', cr.flash > 0.25);
-      shots = shots.filter(s => { const u = Math.min(1, (now - s.at) / s.dur), x = s.sx + (s.tx - s.sx) * u, y = s.sy + (s.ty - s.sy) * u - Math.sin(u * Math.PI) * 30; s.st.style.transform = `translate(${x - 7}px, ${y - 7}px) scale(${1 - u * 0.45})`;
+      if (pullTo) { const k = (now - pullTo.t) / 140; pull = Math.min(1, k); if (k >= 1) { const q = pullTo, d = Math.hypot(q.tx - q.sx, q.ty - q.sy), dur = Math.max(260, Math.min(560, d * 0.85)); const st = h('i', { class: 'fc-stone' }); arena.append(st);
+          shots.push({ st, sx: q.sx, sy: q.sy, tx: q.tx, ty: q.ty, at: now, dur, tr: 0 }); pullTo = null; sfx('swing'); sling.classList.remove('snap'); void sling.offsetWidth; sling.classList.add('snap'); } }
+      else if (pull > 0) pull = Math.max(0, pull - dt * 14); // 놓으면 고무줄이 탁 돌아온다
+      drawSling();
+      shots = shots.filter(s => { const u = Math.min(1, (now - s.at) / s.dur), x = s.sx + (s.tx - s.sx) * u, y = s.sy + (s.ty - s.sy) * u - Math.sin(u * Math.PI) * 40; s.st.style.transform = `translate(${x - 9}px, ${y - 9}px) scale(${1.15 - u * 0.5})`;
+        if (now - s.tr > 28 && u < 1) { s.tr = now; const tr = h('i', { class: 'fc-trail', style: { transform: `translate(${x - 5}px, ${y - 5}px)` } }); arena.append(tr); setTimeout(() => tr.remove(), 280); } // 날아가는 길에 잔상
         if (u < 1) return true; s.st.remove();
         if (Math.hypot(cr.x - s.tx, cr.y - s.ty) < lv.r) { hits++; cr.flash = 0.5; aim(); cr.turn = lv.turn; drawDots(); sfx('hit'); const p = h('b', { class: 'fc-pow', style: { left: s.tx + 'px', top: s.ty + 'px' } }, '퍽!'); arena.append(p); setTimeout(() => p.remove(), 600); msg.textContent = hits >= lv.need ? '' : `맞혔다! ${lv.need - hits}번 더!`; if (hits >= lv.need) end(true); }
         else sfx('miss');

@@ -1678,15 +1678,16 @@ body.vb-on .modal-wrap { z-index: 4600; }
 .fc { position: fixed; inset: 0; z-index: 4550; display: flex; flex-direction: column; background: linear-gradient(rgba(150,200,255,.55), rgba(255,240,200,.35)); backdrop-filter: blur(1px); touch-action: none; user-select: none; }
 .fc-top { display: flex; align-items: center; gap: 8px; padding: calc(env(safe-area-inset-top) + 10px) 12px 8px; background: rgba(46,36,51,.88); color: #fff; }
 .fc-top b { font-size: 15px; } .fc-dots { color: #FFD23F; font-size: 16px; letter-spacing: 2px; } .fc-time { flex: 1; height: 8px; border-radius: 4px; background: rgba(255,255,255,.25); overflow: hidden; } .fc-bar { display: block; height: 100%; background: #FFD23F; }
-.fc-arena { position: relative; flex: 1; overflow: hidden; cursor: crosshair; }
+.fc-arena { position: relative; flex: 1; overflow: visible; cursor: crosshair; }
 .fc-crow { position: absolute; left: 0; top: 0; width: 92px; height: 92px; object-fit: contain; pointer-events: none; filter: drop-shadow(0 6px 6px rgba(0,0,0,.25)); }
 .fc-crow.hit { filter: brightness(2) drop-shadow(0 0 8px #fff); }
 .fc-crow.flee { transition: transform 1.4s ease-in, opacity 1.4s; transform: translate(120vw, -40vh) !important; opacity: 0; }
 .fc-crow.grab { transition: transform 1.2s ease-in; transform: translate(40vw, 80vh) scale(.7) !important; }
-.fc-stone { position: absolute; left: 0; top: 0; width: 14px; height: 14px; border-radius: 50%; background: #8A8F98; border: 2px solid #4B5563; pointer-events: none; }
+.fc-stone { position: absolute; left: 0; top: 0; width: 18px; height: 18px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #D1D5DB, #6B7280); border: 2.5px solid #374151; box-shadow: 0 2px 4px rgba(0,0,0,.4); pointer-events: none; z-index: 6; }
+.fc-trail { position: absolute; left: 0; top: 0; width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,.85); box-shadow: 0 0 6px #fff; pointer-events: none; z-index: 5; animation: fcTrail .28s ease-out forwards; } @keyframes fcTrail { to { opacity: 0; scale: .3; } }
 .fc-pow { position: absolute; transform: translate(-50%, -50%); font: 900 22px/1 var(--head, sans-serif); color: #E5484D; text-shadow: 0 2px 0 #fff; pointer-events: none; animation: fcPow .6s ease-out forwards; } @keyframes fcPow { to { transform: translate(-50%, -110%) scale(1.3); opacity: 0; } }
 .fc-msg { position: absolute; left: 0; right: 0; bottom: 120px; text-align: center; font-weight: 900; font-size: 15px; color: #3E2A1E; text-shadow: 0 1px 0 #fff, 0 0 6px #fff; pointer-events: none; }
-.fc-sling { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 6px); width: 70px; margin-left: -35px; pointer-events: none; } .fc-sling.pull { animation: fcPull .3s ease-out; } @keyframes fcPull { 30% { transform: translateY(8px) scaleY(.92); } }
+.fc-sling { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 6px); width: 92px; margin-left: -46px; pointer-events: none; transform-origin: 50% 90%; transition: transform .12s; z-index: 4; } .fc-sling svg { width: 100%; display: block; overflow: visible; } .fc-sling.snap svg { animation: fcSnap .25s ease-out; } @keyframes fcSnap { 30% { translate: 0 -6px; } 60% { translate: 0 2px; } }
 .fc-lost { position: relative; width: 160px; margin: 0 auto; } .fc-lost img { width: 120px; display: block; margin: 0 auto; } .fc-lost .fc-loot { position: absolute; width: 54px; right: 6px; bottom: 6px; }
 .ck-rent { display: flex; align-items: center; gap: 8px; margin: 6px 0; padding: 8px 10px; border-radius: 14px; background: #2E2433; color: #fff; } .ck-rent > span { font-size: 24px; } .ck-rent > div { flex: 1; display: flex; flex-direction: column; } .ck-rent small { font-size: 11px; opacity: .85; }
 .ck-rent.paid { background: #E6F4DA; color: #2F5A1A; } .ck-order.shut { opacity: .5; }
