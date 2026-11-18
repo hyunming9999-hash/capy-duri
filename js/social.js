@@ -13,7 +13,7 @@ import { openCook, SAUCES, SAUCE_PACK, SAUCE_IMG } from './cook.js';
 import { farmCrow } from './farmcrow.js';
 import { createQuest } from './quest.js';
 import { recOf } from './cook.js';
-import { openFishing, seaBattle, PIRATE_LOOT, FLEE_FEE, CBOAT_FIX, FISH, TIERS, RODS, ZONES, BAIT, BAIT2, BAIT3, baitIc, BALL, CANNON, WBOAT, BOAT_FIX, fishSvg } from './fishing.js';
+import { openFishing, seaBattle, PIRATE_LOOT, FLEE_FEE, CBOAT_FIX, FISH, TIERS, RODS, ZONES, BAIT, BAIT2, BAIT3, baitIc, BALL, CANNON, WBOAT, BOAT_FIX, fishSvg, SHINY_LIST } from './fishing.js';
 
 // 동물마다: 성격, 좋아하는 것, 싫어하는 것, 상징 액세서리, 제일 좋아하는 선물
 const P = (trait, likes, hates, pin, fav) => ({ trait, likes, hates, pin, fav });
@@ -1031,8 +1031,11 @@ export function mount(el, ctx) {
         h('b', null, `🐟 물고기 도감 ${Object.keys(dex).length} / ${FISH.length}${dex.pearl ? ' · 진주 ' + dex.pearl.n + '개' : ''}`),
         h('p', { class: 'dim center' }, '아직 못 잡은 물고기는 그림자로 보여요. 잡으면 그 칸이 채워져요.'),
         ...[1, 2, 3].flatMap(z => { const list = FISH.filter(f => f.z === z), got = list.filter(f => dex[f.id]).length; return [h('small', { class: 'so-dexz' }, `${ZONES[z]} ${got} / ${list.length}`),
-          h('div', { class: 'so-dex' }, list.map(f => dex[f.id] ? h('div', { class: 'so-dexi' + (f.king ? ' king' : f.rare ? ' rare' : '') }, h('span', { html: fishSvg(f) }), h('b', null, f.name), h('small', { class: 'so-dext t' + (f.tier || 1) }, TIERS[f.tier || 1].s), h('small', null, `${dex[f.id].n}마리 · 최대 ${dex[f.id].best}cm${dex[f.id].s ? ` · ✨이로치 ${dex[f.id].s}` : ''}`))
-            : h('div', { class: 'so-dexi shadow' }, h('span', { html: fishSvg(f) }), h('b', null, '???'), h('small', null, TIERS[f.tier || 1].n))))]; }),
+          h('div', { class: 'so-dex' }, list.map(f => dex[f.id] ? h('div', { class: 'so-dexi' + (f.king ? ' king' : f.rare ? ' rare' : '') }, h('span', { html: fishSvg(f) }), h('b', null, f.name), h('small', { class: 'so-dext t' + (f.tier || 1) }, TIERS[f.tier || 1].s), h('small', null, `${dex[f.id].n}마리 · 최대 ${dex[f.id].best}cm`))
+            : h('div', { class: 'so-dexi shadow' }, h('span', { html: fishSvg(f) }), h('b', null, '???'), h('small', null, TIERS[f.tier || 1].n)))),
+          ...(L => [h('small', { class: 'so-dexz shy' }, `✨ ${ZONES[z]} 이로치 ${L.filter(f => (dex[f.id] || {}).s).length} / ${L.length}`),
+            h('div', { class: 'so-dex' }, L.map(f => (dex[f.id] || {}).s ? h('div', { class: 'so-dexi shy' }, h('span', { html: fishSvg(f, false, true) }), h('b', null, f.name), h('small', { class: 'so-dext shy' }, '이로치'), h('small', null, `${dex[f.id].s}마리`))
+              : h('div', { class: 'so-dexi shadow' }, h('span', { html: fishSvg(f, false, true) }), h('b', null, '???'), h('small', null, '이로치'))))])(SHINY_LIST[z].map(id => FISH.find(f => f.id === id)))]; }),
         h('b', null, `동물에게 산 전용 모자 ${wares.length} / ${ANIMALS.length}`),
         wares.length ? h('div', { class: 'so-list' }, wares.map(i => { const w = wareOf(i), on = wearing(w.id); return h('button', { class: 'so-row big' + (on ? ' on' : ''), onClick: async () => { await wearCloth(w.id, !on); draw(); } }, tryOn(w.id), h('b', null, w.name), h('small', null, `${ANIMALS[i].name}에게 삼 · ${on ? '입는 중 (누르면 벗기)' : '누르면 입기'}`)); })) : h('p', { class: 'dim center' }, '동물과 거래하면 그 동물만 파는 전용 모자를 살 수 있어요.'),
         h('p', { class: 'dim center' }, '눌러서 착용하거나 빼요. 액세서리는 가슴이나 손에만 보여요(얼굴만 나오는 곳에는 안 보여요).')); };

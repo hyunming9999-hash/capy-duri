@@ -52,10 +52,23 @@ const sigOf = (z, n) => `${(z === 3 ? DEEP[n % DEEP.length] : z === 2 ? (n % 3 ?
   FISH.forEach(f => { if (f.k < OLD_N[f.z]) return; let n = f.k * 7 + f.z * 13; while (used.has(sigOf(f.z, n))) n++; f.seed = n; used.add(sigOf(f.z, n)); }); }
 // 물고기 그림: 힉스필드로 새로 그린 그림(img/fish/<id>.webp). 그림이 없으면 예전 손그림으로 그린다
 const FISH_IMG = true, OLD_LOOK = new Set();
-export const SHINY_P = 1 / 40, SHINY_X = 1.5; // 이로치(색이 다른 물고기): 중급부터 아주 가끔, 값은 1.5배
+// 이로치(색이 다른 물고기): 바다마다 정해진 흔한 물고기만(초급 10·중급 7·고급 5종). 한 종이 희귀 물고기 한 종만큼 드물게 나오고, 색이 바뀌고 작은 장신구를 단다
+export const SHINY_N = { 1: 10, 2: 7, 3: 5 }, SHINY_LIST = { 1: [], 2: [], 3: [] }, SHINY_X = TIERS[3].x / TIERS[1].x;
+for (const z of [1, 2, 3]) { const l = FISH.filter(f => f.z === z && f.tier === 1); for (let i = 0; i < SHINY_N[z]; i++) SHINY_LIST[z].push(l[Math.floor(i * l.length / SHINY_N[z])].id); }
+export const SHINY_IDS = new Set(Object.values(SHINY_LIST).flat());
+const SH_AT = { 'f1-0': [34, 14], 'f1-3': [28, 30], 'f1-6': [28, 27], 'f1-16': [28, 30], 'f1-21': [34, 14], 'f1-26': [28, 15], 'f1-28': [28, 39], 'f1-34': [28, 20], 'f1-40': [28, 15], 'f1-47': [28, 28], 'f2-0': [28, 25], 'f2-8': [29, 9], 'f2-14': [30, 14], 'f2-27': [28, 17], 'f2-33': [28, 17], 'f2-39': [30, 16], 'f2-48': [28, 13], 'f3-0': [34, 14], 'f3-14': [28, 24], 'f3-21': [28, 8], 'f3-40': [28, 11], 'f3-49': [28, 24] };
+const ACC = ['<path d="M-8 0L-8-9-4-4 0-11 4-4 8-9 8 0z" fill="#FFD84D" stroke="#B8860B" stroke-width="1.2" stroke-linejoin="round"/><circle cx="0" cy="-3" r="1.6" fill="#FF5C8A"/>', // 왕관
+  '<path d="M0-4L-9-10-9 2zM0-4L9-10 9 2z" fill="#FF6FA5" stroke="#C2185B" stroke-width="1.1" stroke-linejoin="round"/><circle cx="0" cy="-4" r="2.6" fill="#FF9EC4" stroke="#C2185B" stroke-width="1"/>', // 리본
+  '<g fill="#FFFFFF" stroke="#E58FB0" stroke-width="1"><circle cx="0" cy="-10" r="3.2"/><circle cx="4.6" cy="-6.6" r="3.2"/><circle cx="2.8" cy="-1.4" r="3.2"/><circle cx="-2.8" cy="-1.4" r="3.2"/><circle cx="-4.6" cy="-6.6" r="3.2"/></g><circle cx="0" cy="-5.6" r="2.4" fill="#FFD84D"/>', // 꽃
+  '<path d="M0-12L2.6-6.4 8.6-5.8 4-1.8 5.4 4 0 1 -5.4 4 -4-1.8 -8.6-5.8 -2.6-6.4z" fill="#FFE066" stroke="#C99A1E" stroke-width="1.1" stroke-linejoin="round"/>', // 별핀
+  '<rect x="-6" y="-13" width="12" height="11" rx="1.5" fill="#3B3355"/><rect x="-6" y="-5.5" width="12" height="2.6" fill="#E94B6A"/><rect x="-9.5" y="-2.8" width="19" height="3" rx="1.5" fill="#3B3355"/>', // 모자
+  '<path d="M0 0C-9-5-9-12-4.5-12-2-12 0-10 0-8 0-10 2-12 4.5-12 9-12 9-5 0 0z" fill="#FF4F6E" stroke="#B3123A" stroke-width="1.1"/><circle cx="-4" cy="-8.5" r="1.3" fill="#fff" opacity=".8"/>']; // 하트핀
 const shinyHue = f => 110 + ((f.k * 53 + f.z * 31) % 140);
 export function fishSvg(f, big, shiny) { const sv = fishSvg0(f, big); if (!shiny) return sv;
-  return sv.replace('<svg ', `<svg style="filter:hue-rotate(${shinyHue(f)}deg) saturate(1.35) brightness(1.06)" `).replace('</svg>', '<g fill="#fff" stroke="#FFE066" stroke-width="1"><path d="M14 8l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M104 60l1.5 3.500 3.500 1.500-3.500 1.500-1.500 3.500-1.500-3.500-3.500-1.500 3.500-1.500z"/><path d="M98 6l1.200 3 3 1.200-3 1.200-1.200 3-1.200-3-3-1.200 3-1.200z"/></g></svg>'); }
+  const id = 'shy-' + f.id, i = sv.indexOf('>') + 1, j = sv.lastIndexOf('</svg>'), [x, y] = SH_AT[f.id] || [30, 16], n = [...SHINY_IDS].indexOf(f.id);
+  const acc = n < 0 ? '' : `<g transform="translate(${x} ${y + 3})">${ACC[n % ACC.length]}</g>`; // 정해진 이로치만 장신구를 단다(예전에 잡은 다른 이로치는 색만)
+  return sv.slice(0, i) + `<defs><filter id="${id}" color-interpolation-filters="sRGB"><feColorMatrix type="hueRotate" values="${shinyHue(f)}"/><feColorMatrix type="saturate" values="1.35"/></filter></defs><g filter="url(#${id})">` + sv.slice(i, j) + '</g>' + acc
+    + '<g fill="#fff" stroke="#FFE066" stroke-width="1"><path d="M14 8l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><path d="M104 60l1.5 3.5 3.5 1.5-3.5 1.5-1.5 3.5-1.5-3.5-3.5-1.5 3.5-1.5z"/></g></svg>'; }
 function fishSvg0(f, big) {
   if (f.id && !f.pearl && !f.icon && !OLD_LOOK.has(f.id) && FISH_IMG) return `<svg viewBox="0 0 120 80"><image href="img/fish/${f.id}.webp" x="0" y="0" width="120" height="80" preserveAspectRatio="xMidYMid meet"/></svg>`;
   if (f.pearl) return `<svg viewBox="0 0 120 80"><image href="img/fish/pearl.webp" x="0" y="0" width="120" height="80" preserveAspectRatio="xMidYMid meet"/></svg>`; // 힉스필드로 그린 바다 진주
@@ -84,7 +97,7 @@ export function rollCatch(zone, rodT, isPearl, power) {
   const g = rollGrade(power), [b0, b1] = GRADE[g].band, t = b0 + (b1 - b0) * Math.random(), cm = Math.round((f.cm[0] + (f.cm[1] - f.cm[0]) * t) * 10) / 10;
   const price = Math.round((f.price[0] + (f.price[1] - f.price[0]) * Math.pow(t, 1.3)) * GRADE[g].x);
   const d = zone === 1 ? 1 + t * 2 : zone === 2 ? 4 + t * 2 + (f.rare ? 1 : 0) : 6.5 + t * 2 + (f.king ? 1 : 0); // 낚싯대 차이는 '끊어짐 칸을 몇 번 버티나'로 따로 매긴다
-  const shiny = zone >= 2 && Math.random() < SHINY_P;
+  const shiny = SHINY_IDS.has(f.id) && Math.random() < TIERS[3].w * (1 + power * 1.2) / TIERS[f.tier || 1].w; // 이로치 한 종 = 희귀 물고기 한 종만큼 드물게
   return { f, cm, g, price: shiny ? Math.round(price * SHINY_X) : price, d, p: power, shiny };
 }
 // 등급 확인하기: 이 물고기가 몇 등급인지, 등급표(확률·크기·값)에서 어디쯤인지 보여 준다
