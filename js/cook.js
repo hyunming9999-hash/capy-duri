@@ -1,7 +1,7 @@
 // 카피백반 — 카피수퍼 옆 백반집. 하루 세 번 장사, 한 번에 손님 한 명(원테이블 식당). 퀘스트 요리도 여기서 만든다
 // 재료(생선 살·작물·밥·양념)를 도마에 올리고 → 도마(날것)·냄비·프라이팬·튀김기 중 하나로 조리 → 원하는 익힘에서 꺼내 → 손님에게 바로 판다
 import { h, toast, modal, ymd } from './ui.js';
-import { sfx } from './sound.js';
+import { sfx, sizzle } from './sound.js';
 import { FISH, TIERS } from './fishing.js';
 import { cropOf } from './farm.js';
 
@@ -100,7 +100,7 @@ export function openCook(o) {
     let fid = null, fany = 0; if (r.fz && Math.random() < 0.4) { const zs = [1, 1, 1, 2, 2, 3].filter(z => z >= r.fz); fany = zs.length ? pick(zs) : r.fz; } // 10명 중 4명은 '초급(중급·고급) 물고기면 다 돼'
     else if (r.fz) { const cand = FISH.filter(f => f.z === r.fz && !f.king && !f.pearl && !f.icon && (f.tier || 1) <= 2), mine = cand.filter(f => o.fish().some(([, , g]) => g && g.id === f.id)); const src = mine.length && Math.random() < 0.6 ? mine : cand; fid = src.length ? pick(src).id : null; }
     const fr = (r.st === 'pot' || r.st === 'pan') && Math.random() < 0.4 ? pick([1, 2, 3]) : 0; // 10명 중 4명은 '약불로·중불로·강불로' 콕 집어 주문
-    let rw = r.rice ? 1 : 0; if (r.rice && r.id !== 'sushi' && Math.random() < 0.2) rw = 0; else if (!r.rice && (r.st === 'pot' || r.st === 'pan') && Math.random() < 0.2) rw = 1; // 밥 빼 주세요 · 밥 넣어 주세요
+    let rw = r.rice ? 1 : 0; if (r.rice && r.id !== 'sushi' && Math.random() < 0.2) rw = 0; else if (!r.rice) rw = Math.random() < 0.5 ? 1 : 0; // 밥 들어가는 요리는 가끔 '밥 빼 주세요', 나머지는 반쯤 '공깃밥 추가'
     return { a: i, rec: r.id, pref, sauce, sn, no, fid, fany, fire: fr, rw }; }
   const wantRice = od => { const r = recOf(od.rec); return od.rw == null ? (r.rice ? 1 : 0) : od.rw; };
   const ro = w => { const c = (w || '').charCodeAt(w.length - 1) - 0xAC00, j = c >= 0 && c <= 11171 ? c % 28 : 0; return w + (j && j !== 8 ? '으로' : '로'); }; // 받침 있으면 '으로'(ㄹ 받침은 '로')
@@ -111,7 +111,7 @@ export function openCook(o) {
     if (od.fire) out.push(['fire', `${['', '🕯️', '🔥', '🌋'][od.fire]} ${FIRE_N[od.fire]}로 ${DO_V[r.st] || '익힌'} 게 좋아`]);
     if (od.sauce !== r.sauce) out.push(['hot', `${S[0]} ${ro(S[1])} 바꿔`]); else out.push(['', `${S[0]} ${S[1]}${od.sn > 1 ? ' 듬뿍(×2)' : ''}`]);
     if (od.no) out.push(['no', `✕ ${cropName(od.no)} 빼기`]);
-    if (wantRice(od) !== (r.rice ? 1 : 0)) out.push(wantRice(od) ? ['hot', '🍚 밥 넣어 주세요'] : ['no', '🍚 밥 빼 주세요']);
+    if (r.rice) { if (!wantRice(od)) out.push(['no', '🍚 밥 빼 주세요']); } else out.push(wantRice(od) ? ['hot', '🍚 공깃밥 추가'] : ['', '🍚 공깃밥 없이']);
     return out; };
 
   // 화면
@@ -169,18 +169,19 @@ export function openCook(o) {
   function drawKitchen() {
     const od = sess.cs[sess.i]; if (!od) { setTimeout(endSession); return; } const r = recOf(od.rec), a = an(od.a);
     const cust = h('div', { class: 'kb-cust' }, h('div', { class: 'kb-an', html: a.svg }), h('span', { class: 'kb-nm' }, `${a.name} ${TASTE_TAG[tasteOf(od.a)].split(' ')[0]}`),
-      h('button', { class: 'kb-bub', onClick: () => recipeFor(od) }, h('i', { class: 'kb-bubhint' }, '📖 눌러서 레시피'), h('img', { src: r.img, alt: '' }), h('div', null, h('b', null, r.n), h('p', { class: 'kb-bubtip' }, '👆 눌러서 요청사항·레시피 보기'), h('small', { class: 'kb-bubmust' }, '⚠️ 꼭 보면서 요리해요!'))),
+      h('button', { class: 'kb-bub', onClick: () => recipeFor(od) }, h('i', { class: 'kb-bubhint' }, '📖 눌러서 레시피'), h('img', { src: r.img, alt: '' }), h('div', null, h('b', null, r.n), h('div', { class: 'kb-tags' }, ...reqTags(od).map(([c, t]) => h('i', { class: c }, t))))),
       !od.quest && h('button', { class: 'kb-nope', onClick: () => noStock() }, '🙇 다음에 다시 오세요'), h('div', { class: 'kb-counter' }));
     const status = h('div', { class: 'kb-status' }, h('span', null, sess.quest ? '🔍 퀘스트 요리' : `🔔 ${(st.n || 0) + 1}번째 장사 · 손님 ${sess.i + 1}/${sess.cs.length}`), h('button', { class: 'kb-mini', onClick: recipeBook }, '📖'));
-    const trayEl = h('div', { class: 'kb-tray', onClick: () => { if (sel && sel.src === 'slot') putSlot(sel.i, 'tray'); } }, ...[0, 1, 2].map(k => { const d = tray[k]; return d ? h('button', { class: 'kb-dish' + (selT === k ? ' on' : ''), onClick: () => { selT = selT === k ? -1 : k; draw(); } }, h('img', { src: d.img, alt: '' }), h('small', null, `${d.name}${d.rec && d.zone !== 'raw' ? ' · ' + ZN[d.zone] : ''}`)) : h('div', { class: 'kb-slot' }, k ? '' : '완성 요리'); }));
+    const trayEl = h('div', { class: 'kb-tray', onClick: () => { if (sel && sel.src === 'slot') putSlot(sel.i, 'tray'); } }, ...[0, 1, 2].map(k => { const d = tray[k]; return d ? h('button', { class: 'kb-dish' + (selT === k ? ' on' : ''), onClick: () => { selT = selT === k ? -1 : k; draw(); } }, h('img', { src: d.img, alt: '' }), h('small', null, `${d.name}${d.rec && d.zone !== 'raw' ? ' · ' + ZN[d.zone] : ''}${d.rice && d.rec && !recOf(d.rec).rice ? ' + 🍚' : ''}`)) : h('div', { class: 'kb-slot' }, k ? '' : '완성 요리'); }));
+    const gd = guideOf(od); focusK = gd.f; const guideEl = h('p', { class: 'kb-guide' }, h('span', null, '👉'), gd.t);
     const grid = h('div', { class: 'kb-st' }, ...Object.keys(STATIONS).map(stationEl));
     if (slotsFor !== od) { slots = []; slotsFor = od; sel = null; } // 손님이 바뀌면 순서 칸을 비운다
     const prepEl = slotsEl(od);
     const tabs = h('div', { class: 'kb-tabs' }, ...[['fish', '🐟 생선'], ['crop', '🥕 채소·밥'], ['sauce', '🧂 양념']].map(([k, t]) => h('button', { class: tab === k ? 'on' : '', onClick: () => { tab = k; draw(); } }, t)));
     const items = h('div', { class: 'kb-items' }, ...itemList());
-    const btns = h('div', { class: 'kb-btns' }, h('button', { class: 'sm', title: '도마 비우기', onClick: () => { board = board.filter(b => b.t === 'prep'); draw(); } }, '↩'), h('button', { class: 'sm', title: '고른 요리 버리기', onClick: trash }, '🗑'),
+    const btns = h('div', { class: 'kb-btns' }, h('button', { class: 'sm', title: '도마 비우기', onClick: () => { board = board.filter(b => b.t === 'prep'); draw(); } }, '↩ 회수'), h('button', { class: 'sm', title: '고른 요리 버리기', onClick: trash }, '🗑 버리기'),
       h('button', { class: 'go', onClick: serve }, sess.quest ? '🍽 완성! 건네기' : '🍽 손님에게 팔기'));
-    body.replaceChildren(status, cust, trayEl, grid, prepEl, tabs, items, btns); tick(); }
+    trayEl.classList.toggle('kb-focus', focusK === 'tray'); body.replaceChildren(status, cust, guideEl, trayEl, grid, prepEl, tabs, items, btns); tick(); }
   function stationEl(k) { const S = STATIONS[k], s = stn[k], od = (sess && sess.cs[sess.i]) || {}, r = od.rec ? recOf(od.rec) : {};
     const kids = [h('img', { class: 'kb-stimg', src: S.img, alt: '' })];
     if (k === 'board') { // 도마: 재료 그림을 그대로 올려 둔다(누르면 내린다) · 손질하기 버튼
@@ -190,7 +191,7 @@ export function openCook(o) {
         kids.push(h('div', { class: 'kb-cooking kb-inpot' }, picsEl(merge(s.parts).pics, 6)), h('i', { class: 'kb-gauge' }, h('em', { class: 'kb-want', style: { left: wantAt(k) + '%' } }, '▼'), h('b'))); }
       if (!S.fixed) kids.push(h('span', { class: 'kb-fire' }, ...[1, 2, 3].map(f => h('button', { class: (fire[k] === f ? 'on' : '') + (sess && sess.cs[sess.i] && sess.cs[sess.i].fire === f && recOf(sess.cs[sess.i].rec).st === k ? ' want' : ''), onClick: e => { e.stopPropagation(); fire[k] = f; draw(); } }, FIRE_N[f][0]))));
       kids.push(h('span', { class: 'kb-lb' }, s ? h('b', { class: 'kb-z' }) : `${S.ic} ${S.n} · ${S.job}${od.fire && r.st === k ? ` · 손님은 ${FIRE_N[od.fire]}!` : S.best ? ` · ${FIRE_N[S.best]} 추천` : ''}`)); }
-    const el = h('button', { class: 'kb-s ' + k + (s ? ' busy' : ''), onClick: () => useStation(k) }, ...kids); stEls[k] = el; return el; }
+    const el = h('button', { class: 'kb-s ' + k + (s ? ' busy' : '') + (focusK === k ? ' kb-focus' : ''), onClick: () => useStation(k) }, ...kids); stEls[k] = el; return el; }
   const picEl = (p, j) => { const st = { transform: `rotate(${[-14, 9, -4, 15, -8, 11][j % 6]}deg) translateY(${[2, -3, 1, -2, 3, -1][j % 6]}px)` };
     if (!p.s.includes('/')) return h('span', { class: 'kb-cutp emo', style: st }, p.s);
     return h('span', { class: 'kb-cutp', style: st }, ...(p.w ? [h('img', { src: p.s, alt: '', draggable: 'false', class: 'w' })] : [h('img', { src: p.s, alt: '', draggable: 'false', class: 'l' }), h('img', { src: p.s, alt: '', draggable: 'false', class: 'r' })])); };
@@ -201,14 +202,15 @@ export function openCook(o) {
   const PIECE = { sauce: '양념', veg: '채소', meat: '생선', mix: '생선+양념 버무림', vmix: '채소+양념 버무림', all: '손질한 재료 전부' };
   const TINT = { gochu: 'rgba(214,38,18,.62)', chojang: 'rgba(220,60,45,.5)', doenjang: 'rgba(150,95,40,.55)', ssamjang: 'rgba(165,70,30,.55)', soy: 'rgba(95,52,25,.5)', butter: 'rgba(250,215,120,.5)', honey: 'rgba(240,175,50,.5)', tartar: 'rgba(240,235,200,.5)', _: 'rgba(225,195,140,.42)' };
   // 요리 순서 대원칙: 탕·찜·조림(냄비) 양념→채소→생선 · 프라이팬 생선→채소→양념 · 튀김 (생선+양념 버무림)→채소 · 날것은 한 번에
-  function stepsOf(od) { const r = recOf(od.rec), veg = r.crops.filter(c => c !== od.no).map(cropName).concat(wantRice(od) ? ['밥'] : []), sc = `${SAUCES[od.sauce][1]}${od.sn > 1 ? ' ×' + od.sn : ''}`, fish = r.fz ? fishLabel(od) : '';
+  function stepsOf(od) { const r = recOf(od.rec), veg = r.crops.filter(c => c !== od.no).map(cropName).concat(r.rice && wantRice(od) ? ['밥'] : []), sc = `${SAUCES[od.sauce][1]}${od.sn > 1 ? ' ×' + od.sn : ''}`, fish = r.fz ? fishLabel(od) : '';
     const S = k => ({ k, what: k === 'sauce' ? sc : k === 'veg' ? veg.join('·') : k === 'meat' ? fish : k === 'mix' ? `${fish} + ${sc}` : k === 'vmix' ? `${veg.join('·')} + ${sc}` : '재료 전부' });
     if (r.st === 'board') return [S('all')];
     if (r.st === 'pot') return [S('sauce'), veg.length && S('veg'), r.fz && S('meat')].filter(Boolean);
     if (r.st === 'pan') return [r.fz && S('meat'), veg.length && S('veg'), S('sauce')].filter(Boolean);
     return r.fz ? [S('mix'), veg.length && S('veg')].filter(Boolean) : [S('vmix')]; }
   // 순서 칸(1·2·3번) + 반짝이는 안내 글
-  function slotsEl(od) { const r = recOf(od.rec), steps = stepsOf(od), S0 = STATIONS[r.st], s = stn[r.st], cutOn = board.some(b => b.t === 'prep'), full = steps.every((_, i) => slots[i]), nx = steps.findIndex((_, i) => !slots[i]);
+  let focusK = null; // 안내 글이 가리키는 조리도구(테두리가 천천히 빛난다)
+  function guideOf(od) { const r = recOf(od.rec), steps = stepsOf(od), S0 = STATIONS[r.st], s = stn[r.st], cutOn = board.some(b => b.t === 'prep'), full = steps.every((_, i) => slots[i]), nx = steps.findIndex((_, i) => !slots[i]);
     const putN = s ? s.parts.length : 0, sauceTip = nx >= 0 && steps[nx].k === 'sauce' && !cutOn, ga = (w, a) => { const c = w.charCodeAt(w.length - 1) - 0xAC00; return w + (c >= 0 && c < 11172 && c % 28 ? a[0] : a[1]); };
     const guide = r.st === 'board' ? (full ? '1번을 위 완성 칸에 끌어 담으세요' : cutOn ? '손질한 재료를 1번 칸에 끌어 넣으세요' : '재료를 모두 도마에 올리고 🔪 손질하세요')
       : s && s.cooking ? `익힘 정도를 기다리세요 · 게이지가 ▼에 오면 ${ga(S0.n, ['을', '를'])} 눌러요`
@@ -218,7 +220,11 @@ export function openCook(o) {
       : sauceTip ? `${nx + 1}번: 아래 🧂 양념에서 ${ga(steps[nx].what, ['을', '를'])} 누르면 바로 들어가요`
       : steps[nx].k === 'mix' || steps[nx].k === 'vmix' ? `${nx + 1}번: ${ga(steps[nx].what, ['을', '를'])} 도마에 같이 올리고 🔪 손질하면 버무려져요`
       : `${nx + 1}번: ${ga(steps[nx].what, ['을', '를'])} 도마에 올리고 🔪 손질하세요`;
-    return h('div', { class: 'kb-slots' }, h('p', { class: 'kb-guide' }, '👉 ' + guide), h('div', { class: 'kb-srow' }, ...steps.flatMap((st, i) => { const p = slots[i], used = i < putN, tgt = !p && i === nx && cutOn, go = p && full && !used && !(s && s.cooking) && i === putN;
+    const f = r.st === 'board' ? (full ? 'tray' : cutOn ? null : 'board') : s || full ? r.st : cutOn || sauceTip ? null : 'board';
+    return { t: guide, f }; }
+  function slotsEl(od) { const r = recOf(od.rec), steps = stepsOf(od), S0 = STATIONS[r.st], s = stn[r.st], cutOn = board.some(b => b.t === 'prep'), full = steps.every((_, i) => slots[i]), nx = steps.findIndex((_, i) => !slots[i]);
+    const putN = s ? s.parts.length : 0, sauceTip = nx >= 0 && steps[nx].k === 'sauce' && !cutOn, ga = (w, a) => { const c = w.charCodeAt(w.length - 1) - 0xAC00; return w + (c >= 0 && c < 11172 && c % 28 ? a[0] : a[1]); };
+    return h('div', { class: 'kb-slots' }, h('div', { class: 'kb-srow' }, ...steps.flatMap((st, i) => { const p = slots[i], used = i < putN, tgt = !p && i === nx && cutOn, go = p && full && !used && !(s && s.cooking) && i === putN;
       const props = { class: 'kb-slot2' + (p ? ' has' : '') + (tgt || go ? ' hot' : '') + (used ? ' used' : '') + (sel && sel.src === 'slot' && sel.i === i ? ' on' : ''), 'data-slot': i, onClick: () => { if (!p && sel && sel.src === 'board') placeCut(sel.j, i); } };
       if (p && !used) props.onPointerdown = e => dragFrom(e, { src: 'slot', i });
       return [i ? h('i', { class: 'kb-sar' }, '➜') : null, h('div', props, h('b', { class: 'kb-sn' }, i + 1), p && !used ? picsEl(p.pics) : h('span', { class: 'kb-sw' }, used ? '✅' : st.what || PIECE[st.k]), h('small', null, tgt ? '여기다 끌어 넣으세요' : go ? `${S0.n}에 넣으세요` : used ? '넣었어요' : PIECE[st.k]))]; }).filter(Boolean))); }
@@ -260,7 +266,10 @@ export function openCook(o) {
     if (k === 'board') return toast(board.some(b => b.t !== 'prep') ? '🔪 손질하기를 눌러요' : '아래에서 재료를 눌러 도마에 올려요');
     toast('순서 칸의 재료를 끌어서 넣어요'); }
   function finish(k) { const s = stn[k], z = s.saved.includes('burnt') ? 'burnt' : s.saved[s.saved.length - 1], tot = s.fireT[1] + s.fireT[2] + s.fireT[3], good = tot > 0 && s.fireT[STATIONS[k].best] / tot >= 0.6, share = [0, 1, 2, 3].map(f => tot > 0 && f ? s.fireT[f] / tot : 0);
-    const dish = { ...stDish(s, k), steps: s.saved.slice(0, -1) }; tray.push({ ...dish, zone: z, fireGood: good, share }); stn[k] = null; slots = []; sel = null; selT = tray.length - 1; sfx(z === 'burnt' ? 'bad' : 'pop'); draw(); doneFx(dish, z); }
+    const dish = { ...stDish(s, k), steps: s.saved.slice(0, -1) }; const item = { ...dish, zone: z, fireGood: good, share }; tray.push(item); stn[k] = null; slots = []; sel = null; selT = tray.length - 1; sfx(z === 'burnt' ? 'bad' : 'pop'); draw(); doneFx(dish, z); askRice(item); }
+  // 완성 연출이 끝나면 공깃밥을 곁들일지 묻는다(밥이 원래 들어가는 요리·실패한 요리는 묻지 않는다)
+  function askRice(item) { const r = item.rec && recOf(item.rec); if (!r || r.rice || item.zone === 'burnt') return; item.rice = false;
+    setTimeout(() => { if (!alive) return; modal({ title: '🍚 공깃밥도 추가할까요?', body: h('div', { class: 'kb-rice' }, h('img', { src: item.img, alt: '' }), h('span', null, '＋ 🍚'), h('p', null, '손님 요청사항을 확인하고 골라요')), noX: true, actions: [{ label: '아니요', onClick: c => { item.rice = false; c(); draw(); } }, { label: '네, 추가', primary: true, onClick: c => { item.rice = true; sfx('tock'); c(); draw(); } }] }); }, 1800); }
   // 손질하기: 도마 재료를 실제로 쓰고(가방·헛간·양념에서 뺀다) 손질 칸에 담는다
   async function prepBoard() { if (!board.length) return; const olds = board.filter(b => b.t === 'prep').map(b => b.p), raw = board.filter(b => b.t !== 'prep');
     const fish = raw.find(b => b.t === 'fish'), crops = raw.filter(b => b.t === 'crop'), rice = raw.some(b => b.t === 'rice'), sauce = {};
@@ -271,23 +280,23 @@ export function openCook(o) {
     const m = merge([...olds, part]), only = !m.ing.fish && !m.ing.crops.length && !m.ing.rice, mixed = Object.keys(m.sauce).length && !only;
     const guess = ['pot', 'pan', 'fry', 'board'].map(st => identifyFrom(m.ing, st)).find(Boolean);
     const cut = { ...m, sauceOnly: only ? 1 : 0, label: only ? sauceName(m.sauce) : `${guess ? guess.r.n + ' 재료' : '손질한 재료'}${mixed ? ' (양념 버무림)' : ''}` };
-    board = [{ t: 'prep', p: cut }]; sel = null; sfx('tock'); setTimeout(() => sfx('tock'), 120); draw(); }
+    board = [{ t: 'prep', p: cut }]; sel = null; sfx('chop'); draw(); }
   // 손질한 재료를 조리도구에 넣는다(날것 요리는 완성 칸에 바로 담는다)
   const stDish = (s, k) => { const m = merge(s.parts); return dishOf(m, identifyFrom(m.ing, k)); };
   function placeCut(j, i) { const b = board[j], od = sess.cs[sess.i], st = stepsOf(od)[i]; if (!b || b.t !== 'prep' || !st) return; if (slots[i]) return toast(`${i + 1}번 칸은 이미 찼어요`);
     if (!fits(st.k, b.p)) return toast(st.k === 'mix' || st.k === 'vmix' ? `${i + 1}번은 ${PIECE[st.k]} 자리예요. 재료와 양념을 도마에 같이 올려 손질해요` : `${i + 1}번은 ${PIECE[st.k]} 자리예요 (${st.what})`, 1800);
     slots[i] = b.p; board.splice(j, 1); sel = null; sfx('tock'); draw(); }
   function putSlot(i, k) { const od = sess.cs[sess.i], r = recOf(od.rec), steps = stepsOf(od), p = slots[i]; if (!p) return;
-    if (r.st === 'board') { if (k !== 'tray') return toast('날것 요리는 위 완성 칸에 끌어 담아요'); if (tray.length >= 3) return toast('완성 칸이 꽉 찼어요'); const dd = dishOf(p, identifyFrom(p.ing, 'board')); tray.push({ ...dd, zone: 'raw', fireGood: true, steps: [] }); slots = []; sel = null; selT = tray.length - 1; sfx('pop'); draw(); doneFx(dd, 'raw'); return; }
+    if (r.st === 'board') { if (k !== 'tray') return toast('날것 요리는 위 완성 칸에 끌어 담아요'); if (tray.length >= 3) return toast('완성 칸이 꽉 찼어요'); const dd = dishOf(p, identifyFrom(p.ing, 'board')); const item = { ...dd, zone: 'raw', fireGood: true, steps: [] }; tray.push(item); slots = []; sel = null; selT = tray.length - 1; sfx('pop'); draw(); doneFx(dd, 'raw'); askRice(item); return; }
     if (k === 'tray') return toast(`${STATIONS[r.st].n}에서 익혀야 해요`); if (k !== r.st) return toast(`이 요리는 ${STATIONS[r.st].n}에서 만들어요`);
     if (!steps.every((_, j) => slots[j])) return toast(`${steps.length}칸을 다 채운 뒤 1번부터 넣어요`);
     const s = stn[k], n = s ? s.parts.length : 0; if (s && s.cooking) return toast('익는 중이에요. ▼에서 눌러 먼저 저장해요'); if (i !== n) return toast(`${n + 1}번부터 순서대로 넣어요`);
     if (s) { s.parts.push(p); s.cooking = true; s.d = 0; } else stn[k] = { parts: [p], saved: [], total: steps.length, cooking: true, d: 0, fireT: { 1: 0, 2: 0, 3: 0 } };
-    stn[k].name = stDish(stn[k], k).name; sel = null; sfx(k === 'fry' ? 'sear' : 'splash'); draw(); }
+    stn[k].name = stDish(stn[k], k).name; sel = null; sfx({ pot: 'potin', pan: 'panin', fry: 'fryin' }[k]); draw(); }
   // 요리 완성 연출: 화면 가운데에 완성된 요리가 빛줄기·반짝이와 함께 튀어나온다
   function doneFx(dish, z) { const bad = z === 'burnt' || (!dish.rec), fx = h('div', { class: 'kb-done' + (bad ? ' bad' : '') }, h('i', { class: 'kb-rays' }), h('img', { src: dish.img, alt: '' }), h('b', null, bad ? (z === 'burnt' ? '앗, 탔어요…' : '정체불명 요리…') : `${dish.name} 완성!`), h('small', null, z === 'raw' ? '날것 그대로' : ZN[z]),
       ...(bad ? [] : Array.from({ length: 12 }, (_, k) => h('em', { class: 'kb-spark', style: { '--a': (k * 30) + 'deg', animationDelay: (k % 3) * 0.08 + 's' } }, k % 3 ? '✦' : '✨'))));
-    document.body.append(fx); sfx(bad ? 'bad' : 'bigfish'); setTimeout(() => fx.classList.add('out'), 1300); setTimeout(() => fx.remove(), 1750); }
+    document.body.append(fx); sfx(bad ? 'bad' : 'fanfare'); setTimeout(() => fx.classList.add('out'), 1300); setTimeout(() => fx.remove(), 1750); }
   const dishOf = (p, m) => { const r = m && m.r; return { rec: r ? r.id : null, name: r ? r.n : '정체불명 요리', img: r ? r.img : 'img/cook/fishdish.webp', miss: m ? m.miss : [], crops: p.ing.crops, rice: !!p.ing.rice, fid: p.ing.fish ? p.ing.fish.id : null, fz: p.ing.fish ? p.ing.fish.z || 1 : 0, sauce: p.sauce, gx: p.gx, tx: p.tx }; };
   // 끌어다 넣기: 손질 칸 재료를 누른 채 조리도구(또는 완성 칸) 위로 끌어 놓는다. 그냥 누르면 골라 두기
   function dragFrom(e, sd) { e.preventDefault(); const src = e.currentTarget, x0 = e.clientX, y0 = e.clientY, sq = sd.src === 'board' ? '.kb-slot2' : '.kb-s, .kb-tray'; let ghost = null;
@@ -303,9 +312,10 @@ export function openCook(o) {
   function trash() { if (selT >= 0 && tray[selT]) { tray.splice(selT, 1); selT = -1; sfx('bad'); draw(); } else toast('버릴 완성 요리를 먼저 골라요'); }
 
   // 익히기: 불 세기에 따라 빨리 익는다. 0.25초마다 고리와 글씨만 고친다
-  let last = performance.now();
+  let last = performance.now(), bubT = 0;
   function loop(t) { if (!alive) return; const dt = Math.min(0.2, (t - last) / 1000); last = t;
     Object.entries(stn).forEach(([k, s]) => { if (!s || k === 'board' || !s.cooking) return; const S = STATIONS[k], f = S.fixed || fire[k]; s.d += dt * 1000 / (S.ms * STEP_X) * 100 * FIRE[f]; s.fireT[f] += dt; });
+    const fr = ['pan', 'fry'].filter(k => stn[k] && stn[k].cooking).length; sizzle(fr); bubT -= dt; if (bubT <= 0) { bubT = 0.55 + Math.random() * 0.4; if (stn.pot && stn.pot.cooking && stn.pot.d > 30) sfx('bubble'); }
     tick(); raf = requestAnimationFrame(loop); }
   function tick() { Object.entries(stn).forEach(([k, s]) => { const el = stEls[k]; if (!s || !el || !el.isConnected) return; const gb = el.querySelector('.kb-gauge b'), wm = el.querySelector('.kb-want'), z = el.querySelector('.kb-z'), zone = zoneAt(s.d);
     if (gb) gb.style.left = Math.min(100, s.d).toFixed(1) + '%'; if (wm) wm.style.left = wantAt(k) + '%';
@@ -389,7 +399,7 @@ export function openCook(o) {
     if (r.fz && od.fany) rows.push(row(h('span', null, '🐟'), `${ZNM[od.fany]} 물고기 아무거나`, zoneCnt(od.fany), 1, `${ZNM[od.fany]} 바다${od.fany < 3 ? ' 이상' : ''}에서 잡은 물고기면 다 돼요`));
     else if (r.fz) rows.push(od.fid && fishOf(od.fid) ? row(h('span', null, '🐟'), `${fishOf(od.fid).name} 살`, fishCnt(od.fid), 1, `${r.fz >= 2 ? '중급' : '초급'} 바다에서 잡아요 · 손님이 콕 집었어요`) : row(h('span', null, '🐟'), `${r.fz >= 2 ? '중급' : '초급'} 바다 생선 살`, fishN, 1, r.fz >= 2 ? '흰 배로 중급 바다에서' : ''));
     r.crops.forEach(c => rows.push(od.no === c ? h('div', { class: 'kb-rr skip' }, h('img', { src: o.cropImg(c), alt: '' }), h('b', null, cropName(c)), h('em', null, '손님이 빼 달래요'), h('span', { class: 'no' }, '넣지 마세요')) : row(h('img', { src: o.cropImg(c), alt: '' }), cropName(c), cropN(c), 1)));
-    if (wantRice(od)) rows.push(row(h('span', null, '🍚'), '공깃밥', 99, 1, r.rice ? '무료' : '무료 · 손님이 넣어 달래요')); else if (r.rice) rows.push(h('div', { class: 'kb-rr skip' }, h('span', null, '🍚'), h('b', null, '공깃밥'), h('em', null, '손님이 빼 달래요'), h('span', { class: 'no' }, '넣지 마세요')));
+    if (wantRice(od)) rows.push(row(h('span', null, '🍚'), '공깃밥', 99, 1, r.rice ? '무료' : '완성 후 [공깃밥 추가 → 네] · 손님이 넣어 달래요')); else if (r.rice) rows.push(h('div', { class: 'kb-rr skip' }, h('span', null, '🍚'), h('b', null, '공깃밥'), h('em', null, '손님이 빼 달래요'), h('span', { class: 'no' }, '넣지 마세요')));
     rows.push(row(sauceIc(od.sauce), `${SAUCES[od.sauce][1]} ×${od.sn}`, sauceN, od.sn, od.sauce !== r.sauce ? `원래 ${SAUCES[r.sauce][1]} → 손님이 바꿔 달래요` : od.sn > 1 ? '손님이 듬뿍 달래요' : ''));
     const zone = ZONES.find(z => z.k === od.pref);
     const steps = flowOf(r, od);
@@ -409,7 +419,7 @@ export function openCook(o) {
     actions: [{ label: '닫기', primary: true }] }); }
   function pantry() { const s = o.sauces() || {}; modal({ title: '🧂 내 양념', body: [h('div', { class: 'kb-pan' }, ...Object.entries(SAUCES).map(([id, [ic, nm]]) => h('div', { class: 'kb-pi' + (s[id] ? '' : ' off') }, sauceIc(id), h('b', null, nm), h('small', null, `${s[id] || 0}번`)))), h('p', { class: 'dim center' }, '양념은 카피수퍼 구매 탭에서 사요.')], actions: [{ label: '닫기', primary: true }] }); }
 
-  function close() { if (!alive) return; alive = false; cancelAnimationFrame(raf); off(); offR(); wrap.remove(); o.onClose && o.onClose(); }
+  function close() { if (!alive) return; alive = false; sizzle(0); cancelAnimationFrame(raf); off(); offR(); wrap.remove(); o.onClose && o.onClose(); }
   draw(); raf = requestAnimationFrame(loop);
   return { close };
 }

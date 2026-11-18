@@ -110,6 +110,13 @@ const SFX = {
   win: (d, t) => [[72, 0], [76, 0.12], [79, 0.24], [84, 0.36], [79, 0.52], [84, 0.64]].forEach(([m, at], i) => { tone(d, 'triangle', hz(m), hz(m), t + at, i === 5 ? 0.6 : 0.16, 0.26); tone(d, 'square', hz(m - 12), hz(m - 12), t + at, i === 5 ? 0.5 : 0.12, 0.05); }),
   lose: (d, t) => [[67, 0], [65, 0.22], [63, 0.44], [60, 0.7]].forEach(([m, at], i) => tone(d, 'triangle', hz(m), hz(m - (i === 3 ? 1 : 0)), t + at, i === 3 ? 0.7 : 0.26, 0.22)),
   draw: (d, t) => [[72, 0], [72, 0.18], [76, 0.36]].forEach(([m, at]) => tone(d, 'triangle', hz(m), hz(m), t + at, 0.2, 0.2)),
+  // 카피백반 주방: 칼질(탁탁탁) · 보글보글 · 팬에 지지기 · 튀김기에 풍덩 · 완성 팡파레
+  chop: (d, t) => [0, 0.11, 0.22, 0.31].forEach((at, k) => { tone(d, 'triangle', 340 - k * 20, 150, t + at, 0.06, 0.32, 0.002); noise(d, t + at, 0.035, 0.28, 2600, 1.4); }),
+  bubble: (d, t) => [0, 0.09, 0.2].forEach(at => { const f = 260 + Math.random() * 260; tone(d, 'sine', f, f * 2.2, t + at + Math.random() * 0.05, 0.07, 0.12, 0.004); }),
+  panin: (d, t) => { noise(d, t, 0.9, 0.42, 4800, 0.5, 'highpass'); noise(d, t, 0.2, 0.3, 2000, 0.7); for (let k = 0; k < 6; k++) noise(d, t + 0.1 + k * 0.11, 0.03, 0.2, 3000 + Math.random() * 3000, 2.5); },
+  fryin: (d, t) => { tone(d, 'sine', 300, 110, t, 0.18, 0.18); noise(d, t + 0.05, 1.2, 0.5, 3600, 0.4, 'highpass'); for (let k = 0; k < 10; k++) noise(d, t + 0.12 + k * 0.09, 0.03, 0.24, 2500 + Math.random() * 4000, 2.5); },
+  potin: (d, t) => { noise(d, t, 0.3, 0.28, 1100, 0.5); tone(d, 'sine', 380, 140, t, 0.2, 0.16); [0.25, 0.38, 0.5].forEach(at => tone(d, 'sine', 300, 700, t + at, 0.06, 0.1, 0.004)); },
+  fanfare: (d, t) => { [[67, 0, 0.12], [67, 0.13, 0.12], [67, 0.26, 0.12], [72, 0.4, 0.5], [76, 0.95, 0.14], [79, 1.1, 0.7]].forEach(([m, at, du]) => { tone(d, 'square', hz(m), hz(m), t + at, du, 0.09); tone(d, 'triangle', hz(m + 12), hz(m + 12), t + at, du, 0.12); }); [48, 55, 60].forEach(m => tone(d, 'triangle', hz(m), hz(m), t + 0.4, 1.3, 0.1)); noise(d, t + 0.4, 0.5, 0.12, 6000, 0.6, 'highpass'); },
 };
 // 동물 30마리의 고유한 소리. 한 줄 = 한 마리, 조각 하나 = [파형, 시작 주파수, 끝 주파수, 시작 시각, 길이, 크기] 또는 ['n', 시작 시각, 길이, 크기, 걸러낼 주파수]
 const S = 'sine', T3 = 'triangle', W = 'sawtooth', Q = 'square';
