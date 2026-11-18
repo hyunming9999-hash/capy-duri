@@ -1986,7 +1986,7 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .kb-raw .kb-cutlb { display: block; text-align: center; font-size: 9.5px; font-weight: 900; color: #fff; background: rgba(91,70,54,.85); border-radius: 6px; margin-top: -4px; white-space: nowrap; }
 .kb-s.board .kb-raw:has(.kb-rawp) { width: 52%; max-width: 120px; cursor: grab; touch-action: none; }
 /* 냄비 물 색 · 끓는 거품 */
-.kb-water { position: absolute; left: 25%; top: 21%; width: 50%; height: 40%; border-radius: 50%; mix-blend-mode: multiply; pointer-events: none; transition: background .6s; overflow: hidden; animation: kbTint .8s ease-out; } @keyframes kbTint { from { opacity: 0; } }
+.kb-water { position: absolute; left: 25%; top: 21%; width: 50%; height: 40%; border-radius: 50%; mix-blend-mode: normal; pointer-events: none; transition: background .6s; overflow: hidden; animation: kbTint .8s ease-out; } @keyframes kbTint { from { opacity: 0; } }
 .kb-water em { position: absolute; bottom: -10px; width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,.75); mix-blend-mode: normal; opacity: 0; }
 .kb-s.boil .kb-water em { animation: kbBub 1.1s ease-in infinite; } @keyframes kbBub { 0% { transform: translateY(0) scale(.5); opacity: 0; } 30% { opacity: .9; } 100% { transform: translateY(-46px) scale(1.2); opacity: 0; } }
 .kb-s.boil .kb-inpot { animation: kbJig .35s ease-in-out infinite; } @keyframes kbJig { 50% { transform: translateY(-2px); } }
