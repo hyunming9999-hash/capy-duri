@@ -95,7 +95,9 @@ export function gradeInfo(f, cm, g) {
     actions: [{ label: '확인', primary: true }] });
 }
 // 쓰레기: 던지는 힘 70 이상(10칸 중 7칸)이면 안 걸리고, 못 미치면 15%. 풍랑: 던질 때마다 1/20 꼴(쓰레기·진주 판엔 안 불어서 조금 보정)
-const TRASH_FAR = 0.7, TRASH_P = 0.15, STORM_P = 0.055;
+const TRASH_FAR = 0.7, TRASH_P = 0.15;
+// 풍랑: 바다마다 10번 던질 때 1~2번. 10번 묶음마다 몇 번째에 불지 미리 정하고, 그 판에 못 불었으면(진주였거나 일찍 끝나서) 다음 판으로 미룬다
+const stormPlan = () => { const k = Math.random() < 0.5 ? 1 : 2, at = []; while (at.length < k) { const x = 1 + Math.floor(Math.random() * 10); if (!at.includes(x)) at.push(x); } return at; };
 // 등급표: 확률(기본) · 크기 구간(물고기 크기 범위 안에서) · 값 배수
 export const GRADE = { S: { p: 3, band: [0.9, 1], x: 2 }, A: { p: 9, band: [0.75, 0.9], x: 1.5 }, B: { p: 18, band: [0.55, 0.75], x: 1.25 }, C: { p: 30, band: [0.3, 0.55], x: 1.1 }, D: { p: 40, band: [0, 0.3], x: 1 } };
 function rollGrade(power) { const w = Object.entries(GRADE).map(([k, v]) => [k, v.p * (k === 'S' || k === 'A' ? 1 + power * 0.6 : 1)]), tot = w.reduce((a, [, x]) => a + x, 0); let r = Math.random() * tot; for (const [k, x] of w) { r -= x; if (r <= 0) return k; } return 'D'; }
@@ -149,13 +151,16 @@ export function openFishing(o) {
     if (zone >= 2 && o.onPirate) { const gap = () => 15 + Math.floor(Math.random() * 6), pn = (b.pcasts || 0) + 1, at = b.pirNext > 0 ? b.pirNext : pn - 1 + gap(), hit = pn >= at; o.save({ pcasts: pn, pirNext: hit ? pn + gap() : at }); if (hit) { close(); return o.onPirate(); } }
     // 진주는 고급 바다에서만: 고급에서 100번 던질 때마다 그 안의 어느 한 번에 문다
     const isPearl = deep && ((n - 1) % 100) + 1 === at; o.save({ bait: b.bait - 1, rodD: b.rodD - 1, casts: (b.casts || 0) + 1, ...(deep ? { casts3: n, pearlAt3: n % 100 === 0 ? 1 + Math.floor(Math.random() * 100) : at } : {}) });
-    cur = rollCatch(zone, rodT(), isPearl, power / 100); stormIn = !cur.f.icon && !cur.f.pearl && Math.random() < STORM_P; stormAt = 0; phase = 'cast'; c0 = performance.now(); castTo = 48 + power * 0.44; flew = false; shown = false; setBar(power, 'pow'); drawInfo();
+    cur = rollCatch(zone, rodT(), isPearl, power / 100);
+    { const key = 'sp' + zone, sp = (o.bag()[key]) || {}, n = (sp.n || 0) % 10 + 1, at = n === 1 || !Array.isArray(sp.at) ? stormPlan() : sp.at, due = !!sp.due || at.includes(n); stormIn = due && !cur.f.pearl; o.save({ [key]: { n, at, due } }); }
+    stormAt = 0; phase = 'cast'; c0 = performance.now(); castTo = 48 + power * 0.44; flew = false; shown = false; setBar(power, 'pow'); drawInfo();
     rodEl.className = 'fs-rod back'; float.className = 'fs-float fly'; hook.classList.add('up'); say(power >= 85 ? '아주 멀리! 큰 물고기가 잘 물고 줄도 덜 끊어져요.' : power >= 55 ? '꽤 멀리 던졌어요.' : '가까이 떨어졌어요. 멀리 던질수록 유리해요.'); btn.textContent = '…'; btn.onclick = null;
   }
   // 찌가 물에 닿았다: 물이 튀고, 줄이 가라앉고, 그때부터 입질을 기다린다
   function splash(x, big) { const r = h('i', { class: 'fs-splash' + (big ? ' big' : ''), style: { left: x + '%' } }); surf.append(r); setTimeout(() => r.remove(), 700); }
   function touch() {
-    const p = cur.p; phase = 'wait'; t0 = performance.now(); biteAt = t0 + rnd(1400, 4200) * (1 - p * 0.35); stormAt = stormIn ? t0 + rnd(1500, 7000) : 0; // 풍랑은 입질을 기다리는 중이나 싸우는 중에 분다 nibAt = Math.random() < 0.6 ? t0 + rnd(400, Math.max(450, biteAt - t0 - 450)) : 0;
+    const p = cur.p; phase = 'wait'; t0 = performance.now(); biteAt = t0 + rnd(1400, 4200) * (1 - p * 0.35); nibAt = Math.random() < 0.6 ? t0 + rnd(400, Math.max(450, biteAt - t0 - 450)) : 0;
+    stormAt = stormIn ? t0 + rnd(900, 2600) : 0; // 풍랑은 입질 오기 전후에 분다(챔질 전에 대부분 불어서 끝까지 못 버틴다)
     if (cur.f.pearl) { wrap.classList.add('pearl'); sfx('bigfish'); pearlTxt.hidden = false; pearlTxt.textContent = '✨ 물속에서 뭔가 반짝여요! ✨'; }
     setFloat(castTo); float.className = 'fs-float'; hook.style.display = ''; hook.classList.remove('up'); rodEl.className = 'fs-rod'; splash(castTo, true); sfx('splash');
     fishEl.className = 'fs-fish on far'; fishEl.innerHTML = shadow(); fishEl.style.left = '125%'; setBar(0);
@@ -182,7 +187,7 @@ export function openFishing(o) {
     say(cur.f.icon ? '누르고 있으면 감아요.' : `줄을 주황 칸에 맞춰야 끌려와요! 빨간 칸은 ${lim()}번 닿으면 끝이에요.`); btn.textContent = '꾹 눌러\n감기'; btn.onclick = null;
   }
   // 풍랑: 하늘이 어두워지고 비바람이 치며 배가 크게 흔들리다가 줄이 풀려 물고기가 달아난다
-  function storm() { stormAt = 0; phase = 'storm'; hold = false; wrap.classList.remove('reel'); wrap.classList.add('storm'); sfx('splash'); setTimeout(() => sfx('bad'), 500); say('🌊 풍랑이다! 배가 크게 흔들려요…', 'warn'); btn.textContent = '…'; btn.onclick = null;
+  function storm() { stormAt = 0; phase = 'storm'; { const key = 'sp' + zone, sp = o.bag()[key] || {}; o.save({ [key]: { ...sp, due: false } }); } // 이번 풍랑을 썼다 hold = false; wrap.classList.remove('reel'); wrap.classList.add('storm'); sfx('splash'); setTimeout(() => sfx('bad'), 500); say('🌊 풍랑이다! 배가 크게 흔들려요…', 'warn'); btn.textContent = '…'; btn.onclick = null;
     setTimeout(() => { if (!alive) return; wrap.classList.remove('storm'); sfx('snap'); phase = 'done'; mark.textContent = ''; float.style.display = rl.style.display = hook.style.display = 'none'; fishEl.className = 'fs-fish'; patEl.hidden = true; wrap.classList.remove('fight', 'reel'); say('');
       // 카드로 알려 주고, 확인을 눌러야 닫힌다(뜬 직후 1.2초는 안 눌려서 연타로 바로 닫히지 않는다)
       const at = performance.now(), card = h('div', { class: 'fs-card storm-card wait' }, h('div', { class: 'storm-pic' }, '⛈️', h('span', null, '🌊')), h('b', null, '풍랑 때문에 놓쳤어요'),
