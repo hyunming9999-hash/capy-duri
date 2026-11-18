@@ -345,6 +345,10 @@ export function mount(el, ctx) {
   function goFarm() { if (farmOpen) return; if (fishOpen || battle) return toast('하던 걸 끝내고 농장에 갈 수 있어요'); if (me.boat) return toast('배에서 내린 뒤에 농장에 갈 수 있어요'); fishOpen = true; farmOpen = true; keys.clear(); sfx('pop');
     openFarm({ ctx, scoot: () => (scoot ? scootHtml() : null), onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); } }); }
   const fcrow = farmCrow(ctx, { goFarm: () => goFarm() });
+  // 낚시 연습 링크(?fishtest=1·2·3): 그 바다에 같은 등급 낚싯대를 빌려 바로 낚시. 가방·돈·도감·미끼에는 아무 영향 없음(해적단도 안 나옴)
+  try { const ft = +new URLSearchParams(location.search).get('fishtest'); if (ft >= 1 && ft <= 3) setTimeout(() => { if (fishOpen || battle) return; document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); fishOpen = true; keys.clear();
+      const tb = { rod: ft, rodD: RODS[ft].dur, bait: 99, [`sp${ft}`]: (bag[`sp${ft}`] || {}) };
+      openFishing({ ctx, zone: ft, trial: true, boat: boatSvg(ft >= 2 ? MY_WBOAT : MY_BOAT), bag: () => tb, save: patch => Object.assign(tb, patch), coins: () => {}, keep: null, seen: null, dex: () => null, onClose: () => { fishOpen = false; if (!voice.on) bgm.duck(false); lastT = performance.now(); toast('낚시 연습 끝 · 다시 하려면 링크를 다시 열어요', 2400); }, onPirate: null }); }, 1400); } catch {}
   // 까마귀 연습 링크(?crowtest): 친목회에 들어오면 바로 농장으로 데려간다
   try { if (new URLSearchParams(location.search).has('crowtest')) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); if (!farmOpen && !me.boat && !fishOpen && !battle) goFarm(); setTimeout(() => fcrow.practice(), 900); }, 1200); } catch {}
   // 메인 퀘스트: 동물 머리 위 ! ? 표시와 동물 창의 🔍 퀘스트 버튼
