@@ -9,7 +9,7 @@ import { makeVoice } from './walk.js';
 import { PUSH_URL } from './push.js';
 import { isMock } from './store.js';
 import { openFarm, cropOf, cropImg, cropPrice } from './farm.js';
-import { openCook, SAUCES, SAUCE_PACK } from './cook.js';
+import { openCook, SAUCES, SAUCE_PACK, SAUCE_IMG } from './cook.js';
 import { farmCrow } from './farmcrow.js';
 import { createQuest } from './quest.js';
 import { recOf } from './cook.js';
@@ -863,7 +863,7 @@ export function mount(el, ctx) {
         ...Object.entries(GIFTS).map(([k, [ic, nm, price, up]]) => ({ ic, name: nm, sub: `${won(price)} · 친밀도 +${up} · 가진 것 ${bag[k] || 0}개`, price, line: GP[k], act: () => buy(price, { [k]: (bag[k] || 0) + 1 }) })),
         { ic: '🧪', name: '회복 포션', sub: `${won(POTION[0])} · 체력 +${POTION[1]} · 가진 것 ${bag.potion || 0}개`, price: POTION[0], line: hpNow() < HP_MAX ? GP.potion : '지금은 쌩쌩하구먼. 그래도 하나쯤 챙겨 두면 든든하지.', act: () => buy(POTION[0], { potion: (bag.potion || 0) + 1 }) },
         ['sec', '🧂 카피백반 양념'],
-        ...Object.entries(SAUCES).map(([k, [ic, nm, price]]) => ({ ic, name: `${nm} (${SAUCE_PACK}번 쓰기)`, sub: `${won(price)} · 가진 것 ${((bag.sauce || {})[k]) || 0}번`, price, line: '카피백반 요리에 넣는 양념이여. 손님 입맛 따라 골라 쓰게.', act: () => buy(price, { sauce: { ...(bag.sauce || {}), [k]: (((bag.sauce || {})[k]) || 0) + SAUCE_PACK } }) })),
+        ...Object.entries(SAUCES).map(([k, [ic, nm, price]]) => ({ ic: SAUCE_IMG[k] ? `<img src="${SAUCE_IMG[k]}" alt="${nm}" style="width:100%;height:100%;object-fit:contain">` : ic, name: `${nm} (${SAUCE_PACK}번 쓰기)`, sub: `${won(price)} · 가진 것 ${((bag.sauce || {})[k]) || 0}번`, price, line: '카피백반 요리에 넣는 양념이여. 손님 입맛 따라 골라 쓰게.', act: () => buy(price, { sauce: { ...(bag.sauce || {}), [k]: (((bag.sauce || {})[k]) || 0) + SAUCE_PACK } }) })),
         ['note', '동물마다 제일 좋아하는 선물이 있어요. 그걸 주면 친밀도가 1.5배 올라요. 포션은 화면 위 🧪 를 눌러 마셔요.'],
         ['sec', '🚤 배·낚시 용품'],
         { ic: '🚤', name: '카피보트', sub: bag.boat ? '가지고 있어요 · 바닷가 물에서 🚤 내 보트' : `${won(BOAT_PRICE)} · 바닷가에서 타면 파도가 일어요`, price: BOAT_PRICE, off: bag.boat, line: bag.boat ? '이미 한 척 있잖나. 잘 타고 다니게, 허허.' : '바닷가에서 타면 물살이 시원하게 갈라지지. 초급 낚시터까지는 이걸로 충분하네.', act: () => buy(BOAT_PRICE, { boat: true }) },
