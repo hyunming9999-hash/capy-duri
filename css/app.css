@@ -1555,7 +1555,7 @@ body.vb-on .modal-wrap { z-index: 4600; }
 /* ===== 🌱 카피 농장 ===== */
 .so-farmsign { position: absolute; bottom: 30%; z-index: 2; padding: 0; border: 0; background: none; cursor: pointer; aspect-ratio: 364 / 400; }
 .so-farmsign img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 2px 2px rgba(0,0,0,.2)); }
-.so-farmsign b { position: absolute; left: 22%; right: 2%; top: 17%; height: 22%; display: flex; align-items: center; justify-content: center; font: 900 clamp(9px, 2.6vw, 14px)/1 var(--head); color: #3E7D2A; white-space: nowrap; text-shadow: 1.5px 0 #FFF3D6, -1.5px 0 #FFF3D6, 0 1.5px #FFF3D6, 0 -1.5px #FFF3D6; }
+.so-farmsign b { position: absolute; left: 21%; right: 3%; top: 19%; height: 28%; display: flex; align-items: center; justify-content: center; font: 900 clamp(12px, 4.1vw, 17px)/1 var(--head); letter-spacing: -.5px; color: #3E7D2A; white-space: nowrap; text-shadow: 1.5px 0 #FFF3D6, -1.5px 0 #FFF3D6, 0 1.5px #FFF3D6, 0 -1.5px #FFF3D6; }
 .so-farmsign:active { transform: scale(.96); }
 .fm { position: fixed; inset: 0; z-index: 4500; background: #CFE9FF; display: flex; flex-direction: column; }
 .fm-top { display: flex; align-items: center; gap: 6px; padding: calc(env(safe-area-inset-top) + 8px) 10px 8px; background: #FFF6E0; border-bottom: 2px solid #E8D3AE; }
@@ -1868,3 +1868,6 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 @keyframes fmPop { 0% { opacity: 0; translate: 0 10px; scale: .7; } 15% { opacity: 1; scale: 1.1; } 30% { scale: 1; } 100% { opacity: 0; translate: 0 -40px; } }
 .fm-rharv { margin-top: 4px; align-self: flex-start; }
 .fm-rlab { position: absolute; transform: translateY(-50%); font: 800 9px/1 var(--head); color: #fff; background: rgba(60, 38, 20, .55); padding: 2px 5px; border-radius: 6px; pointer-events: none; white-space: nowrap; z-index: 2; }
+.so-fclick { position: absolute; left: 50%; top: -14%; transform: translateX(-50%); white-space: nowrap; font: 900 13px/1 var(--head); font-style: normal; color: #fff; background: #E5484D; padding: 4px 9px; border-radius: 12px; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,.3); animation: soClick 1s ease-in-out infinite; pointer-events: none; }
+.so-fclick::after { content: ''; position: absolute; left: 50%; bottom: -7px; margin-left: -5px; border: 5px solid transparent; border-top-color: #E5484D; border-bottom: 0; }
+@keyframes soClick { 50% { translate: 0 -5px; } }
