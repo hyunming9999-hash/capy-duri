@@ -43,7 +43,7 @@ const SELL_A = (() => { const rg = {}; CROPS.forEach(c => { const r = rg[c.t] ||
 export const cropPrice = (id, g) => (GRADE_X[g] && SELL_A[id] ? Math.max(1, Math.round(SELL_A[id] * GRADE_X[g] / GRADE_X.A)) : 0);
 
 // 밭 한 칸의 컨디션 계산(순수 함수): 물이 마른 시간과 잡초가 자란 채로 둔 시간만큼 깎인다. 다 자란 뒤로는 셈하지 않는다
-export const SPRK_PRICE = 1500, SPRK_HOUR = 150, SPRK_FROM = 0, SPRK_TO = 10; // 스프링클러: 밭 1칸에 1개, 밤 12시~아침 10시 자동, 그 밖은 1시간 150코인
+export const SPRK_IMG = 'img/farm/sprinkler.webp', SPRK_PRICE = 1500, SPRK_HOUR = 150, SPRK_FROM = 0, SPRK_TO = 10; // 스프링클러: 밭 1칸에 1개, 밤 12시~아침 10시 자동, 그 밖은 1시간 150코인
 const HR = 3600000, WIN = new WeakMap(); // 이랑 → 그 밭 스프링클러가 도는 시간들
 // 밭 하나의 스프링클러 작동 구간([시작, 끝] 목록): 매일 밤 12시~아침 10시 + 돈 내고 늘린 시간
 export function sprkWins(sp, a, b) { if (!sp || !sp.on) return []; const out = []; const d = new Date(a - 86400000); d.setHours(0, 0, 0, 0);
@@ -110,7 +110,7 @@ export function openFarm(o) {
   const lastWater = {}; // 밭마다 방금 물 준 때와 아직 못 적신 이랑 수(중급 '한 번 더' 안내용)
   function drawQuick() { const t = now(), k = meEl.classList.contains('walk') ? -1 : plotEls.findIndex((_, i) => Math.abs(me.x - (plotX(i) + PW / 2)) < PW / 2), open = k >= 0 && isOpen(k), rs = open ? rowsOf(k).filter(live) : [], grow = rs.filter(r => !ripe(r, t)), rip = who === ctx.uid ? rs.filter(r => ripe(r, t)) : [], dry = grow.some(r => dryNow(r, t)), wd = who === ctx.uid ? grow.filter(r => weedNow(r, t)).length : 0;
     const wh = k >= 0 ? waterHint(k) : '', inv = mine.sprkInv || 0, canSp = open && who === ctx.uid && inv > 0 && !((data.sprk || {})[k] || {}).on, key = `${k}|${grow.length}|${rip.length}|${dry}|${tool()}|${wh}|${wd}|${canSp}|${inv}`; if (key === quickKey) return; quickKey = key;
-    rc(quickEl, canSp && h('button', { class: 'fm-qb sprk on', onClick: () => installSprk(k) }, h('b', null, '💦'), h('span', null, '스프링클러 설치'), h('small', null, `가방에 ${inv}개`)),
+    rc(quickEl, canSp && h('button', { class: 'fm-qb sprk on', onClick: () => installSprk(k) }, h('img', { src: SPRK_IMG, alt: '' }), h('span', null, '스프링클러 설치'), h('small', null, `가방에 ${inv}개`)),
       wd > 0 && h('button', { class: 'fm-qb weed on', onClick: () => doWeed(k) }, h('img', { src: toolImg(tool(), 'hoe'), alt: '' }), h('span', null, '잡초 베기'), h('small', null, `잡초 ${wd}개 · ${tool() >= 3 ? '밭 전체' : `${tool()}이랑씩`}`)),
       grow.length > 0 && h('button', { class: 'fm-qb water' + (dry ? ' on' : ''), onClick: () => doWater(k) }, h('img', { src: toolImg(tool(), 'can'), alt: '' }), h('span', null, '물 주기'), h('small', null, wh)),
       rip.length > 0 && h('button', { class: 'fm-qb harv on', onClick: () => harvestTap(k) }, h('b', null, '🧺'), h('span', null, '수확'), h('small', null, ['', '하나씩', '한 이랑', '밭 전체'][tool()]))); }
@@ -149,7 +149,7 @@ export function openFarm(o) {
       const lab = !open ? `🔒 땅 문서 ${DEEDS[k - 1].toLocaleString('ko-KR')}코인` : !any ? (who === ctx.uid ? '빈 밭 · 눌러서 씨앗 심기' : '빈 밭') : ripeN ? `수확! ${ripeN}이랑` : emptyN && who === ctx.uid ? `빈 이랑 ${emptyN}` : ''; // 남은 시간은 아래 밭 현황에서 본다
       kids.push(h('span', { class: 'fm-lab' + (ripeN ? ' ripe' : '') + (open ? '' : ' lock') }, `${k + 1}밭${open ? '' : ' 🔒'}`)); // 알약은 밭 번호만(남은 시간·상태는 아래 밭 현황에서)
       if (open) ROWBOX.forEach((b, i) => kids.push(h('small', { class: 'fm-rlab', style: { top: b.t + b.h / 2 + '%', right: Math.max(1, b.r - 7) + '%' } }, `${i + 1}번 이랑`)));
-      const sp = (data.sprk || {})[k]; if (open && sp && sp.on) { const on = sprkOn(sp, t); kids.push(h('div', { class: 'fm-sprk' + (on ? ' on' : '') }, h('i', { class: 'fm-sphead' }), ...(on ? Array.from({ length: 10 }, (_, j) => h('em', { style: { '--a': (j * 36) + 'deg', animationDelay: (j % 5) * 0.16 + 's' } })) : []))); }
+      const sp = (data.sprk || {})[k]; if (open && sp && sp.on) { const on = sprkOn(sp, t); kids.push(h('div', { class: 'fm-sprk' + (on ? ' on' : '') }, h('img', { class: 'fm-spimg', src: SPRK_IMG, alt: '' }), ...(on ? Array.from({ length: 10 }, (_, j) => h('em', { style: { '--a': (j * 36) + 'deg', animationDelay: (j % 5) * 0.16 + 's' } })) : []))); }
       if (open && growing.length) kids.push(h('span', { class: 'fm-bub' }, [growing.some(r => dryNow(r, t)) && '💧', growing.some(r => weedNow(r, t)) && '🌿'].filter(Boolean).join('')));
       rc(e, kids); });
     coinsEl.textContent = '🪙 ' + ctx.coins().toLocaleString('ko-KR');
@@ -168,7 +168,7 @@ export function openFarm(o) {
   let pickRow = -1;
 
   // 밭 아래 창
-  function drawSheet() {
+  function drawSheet() { const ae = document.activeElement; if (ae && ae.type === 'time' && sheet.contains(ae)) return; // 시간 고르는 중엔 다시 그리지 않는다
     const k = sel, t = now(), visit = who !== ctx.uid;
     if (k < 0) { // 한눈에 보기: 밭마다 카드 한 장(이랑 3칸 미리보기 + 상태 + 바로 하기 버튼)
       const seeds = Object.values(mine.seeds || {}).reduce((a, n) => a + (n || 0), 0), barn = Object.values(mine.barn || {}).reduce((a, n) => a + (n || 0), 0);
@@ -248,7 +248,7 @@ export function openFarm(o) {
   // 내 가방(농장): 가진 씨앗 세트와 농기구. 씨앗 1세트 = 이랑 1줄
   function bagView() { const sd = Object.entries(mine.seeds || {}).filter(([, n]) => n > 0).map(([id, n]) => [cropOf(id), n]).filter(([c]) => c).sort((a, b) => a[0].t - b[0].t || a[0].ms - b[0].ms), total = sd.reduce((a, [, n]) => a + n, 0);
     return h('div', { class: 'fm-bag' }, h('div', { class: 'fm-bagtool' }, h('img', { src: toolImg(tool()), alt: '' }), h('div', null, h('b', null, TOOLS[tool()].name), h('small', null, `${TIER_NAME[tool()]} 작물까지 심어요 · 물은 한 번에 ${tool() >= 3 ? '밭 전체' : `이랑 ${tool()}줄`}`))),
-      (mine.sprkInv || 0) > 0 && h('div', { class: 'fm-bagtool' }, h('span', { class: 'fm-sprkic' }, '💦'), h('div', null, h('b', null, `스프링클러 ${mine.sprkInv}개`), h('small', null, '밭 앞에 서면 "스프링클러 설치" 버튼이 떠요'))),
+      (mine.sprkInv || 0) > 0 && h('div', { class: 'fm-bagtool' }, h('span', { class: 'fm-sprkic' }, h('img', { src: SPRK_IMG, alt: '' })), h('div', null, h('b', null, `스프링클러 ${mine.sprkInv}개`), h('small', null, '밭 앞에 서면 "스프링클러 설치" 버튼이 떠요'))),
       h('b', { class: 'so-sellh' }, `🌱 가진 씨앗 ${total}세트 · 1세트 = 이랑 1줄`),
       sd.length ? h('div', { class: 'fm-sgrid' }, ...sd.map(([c, n]) => { const can = c.t <= tool(); return h('div', { class: 'fm-sbuy have' + (can ? '' : ' off') }, h('i', { class: 'fm-have' }, `${n}세트`), h('img', { src: cropImg(c.id), alt: '' }), h('b', null, c.name), h('small', null, `${TIER_NAME[c.t]} · 이랑 ${n}줄 심을 수 있어요`), h('small', null, can ? `${left(c.ms)} 걸려요` : `${TOOLS[c.t].name}가 있어야 심어요`)); }))
         : h('p', { class: 'dim center' }, '가진 씨앗이 없어요. 카피철물에서 사 오세요.')); }
@@ -278,7 +278,7 @@ export function openFarm(o) {
         rows.push(h('button', { class: 'so-row big' + (have ? ' off' : '') , onClick: () => have ? toast('이미 가지고 있어요') : tl.t > tool() + 1 ? toast(`${TOOLS[tl.t - 1].name}부터 사야 해요`) : buy(tl.price, { tool: tl.t }, `${tl.name}를 샀어요! ${TIER_NAME[tl.t]} 작물을 심을 수 있어요`) },
           h('span', { class: 'so-rodic' }, h('img', { src: toolImg(tl.t), alt: '', style: { width: '48px' } })), h('b', null, tl.name), h('small', null, have ? '가지고 있어요 · 한 번 사면 계속 써요' : `${tl.price.toLocaleString('ko-KR')}코인 · ${tl.note}`))); });
       if (tab === 'tool') { const inv = mine.sprkInv || 0, put = Object.values(mine.sprk || {}).filter(x => x && x.on).length;
-        rows.push(h('button', { class: 'so-row big', onClick: () => buy(SPRK_PRICE, { sprkInv: inv + 1 }, '스프링클러를 샀어요! 가방에 넣었어요. 밭 앞에 서면 설치 버튼이 떠요 💦') }, h('span', { class: 'so-rodic fm-sprkic' }, '💦'), h('b', null, `스프링클러${inv ? ` (가진 것 ${inv})` : ''}${put ? ` · 설치 ${put}밭` : ''}`), h('small', null, `${SPRK_PRICE.toLocaleString('ko-KR')}코인 · 밭 1칸에 1개 · 밤 12시~아침 10시 자동으로 물 주기(등급이 안 떨어져요) · 다른 시간은 1시간 ${SPRK_HOUR}코인`))); }
+        rows.push(h('button', { class: 'so-row big', onClick: () => buy(SPRK_PRICE, { sprkInv: inv + 1 }, '스프링클러를 샀어요! 가방에 넣었어요. 밭 앞에 서면 설치 버튼이 떠요 💦') }, h('span', { class: 'so-rodic fm-sprkic' }, h('img', { src: SPRK_IMG, alt: '' })), h('b', null, `스프링클러${inv ? ` (가진 것 ${inv})` : ''}${put ? ` · 설치 ${put}밭` : ''}`), h('small', null, `${SPRK_PRICE.toLocaleString('ko-KR')}코인 · 밭 1칸에 1개 · 밤 12시~아침 10시 자동으로 물 주기(등급이 안 떨어져요) · 다른 시간은 1시간 ${SPRK_HOUR}코인`))); }
       if (tab === 'deed') { const n = data.open || 1; rows.push(h('p', { class: 'dim center' }, `지금 열린 밭 ${n} / ${PLOTS}칸 · 밭은 순서대로 열려요`));
         DEEDS.forEach((pr, i) => { const k = i + 1, have = n > k, next = n === k;
           rows.push(h('button', { class: 'so-row big' + (have || !next ? ' off' : ''), onClick: () => have ? toast('이미 연 밭이에요') : !next ? toast('앞의 밭부터 열어야 해요') : buy(pr, { open: k + 1 }, `${k + 1}번 밭이 열렸어요! 🌱`) },
@@ -290,15 +290,32 @@ export function openFarm(o) {
   const sprkN = {}, hhmm = ms => { const d = new Date(ms), td = new Date(); const day = d.toDateString() === td.toDateString() ? '' : d.getDate() === new Date(td.getTime() + 86400000).getDate() ? '내일 ' : `${d.getMonth() + 1}/${d.getDate()} `; return `${day}${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
   const sprkEnd = (sp, t) => { const w = sprkWins(sp, t - 1, t + 7 * 86400000).find(([a, b]) => a <= t && t < b); return w ? w[1] : 0; };
   function sprkPanel(k, visit) { const sp = (data.sprk || {})[k], t = now(), inv = mine.sprkInv || 0;
-    if (!sp || !sp.on) return visit ? null : h('div', { class: 'fm-sprkp' }, h('b', null, '💦 스프링클러'), h('small', null, inv ? `가진 스프링클러 ${inv}개 · 설치하면 밤 12시~아침 10시에 자동으로 물을 줘서 등급이 안 떨어져요` : `밤 12시~아침 10시에 자동으로 물을 줘요 · 카피철물 🧰 농기구에서 ${SPRK_PRICE.toLocaleString('ko-KR')}코인`),
+    if (!sp || !sp.on) return visit ? null : h('div', { class: 'fm-sprkp' }, h('b', { class: 'fm-sph' }, h('img', { src: SPRK_IMG, alt: '' }), '스프링클러'), h('small', null, inv ? `가진 스프링클러 ${inv}개 · 설치하면 밤 12시~아침 10시에 자동으로 물을 줘서 등급이 안 떨어져요` : `밤 12시~아침 10시에 자동으로 물을 줘요 · 카피철물 🧰 농기구에서 ${SPRK_PRICE.toLocaleString('ko-KR')}코인`),
       inv ? h('button', { class: 'btn primary', onClick: () => installSprk(k) }, '이 밭에 설치하기') : h('button', { class: 'btn', onClick: () => openShop('tool') }, '사러 가기'));
     const end = sprkEnd(sp, t), on = end > 0, n = sprkN[k] || 1, base = on ? end : t, upto = base + n * HR;
     const step = d => h('button', { class: 'btn fm-qbtn', onClick: () => { sprkN[k] = Math.max(1, Math.min(24, n + d)); drawSheet(); } }, d > 0 ? '+' : '−');
-    return h('div', { class: 'fm-sprkp on' }, h('b', null, on ? `💦 스프링클러 작동 중 · ${hhmm(end)}까지` : '💦 스프링클러 쉬는 중 · 밤 12시에 다시 켜져요'),
+    return h('div', { class: 'fm-sprkp on' }, h('b', { class: 'fm-sph' }, h('img', { src: SPRK_IMG, alt: '' }), on ? `스프링클러 작동 중 · ${hhmm(end)}까지` : '스프링클러 쉬는 중 · 밤 12시에 다시 켜져요'),
       h('small', null, '밤 12시~아침 10시는 자동이에요. 다른 시간에 쓰거나 더 늘리려면 1시간에 150코인이에요.'),
+      !visit && rangeEl(k, sp, t), !visit && h('small', { class: 'fm-sprkor' }, '또는 지금부터 몇 시간 늘리기'),
       !visit && h('div', { class: 'fm-sprkx' }, step(-1), h('span', null, h('b', null, `${n}시간`), h('small', null, `${hhmm(upto)}까지`)), step(1), h('button', { class: 'btn primary', onClick: () => buySprkTime(k, base, n) }, `${(n * SPRK_HOUR).toLocaleString('ko-KR')}코인 결제`))); }
+  // 시간 정해서 켜기: 시작~끝 시간을 직접 고르면, 무료 시간·이미 켜 둔 시간을 뺀 만큼만 1시간 150코인
+  const sprkT = {}, pad2 = n => String(n).padStart(2, '0'), hm = ms => { const d = new Date(ms); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+  const atHM = (v, ref) => { const [H, M] = String(v || '00:00').split(':').map(Number), d = new Date(ref); d.setHours(H || 0, M || 0, 0, 0); return d.getTime(); };
+  function rangeOf(k, sp, t) { const nx = Math.ceil(t / HR) * HR, st = sprkT[k] || (sprkT[k] = { s: hm(nx), e: hm(nx + 2 * HR) }); let a = atHM(st.s, t), b = atHM(st.e, t); if (b <= a) b += 86400000; if (b <= t) { a += 86400000; b += 86400000; } a = Math.max(a, t);
+    const cov = sprkWins(sp, a, b).reduce((x, [p, q]) => x + Math.max(0, Math.min(q, b) - Math.max(p, a)), 0), hrs = Math.ceil(Math.max(0, b - a - cov) / HR - 1e-9); return { a, b, hrs }; }
+  function rangeEl(k, sp, t) { const { a, b, hrs } = rangeOf(k, sp, t), st = sprkT[k], inp = key => h('input', { type: 'time', class: 'fm-time', value: st[key], onChange: e => { sprkT[k] = { ...sprkT[k], [key]: e.target.value }; e.target.blur(); drawSheet(); } });
+    return h('div', { class: 'fm-sprkt' }, h('b', null, '⏰ 원하는 시간 정해서 켜기'), h('div', { class: 'fm-sprkti' }, inp('s'), h('span', null, '~'), inp('e'),
+        h('button', { class: 'btn primary', onClick: () => buySprkRange(k) }, hrs ? `${(hrs * SPRK_HOUR).toLocaleString('ko-KR')}코인 결제` : '이미 켜져 있어요')),
+      h('small', null, `${hhmm(a)} ~ ${hhmm(b)} · ${hrs ? `무료 시간·이미 켜 둔 시간 빼고 ${hrs}시간` : '이 시간엔 이미 물을 줘요'}`)); }
+  // 구독료 결제 전에 한 번 더: 시간과 총 비용을 보여 주고 확인·취소
+  const payAsk = (k, a, b, hrs) => new Promise(res => { let done = false; modal({ title: '💦 스프링클러 구독료 결제', body: h('div', { class: 'fm-payask' }, h('img', { src: SPRK_IMG, alt: '' }),
+      h('p', null, h('b', null, `${k + 1}번 밭`), ` · ${hhmm(a)} ~ ${hhmm(b)}`), h('p', null, `${hrs}시간 × ${SPRK_HOUR}코인`), h('p', { class: 'fm-paytot' }, `총 ${(hrs * SPRK_HOUR).toLocaleString('ko-KR')}코인`), h('small', null, `결제 후 남는 돈 ${(ctx.coins() - hrs * SPRK_HOUR).toLocaleString('ko-KR')}코인`)),
+    noX: true, onClose: () => { if (!done) res(false); }, actions: [{ label: '취소', onClick: c => { done = true; res(false); c(); } }, { label: '확인', primary: true, onClick: c => { done = true; res(true); c(); } }] }); });
+  async function buySprkRange(k) { if (who !== ctx.uid) return; const t = now(), sp = (mine.sprk || {})[k] || { on: 1 }, { a, b, hrs } = rangeOf(k, sp, t); if (!hrs) return toast('그 시간엔 이미 스프링클러가 돌아요'); if (!(await payAsk(k, a, b, hrs))) return;
+    const cost = hrs * SPRK_HOUR; if (!(await ctx.spend(cost))) return toast(`돈이 모자라요 (${cost.toLocaleString('ko-KR')}코인 필요)`);
+    const paid = (sp.paid || []).filter(w => w[1] > t - 2 * 86400000).concat([[a, b]]); await save({ [`sprk/${k}/paid`]: paid }); sfx('coin'); toast(`💦 ${hhmm(a)} ~ ${hhmm(b)} 예약했어요 (${cost.toLocaleString('ko-KR')}코인)`, 2000); }
   async function installSprk(k) { const inv = mine.sprkInv || 0; if (inv <= 0 || who !== ctx.uid) return; await save({ [`sprk/${k}`]: { on: 1, paid: [] }, sprkInv: inv - 1 > 0 ? inv - 1 : null }); sfx('splash'); toast(`${k + 1}번 밭에 스프링클러를 설치했어요 💦`, 1600); }
-  async function buySprkTime(k, base, n) { if (who !== ctx.uid) return; const cost = n * SPRK_HOUR; if (!(await ctx.spend(cost))) return toast(`돈이 모자라요 (${cost.toLocaleString('ko-KR')}코인 필요)`); const t = now(), sp = (mine.sprk || {})[k] || { on: 1 };
+  async function buySprkTime(k, base, n) { if (who !== ctx.uid) return; if (!(await payAsk(k, base, base + n * HR, n))) return; const cost = n * SPRK_HOUR; if (!(await ctx.spend(cost))) return toast(`돈이 모자라요 (${cost.toLocaleString('ko-KR')}코인 필요)`); const t = now(), sp = (mine.sprk || {})[k] || { on: 1 };
     const paid = (sp.paid || []).filter(w => w[1] > t - 2 * 86400000).concat([[base, base + n * HR]]); await save({ [`sprk/${k}/paid`]: paid }); sprkN[k] = 1; sfx('coin'); toast(`💦 ${hhmm(base + n * HR)}까지 물을 줘요 (${cost.toLocaleString('ko-KR')}코인)`, 1800); }
 
   // 화면: 내 카피바라가 걸어가고, 1초마다 밭 시간 표시를 고친다
