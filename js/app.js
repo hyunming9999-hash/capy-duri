@@ -198,7 +198,7 @@ function showRulesHelp() {
 function leave() { LS.del('room'); location.hash = ''; location.reload(); }
 
 // 패치 소식
-const PATCH_UNTIL = Date.parse('2026-11-20T23:59:00+09:00'); // 이 시각까지만, 들어올 때마다 보여 준다
+const PATCH_UNTIL = Date.parse('2026-11-22T23:59:00+09:00'); // 이 시각까지만, 들어올 때마다 보여 준다
 function patchNote() { if (Date.now() >= PATCH_UNTIL) return;
   const li = (ic, t, d) => h('li', null, h('span', null, ic), h('div', null, h('b', null, t), h('small', null, d)));
   // 카피 농장 오픈 공지(카피백반이 열리면 다음 장에 붙인다)
@@ -215,15 +215,22 @@ function patchNote() { if (Date.now() >= PATCH_UNTIL) return;
       h('ul', null,
         li('🏠', '카피수퍼 바로 옆 카피백반', '놀이터 맨 오른쪽 끝, 카피수퍼 옆 건물을 누르면 들어가요. 요리는 여기서만 할 수 있어요.'),
         li('🏪', '하루 임대료 100코인', '장사를 하려면 그날 처음 들어갈 때 임대료 100코인을 내고 가게 문을 열어요. 하루 한 번만 내요.'),
-        li('📋', '오늘의 주문 3개', '동물들이 날마다 요리를 주문해요. "덜 익혀서", "알맞게", "푹 익혀서"처럼 동물마다 좋아하는 익힘이 달라요.'),
-        li('🐟', '생선찜: 손질된 살로 바로 찜', '낚시로 잡은 물고기는 「레몬전어의 흰살생선」처럼 손질된 살로 나와요. 물고기마다 특징을 살린 곁들임(레몬·도토리·왕관…)이 올라가고, 희귀·A·S급은 반짝여요. 냄비에 넣고 뚜껑 덮어 찌다가 ★ 칸에서 불을 꺼요.'),
-        li('🥕', '채소 수프 · 감자옥수수찜', '농장에서 거둔 작물 2개로 끓여요. 딱 맞추면 돈 + 친밀도 듬뿍, 익힘이 다르면 절반, 날것이거나 타면 보상이 없어요.'))]];
+        li('🔔', '하루 3번 장사 · 한 번에 손님 2명', '시간 제한은 없어요. 손님마다 원하는 익힘(덜익힘·알맞게·바싹)과 양념, 빼 달라는 재료가 달라요. 재료가 없으면 별점을 낮게 주고 나가요(친한 동물은 살짝 실망만).'),
+        li('🔪', '도마 · 냄비 · 프라이팬 · 튀김기', '재료를 도마에 올리고 조리도구를 누르면 익기 시작해요. 냄비는 약불, 프라이팬은 강불이 맛있어요. 원하는 익힘에서 눌러 꺼내 손님에게 바로 팔아요.'),
+        li('🍱', '메뉴 19종', '생선 13종(초밥·매운탕·생선까스…)과 채소 6종(감자전·맛탕…). 재료 등급과 물고기 희귀도가 높을수록 비싸게 팔려요. 양념은 카피수퍼에서 사요.'),
+        li('🐟', '생선파 · 채소파', '고양이·곰·펭귄 같은 생선파, 토끼·판다 같은 채소파가 있어요. 입맛에 맞는 요리를 주면 친밀도를 더 받아요. 너구리랑 여우는 계산할 때 할부 농담을 해요 💳'))],
+    () => [h('div', { class: 'patch-quest' }, h('b', null, '📜 메인 퀘스트 「누가 왕관을 훔쳤나」'), h('small', null, '사자의 황금 왕관이 사라졌다! 30마리 모두가 용의자')),
+      h('ul', null,
+        li('🦁', '사자에게 말을 걸어 시작', '머리 위에 ❗가 뜬 동물을 누르고 📜 퀘스트를 눌러요. ❓는 완료할 수 있다는 뜻이에요.'),
+        li('🦉', '부엉이 탐정의 조수가 되어', '진흙 발자국 · 검은 깃털 · 달콤한 냄새. 동물들의 알리바이를 확인하고 단서를 수첩에 모아요. 부탁·배달·카피백반 요리 퀘스트가 섞여 있어요.'),
+        li('🔎', '마지막엔 내가 범인 지목', '7장에서 단서를 떠올려 범인을 직접 골라요. 틀려도 다시 고를 수 있어요. 끝까지 하면 큰 보상과 모든 동물 친밀도가 올라요.'),
+        li('🗓️', '하루 최대 11단계', '7장 33단계예요. 단계마다 코인과 친밀도를 받아요. 동물들도 이야기 진행에 맞춰 수군거려요.'))]];
   const box = h('div', { class: 'patch' }), dots = h('div', { class: 'patch-dots' });
   let at = 0, nextBtn, prevBtn;
   function go(n) { at = n; box.replaceChildren(...pages[n]()); box.scrollTop = 0; const m = box.closest('.modal'); if (m) m.scrollTop = 0;
     dots.replaceChildren(...pages.map((_, k) => h('i', { class: k === n ? 'on' : '' }))); if (nextBtn) { nextBtn.textContent = n === pages.length - 1 ? '확인' : '다음 장 👉'; prevBtn.style.visibility = n ? 'visible' : 'hidden'; } }
   go(0);
-  const close = modal({ title: '✨ 패치 소식 · 카피 농장 & 카피백반', body: h('div', null, box, dots),
+  const close = modal({ title: '✨ 패치 소식 · 농장 · 카피백반 · 메인 퀘스트', body: h('div', null, box, dots),
     actions: [{ label: '👈 이전', onClick: () => at && go(at - 1) }, { label: '다음 장 👉', primary: true, onClick: c => (at < pages.length - 1 ? go(at + 1) : c()) }] });
   const btns = [...document.querySelectorAll('.modal-wrap:last-child .modal-actions .btn')]; [prevBtn, nextBtn] = btns; go(0); return close; }
 function enter() {

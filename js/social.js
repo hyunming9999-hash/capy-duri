@@ -11,6 +11,8 @@ import { isMock } from './store.js';
 import { openFarm, cropOf, cropImg, cropPrice } from './farm.js';
 import { openCook, SAUCES, SAUCE_PACK } from './cook.js';
 import { farmCrow } from './farmcrow.js';
+import { createQuest } from './quest.js';
+import { recOf } from './cook.js';
 import { openFishing, seaBattle, PIRATE_LOOT, FLEE_FEE, FISH, TIERS, RODS, ZONES, BAIT, BALL, CANNON, WBOAT, BOAT_FIX, fishSvg } from './fishing.js';
 
 // 동물마다: 성격, 좋아하는 것, 싫어하는 것, 상징 액세서리, 제일 좋아하는 선물
@@ -335,7 +337,21 @@ export function mount(el, ctx) {
   function goFarm() { if (farmOpen) return; if (fishOpen || battle) return toast('하던 걸 끝내고 농장에 갈 수 있어요'); if (me.boat) return toast('배에서 내린 뒤에 농장에 갈 수 있어요'); fishOpen = true; farmOpen = true; keys.clear(); sfx('pop');
     openFarm({ ctx, onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); } }); }
   const fcrow = farmCrow(ctx, { goFarm: () => goFarm() });
-  let quest = null;
+  // 메인 퀘스트: 동물 머리 위 ! ? 표시와 동물 창의 📜 퀘스트 버튼
+  const quest = createQuest({ ctx, names: ANIMALS.map(a => a.name), svg: i => animalSvg(i), A, affinity: (i, d) => setRel(i, { a: A(i) + d }), toned, coins: addCoins, bag: () => bag, saveBag,
+    fish: () => Object.entries(bag.fish || {}).filter(([, v]) => v).map(([k, v]) => [k, v, fishOf(v.id)]),
+    useFish: key => { const left = { ...(bag.fish || {}) }; delete left[key]; bag = { ...bag, fish: left }; ctx.store.update('bag/' + ctx.uid + '/fish', { [key]: null }).catch(() => {}); },
+    barn: () => farmBarn, useCrops: use => ctx.store.update('farm/' + ctx.uid + '/barn', Object.fromEntries(Object.entries(use).map(([k, n]) => { const v = (farmBarn[k] || 0) - n; return [k, v > 0 ? v : null]; }))).catch(() => {}),
+    cropName: id => (cropOf(id) || { name: id }).name, recName: id => (recOf(id) || { n: id }).n, onChange: () => setTimeout(drawQMarks) });
+  let qmAt = 0, chatAt = performance.now() + 20000;
+  // 이야기에 맞춰 근처 동물끼리 수군거린다(30~60초마다 한 번, 화면 근처에 있을 때만)
+  function chatTick(now, paused, wet) { if (now < chatAt || paused || wet || me.boat || trial) return; chatAt = now + 30000 + Math.random() * 30000;
+    const near = (i, r = 900) => actors[i] && Math.abs(actors[i].x - me.x) < r && ['idle', 'walk'].includes(actors[i].st);
+    const L = quest.chatter().filter(c => c.every(([i]) => near(i)));
+    let c = L.length && Math.random() < 0.7 ? L[Math.floor(Math.random() * L.length)] : null;
+    if (!c) { const who = actors.map((o, i) => i).filter(i => near(i, 520) && A(i) > -30), g = quest.gossip(); if (!who.length) return; c = [[who[Math.floor(Math.random() * who.length)], g[Math.floor(Math.random() * g.length)]]]; }
+    c.forEach(([i, t], k) => setTimeout(() => { if (alive && actors[i]) pop(actors[i].e, toned(i, t), 'say long'); }, k * 2800)); }
+  function drawQMarks() { actors.forEach((o, i) => { if (!o || !o.e) return; const m = quest.markOf(i); let el = o.e.querySelector('.so-qm'); if (!m) { if (el) el.remove(); return; } if (!el) { el = h('i', { class: 'so-qm' }); o.e.prepend(el); } el.textContent = m; el.dataset.m = m; }); }
   // 낚시: 낚시터에서 내 배를 탄 채 🎣. 중급부터는 가끔 갈매기 해적단이 먼저 덤빈다
   function goFish() { const zone = zoneOf(me.x); if (!zone || fishOpen || battle || !(me.boat && (me.boat.own || me.boat.pass))) return; const guest = !!me.boat.pass; fishOpen = true; keys.clear();
     const done = () => { fishOpen = false; if (!voice.on) bgm.duck(false); lastT = performance.now(); };
@@ -556,7 +572,7 @@ export function mount(el, ctx) {
         else { const sh = shiny && goldOk && (A(i) < 30 || Math.random() < 0.6); if (sh) pop(o.e, gold('shine', RAREGREET.map(f => toned(i, f(ctx.me.name)))), 'say long'); else if (A(i) >= 30) pop(o.e, line(i, 'greet', toned(i, pick(GREET)(ctx.me.name))), 'say long'); } }
       const k = Math.min(1, dt * 5); o.y += (ty - o.y) * k; o.s += (ts - o.s) * k;
       o.e.style.left = o.x + 'px'; o.e.style.bottom = (o.y * 100).toFixed(2) + '%'; o.e.style.transform = `scale(${o.s.toFixed(3)})`; });
-    fcrow.tick(now, farmOpen ? 'farm' : !trial && !paused && !wet && !me.boat ? 'land' : null);
+    fcrow.tick(now, farmOpen ? 'farm' : !trial && !paused && !wet && !me.boat ? 'land' : null); if (now > qmAt) { qmAt = now + 1500; drawQMarks(); } chatTick(now, paused, wet);
     crowTick(now, paused, wet); charmTick(now, paused, wet); sRumorTick(now, paused, wet); loveTick(now, paused, wet);
     raf = requestAnimationFrame(step);
   }
@@ -778,7 +794,7 @@ export function mount(el, ctx) {
     close = modal({ title: `${a.name} · ${p.trait}`, body: h('div', { class: 'so-meet' },
       h('div', { class: 'so-face' }, faceEl, bubble), meter, fedNote, quick,
       h('div', { class: 'so-say' }, input, h('button', { class: 'btn primary', onClick: () => talk(input.value) }, '말하기')),
-      h('div', { class: 'so-acts' }, h('button', { class: 'btn', onClick: give }, '🎁 선물'), h('button', { class: 'btn', onClick: trade }, '🤝 거래'), h('button', { class: 'btn', onClick: memBtn }, '📜 기억'))), actions: [{ label: '닫기' }], onClose: () => { if (demand && actors[i]) actors[i].rage = true; if (held === i) held = -1; const o = actors[i]; if (o && o.st === 'walk') o.e.classList.add('walk'); } });
+      h('div', { class: 'so-acts' }, h('button', { class: 'btn so-qbtn', 'data-m': quest.markOf(i), onClick: () => quest.open(i) }, '📜 퀘스트', quest.markOf(i) && h('i', null, quest.markOf(i))), h('button', { class: 'btn', onClick: give }, '🎁 선물'), h('button', { class: 'btn', onClick: trade }, '🤝 거래'), h('button', { class: 'btn', onClick: memBtn }, '📜 기억'))), actions: [{ label: '닫기' }], onClose: () => { if (demand && actors[i]) actors[i].rage = true; if (held === i) held = -1; const o = actors[i]; if (o && o.st === 'walk') o.e.classList.add('walk'); } });
     const v = A(i); say(v <= ROB_AT ? pick(LINES.cold) : v >= PIN_AT ? `${ctx.me.name}! 왔구나, 보고 싶었어!` : v >= 10 ? `안녕, ${ctx.me.name}! 또 만났네.` : `안녕? 난 ${a.name}야. ${p.likes[0]} 좋아해.`); drawMeter(); drawQuick();
   }
 
@@ -930,5 +946,5 @@ export function mount(el, ctx) {
     ctx.store.on('socialme/' + ctx.uid, v => { const first = vit === null; vit = v || {};
       if (first) { if (vit.deadAt && ctx.store.now() - vit.deadAt < TEN_MIN) lock(); else { if (vit.deadAt) saveVit({ hp: HP_MAX, deadAt: 0 }); scene(); } } else drawHp(); }),
   ];
-  return () => { fcrow.dispose(); trial = null; kingTrial = 0; keepPos(); alive = false; if (battle) { battle.stop(); battle = null; } voice.destroy(); bgm.duck(false); window.removeEventListener('pointerdown', wakeVoice); leavePos(); me.boat = null; offer = null; endSorry(); clearInterval(lockT); cancelAnimationFrame(raf); offs.forEach(f => f()); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
+  return () => { fcrow.dispose(); quest.dispose(); trial = null; kingTrial = 0; keepPos(); alive = false; if (battle) { battle.stop(); battle = null; } voice.destroy(); bgm.duck(false); window.removeEventListener('pointerdown', wakeVoice); leavePos(); me.boat = null; offer = null; endSorry(); clearInterval(lockT); cancelAnimationFrame(raf); offs.forEach(f => f()); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
 }
