@@ -1669,3 +1669,22 @@ body.vb-on .modal-wrap { z-index: 4600; }
 .modal-x, .top-x { width: 34px; height: 34px; flex: none; border-radius: 50%; border: 2px solid #E8D3AE; background: #fff; color: #7A5236; font: 900 16px/1 var(--head, sans-serif); display: grid; place-items: center; cursor: pointer; padding: 0; box-shadow: 0 2px 0 rgba(0,0,0,.08); }
 .modal-x { position: sticky; top: 0; float: right; margin: -6px -6px 4px 8px; z-index: 6; }
 .modal-x:active, .top-x:active { transform: translateY(1px); }
+/* 농장 까마귀: 알림 띠 + 새총 놀이 */
+.fc-banner { position: fixed; left: 10px; right: 10px; top: calc(env(safe-area-inset-top) + 64px); z-index: 4700; display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 16px; background: #2E2433; color: #fff; border: 3px solid #E5484D; box-shadow: 0 6px 18px rgba(0,0,0,.3); animation: crowShake .4s ease-in-out 3; }
+.fc-banner img { width: 48px; height: 48px; object-fit: contain; flex: none; }
+.fc-banner > div { flex: 1; display: flex; flex-direction: column; min-width: 0; } .fc-banner strong { font-size: 15px; color: #FFD7DA; } .fc-banner small { font-size: 11px; opacity: .85; }
+.fc-banner .fc-t { font-size: 14px; color: #FFD23F; } .fc-banner.hurry .fc-t { color: #FF6B6B; animation: crowShake .5s infinite; }
+.fc-go { flex: none; border: 0; border-radius: 12px; padding: 10px 10px; font-weight: 900; font-size: 13px; background: linear-gradient(#7BC74D, #4E8A2E); color: #fff; box-shadow: 0 3px 0 #2F5A1A; }
+.fc { position: fixed; inset: 0; z-index: 4550; display: flex; flex-direction: column; background: linear-gradient(rgba(150,200,255,.55), rgba(255,240,200,.35)); backdrop-filter: blur(1px); touch-action: none; user-select: none; }
+.fc-top { display: flex; align-items: center; gap: 8px; padding: calc(env(safe-area-inset-top) + 10px) 12px 8px; background: rgba(46,36,51,.88); color: #fff; }
+.fc-top b { font-size: 15px; } .fc-dots { color: #FFD23F; font-size: 16px; letter-spacing: 2px; } .fc-time { flex: 1; height: 8px; border-radius: 4px; background: rgba(255,255,255,.25); overflow: hidden; } .fc-bar { display: block; height: 100%; background: #FFD23F; }
+.fc-arena { position: relative; flex: 1; overflow: hidden; cursor: crosshair; }
+.fc-crow { position: absolute; left: 0; top: 0; width: 92px; height: 92px; object-fit: contain; pointer-events: none; filter: drop-shadow(0 6px 6px rgba(0,0,0,.25)); }
+.fc-crow.hit { filter: brightness(2) drop-shadow(0 0 8px #fff); }
+.fc-crow.flee { transition: transform 1.4s ease-in, opacity 1.4s; transform: translate(120vw, -40vh) !important; opacity: 0; }
+.fc-crow.grab { transition: transform 1.2s ease-in; transform: translate(40vw, 80vh) scale(.7) !important; }
+.fc-stone { position: absolute; left: 0; top: 0; width: 14px; height: 14px; border-radius: 50%; background: #8A8F98; border: 2px solid #4B5563; pointer-events: none; }
+.fc-pow { position: absolute; transform: translate(-50%, -50%); font: 900 22px/1 var(--head, sans-serif); color: #E5484D; text-shadow: 0 2px 0 #fff; pointer-events: none; animation: fcPow .6s ease-out forwards; } @keyframes fcPow { to { transform: translate(-50%, -110%) scale(1.3); opacity: 0; } }
+.fc-msg { position: absolute; left: 0; right: 0; bottom: 120px; text-align: center; font-weight: 900; font-size: 15px; color: #3E2A1E; text-shadow: 0 1px 0 #fff, 0 0 6px #fff; pointer-events: none; }
+.fc-sling { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 6px); width: 70px; margin-left: -35px; pointer-events: none; } .fc-sling.pull { animation: fcPull .3s ease-out; } @keyframes fcPull { 30% { transform: translateY(8px) scaleY(.92); } }
+.fc-lost { position: relative; width: 160px; margin: 0 auto; } .fc-lost img { width: 120px; display: block; margin: 0 auto; } .fc-lost .fc-loot { position: absolute; width: 54px; right: 6px; bottom: 6px; }
