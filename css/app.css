@@ -1974,3 +1974,20 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .kb-cooking.kb-inpot { display: grid; place-items: center; pointer-events: none; } .kb-inpot .kb-pimgs { height: 60px; flex-wrap: wrap; max-width: 150px; } .kb-inpot .kb-cutp { transform-origin: center; animation: kbBob 1.4s ease-in-out infinite; } @keyframes kbBob { 50% { translate: 0 -3px; } }
 .kb-rawp .kb-pimgs { height: 40px; } .kb-rawp .kb-cutp { width: 34px; height: 34px; margin: 0 -7px; } .kb-rawp .kb-cutp img { width: 34px; height: 34px; }
 .kb-cutp .w { clip-path: none; } .kb-cutp.emo { display: grid; place-items: center; font-size: 30px; line-height: 1; }
+/* 카피백반 순서 칸(1·2·3번) */
+.kb-slots { padding: 2px 0; } .kb-guide { margin: 0 2px 5px; font-size: 12.5px; font-weight: 900; color: #C2410C; animation: kbBlink 1.1s ease-in-out infinite; } @keyframes kbBlink { 50% { opacity: .35; } }
+.kb-srow { display: flex; align-items: center; gap: 2px; } .kb-sar { font-style: normal; font-size: 12px; color: #B49A74; flex: none; }
+.kb-slot2 { position: relative; flex: 1; min-width: 0; height: 84px; border-radius: 14px; border: 2px dashed #CDB48B; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; touch-action: none; user-select: none; -webkit-user-select: none; }
+.kb-slot2.has { border-color: transparent; cursor: grab; } .kb-slot2.used { opacity: .45; border-style: solid; } .kb-slot2.lift { opacity: .2; }
+.kb-slot2.hot { border: 2px solid #FFC83D; box-shadow: 0 0 0 3px rgba(255,200,61,.35), 0 0 12px #FFB800; animation: kbHot 1s ease-in-out infinite; } @keyframes kbHot { 50% { box-shadow: 0 0 0 1px rgba(255,200,61,.2), 0 0 4px #FFB800; } }
+.kb-slot2.kb-drop { background: rgba(87,194,107,.18); border-color: #57C26B; } .kb-slot2.on .kb-pimgs { filter: drop-shadow(0 0 5px #57C26B); transform: translateY(-3px); }
+.kb-sn { position: absolute; left: 5px; top: 4px; width: 20px; height: 20px; border-radius: 50%; background: #5B4636; color: #fff; font-size: 12px; display: grid; place-items: center; }
+.kb-sw { font-size: 11px; font-weight: 800; color: #8C7356; text-align: center; padding: 0 6px 0 18px; line-height: 1.2; } .kb-slot2 small { font-size: 10px; font-weight: 800; color: #7A6248; text-align: center; line-height: 1.1; } .kb-slot2.hot small { color: #C2410C; animation: kbBlink 1s infinite; }
+.kb-raw .kb-cutlb { display: block; text-align: center; font-size: 9.5px; font-weight: 900; color: #fff; background: rgba(91,70,54,.85); border-radius: 6px; margin-top: -4px; white-space: nowrap; }
+.kb-s.board .kb-raw:has(.kb-rawp) { width: 52%; max-width: 120px; cursor: grab; touch-action: none; }
+/* 냄비 물 색 · 끓는 거품 */
+.kb-water { position: absolute; left: 25%; top: 21%; width: 50%; height: 40%; border-radius: 50%; mix-blend-mode: multiply; pointer-events: none; transition: background .6s; overflow: hidden; animation: kbTint .8s ease-out; } @keyframes kbTint { from { opacity: 0; } }
+.kb-water em { position: absolute; bottom: -10px; width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,.75); mix-blend-mode: normal; opacity: 0; }
+.kb-s.boil .kb-water em { animation: kbBub 1.1s ease-in infinite; } @keyframes kbBub { 0% { transform: translateY(0) scale(.5); opacity: 0; } 30% { opacity: .9; } 100% { transform: translateY(-46px) scale(1.2); opacity: 0; } }
+.kb-s.boil .kb-inpot { animation: kbJig .35s ease-in-out infinite; } @keyframes kbJig { 50% { transform: translateY(-2px); } }
+.kb-s.wait .kb-gauge b { box-shadow: 0 0 0 2px #57C26B; }
