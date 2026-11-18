@@ -357,7 +357,7 @@ export function mount(el, ctx) {
     const tctx = Object.assign(Object.create(ctx), { store: mem, spend: async () => true, coins: () => ctx.coins() });
     const z = r.fz || 0, fishes = z ? FISH.filter(f => f.z === z && !f.king && !f.pearl && (f.tier || 1) === 1).slice(0, 2) : [];
     const tf = Object.fromEntries(fishes.map((f, k) => ['t' + k, { id: f.id, cm: f.cm[1], p: f.price[1], g: 'A', t: 1 }])), tb = Object.fromEntries(r.crops.map(c => [`${c}|A`, 3])), ts = { [r.sauce]: 6 };
-    const od = { a: 9, rec: r.id, pref: r.st === 'board' ? 'raw' : 'mid', sauce: r.sauce, sn: 1, no: null, fid: null, fany: z };
+    const od = { a: 9, rec: r.id, pref: r.st === 'board' ? 'raw' : 'mid', sauce: r.sauce, sn: 1, no: null, fid: null, fany: z, fire: r.st === 'pot' || r.st === 'pan' ? (+new URLSearchParams(location.search).get('fire') || 0) % 4 : 0 }; // &fire=1|2|3: 약불·중불·강불 요청
     data[`cook/${ctx.uid}/${ymd()}`] = { rent: 1, next: [od] };
     openCook({ ctx: tctx, animals: ANIMALS.map((a, i) => ({ i, name: a.name, svg: animalSvg(i) })), svgFull: (i, m) => animalSvg(i, true, m), A, affinity: () => {}, toned,
       fish: () => Object.entries(tf).map(([k, v]) => [k, v, fishOf(v.id)]), useFish: key => { delete tf[key]; },
