@@ -168,7 +168,7 @@ export function openFarm(o) {
   let pickRow = -1;
 
   // 밭 아래 창
-  function drawSheet() { const ae = document.activeElement; if (ae && ae.type === 'time' && sheet.contains(ae)) return; // 시간 고르는 중엔 다시 그리지 않는다
+  function drawSheet() { const ae = document.activeElement; if (ae && (ae.type === 'time' || ae.tagName === 'SELECT') && sheet.contains(ae)) return; // 시간 고르는 중엔 다시 그리지 않는다
     const k = sel, t = now(), visit = who !== ctx.uid;
     if (k < 0) { // 한눈에 보기: 밭마다 카드 한 장(이랑 3칸 미리보기 + 상태 + 바로 하기 버튼)
       const seeds = Object.values(mine.seeds || {}).reduce((a, n) => a + (n || 0), 0), barn = Object.values(mine.barn || {}).reduce((a, n) => a + (n || 0), 0);
@@ -292,21 +292,26 @@ export function openFarm(o) {
   function sprkPanel(k, visit) { const sp = (data.sprk || {})[k], t = now(), inv = mine.sprkInv || 0;
     if (!sp || !sp.on) return visit ? null : h('div', { class: 'fm-sprkp' }, h('b', { class: 'fm-sph' }, h('img', { src: SPRK_IMG, alt: '' }), '스프링클러'), h('small', null, inv ? `가진 스프링클러 ${inv}개 · 설치하면 밤 12시~아침 10시에 자동으로 물을 줘서 등급이 안 떨어져요` : `밤 12시~아침 10시에 자동으로 물을 줘요 · 카피철물 🧰 농기구에서 ${SPRK_PRICE.toLocaleString('ko-KR')}코인`),
       inv ? h('button', { class: 'btn primary', onClick: () => installSprk(k) }, '이 밭에 설치하기') : h('button', { class: 'btn', onClick: () => openShop('tool') }, '사러 가기'));
-    const end = sprkEnd(sp, t), on = end > 0, n = sprkN[k] || 1, base = on ? end : t, upto = base + n * HR;
-    const step = d => h('button', { class: 'btn fm-qbtn', onClick: () => { sprkN[k] = Math.max(1, Math.min(24, n + d)); drawSheet(); } }, d > 0 ? '+' : '−');
+    const end = sprkEnd(sp, t), on = end > 0, base = on ? end : t, mid = (() => { const d = new Date(base); d.setHours(24, 0, 0, 0); return d.getTime(); })(), maxN = Math.max(0, Math.floor((mid - base) / HR)), n = Math.min(sprkN[k] || 1, Math.max(1, maxN)), upto = base + n * HR; // 늘리기도 밤 12시까지만
+    const step = d => h('button', { class: 'btn fm-qbtn', onClick: () => { sprkN[k] = Math.max(1, Math.min(maxN || 1, n + d)); drawSheet(); } }, d > 0 ? '+' : '−');
     return h('div', { class: 'fm-sprkp on' }, h('b', { class: 'fm-sph' }, h('img', { src: SPRK_IMG, alt: '' }), on ? `스프링클러 작동 중 · ${hhmm(end)}까지` : '스프링클러 쉬는 중 · 밤 12시에 다시 켜져요'),
       h('small', null, '밤 12시~아침 10시는 자동이에요. 다른 시간에 쓰거나 더 늘리려면 1시간에 150코인이에요.'),
-      !visit && rangeEl(k, sp, t), !visit && h('small', { class: 'fm-sprkor' }, '또는 지금부터 몇 시간 늘리기'),
-      !visit && h('div', { class: 'fm-sprkx' }, step(-1), h('span', null, h('b', null, `${n}시간`), h('small', null, `${hhmm(upto)}까지`)), step(1), h('button', { class: 'btn primary', onClick: () => buySprkTime(k, base, n) }, `${(n * SPRK_HOUR).toLocaleString('ko-KR')}코인 결제`))); }
+      !visit && rangeEl(k, sp, t), !visit && maxN > 0 && h('small', { class: 'fm-sprkor' }, '또는 지금부터 몇 시간 늘리기(밤 12시까지)'),
+      !visit && maxN > 0 && h('div', { class: 'fm-sprkx' }, step(-1), h('span', null, h('b', null, `${n}시간`), h('small', null, `${hhmm(upto)}까지`)), step(1), h('button', { class: 'btn primary', onClick: () => buySprkTime(k, base, n) }, `${(n * SPRK_HOUR).toLocaleString('ko-KR')}코인 결제`))); }
   // 시간 정해서 켜기: 시작~끝 시간을 직접 고르면, 무료 시간·이미 켜 둔 시간을 뺀 만큼만 1시간 150코인
   const sprkT = {}, pad2 = n => String(n).padStart(2, '0'), hm = ms => { const d = new Date(ms); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
   const atHM = (v, ref) => { const [H, M] = String(v || '00:00').split(':').map(Number), d = new Date(ref); d.setHours(H || 0, M || 0, 0, 0); return d.getTime(); };
-  function rangeOf(k, sp, t) { const nx = Math.ceil(t / HR) * HR, st = sprkT[k] || (sprkT[k] = { s: hm(nx), e: hm(nx + 2 * HR) }); let a = atHM(st.s, t), b = atHM(st.e, t); if (b <= a) b += 86400000; if (b <= t) { a += 86400000; b += 86400000; } a = Math.max(a, t);
+  // 고를 수 있는 건 아침 10시 ~ 밤 12시 사이 정시만(밤 12시~아침 10시는 원래 무료). 오늘 그 시간이 다 지났으면 내일로
+  function rangeOf(k, sp, t) { const nowH = new Date(t).getHours(), d0 = new Date(t); d0.setHours(0, 0, 0, 0);
+    const st = sprkT[k] || (sprkT[k] = (() => { const s0 = nowH >= 10 && nowH < 23 ? nowH + 1 : 10; return { s: s0, e: Math.min(24, s0 + 2) }; })());
+    let a = d0.getTime() + st.s * HR, b = d0.getTime() + st.e * HR; if (b <= t) { a += 86400000; b += 86400000; } a = Math.max(a, t);
     const cov = sprkWins(sp, a, b).reduce((x, [p, q]) => x + Math.max(0, Math.min(q, b) - Math.max(p, a)), 0), hrs = Math.ceil(Math.max(0, b - a - cov) / HR - 1e-9); return { a, b, hrs }; }
-  function rangeEl(k, sp, t) { const { a, b, hrs } = rangeOf(k, sp, t), st = sprkT[k], inp = key => h('input', { type: 'time', class: 'fm-time', value: st[key], onChange: e => { sprkT[k] = { ...sprkT[k], [key]: e.target.value }; e.target.blur(); drawSheet(); } });
-    return h('div', { class: 'fm-sprkt' }, h('b', null, '⏰ 원하는 시간 정해서 켜기'), h('div', { class: 'fm-sprkti' }, inp('s'), h('span', null, '~'), inp('e'),
+  function rangeEl(k, sp, t) { const { a, b, hrs } = rangeOf(k, sp, t), st = sprkT[k], lab = n => n === 24 ? '밤 12시' : n < 12 ? `오전 ${n}시` : n === 12 ? '낮 12시' : `오후 ${n - 12}시`;
+    const sel = (key, from, to) => h('select', { class: 'fm-time', onChange: e => { const v = +e.target.value; sprkT[k] = key === 's' ? { s: v, e: Math.max(st.e, v + 1) } : { ...st, e: v }; drawSheet(); } },
+      ...Array.from({ length: to - from + 1 }, (_, i) => from + i).map(n => h('option', { value: n, selected: n === st[key] }, lab(n))));
+    return h('div', { class: 'fm-sprkt' }, h('b', null, '⏰ 원하는 시간 정해서 켜기 (아침 10시 ~ 밤 12시)'), h('div', { class: 'fm-sprkti' }, sel('s', 10, 23), h('span', null, '~'), sel('e', st.s + 1, 24),
         h('button', { class: 'btn primary', onClick: () => buySprkRange(k) }, hrs ? `${(hrs * SPRK_HOUR).toLocaleString('ko-KR')}코인 결제` : '이미 켜져 있어요')),
-      h('small', null, `${hhmm(a)} ~ ${hhmm(b)} · ${hrs ? `무료 시간·이미 켜 둔 시간 빼고 ${hrs}시간` : '이 시간엔 이미 물을 줘요'}`)); }
+      h('small', null, `${hhmm(a)} ~ ${hhmm(b)} · ${hrs ? `이미 켜 둔 시간 빼고 ${hrs}시간` : '이 시간엔 이미 물을 줘요'}`)); }
   // 구독료 결제 전에 한 번 더: 시간과 총 비용을 보여 주고 확인·취소
   const payAsk = (k, a, b, hrs) => new Promise(res => { let done = false; modal({ title: '💦 스프링클러 구독료 결제', body: h('div', { class: 'fm-payask' }, h('img', { src: SPRK_IMG, alt: '' }),
       h('p', null, h('b', null, `${k + 1}번 밭`), ` · ${hhmm(a)} ~ ${hhmm(b)}`), h('p', null, `${hrs}시간 × ${SPRK_HOUR}코인`), h('p', { class: 'fm-paytot' }, `총 ${(hrs * SPRK_HOUR).toLocaleString('ko-KR')}코인`), h('small', null, `결제 후 남는 돈 ${(ctx.coins() - hrs * SPRK_HOUR).toLocaleString('ko-KR')}코인`)),
