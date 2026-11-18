@@ -118,13 +118,23 @@ export function openCook(o) {
     if (banned()) { const left = Math.max(0, rate.ban - ctx.store.now()), tm = Math.ceil(left / 60000), hh = Math.floor(tm / 60), mm = tm % 60;
       kids.push(h('div', { class: 'kb-ban' }, h('span', null, '🚫'), h('div', null, h('b', null, '영업정지 중'), h('small', null, `가게 평점이 ${RATE_BAN}점 이하로 떨어졌어요. ${hh ? hh + '시간 ' : ''}${mm ? mm + '분 ' : ''}뒤에 평점 5점으로 회복되고 다시 열어요.`)))); }
     else kids.push(h('button', { class: 'btn primary big kb-start', disabled: !open || n >= SESSIONS, onClick: startSession }, n >= SESSIONS ? '오늘 장사는 끝! 내일 또 와요' : `🔔 장사 시작 (${n + 1}번째 · 손님 ${PER}명)`));
+    if (!banned() && n < SESSIONS) { ensureNext(); const nx = Array.isArray(st.next) ? st.next : [];
+      if (nx.length) stage.append(h('div', { class: 'kb-wq' }, ...nx.map(od => h('div', { class: 'kb-wqa', html: an(od.a).svg }, h('i', null, '💭')))));
+      if (nx.length) kids.push(h('b', { class: 'kb-h' }, `⏳ 기다리는 손님 · ${n + 1}번째 장사`), h('p', { class: 'dim kb-wtip' }, '장사를 시작하면 이 손님들이 와요. 재료를 미리 준비하세요! 눌러서 레시피 보기'),
+        ...nx.map(od => { const r = recOf(od.rec), a = an(od.a), fishN = r.fz ? o.fish().filter(([, , f]) => f && (f.z || 1) >= r.fz).length : 0, cropN = id => Object.entries(o.barn() || {}).filter(([k, v]) => k.split('|')[0] === id && v > 0).reduce((t, [, v]) => t + v, 0), sN = ((o.sauces() || {})[od.sauce] || 0);
+          const need = [r.fz && h('i', { class: fishN ? 'ok' : 'no' }, `🐟 ${r.fz >= 2 ? '중급' : '초급'} 생선`), ...r.crops.filter(c => c !== od.no).map(c => h('i', { class: cropN(c) ? 'ok' : 'no' }, h('img', { src: o.cropImg(c), alt: '' }), cropName(c))), r.rice && h('i', { class: 'ok' }, '🍚 밥'), h('i', { class: sN >= od.sn ? 'ok' : 'no' }, sauceIc(od.sauce), `${SAUCES[od.sauce][1]}${od.sn > 1 ? ' ×2' : ''}`)].filter(Boolean);
+          const ready = (!r.fz || fishN) && r.crops.every(c => c === od.no || cropN(c)) && sN >= od.sn;
+          return h('button', { class: 'kb-wait' + (ready ? ' ready' : ''), onClick: () => recipeFor(od) }, h('div', { class: 'kb-wan', html: a.svg }), h('div', { class: 'kb-wbody' }, h('b', null, `${a.name} · ${r.n}`), h('div', { class: 'kb-tags' }, ...reqTags(od).map(([c, t]) => h('i', { class: c }, t))), h('div', { class: 'kb-need' }, ...need), h('small', { class: ready ? 'ok' : 'no' }, ready ? '✅ 준비 완료' : '❌ 재료가 모자라요')), h('img', { class: 'kb-wimg', src: r.img, alt: '' })); })); }
     if (qs.length) kids.push(h('b', { class: 'kb-h' }, '🔍 퀘스트 요리'), ...qs.map(q => { const r = recOf(q.rec); return h('button', { class: 'kb-qrow', onClick: () => startQuest(q) }, h('img', { src: r.img, alt: '' }), h('div', null, h('b', null, `${an(q.i).name}에게 ${r.n}`), h('small', null, '임대료 없이 만들 수 있어요 · 다 만들면 그 동물에게 가서 퀘스트 완료')), h('span', null, '만들기 ›')); }));
     kids.push(h('div', { class: 'kb-row2' }, h('button', { class: 'btn', onClick: recipeBook }, '📖 레시피북'), h('button', { class: 'btn', onClick: pantry }, '🧂 내 양념')));
     kids.push(h('p', { class: 'dim kb-tip' }, `가게 평점은 5점 만점이고 하루가 지나면 회복돼요. 손님 요청을 못 맞추면 -${RATE_MISS}, 다 맞추면 +${RATE_GOOD}. ${RATE_BAN}점 이하가 되면 하루 영업정지예요. 손님마다 원하는 익힘·양념·뺄 재료가 달라요.` + ' 생선은 낚시로, 작물은 농장에서, 양념은 카피수퍼에서 구해요. 재료가 없으면 "다음에 다시 오세요"로 돌려보내요(평점은 그대로).'));
     body.replaceChildren(...kids); }
   async function payRent() { if (st.rent) return; if (!(await ctx.spend(RENT))) return toast(`돈이 모자라요 (${RENT}코인 필요)`); st = { ...st, rent: ctx.store.now() }; await ctx.store.update(ref, { rent: st.rent }).catch(() => {}); sfx('coin'); toast('가게 문을 열었어요! 🍚', 1600); draw(); }
+  // 다음 장사에 올 손님을 미리 정해 둔다(로비에서 메뉴·재료를 보고 미리 준비할 수 있게). 장사를 시작하면 이 손님들이 그대로 온다
+  const newCust = () => { const all = o.animals.map(a => a.i).filter(i => A(i) > -30), cs = []; while (cs.length < PER) { const i = pick(all); if (!cs.some(c => c.a === i)) cs.push(makeOrder(i)); } return cs; };
+  let nextBusy = false; function ensureNext() { if (nextBusy || st.next || banned() || (st.n || 0) >= SESSIONS) return; nextBusy = true; st = { ...st, next: newCust() }; ctx.store.update(ref, { next: st.next }).catch(() => {}).finally(() => { nextBusy = false; }); }
   function startSession() { if (banned()) return toast('영업정지 중이에요'); if (!st.rent) return toast('먼저 임대료를 내요'); if ((st.n || 0) >= SESSIONS) return;
-    const all = o.animals.map(a => a.i).filter(i => A(i) > -30), cs = []; while (cs.length < PER) { const i = pick(all); if (!cs.some(c => c.a === i)) cs.push(makeOrder(i)); }
+    const cs = Array.isArray(st.next) && st.next.length ? st.next : newCust(); st = { ...st, next: null }; ctx.store.update(ref, { next: null }).catch(() => {});
     sess = { cs, i: 0 }; resetKitchen(); ctx.store.update(ref, { cur: { ...sess } }).catch(() => {}); sfx('point'); draw(); }
   function startQuest(q) { sess = { cs: [makeOrder(q.i, q)], i: 0, quest: 1 }; resetKitchen(); draw(); }
   function resetKitchen() { board = []; tray = []; selT = -1; Object.keys(stn).forEach(k => { stn[k] = null; }); }

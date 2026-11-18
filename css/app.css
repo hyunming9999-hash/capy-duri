@@ -1881,3 +1881,14 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .qs-rw { color: #A86A00 !important; font-weight: 700; }
 .qs-chs { display: grid; gap: 4px; } .qs-ch { display: grid; grid-template-columns: 24px 1fr auto; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 10px; background: #FFF8EA; border: 1.5px solid #EFE2CB; font-size: 13px; }
 .qs-ch.done { background: #EEF8EA; border-color: #BFE3B4; color: #4E7A44; } .qs-ch.now { background: #FFF1B8; border-color: #E6A817; font-weight: 800; } .qs-ch.lock { opacity: .55; } .qs-ch small { color: #8a7a66; }
+
+/* 카피백반 로비: 기다리는 손님 미리 보기 */
+.kb-wtip { margin: -2px 0 4px; font-size: 12px; }
+.kb-wait { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 8px 10px; margin-bottom: 6px; border-radius: 16px; border: 2.5px solid #F0B7B0; background: #FFF5F3; box-shadow: 0 3px 0 #E8A49C; font: inherit; color: inherit; cursor: pointer; }
+.kb-wait.ready { border-color: #8FD19E; background: #F1FBF2; box-shadow: 0 3px 0 #7CC08C; }
+.kb-wan { flex: none; width: 52px; } .kb-wan svg { width: 100%; display: block; }
+.kb-wbody { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; } .kb-wbody > b { font: 900 15px/1.2 var(--head); color: #4A3222; } .kb-wbody > small { font-weight: 800; font-size: 12px; } .kb-wbody > small.ok { color: #2F8A3E; } .kb-wbody > small.no { color: #C4281F; }
+.kb-wimg { flex: none; width: 58px; height: 58px; object-fit: contain; }
+.kb-need { display: flex; flex-wrap: wrap; gap: 4px; } .kb-need i { font-style: normal; display: inline-flex; align-items: center; gap: 2px; font-size: 11.5px; font-weight: 700; padding: 1px 7px 1px 4px; border-radius: 10px; background: #fff; border: 1.5px solid #ddd; } .kb-need i img { width: 16px; height: 16px; } .kb-need i.ok { border-color: #8FD19E; color: #2F6A38; } .kb-need i.no { border-color: #F0A39C; color: #B4231B; background: #FFF0EE; }
+.kb-need i .kb-sic, .kb-need i img.kb-sic { width: 16px; height: 16px; }
+.kb-wq { position: absolute; left: 0; right: 0; bottom: 14%; display: flex; justify-content: center; gap: 18%; pointer-events: none; z-index: 2; } .kb-wqa { position: relative; width: 22%; max-width: 92px; animation: fmBob 1.6s ease-in-out infinite; } .kb-wqa:nth-child(2) { animation-delay: .4s; } .kb-wqa svg { width: 100%; display: block; } .kb-wqa i { position: absolute; top: -14%; right: -16%; font-style: normal; font-size: 20px; }
