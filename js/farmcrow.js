@@ -50,7 +50,7 @@ export function farmCrow(ctx, { goFarm }) {
   // 새총 놀이: 화면을 누르면 그쪽으로 돌을 쏜다. 제한 시간 안에 정해진 만큼 맞히면 까마귀가 도망간다
   function startGame(lvN, test) { const lv = LV[lvN] || LV[1]; let hits = 0, shots = [], reload = 0, t0 = performance.now(), lastF = t0, raf = 0, over = false;
     const crowEl = h('img', { class: 'fc-crow', src: 'img/crow/crow.webp', alt: '까마귀' }), arena = h('div', { class: 'fc-arena' }, crowEl);
-    const dots = h('span', { class: 'fc-dots' }), bar = h('i', { class: 'fc-bar' }), msg = h('div', { class: 'fc-msg' }, '까마귀를 눌러서 새총을 쏘세요!');
+    const dots = h('span', { class: 'fc-dots' }), bar = h('i', { class: 'fc-bar' }), msg = h('div', { class: 'fc-msg' }, '화면을 누른 채 아래로 당겨 겨누고, 손을 떼면 발사!');
     // 새총: 누르면 고무줄이 뒤로 쭉 늘어났다가(0.14초) 놓으면 탁 튕기며 돌이 주머니에서 날아간다
     const sling = h('div', { class: 'fc-sling', html: '<svg viewBox="0 -10 80 110" style="overflow:visible"><path d="M40 98 V56 M40 58 L16 14 M40 58 L64 14" stroke="#8B5A2B" stroke-width="10" stroke-linecap="round" fill="none"/><path class="fc-band" d="M16 16 Q40 46 64 16" stroke="#C2410C" stroke-width="4.5" fill="none" stroke-linecap="round"/><circle class="fc-pouch" cx="40" cy="31" r="8" fill="#9CA3AF" stroke="#4B5563" stroke-width="2"/></svg>' });
     let pull = 0, pullTo = null; // pull: 0(그대로)~1(끝까지 당김). pullTo = 당기는 중인 한 발
@@ -61,11 +61,27 @@ export function farmCrow(ctx, { goFarm }) {
     const cr = { x: W() * 0.5, y: H() * 0.3, vx: 1, vy: 0.4, turn: 0, flash: 0 };
     const aim = () => { const a = Math.random() * Math.PI * 2; cr.vx = Math.cos(a); cr.vy = Math.sin(a) * 0.7; };
     const drawDots = () => { dots.textContent = '●'.repeat(hits) + '○'.repeat(Math.max(0, lv.need - hits)); }; drawDots(); aim();
-    arena.addEventListener('pointerdown', e => { if (over || reload > performance.now()) return; e.preventDefault(); const r = arena.getBoundingClientRect(), tx = e.clientX - r.left, ty = e.clientY - r.top;
-      const sr = sling.getBoundingClientRect(), sx = sr.left + sr.width / 2 - r.left, sy = sr.top + sr.height * 0.37 - r.top; // 새총 주머니 자리(화면 기준)에서 쏜다
-      sling.style.transform = `rotate(${Math.max(-25, Math.min(25, Math.atan2(tx - sx, sy - ty) * 57))}deg)`; // 겨눈 쪽으로 새총을 살짝 기울인다
-      pullTo = { sx, sy, tx, ty, t: performance.now() }; reload = performance.now() + 420; sfx('tock'); });
-    function end(win) { if (over) return; over = true; cancelAnimationFrame(raf);
+    // 조작: 화면을 누른 채 아래(뒤)로 당기면 고무줄이 늘어나고, 좌우로 움직이면 겨냥선이 따라 움직인다. 손을 떼는 순간 돌이 나간다
+    const aimSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); aimSvg.setAttribute('class', 'fc-aim'); arena.append(aimSvg);
+    const MAXP = 110; let drag = null; // { px, py } 당긴 주머니 자리(arena 좌표)
+    const geo = () => { const r = arena.getBoundingClientRect(), sr = sling.getBoundingClientRect(), P = (vx, vy) => [sr.left - r.left + vx / 80 * sr.width, sr.top - r.top + (vy + 10) / 110 * sr.height]; return { r, rest: P(40, 31), L: P(16, 14), R: P(64, 14) }; };
+    const aimOf = () => { const g = geo(), [sx, sy] = g.rest, vx = drag.px - sx, vy = drag.py - sy, len = Math.hypot(vx, vy); if (len < 14 || vy < 4) return null;
+      const k = Math.min(1, len / MAXP), dist = 120 + k * (sy - 60), ux = -vx / len, uy = -vy / len; return { sx, sy, tx: sx + ux * dist, ty: sy + uy * dist, k }; };
+    const drawAim = () => { if (!drag) { aimSvg.innerHTML = ''; sling.classList.remove('drag'); return; } const g = geo(), a = aimOf(), [px, py] = [drag.px, drag.py];
+      let html = `<path d="M${g.L[0]} ${g.L[1]} L${px} ${py} L${g.R[0]} ${g.R[1]}" stroke="#C2410C" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${px}" cy="${py}" r="11" fill="#8B5A2B" stroke="#4A2E18" stroke-width="2"/><circle cx="${px}" cy="${py}" r="7" fill="#9CA3AF" stroke="#374151" stroke-width="2"/>`;
+      if (a) { const n = 9; for (let q = 1; q <= n; q++) { const u = q / (n + 1), x = a.sx + (a.tx - a.sx) * u, y = a.sy + (a.ty - a.sy) * u - Math.sin(u * Math.PI) * 40; html += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(4 - u * 2).toFixed(1)}" fill="#fff" stroke="#3E2A1E" stroke-width="1.2" opacity="${(1 - u * 0.4).toFixed(2)}"/>`; }
+        html += `<g transform="translate(${a.tx.toFixed(1)} ${a.ty.toFixed(1)})"><circle r="${lv.r * 0.55}" fill="none" stroke="#E5484D" stroke-width="3"/><path d="M-${lv.r * 0.8} 0 H-6 M6 0 H${lv.r * 0.8} M0 -${lv.r * 0.8} V-6 M0 6 V${lv.r * 0.8}" stroke="#E5484D" stroke-width="3" stroke-linecap="round"/></g>`; }
+      aimSvg.innerHTML = html; sling.classList.add('drag'); sling.style.transform = a ? `rotate(${Math.max(-25, Math.min(25, Math.atan2(a.tx - a.sx, a.sy - a.ty) * 57))}deg)` : ''; };
+    const clampPull = (cx, cy) => { const g = geo(), [sx, sy] = g.rest; let vx = cx - g.r.left - sx, vy = cy - g.r.top - sy; const len = Math.hypot(vx, vy); if (len > MAXP) { vx *= MAXP / len; vy *= MAXP / len; } return { px: sx + vx, py: sy + vy }; };
+    el.addEventListener('pointerdown', e => { if (over || reload > performance.now()) return; e.preventDefault(); drag = clampPull(e.clientX, e.clientY); drag.id = e.pointerId; sfx('tock'); drawAim(); msg.textContent = '아래로 당겨서 겨누고, 손을 떼면 발사!'; });
+    const onMove = e => { if (!drag || e.pointerId !== drag.id) return; e.preventDefault(); Object.assign(drag, clampPull(e.clientX, e.clientY)); drawAim(); };
+    const onUp = e => { if (!drag || e.pointerId !== drag.id) return; const a = aimOf(); drag = null; drawAim(); sling.style.transform = '';
+      if (!a || over) { if (!over) msg.textContent = '조금 더 아래로 당겨서 놓아요!'; return; }
+      const d = Math.hypot(a.tx - a.sx, a.ty - a.sy), dur = Math.max(240, Math.min(520, d * 0.8)), st = h('i', { class: 'fc-stone' }); arena.append(st); shots.push({ st, sx: a.sx, sy: a.sy, tx: a.tx, ty: a.ty, at: performance.now(), dur, tr: 0 });
+      reload = performance.now() + 300; pull = 1; sfx('swing'); sling.classList.remove('snap'); void sling.offsetWidth; sling.classList.add('snap'); };
+    window.addEventListener('pointermove', onMove, { passive: false }); window.addEventListener('pointerup', onUp); window.addEventListener('pointercancel', onUp);
+    const unbind = () => { window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); window.removeEventListener('pointercancel', onUp); };
+    function end(win) { if (over) return; over = true; cancelAnimationFrame(raf); unbind(); drag = null; drawAim();
       if (test) { crowEl.classList.add(win ? 'flee' : 'grab'); msg.textContent = win ? '연습 성공! 까마귀가 도망갔어요 🎉' : '연습 실패… (진짜였다면 이랑 하나를 뺏겼어요)'; sfx(win ? 'bigfish' : 'bad'); setTimeout(() => { el.remove(); game = null; toast('연습 끝 · 다시 하려면 링크를 다시 열어요', 2600); }, 1700); return; }
       if (win) { crowEl.classList.add('flee'); msg.textContent = '까마귀가 도망갔어요! 밭을 지켰어요 🎉'; sfx('bigfish'); put({ res: 'win' }); data = { ...data, crow: { ...cw(), res: 'win' } }; setTimeout(() => { el.remove(); game = null; toast('오늘 까마귀는 다시 오지 않아요', 2200); }, 1700); }
       else { msg.textContent = '놓쳤어요… 까마귀가 이랑을 노려요!'; crowEl.classList.add('grab'); setTimeout(() => { el.remove(); game = null; steal('새총을 피한 까마귀가'); }, 1400); } }
@@ -77,9 +93,7 @@ export function farmCrow(ctx, { goFarm }) {
       if (cr.x < CS / 2) { cr.x = CS / 2; cr.vx = Math.abs(cr.vx); } if (cr.x > w - CS / 2) { cr.x = w - CS / 2; cr.vx = -Math.abs(cr.vx); }
       if (cr.y < CS / 2) { cr.y = CS / 2; cr.vy = Math.abs(cr.vy); } if (cr.y > hh * 0.72) { cr.y = hh * 0.72; cr.vy = -Math.abs(cr.vy); }
       crowEl.style.transform = `translate(${cr.x - CS / 2}px, ${cr.y - CS / 2}px) scaleX(${cr.vx < 0 ? -1 : 1})`; crowEl.classList.toggle('hit', cr.flash > 0.25);
-      if (pullTo) { const k = (now - pullTo.t) / 140; pull = Math.min(1, k); if (k >= 1) { const q = pullTo, d = Math.hypot(q.tx - q.sx, q.ty - q.sy), dur = Math.max(260, Math.min(560, d * 0.85)); const st = h('i', { class: 'fc-stone' }); arena.append(st);
-          shots.push({ st, sx: q.sx, sy: q.sy, tx: q.tx, ty: q.ty, at: now, dur, tr: 0 }); pullTo = null; sfx('swing'); sling.classList.remove('snap'); void sling.offsetWidth; sling.classList.add('snap'); } }
-      else if (pull > 0) pull = Math.max(0, pull - dt * 14); // 놓으면 고무줄이 탁 돌아온다
+      if (pull > 0) pull = Math.max(0, pull - dt * 14); // 놓으면 고무줄이 탁 돌아온다
       drawSling();
       shots = shots.filter(s => { const u = Math.min(1, (now - s.at) / s.dur), x = s.sx + (s.tx - s.sx) * u, y = s.sy + (s.ty - s.sy) * u - Math.sin(u * Math.PI) * 40; s.st.style.transform = `translate(${x - 9}px, ${y - 9}px) scale(${1.15 - u * 0.5})`;
         if (now - s.tr > 28 && u < 1) { s.tr = now; const tr = h('i', { class: 'fc-trail', style: { transform: `translate(${x - 5}px, ${y - 5}px)` } }); arena.append(tr); setTimeout(() => tr.remove(), 280); } // 날아가는 길에 잔상
