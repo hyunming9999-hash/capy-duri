@@ -107,6 +107,9 @@ const AWE2 = ['흑흑… 너는 우리 세상의 영웅이야. 네 곁이라 자
 const KING = ['대왕 폐하! 문안 인사 올립니다', '대왕 폐하 납시오! 만수무강하소서', '대왕 폐하, 오늘도 성은이 망극하옵니다', '대왕 폐하! 분부만 내려 주소서', '대왕 폐하 만세! 만세! 만만세!'], TAX_MS = 1800000, BOW_MS = 600000;
 // 단짝(100점)은 케이크 선물로만 될 수 있다. 다른 걸로는 99점까지만 오른다
 const CAKE_HINT = ['우리 거의 단짝이야! 케이크를 선물해 주면 진짜 단짝(100점)이 될 수 있어 🍰', '100점 단짝이 되려면 케이크가 꼭 필요해. 케이크 한 번만 선물해 줘 🍰', '여기서부터는 케이크 선물이 있어야 마음이 꽉 차 🍰'];
+// 오랜만에 접속(10시간 넘게): 동물마다 처음 마주칠 때 한 번만 걱정했다·보고 싶었다고 말한다. 그 뒤로는 평소 인사
+const AWAY_MS = 10 * 3600000, MISS_KEEP = 6 * 3600000;
+const MISS = [n => `${n}! 왜 이렇게 오래 안 왔어? 걱정했잖아`, n => `${n}, 보고 싶었어! 무슨 일 있었던 건 아니지?`, n => `드디어 왔다! ${n} 안 와서 하루 종일 기다렸어`, n => `${n}, 어디 아팠던 거 아니지? 너무 보고 싶었어`, n => `${n} 안 보여서 얼마나 걱정했는데! 와 줘서 고마워`];
 const RAREGREET = [n => `우와, ${n} 몸에서 빛이 나!`, n => `${n}, 그 반짝이는 거 진짜 예쁘다`, n => `눈부셔! ${n} 오늘 주인공이네`, n => `그 보물 어디서 났어? 너무 멋져`, n => `${n} 지나가니까 놀이터가 환해졌어`, n => `반짝반짝! ${n}한테 딱 어울려`, n => `와… 나도 그런 거 갖고 싶다`, n => `${n}, 별이 걸어 다니는 줄 알았어`];
 // 사이 유지: 50점 이상으로 친해진 동물은 하루에 한 번만 말을 걸면(선물·같이 놀기도 된다) 그날은 식지 않는다
 // 하루(24시간) 넘게 교류가 없으면 그때부터 8시간마다 1점씩 자연스럽게 식는다(하루에 많아야 3점, 50점 밑으로 내려가면 멈춘다)
@@ -288,6 +291,9 @@ export function mount(el, ctx) {
   }
   // 체력: 맞으면 줄고, 0이 되면 쓰러져서 10분 동안 친목회에 못 들어온다. 회복 포션은 카피수퍼에서 판다
   const hpNow = () => (vit && vit.hp != null ? vit.hp : HP_MAX);
+  // 오랜만에 온 날: 아는 사이(10점) 이상인 동물이 아직 그 말을 안 했으면 한 번 말한다(돌아온 뒤 6시간 안)
+  const missOf = i => !!(vit && vit.missAt) && ctx.store.now() - vit.missAt < MISS_KEEP && A(i) >= 10 && (mine[i] || {}).miss !== vit.missAt;
+  const seenT = setInterval(() => { if (vit) saveVit({ seen: ctx.store.now() }); }, 300000); // 놀이터에 있는 동안 5분마다 '마지막으로 본 때'를 적어 둔다
   const saveVit = patch => { vit = { ...(vit || {}), ...patch }; return ctx.store.update('socialme/' + ctx.uid, patch).catch(() => {}); };
   function drawHp() { if (!hpEl || !playing) return; const v = hpNow(); hpEl.style.width = v / HP_MAX * 100 + '%'; hpEl.style.background = v > 50 ? '#57C26B' : v > 25 ? '#F5A524' : '#E5484D'; hpEl.parentNode.nextSibling.textContent = `${v} / ${HP_MAX}`; potEl.textContent = `🧪 ${bag.potion || 0}`; potEl.disabled = !(bag.potion > 0) || v >= HP_MAX; }
   async function drink() { if (!(bag.potion > 0) || hpNow() >= HP_MAX) return; bag = { ...bag, potion: bag.potion - 1 }; ctx.store.update('bag/' + ctx.uid, { potion: bag.potion }).catch(() => {}); await saveVit({ hp: Math.min(HP_MAX, hpNow() + POTION[1]) }); sfx('point'); pop(mePop, `+${POTION[1]} ❤️`, 'up'); drawHp(); }
@@ -492,6 +498,7 @@ export function mount(el, ctx) {
     love_jeal: () => `(놀이터에 ${ctx.me.name}가 혼자 놀러 왔다. ${ctx.me.name}는 ${ctx.nameOf(ctx.partnerId)}와 사귀는 사이다. 너는 ${ctx.me.name}를 좋아해서 ${ctx.nameOf(ctx.partnerId)}를 살짝 질투한다. 귀엽게 삐지거나 서운해하며 나랑도 놀아 달라고 한다. ${ctx.nameOf(ctx.partnerId)} 이름을 꼭 넣는다)`,
     love_ask: () => `(놀이터에 ${ctx.me.name}가 혼자 놀러 왔다. ${ctx.me.name}는 ${ctx.nameOf(ctx.partnerId)}와 사귀는 사이다. 너는 둘의 연애가 너무 궁금해서 눈을 반짝이며 하나를 물어본다. 어떻게 만났는지, 어디가 좋은지, 첫 데이트 같은 것. 질문으로 끝낸다. ${ctx.nameOf(ctx.partnerId)} 이름을 꼭 넣는다)`,
     srumor: () => { const r = bag.sRumor || {}; return `(${ctx.me.name}가 낚시로 ${r.lab || 'S등급'} ${r.name || '물고기'}(${r.cm || '?'}cm)를 잡았다는 소문이 놀이터에 쫙 퍼졌다. 너는 소문을 듣고 ${ctx.me.name}에게 달려와서 진짜냐고, 얼마나 컸냐고 신나게 물어보며 대단하다고 칭찬한다. 물고기 이름을 꼭 넣는다)`; },
+    miss: () => `(${ctx.me.name}가 10시간 넘게 놀이터에 오지 않다가 오랜만에 왔다. 네가 먼저 반가워하며 걱정했다, 보고 싶었다는 마음을 네 성격대로 다정하게 말한다)`,
     sulk: () => `(${ctx.me.name}가 한참 동안 너와 놀아 주지 않아서 마음이 조금 식었다. 네가 먼저 귀엽게 서운해하며 경고한다. 화내지 말고 삐진 듯 애교 있게)` };
   function line(i, kind, fallback, n) { const key = i + '|' + kind + (n || ''), bank = aiBank[key] || (aiBank[key] = []), out = bank.length ? bank.shift() : fallback, now = performance.now();
     if (!bank.length && !aiBusy[key] && now - aiAt > 5000 && aiN < 300 && PERSONA[i]) { aiBusy[key] = 1; aiAt = now; aiN++; const a = ANIMALS[i], p = PERSONA[i];
@@ -653,12 +660,13 @@ export function mount(el, ctx) {
           if (now > o.until) { leave(o); o.st = 'idle'; o.until = now + 500; } }
         else if (now > o.until) decide(o, i);
       }
-      if (!paused && i !== held && (o.st === 'idle' || o.st === 'walk') && (mx || my) && (A(i) >= 30 || (shiny && A(i) >= 0)) && Math.abs(me.x - o.x) < (shiny ? 110 : 85) && now > o.greetAt) { o.greetAt = now + (shiny ? 9000 : 14000) + Math.random() * 9000;
+      if (!paused && i !== held && (o.st === 'idle' || o.st === 'walk') && (mx || my) && (A(i) >= 30 || (shiny && A(i) >= 0) || missOf(i)) && Math.abs(me.x - o.x) < (shiny ? 110 : 85) && now > o.greetAt) { o.greetAt = now + (shiny ? 9000 : 14000) + Math.random() * 9000;
         const near100 = A(i) >= 90 && A(i) < 100;
         // 황금 장비 칭찬: 같은 동물은 한 번 칭찬하면 10분 동안 다시 안 한다(대왕 세금·절은 따로). 칭찬 말은 지난번과 겹치지 않게 돌아가며
         const goldOk = wall - ((mine[i] || {}).gp || 0) >= 600000, gold = (kind, list) => { setRel(i, { gp: wall }); const prev = o.lastGold, pool = list.filter(t => t !== prev), t = pool.length ? pool[Math.floor(Math.random() * pool.length)] : list[0]; o.lastGold = t; return line(i, kind, t, shineN); };
         const goldPool = base => [base, ...RAREGREET.map(f => toned(i, f(ctx.me.name)))];
-        if (bag.rumorAt && shiny && !(mine[i] || {}).rumor) { setRel(i, { rumor: 1 }); pop(o.e, line(i, 'rumor', toned(i, pick(RUMOR)(ctx.me.name))), 'say long'); } // 첫 황금템 소문을 듣고 달려온다(동물마다 한 번)
+        if (missOf(i)) { setRel(i, { miss: vit.missAt }); pop(o.e, line(i, 'miss', toned(i, pick(MISS)(ctx.me.name))), 'say long'); animalVoice(i); }
+        else if (bag.rumorAt && shiny && !(mine[i] || {}).rumor) { setRel(i, { rumor: 1 }); pop(o.e, line(i, 'rumor', toned(i, pick(RUMOR)(ctx.me.name))), 'say long'); } // 첫 황금템 소문을 듣고 달려온다(동물마다 한 번)
         else if (near100 && now > (o.cakeAt || 0)) { o.cakeAt = now + 60000; pop(o.e, line(i, 'cake', toned(i, pick(CAKE_HINT))), 'say long'); } // 단짝 직전: 케이크가 필요하다고 알려 준다
         else if (shineN >= 6 && (goldOk || (!kingTrial && (wall - ((mine[i] || {}).taxAt || 0) >= TAX_MS || wall - ((mine[i] || {}).bowAt || 0) >= BOW_MS)) || kingTrial)) { // 대왕 폐하: 10분에 한 번 절을 하고, 30분에 한 번 세금 1코인을 바친다
           const r = mine[i] || {}, due = !kingTrial && wall - (r.taxAt || 0) >= TAX_MS, bow = kingTrial ? now > (o.tbow || 0) : wall - (r.bowAt || 0) >= BOW_MS; if (kingTrial) o.tbow = now + 12000; pop(o.e, due ? '대왕 폐하! 세금 1코인 바치옵니다 🪙' : gold('king', KING), 'say long');
@@ -1052,7 +1060,8 @@ export function mount(el, ctx) {
     ctx.store.on('farm/' + ctx.uid + '/sprkInv', v => { farmSprk = v || 0; }),
     ctx.store.on('socialpos', v => { const q = pid() && v && v[pid()]; pal.on = !!q; if (q) { pal.x = q.x || 0; pal.y = q.y || 0; pal.f = q.f || 1; pal.ride = q.r == null ? -1 : q.r; pal.boat = q.b == null ? -1 : q.b; pal.t = q.t || 0; } }),
     ctx.store.on('socialme/' + ctx.uid, v => { const first = vit === null; vit = v || {};
+      if (first) { const t = ctx.store.now(); if (vit.seen && t - vit.seen >= AWAY_MS) saveVit({ missAt: t }); saveVit({ seen: t }); }
       if (first) { if (vit.deadAt && ctx.store.now() - vit.deadAt < TEN_MIN) lock(); else { if (vit.deadAt) saveVit({ hp: HP_MAX, deadAt: 0 }); scene(); } } else drawHp(); }),
   ];
-  return () => { fcrow.dispose(); quest.dispose(); trial = null; kingTrial = 0; keepPos(); alive = false; if (battle) { battle.stop(); battle = null; } voice.destroy(); bgm.duck(false); window.removeEventListener('pointerdown', wakeVoice); leavePos(); me.boat = null; offer = null; endSorry(); clearInterval(lockT); cancelAnimationFrame(raf); offs.forEach(f => f()); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
+  return () => { clearInterval(seenT); if (vit) saveVit({ seen: ctx.store.now() }); fcrow.dispose(); quest.dispose(); trial = null; kingTrial = 0; keepPos(); alive = false; if (battle) { battle.stop(); battle = null; } voice.destroy(); bgm.duck(false); window.removeEventListener('pointerdown', wakeVoice); leavePos(); me.boat = null; offer = null; endSorry(); clearInterval(lockT); cancelAnimationFrame(raf); offs.forEach(f => f()); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
 }
