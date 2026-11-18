@@ -14,7 +14,7 @@ const C = [
   ['watermelon', '수박', 3, 95, 800, 260], ['melon', '멜론', 3, 110, 850, 275], ['grape', '포도', 3, 120, 900, 290], ['pineapple', '파인애플', 3, 130, 950, 305], ['blueberry', '블루베리', 3, 145, 1000, 320],
   ['ginseng', '인삼', 3, 170, 1100, 350], ['matsutake', '송이버섯', 3, 190, 1200, 380], ['apple', '사과', 3, 210, 1250, 395], ['banana', '바나나', 3, 225, 1300, 410], ['yuzu', '황금유자', 3, 240, 1400, 440],
 ];
-export const CROPS = C.map(([id, name, t, min, seed, base]) => ({ id, name, t, ms: min * 60000, seed: Math.max(10, Math.round(seed / 3 / 5) * 5), base })); // 씨앗 하나 = 이랑 한 줄(밭 한 칸은 3줄)
+export const CROPS = C.map(([id, name, t, min, seed, base]) => ({ id, name, t, ms: min * 60000, seed: Math.max(15, Math.round(seed / 2 / 5) * 5), base })); // 씨앗값: 물가에 맞춰 예전의 1.5배 // 씨앗 하나 = 이랑 한 줄(밭 한 칸은 3줄)
 export const cropOf = id => CROPS.find(c => c.id === id);
 export const cropImg = id => `img/farm/crop/${id}.webp`;
 export const TOOLS = [null, { t: 1, name: '초급 농기구', price: 0, note: '구리 호미·구리 물뿌리개 · 물은 한 번에 1이랑 · 처음부터 있어요' }, { t: 2, name: '중급 농기구', price: 2500, note: '은 호미·은 물뿌리개 · 물은 한 번에 2이랑 · 중급 작물을 심어요' }, { t: 3, name: '고급 농기구', price: 6000, note: '황금 낫·황금 물뿌리개 · 물은 한 번에 밭 전체(3이랑) · 고급 작물을 심어요' }];
@@ -44,7 +44,7 @@ const SELL_UP = 1.5; // 동물 물건 값이 오른 만큼 작물 매입가도 1
 export const cropPrice = (id, g) => (GRADE_X[g] && SELL_A[id] ? Math.max(1, Math.round(SELL_A[id] * SELL_UP * GRADE_X[g] / GRADE_X.A)) : 0);
 
 // 밭 한 칸의 컨디션 계산(순수 함수): 물이 마른 시간과 잡초가 자란 채로 둔 시간만큼 깎인다. 다 자란 뒤로는 셈하지 않는다
-export const SPRK_IMG = 'img/farm/sprinkler.webp', SPRK_PRICE = 1500, SPRK_HOUR = 150, SPRK_FROM = 0, SPRK_TO = 10; // 스프링클러: 밭 1칸에 1개, 밤 12시~아침 10시 자동, 그 밖은 1시간 150코인
+export const SPRK_IMG = 'img/farm/sprinkler.webp', SPRK_PRICE = 2500, SPRK_HOUR = 200, SPRK_FROM = 0, SPRK_TO = 10; // 스프링클러: 밭 1칸에 1개, 밤 12시~아침 10시 자동, 그 밖은 1시간 150코인
 const HR = 3600000, WIN = new WeakMap(); // 이랑 → 그 밭 스프링클러가 도는 시간들
 // 밭 하나의 스프링클러 작동 구간([시작, 끝] 목록): 매일 밤 12시~아침 10시 + 돈 내고 늘린 시간
 export function sprkWins(sp, a, b) { if (!sp || !sp.on) return []; const out = []; const d = new Date(a - 86400000); d.setHours(0, 0, 0, 0);
@@ -287,7 +287,7 @@ export function openFarm(o) {
       rc(body, tabs, rows); }
     draw(); modal({ title: '🔨 카피철물', body: [body], actions: [{ label: '나가기', primary: true }] }); }
 
-  // 스프링클러: 밭마다 하나. 밤 12시~아침 10시는 그냥 돌고, 그 밖의 시간은 1시간 150코인으로 늘린다(버튼으로 시간을 고른 뒤 결제)
+  // 스프링클러: 밭마다 하나. 밤 12시~아침 10시는 그냥 돌고, 그 밖의 시간은 1시간 SPRK_HOUR코인으로 늘린다(버튼으로 시간을 고른 뒤 결제)
   const sprkN = {}, hhmm = ms => { const d = new Date(ms), td = new Date(); const day = d.toDateString() === td.toDateString() ? '' : d.getDate() === new Date(td.getTime() + 86400000).getDate() ? '내일 ' : `${d.getMonth() + 1}/${d.getDate()} `; return `${day}${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
   const sprkEnd = (sp, t) => { const w = sprkWins(sp, t - 1, t + 7 * 86400000).find(([a, b]) => a <= t && t < b); return w ? w[1] : 0; };
   function sprkPanel(k, visit) { const sp = (data.sprk || {})[k], t = now(), inv = mine.sprkInv || 0;
@@ -296,10 +296,10 @@ export function openFarm(o) {
     const end = sprkEnd(sp, t), on = end > 0, base = on ? end : t, mid = (() => { const d = new Date(base); d.setHours(24, 0, 0, 0); return d.getTime(); })(), maxN = Math.max(0, Math.floor((mid - base) / HR)), n = Math.min(sprkN[k] || 1, Math.max(1, maxN)), upto = base + n * HR; // 늘리기도 밤 12시까지만
     const step = d => h('button', { class: 'btn fm-qbtn', onClick: () => { sprkN[k] = Math.max(1, Math.min(maxN || 1, n + d)); drawSheet(); } }, d > 0 ? '+' : '−');
     return h('div', { class: 'fm-sprkp on' }, h('b', { class: 'fm-sph' }, h('img', { src: SPRK_IMG, alt: '' }), on ? `스프링클러 작동 중 · ${hhmm(end)}까지` : '스프링클러 쉬는 중 · 밤 12시에 다시 켜져요'),
-      h('small', null, '밤 12시~아침 10시는 자동이에요. 다른 시간에 쓰거나 더 늘리려면 1시간에 150코인이에요.'),
+      h('small', null, `밤 12시~아침 10시는 자동이에요. 다른 시간에 쓰거나 더 늘리려면 1시간에 ${SPRK_HOUR}코인이에요.`),
       !visit && rangeEl(k, sp, t), !visit && maxN > 0 && h('small', { class: 'fm-sprkor' }, '또는 지금부터 몇 시간 늘리기(밤 12시까지)'),
       !visit && maxN > 0 && h('div', { class: 'fm-sprkx' }, step(-1), h('span', null, h('b', null, `${n}시간`), h('small', null, `${hhmm(upto)}까지`)), step(1), h('button', { class: 'btn primary', onClick: () => buySprkTime(k, base, n) }, `${(n * SPRK_HOUR).toLocaleString('ko-KR')}코인 결제`))); }
-  // 시간 정해서 켜기: 시작~끝 시간을 직접 고르면, 무료 시간·이미 켜 둔 시간을 뺀 만큼만 1시간 150코인
+  // 시간 정해서 켜기: 시작~끝 시간을 직접 고르면, 무료 시간·이미 켜 둔 시간을 뺀 만큼만 1시간 SPRK_HOUR코인
   const sprkT = {}, pad2 = n => String(n).padStart(2, '0'), hm = ms => { const d = new Date(ms); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
   const atHM = (v, ref) => { const [H, M] = String(v || '00:00').split(':').map(Number), d = new Date(ref); d.setHours(H || 0, M || 0, 0, 0); return d.getTime(); };
   // 고를 수 있는 건 아침 10시 ~ 밤 12시 사이 정시만(밤 12시~아침 10시는 원래 무료). 오늘 그 시간이 다 지났으면 내일로
