@@ -186,7 +186,11 @@ export function createQuest(d) {
     const clues = s.clue ? [...(q.clues || []), s.clue] : q.clues || [];
     await save({ s: (q.s || 0) + 1, on: 0, ok: 0, clues, day: ymd(), dn: doneToday() + 1 }); sfx(s.end ? 'bigfish' : 'coin');
     const next = FLAT[(q.s || 0)], nextT = next && capped() ? `오늘 ${DAY_MAX}단계를 모두 했어요. 내일 ${d.names[next.who]}에게서 이어져요!` : next ? (next.ci !== s.ci ? `다음: ${STORY[next.ci].t} — ${d.names[next.who]}에게 가 보세요` : `다음: ${d.names[next.who]}에게 가 보세요`) : '메인 이야기 끝! 🎉';
-    vn(s.done, i, title + (s.end ? ' · 장 완료!' : ' · 완료'), [h('div', { class: 'qw-rw' }, h('b', null, '받음'), h('span', null, `🪙 +${c + bonus}`), h('span', null, s.final ? `💗 모든 동물 +${a}` : `💗 +${a}`)), s.clue && h('p', { class: 'qw-new' }, `🔎 수첩에 적었어요: ${s.clue}`), h('p', { class: 'vn-sub' }, nextT)], [{ label: '확인', primary: true, value: 1 }]); }
+    await vn(s.done, i, title + (s.end ? ' · 장 완료!' : ' · 완료'), [s.clue && h('p', { class: 'qw-new' }, `🔎 수첩에 적었어요: ${s.clue}`)], [{ label: '보상 받기 🎁', primary: true, value: 1 }]);
+    // 보상 알림 창: (보상 내용)을 받았습니다
+    const items = [['🪙', `${(c + bonus).toLocaleString('ko-KR')}코인`, bonus ? `(장 보너스 ${bonus} 포함)` : ''], ['💗', s.final ? `모든 동물 친밀도 +${a}` : `${d.names[i]} 친밀도 +${a}`, ''], ...(s.who !== i && !s.final ? [['💗', `${d.names[s.who]} 친밀도 +2`, '']] : [])];
+    sfx('coin'); modal({ title: s.end ? '🎉 장 완료 보상' : '🎁 퀘스트 보상', body: [h('div', { class: 'rw-pop' }, ...items.map(([ic, t, sub]) => h('div', { class: 'rw-it' }, h('span', null, ic), h('b', null, t), sub && h('small', null, sub)))),
+      h('p', { class: 'center rw-msg' }, `${items.map(x => x[1]).join(', ')}을(를) 받았습니다.`), h('p', { class: 'center dim' }, nextT)], actions: [{ label: '확인', primary: true }] }); }
   async function accuse(i, s, title) {
     const c = await vn(s.say, i, title, [clueBox()], s.need.opts.map(([nm], k) => ({ label: `👉 ${nm}`, value: k + 1 }))); if (!c) return;
     const [, ok, why] = s.need.opts[c - 1]; if (ok) { await save({ on: 1 }); return finish(i, s, title); }
