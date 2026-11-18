@@ -110,6 +110,14 @@ const KEEP_AT = 50, DAY_MS = 86400000, DROP_MS = 28800000, LOW_MS = 3 * 86400000
 // 날짜 기준: 말을 건 날은 안 식는다. 하루를 통째로 거르면 그다음 날 0시부터 8시간마다 -1(하루 최대 -3)
 const dueAt = fed => { const d = new Date(fed); d.setHours(0, 0, 0, 0); return d.getTime() + 2 * DAY_MS; };
 const dropsBy = (fed, now) => (now < dueAt(fed) ? 0 : Math.floor((now - dueAt(fed)) / DROP_MS) + 1);
+// 혼자 놀이터에 있을 때 동물들이 연애 얘기를 건다: 놀리는 동물 / 질투하는 동물 / 궁금해서 묻는 동물
+const LOVE_TEASE = new Set([9, 14, 5, 20]), LOVE_JEAL = new Set([28, 4, 12]); // 호랑이·원숭이·여우·늑대 / 다람쥐·토끼·돼지
+const loveKind = i => (LOVE_TEASE.has(i) ? 'tease' : LOVE_JEAL.has(i) ? 'jeal' : 'ask');
+const LOVE = {
+  tease: [(n, p) => `${n}~ ${josa(p, '랑', '이랑')} 사귄다며? 얼레리 꼴레리~!`, (n, p) => `둘이 손잡고 다니는 거 다 봤다~ 크크`, (n, p) => `${p} 생각하느라 얼굴 빨개졌지? 다 보여~`, (n, p) => `오늘은 ${p} 없이 혼자야? 심심하겠다~ 농담이야!`, (n, p) => `${n}, ${p} 앞에서는 말투가 달라지더라? 다 알아~`],
+  jeal: [(n, p) => `흥… ${p}만 좋아하고 나랑은 안 놀아 줄 거지?`, (n, p) => `나도 ${n} 좋은데… ${p} 부러워`, (n, p) => `${p} 얘기는 그만! 지금은 나랑 놀자`, (n, p) => `칫, 나한테는 그렇게 웃어 준 적 없잖아…`, (n, p) => `${p}가 그렇게 좋아? 나보다?`],
+  ask: [(n, p) => `${n}, ${josa(p, '랑', '이랑')} 어떻게 만났어? 궁금해!`, (n, p) => `${p}의 어디가 제일 좋아?`, (n, p) => `둘이 처음 데이트는 어디 갔어?`, (n, p) => `${p}한테 고백은 누가 먼저 했어?`, (n, p) => `${josa(p, '랑', '이랑')} 싸운 적 있어? 어떻게 화해해?`],
+};
 const S_RUMOR = [(n, f, l) => `${n}! ${l} ${f} 잡았다며? 소문 다 났어, 대단해!`, (n, f, l) => `들었어 들었어! ${josa(f, '가', '이')} ${josa(l, '라며', '이라며')}? 얼마나 컸어? 진짜 멋지다!`, (n, f, l) => `${n}, 낚시왕이야? ${l} ${josa(f, '라니', '이라니')} 놀이터가 난리야!`, (n, f, l) => `헉, 그 소문 진짜야? ${l} ${f}! 나도 보고 싶어~ 최고야!`, (n, f, l) => `${l} ${f} 잡은 사람이 ${n}이었구나! 존경해!`, (n, f, l) => `${n} 최고! ${l} ${josa(f, '는', '은')} 아무나 못 잡는대!`];
 const RUMOR = [n => `소문 듣고 왔어~ 대박! ${n} 황금 보물 샀다며!`, n => `대박! ${n}, 진짜 황금이야? 소문이 사실이었네!`, n => `온 놀이터가 ${n} 얘기뿐이야~ 대박 멋져!`, n => `소문 듣고 달려왔어! ${n} 최고야, 눈부셔!`, n => `헉 대박… ${n} 황금 두른 거 실화야? 존경해!`];
 const SULK = ['요즘 나랑 안 놀아 줘서 서운해… 🥺', '나 잊은 거 아니지? 힝… 🥺', '같이 안 놀면 마음이 식어 버려… 🥺', '나 여기 있는데… 좀 봐 줘 🥺', '심심해서 삐질 거야… 🥺'];
@@ -347,6 +355,9 @@ export function mount(el, ctx) {
     care: () => `(${ctx.me.name}가 바다에서 놀고 있다. 네가 먼저 다칠까 봐 걱정하고 챙겨 주는 다정한 한마디를 한다. 소중한 존재라는 느낌이 들게)`,
     cake: () => `(너와 ${ctx.me.name}는 단짝 바로 직전이다. 100점 단짝이 되려면 케이크 선물이 꼭 필요하다는 것을 네가 먼저 귀엽게 알려 준다. "케이크"라는 말을 꼭 넣는다)`,
     rumor: () => `(${ctx.me.name}가 처음으로 황금 보물을 손에 넣었다는 소문이 놀이터에 퍼졌다. 너는 그 소문을 듣고 달려왔다. "소문 듣고 왔어", "대박" 같은 말로 호들갑스럽게 놀라며 칭송한다)`,
+    love_tease: () => `(놀이터에 ${ctx.me.name}가 혼자 놀러 왔다. ${ctx.me.name}는 ${ctx.nameOf(ctx.partnerId)}와 사귀는 사이다. 너는 장난꾸러기라 둘이 사귀는 걸 짓궂게 놀린다. 얼레리 꼴레리 같은 말도 좋다. 나쁜 말이나 상처 주는 말은 하지 않는다. ${ctx.nameOf(ctx.partnerId)} 이름을 꼭 넣는다)`,
+    love_jeal: () => `(놀이터에 ${ctx.me.name}가 혼자 놀러 왔다. ${ctx.me.name}는 ${ctx.nameOf(ctx.partnerId)}와 사귀는 사이다. 너는 ${ctx.me.name}를 좋아해서 ${ctx.nameOf(ctx.partnerId)}를 살짝 질투한다. 귀엽게 삐지거나 서운해하며 나랑도 놀아 달라고 한다. ${ctx.nameOf(ctx.partnerId)} 이름을 꼭 넣는다)`,
+    love_ask: () => `(놀이터에 ${ctx.me.name}가 혼자 놀러 왔다. ${ctx.me.name}는 ${ctx.nameOf(ctx.partnerId)}와 사귀는 사이다. 너는 둘의 연애가 너무 궁금해서 눈을 반짝이며 하나를 물어본다. 어떻게 만났는지, 어디가 좋은지, 첫 데이트 같은 것. 질문으로 끝낸다. ${ctx.nameOf(ctx.partnerId)} 이름을 꼭 넣는다)`,
     srumor: () => { const r = bag.sRumor || {}; return `(${ctx.me.name}가 낚시로 ${r.lab || 'S등급'} ${r.name || '물고기'}(${r.cm || '?'}cm)를 잡았다는 소문이 놀이터에 쫙 퍼졌다. 너는 소문을 듣고 ${ctx.me.name}에게 달려와서 진짜냐고, 얼마나 컸냐고 신나게 물어보며 대단하다고 칭찬한다. 물고기 이름을 꼭 넣는다)`; },
     sulk: () => `(${ctx.me.name}가 한참 동안 너와 놀아 주지 않아서 마음이 조금 식었다. 네가 먼저 귀엽게 서운해하며 경고한다. 화내지 말고 삐진 듯 애교 있게)` };
   function line(i, kind, fallback, n) { const key = i + '|' + kind + (n || ''), bank = aiBank[key] || (aiBank[key] = []), out = bank.length ? bank.shift() : fallback, now = performance.now();
@@ -524,7 +535,7 @@ export function mount(el, ctx) {
         else { const sh = shiny && goldOk && (A(i) < 30 || Math.random() < 0.6); if (sh) pop(o.e, gold('shine', RAREGREET.map(f => toned(i, f(ctx.me.name)))), 'say long'); else if (A(i) >= 30) pop(o.e, line(i, 'greet', toned(i, pick(GREET)(ctx.me.name))), 'say long'); } }
       const k = Math.min(1, dt * 5); o.y += (ty - o.y) * k; o.s += (ts - o.s) * k;
       o.e.style.left = o.x + 'px'; o.e.style.bottom = (o.y * 100).toFixed(2) + '%'; o.e.style.transform = `scale(${o.s.toFixed(3)})`; });
-    crowTick(now, paused, wet); charmTick(now, paused, wet); sRumorTick(now, paused, wet);
+    crowTick(now, paused, wet); charmTick(now, paused, wet); sRumorTick(now, paused, wet); loveTick(now, paused, wet);
     raf = requestAnimationFrame(step);
   }
   // 동물 머리 위 친밀도: 내 점수(크게)와 상대 점수(작게). 사이가 나쁘면 찌푸리고, 좋으면 하트가 떠오른다
@@ -541,10 +552,22 @@ export function mount(el, ctx) {
   // 퇴치 버튼 → 악귀퇴치부적 3장 중 진짜 1장(1/3)을 10초 안에 고르면 퇴치. 못 고르거나 시간이 다 되면 두 동물이 각각 -15~-20
   const CROW_N = 2, CROW_MS = 25000, CROW_STAY = 300000, PICK_MS = 10000; // 하루 2번: 첫 번째는 친목회 5분째, 두 번째는 그 뒤 아무 때나(2~25분 더 놀다 보면)
   let crow = null, crowStay = 0, crowLast = 0, worldEl = null, stageEl = null, charmSnooze = 0;
-  if (isMock) window.capyDebug = { crow: () => { crowStay = 1e9; }, charm: () => { charmSnooze = 0; window.capyDebug.charmNow = true; }, fx: n => charmFx(n) }; // 연습 모드에서만: 시험용으로 바로 부르기
+  if (isMock) window.capyDebug = { crow: () => { crowStay = 1e9; }, charm: () => { charmSnooze = 0; window.capyDebug.charmNow = true; }, fx: n => charmFx(n), love: () => { loveNext = 0; } }; // 연습 모드에서만: 시험용으로 바로 부르기
   // 까마귀는 화·금요일에만: 그날 친목회 육지에 2분 머물면 딱 1번 나와 한 마리만 이간질. 다른 요일은 안 나온다
   const crowBig = () => [2, 5].includes(new Date().getDay()), crowMax = () => (crowBig() ? 1 : 0), crowWho = () => 1;
   const crowUsed = () => (bag.crowDay === ymd() ? bag.crowN || 0 : 0);
+  let loveNext = performance.now() + 60000 + Math.random() * 60000;
+  function loveTick(now, paused, wet) {
+    if (trial || paused || wet || me.boat || fishOpen || battle || crow || now < loveNext || !ctx.partnerId) return;
+    if (palEl && palEl.style.display !== 'none') { loveNext = now + 30000; return; } // 둘이 같이 있으면 안 한다(혼자일 때만)
+    loveNext = now + 120000 + Math.random() * 120000;
+    const pool = actors.map((o, i) => i).filter(i => A(i) >= 20 && actors[i] && (mine[i] || {}).loveDay !== ymd() && i !== held && ['idle', 'walk'].includes(actors[i].st)).sort((a, b) => Math.abs(actors[a].x - me.x) - Math.abs(actors[b].x - me.x));
+    if (!pool.length) return; const i = pool[Math.floor(Math.random() * Math.min(4, pool.length))], o = actors[i], k = loveKind(i); setRel(i, { loveDay: ymd() });
+    leave(o); o.st = 'walk'; o.spot = null; o.wait = 0; o.tx = Math.max(40, Math.min(WATER_X - 40, me.x + (Math.random() < 0.5 ? 56 : -56))); o.e.classList.add('walk'); o.e.classList.toggle('left', o.tx < o.x);
+    const pn = ctx.nameOf(ctx.partnerId);
+    setTimeout(() => { if (!alive || !actors[i]) return; pop(o.e, line(i, 'love_' + k, toned(i, pick(LOVE[k])(ctx.me.name, pn))), 'say long'); animalVoice(i);
+      if (k === 'jeal') { o.e.classList.add('cry'); setTimeout(() => o.e.classList.remove('cry'), 2400); } }, Math.min(5000, 600 + Math.abs(o.x - me.x) / 120 * 1000));
+  }
   let srNext = 0, srAt = 0, srUntil = 0; const srSaid = new Set();
   function sRumorTick(now, paused, wet) {
     const r = bag.sRumor; if (!r || r.done || trial || paused || wet || me.boat || fishOpen || battle || crow || now < srNext) return;
