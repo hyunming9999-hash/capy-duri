@@ -42,7 +42,7 @@ export function openCook(o) {
   const R = rnd(hash(ctx.uid + day)), pool = o.animals.filter(a => o.A(a.i) >= 0);
   const orders = Array.from({ length: 3 }, (_, k) => { const a = pool.length ? pool[Math.floor(R() * pool.length)] : o.animals[k], dish = ['fish', 'soup', 'steam'][Math.floor(R() * 3)], pref = DONE[Math.floor(R() * 3)].k; return { k, a, dish, pref }; });
   const coinsEl = h('span', { class: 'ck-coins' }), stage = h('div', { class: 'ck-stage' }), panel = h('div', { class: 'ck-panel' });
-  const wrap = h('div', { class: 'ck' }, h('div', { class: 'ck-top' }, h('button', { class: 'btn sm', onClick: () => close() }, '✕'), h('b', null, '👩‍🍳 카피요리교실'), coinsEl), stage, panel);
+  const wrap = h('div', { class: 'ck' }, h('div', { class: 'ck-top' }, h('b', null, '👩‍🍳 카피요리교실'), coinsEl, h('button', { class: 'top-x', 'aria-label': '닫기', onClick: () => close() }, '✕')), stage, panel);
   document.body.append(wrap);
   const off = ctx.store.on(ref, v => { st = v || {}; if (phase === 'orders') draw(); });
   const prefOf = k => DONE.find(d => d.k === k);

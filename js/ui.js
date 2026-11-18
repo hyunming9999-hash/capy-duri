@@ -40,10 +40,11 @@ export function toast(msg, ms = 2200) {
 }
 
 // actions: [{label, primary, danger, onClick(close)}]
-export function modal({ title, body, actions = [], onClose }) {
-  const close = () => { wrap.remove(); onClose && onClose(); };
+export function modal({ title, body, actions = [], onClose, noX }) {
+  let shut = false; const close = () => { if (shut) return; shut = true; wrap.remove(); onClose && onClose(); };
   const wrap = h('div', { class: 'modal-wrap', onClick: e => { if (e.target === wrap) close(); } },
     h('div', { class: 'modal' },
+      !noX && h('button', { class: 'modal-x', 'aria-label': '닫기', onClick: () => close() }, '✕'),
       title && h('h3', null, title),
       h('div', { class: 'modal-body' }, body),
       actions.length > 0 && h('div', { class: 'modal-actions' }, actions.map(a =>

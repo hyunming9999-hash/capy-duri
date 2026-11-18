@@ -1663,3 +1663,9 @@ body.vb-on .modal-wrap { z-index: 4600; }
 .ck-res { position: relative; width: 170px; margin: 4px auto; } .ck-res > img { width: 100%; } .ck-res .ck-an { position: absolute; right: -28px; bottom: -6px; width: 64px; } .ck-res.bad > img { filter: grayscale(.7) brightness(.7); }
 .patch-next.cookn { border-color: #F5A27A; background: linear-gradient(135deg, #FFF1E6, #FFE0CC); } .patch-next.cookn b { color: #B8441F; } .patch-next.cookn small { color: #C0663F; } .patch-next.cookn img { filter: drop-shadow(0 0 8px #FFC9A3); }
 .ck-ing:has(.ck-fil.glow) { border-color: #F5C33B; background: linear-gradient(#FFF6D6, #FFF8EA); box-shadow: 0 0 0 2px rgba(245,195,59,.25), 0 0 12px rgba(245,195,59,.45); }
+
+/* 모든 창 오른쪽 위 닫기(✕) */
+.modal { position: relative; }
+.modal-x, .top-x { width: 34px; height: 34px; flex: none; border-radius: 50%; border: 2px solid #E8D3AE; background: #fff; color: #7A5236; font: 900 16px/1 var(--head, sans-serif); display: grid; place-items: center; cursor: pointer; padding: 0; box-shadow: 0 2px 0 rgba(0,0,0,.08); }
+.modal-x { position: sticky; top: 0; float: right; margin: -6px -6px 4px 8px; z-index: 6; }
+.modal-x:active, .top-x:active { transform: translateY(1px); }

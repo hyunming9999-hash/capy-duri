@@ -62,7 +62,7 @@ export function openFarm(o) {
   const scroller = h('div', { class: 'fm-scroll' }, world);
   const title = h('b'), coinsEl = h('span', { class: 'fm-coins' }), visitBtn = h('button', { class: 'btn sm' }), barnBtn = h('button', { class: 'btn sm', onClick: () => openBarn() }, '🧺 헛간');
   const sheet = h('div', { class: 'fm-sheet' });
-  const wrap = h('div', { class: 'fm' }, h('div', { class: 'fm-top' }, h('button', { class: 'btn sm', onClick: () => close() }, '✕'), title, coinsEl, barnBtn, visitBtn), scroller, sheet);
+  const wrap = h('div', { class: 'fm' }, h('div', { class: 'fm-top' }, title, coinsEl, barnBtn, visitBtn, h('button', { class: 'top-x', 'aria-label': '닫기', onClick: () => close() }, '✕')), scroller, sheet);
   document.body.append(wrap);
 
   const plotOf = k => (data.plots || {})[k] || null, isOpen = k => k < (data.open || 1), tool = () => mine.tool || 1;
