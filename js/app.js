@@ -208,13 +208,20 @@ function patchNote() { if (Date.now() >= PATCH_UNTIL) return;
         li('🪧', '놀이터 왼쪽 끝 "농장 가는 길"', '팻말을 누르면 나만의 카피 농장으로 들어가요. 울타리 텃밭 5칸 중 첫 칸은 공짜, 나머지는 카피철물에서 땅 문서(300·700·1,400·2,000코인)로 열어요.'),
         li('🌱', '씨앗 하나 = 고랑 한 줄', '밭 한 칸은 고랑 3줄. 고랑마다 다른 작물을 심어도 돼요. 작물 30종: 초급 10~40분, 중급 1~3시간, 고급 4~10시간(중급·고급은 그 등급 농기구가 필요해요).'),
         li('💧', '물 주고 잡초 베면 S급', '컨디션 85% 넘으면 A급(가끔 S급), 60% 넘으면 B급, 안 돌봐도 C급. 다 자란 뒤 3일 넘게 안 거두면 시들어 F! 고랑 하나에서 2개씩 거둬요.'),
-        li('💑', '두두네 밭에 물 주기', '위의 "두두네 농장"에서 구경하고 물을 주고 올 수 있어요. 거둔 작물은 카피수퍼에서 팔아요(S×2 · A×1.5 · B×1.2).'))]];
+        li('💑', '두두네 밭에 물 주기', '위의 "두두네 농장"에서 구경하고 물을 주고 올 수 있어요. 거둔 작물은 카피수퍼에서 팔아요(S×2 · A×1.5 · B×1.2).')),
+      h('button', { class: 'patch-next cookn', onClick: () => go(1) }, h('img', { src: 'img/cook/fishdish.webp', alt: '' }), h('span', null, h('b', null, '다음 장: 카피요리교실 오픈!'), h('small', null, '눌러서 넘겨 보세요 👉')))],
+    () => [h('div', { class: 'patch-farm' }, h('img', { src: 'img/cook/patch.webp', alt: '카피요리교실 오픈' })),
+      h('ul', null,
+        li('🏠', '카피수퍼 바로 옆 카피요리교실', '놀이터 맨 오른쪽 끝, 카피수퍼 옆 건물을 누르면 들어가요. 요리는 여기서만 할 수 있어요.'),
+        li('📋', '오늘의 주문 3개', '동물들이 날마다 요리를 주문해요. "덜 익혀서", "알맞게", "푹 익혀서"처럼 동물마다 좋아하는 익힘이 달라요.'),
+        li('🐟', '생선찜: 손질 → 찜', '낚시로 잡은 물고기를 도마에 올려 🔪 손질하면 머리를 떼고 몸통만 남아요. 냄비에 넣고 뚜껑 덮어 찌다가 ★ 칸에서 불을 꺼요. 물고기 등급이 좋을수록 보상이 커요.'),
+        li('🥕', '채소 수프 · 감자옥수수찜', '농장에서 거둔 작물 2개로 끓여요. 딱 맞추면 돈 + 친밀도 듬뿍, 익힘이 다르면 절반, 날것이거나 타면 보상이 없어요.'))]];
   const box = h('div', { class: 'patch' }), dots = h('div', { class: 'patch-dots' });
   let at = 0, nextBtn, prevBtn;
   function go(n) { at = n; box.replaceChildren(...pages[n]()); box.scrollTop = 0; const m = box.closest('.modal'); if (m) m.scrollTop = 0;
     dots.replaceChildren(...pages.map((_, k) => h('i', { class: k === n ? 'on' : '' }))); if (nextBtn) { nextBtn.textContent = n === pages.length - 1 ? '확인' : '다음 장 👉'; prevBtn.style.visibility = n ? 'visible' : 'hidden'; } }
   go(0);
-  const close = modal({ title: '✨ 패치 소식 · 카피 농장 오픈', body: h('div', null, box, dots),
+  const close = modal({ title: '✨ 패치 소식 · 카피 농장 & 요리교실', body: h('div', null, box, dots),
     actions: [{ label: '👈 이전', onClick: () => at && go(at - 1) }, { label: '다음 장 👉', primary: true, onClick: c => (at < pages.length - 1 ? go(at + 1) : c()) }] });
   const btns = [...document.querySelectorAll('.modal-wrap:last-child .modal-actions .btn')]; [prevBtn, nextBtn] = btns; go(0); return close; }
 function enter() {
