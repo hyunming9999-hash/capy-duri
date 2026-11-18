@@ -48,11 +48,11 @@ export const RECIPES = [
   R('jjin', '감자옥수수찜', 'pot', 0, ['potato', 'corn'], 0, 'salt', 170), R('hobakjuk', '단호박죽', 'pot', 0, ['squash', 'pea'], 0, 'honey', 240),
   R('ssam', '생선 상추쌈', 'pan', 1, ['lettuce'], 0, 'ssamjang', 180), R('gui', '대파 생선구이', 'pan', 2, ['scallion', 'garlic'], 0, 'salt', 520), R('gamjajeon', '감자전', 'pan', 0, ['potato', 'onion'], 0, 'soy', 120), R('gaji', '가지 대파볶음', 'pan', 0, ['eggplant', 'scallion'], 0, 'soy', 360),
   R('croq', '생선 고로케', 'fry', 1, ['potato'], 0, 'tartar', 250), R('kkaseu', '생선까스', 'fry', 1, ['cabbage'], 0, 'tartar', 210), R('mattang', '고구마 맛탕', 'fry', 0, ['sweetpotato'], 0, 'honey', 130), R('tempura', '채소튀김', 'fry', 0, ['carrot', 'sweetpotato', 'onion'], 0, 'soy', 150)];
-// 메뉴 값 = (생선 시세 + 작물 시세 + 양념 1번 값 + 인건비) × 1.6. 생선 시세는 그 바다 흔한 물고기 평균값, 작물은 B급 값(기본값 ×1.2)
-const LABOR = { board: 40, pot: 70, pan: 60, fry: 70 }, MARGIN = 1.6;
+// 메뉴 값 = 기본 900 + (생선 시세 + 작물 시세 + 양념 1번 값 + 인건비 + 조리 시간 값) × 1.6. 생선 시세는 그 바다 흔한 물고기 평균값, 작물은 B급 값(기본값 ×1.2)
+const LABOR = { board: 40, pot: 70, pan: 60, fry: 70 }, TIME = { board: 20, pot: 50, pan: 40, fry: 40 }, MARGIN = 1.6, BASE_FEE = 900;
 const fishAvg = z => { const L = FISH.filter(f => f.z === z && !f.king && !f.pearl && !f.icon && (f.tier || 1) <= 2); return L.length ? Math.round(L.reduce((t, f) => t + (f.price[0] + f.price[1]) / 2, 0) / L.length) : 0; };
-RECIPES.forEach(r => { const fish = r.fz ? fishAvg(r.fz) : 0, crop = Math.round(r.crops.reduce((t, id) => t + ((cropOf(id) || {}).base || 0) * 1.2, 0)), sauce = Math.round(SAUCES[r.sauce][2] / SAUCE_PACK), labor = LABOR[r.st];
-  r.cost = { fish, crop, sauce, labor, sum: fish + crop + sauce + labor }; r.base = Math.round(r.cost.sum * MARGIN / 10) * 10; });
+RECIPES.forEach(r => { const fish = r.fz ? fishAvg(r.fz) : 0, crop = Math.round(r.crops.reduce((t, id) => t + ((cropOf(id) || {}).base || 0) * 1.2, 0)), sauce = Math.round(SAUCES[r.sauce][2] / SAUCE_PACK), labor = LABOR[r.st], time = TIME[r.st];
+  r.cost = { fish, crop, sauce, labor, time, sum: fish + crop + sauce + labor + time }; r.base = BASE_FEE + Math.round(r.cost.sum * MARGIN / 10) * 10; });
 // 요청을 다 맞췄을 때 받을 값(재료 등급 C 기준): 익힘 ×1.2 · 양념 ×1.1 · 불 조절 ×1.1. 도마(날것) 요리는 양념만
 export const bestPrice = r => Math.round(r.base * (r.st === 'board' ? 1.1 : 1.2 * 1.1 * 1.1) / 10) * 10;
 export const recOf = id => RECIPES.find(r => r.id === id);
@@ -274,7 +274,7 @@ export function openCook(o) {
     const steps = [`재료를 모두 도마에 올려요${od.sn > 1 ? ` (양념은 ${od.sn}번 눌러요)` : ''}`, r.st === 'board' ? '도마를 눌러 날것 그대로 담아요' : `${S.ic} ${S.n}을(를) 눌러 조리를 시작해요${S.best ? ` · ${FIRE_N[S.best]}이 맛있어요` : ''}`,
       r.st === 'board' ? '완성 칸의 요리를 골라 손님에게 팔아요' : `고리가 ${zone ? `${zone.n}(${zone.lo}~${zone.hi}%)` : ''}일 때 눌러서 꺼내요`, '🍽 손님에게 팔기'];
     const can = (!r.fz || fishNeed(od)) && r.crops.every(c => c === od.no || cropN(c)) && sauceN >= od.sn;
-    modal({ title: `📖 ${r.n} · ${an(od.a).name}의 주문`, body: [h('div', { class: 'kb-rhead' }, h('img', { src: r.img, alt: '' }), h('div', null, h('b', null, `${S.ic} ${S.n} · ${S.job}`), h('div', { class: 'kb-tags' }, ...reqTags(od).map(([c, t]) => h('i', { class: c }, t))), h('small', null, `기본가 ${won(r.base)} · 다 맞추면 ~${won(bestPrice(r))}`), h('small', { class: 'kb-cost' }, `원가 ${r.cost.fish ? `생선 ${r.cost.fish} + ` : ''}작물 ${r.cost.crop} + 양념 ${r.cost.sauce} + 인건비 ${r.cost.labor} = ${r.cost.sum}코인`))),
+    modal({ title: `📖 ${r.n} · ${an(od.a).name}의 주문`, body: [h('div', { class: 'kb-rhead' }, h('img', { src: r.img, alt: '' }), h('div', null, h('b', null, `${S.ic} ${S.n} · ${S.job}`), h('div', { class: 'kb-tags' }, ...reqTags(od).map(([c, t]) => h('i', { class: c }, t))), h('small', null, `기본가 ${won(r.base)} · 다 맞추면 ~${won(bestPrice(r))}`), h('small', { class: 'kb-cost' }, `원가 ${r.cost.fish ? `생선 ${r.cost.fish} + ` : ''}작물 ${r.cost.crop} + 양념 ${r.cost.sauce} + 인건비 ${r.cost.labor} + 조리 시간 ${r.cost.time} = ${r.cost.sum}코인 → 기본 ${BASE_FEE} + 원가×${MARGIN}`))),
       h('div', { class: 'kb-rlist' }, ...rows), h('ol', { class: 'kb-steps' }, ...steps.map(t => h('li', null, t))),
       h('p', { class: 'center kb-can ' + (can ? 'ok' : 'no') }, can ? '✅ 지금 가진 재료로 만들 수 있어요!' : '❌ 재료가 모자라요. 못 만들면 "🙇 다음에 다시 오세요"로 돌려보내요(평점은 그대로).')], actions: [{ label: '닫기', primary: true }] }); }
   function recipeBook() { modal({ title: '📖 카피백반 레시피북', body: h('div', { class: 'kb-book' }, ...Object.entries(STATIONS).map(([k, S]) => h('div', null, h('b', { class: 'kb-bh' }, `${S.ic} ${S.n} · ${S.job}${S.best ? ` · ${FIRE_N[S.best]}이 맛있어요` : ''}`),
