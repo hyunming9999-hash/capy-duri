@@ -336,7 +336,7 @@ export function mount(el, ctx) {
 
   function result() {
     const key = `${S.kind}-${S.diff}-${ctx.uid}${S.calc ? '-c' : ''}`, my = L && L.id === S.id ? L.score : ((S.sc || {})[ctx.uid] || {}).s || 0, served = L && L.id === S.id ? L.n : 0, other = otherScore(), prev = best[key];
-    if (fxDone !== S.id) { fxDone = S.id; const id = S.id, bl = [`내 점수 ${my}점 ÷ 8 = ${PAY.burger(my)}코인`]; if (S.kind === 'rec') ctx.earn(PAY.burger(my), '카피 버거', bl);
+    if (fxDone !== S.id) { fxDone = S.id; const id = S.id, bl = [`내 점수 ${my}점 ÷ 2 = ${PAY.burger(my)}코인`]; if (S.kind === 'rec') ctx.earn(PAY.burger(my), '카피 버거', bl);
       if (my > 0 && (!prev || my > prev.s)) ctx.store.tx('games/burgerBest/' + key, c => (c && c.s >= my ? undefined : { s: my, at: now() })).catch(() => {});
       setTimeout(() => { if (!alive || !S || S.id !== id) return; const o2 = otherScore(); // 경쟁은 상대 마지막 점수가 올 때까지 잠깐 기다린다
         if (S.kind !== 'rec') { if (o2) ctx.earnMatch(PAY.burger(my), '카피 버거', bl, my > o2.s ? 'win' : my < o2.s ? 'lose' : 'draw', 'burger', S.kind === 'vs'); else ctx.earn(PAY.burger(my), '카피 버거', bl); }

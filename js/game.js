@@ -37,7 +37,7 @@ function betBar(ctx, g) {
     el.replaceChildren(h('span', { class: 'hot' }, `🔥 ${b.amount}코인 내기 중 · 이기면 +${b.amount * 2}`), h('small', null, `다음 경쟁 판에서 이긴 사람이 판돈 ${b.amount * 2}코인을 가져가요 · 비기면 돌려받아요`), ...(old ? [h('button', { class: 'btn sm', onClick: () => ctx.cancelBet(g.id) }, '무르기')] : [])); };
   const offer = () => { let v = 100; const amt = h('b', { class: 'bet-amt' }, '100코인'), set = n => { v = Math.max(10, Math.min(n, ctx.coins())); amt.textContent = `${v}코인`; };
     modal({ title: `💰 ${g.title} 내기`, body: h('div', { class: 'bet-pick' }, h('p', null, `${pj('와', '과')} 같은 돈을 걸어요(1:1). 다음 경쟁 판에서 이긴 사람이 둘이 건 돈을 모두 가져가요.`), amt,
-      h('div', { class: 'bet-chips' }, [50, 100, 300, 500, 1000].map(n => h('button', { class: 'chip', onClick: () => set(n) }, String(n)))), h('input', { class: 'inp', type: 'number', min: 10, step: 10, placeholder: '직접 입력', onInput: e => set(+e.target.value || 0) }),
+      h('div', { class: 'bet-chips' }, [200, 500, 1000, 2000, 5000].map(n => h('button', { class: 'chip', onClick: () => set(n) }, String(n)))), h('input', { class: 'inp', type: 'number', min: 10, step: 10, placeholder: '직접 입력', onInput: e => set(+e.target.value || 0) }),
       h('small', { class: 'dim' }, `내 돈 ${ctx.coins().toLocaleString('ko-KR')}코인 · 걸 때 바로 빠지고, 상대가 거절하거나 취소하면 돌려받아요`)),
       actions: [{ label: '그만두기' }, { label: '내기 걸기', primary: true, onClick: async c => { if (await ctx.offerBet(g.id, v)) { c(); toast(`${pn()}에게 ${v}코인 내기를 신청했어요`); } } }] }); };
   ctx.betWatch = [...(ctx.betWatch || []), draw]; draw();
