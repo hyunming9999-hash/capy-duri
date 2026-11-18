@@ -2,7 +2,7 @@
 // 재료(생선 살·작물·밥·양념)를 도마에 올리고 → 도마(날것)·냄비·프라이팬·튀김기 중 하나로 조리 → 원하는 익힘에서 꺼내 → 손님에게 바로 판다
 import { h, toast, modal, ymd } from './ui.js';
 import { sfx } from './sound.js';
-import { FISH } from './fishing.js';
+import { FISH, TIERS } from './fishing.js';
 import { cropOf } from './farm.js';
 
 const RENT = 100, SESSIONS = 3, PER = 1; // 원테이블 식당: 한 번 장사에 손님 한 명
@@ -293,8 +293,15 @@ export function openCook(o) {
     modal({ title: `📖 ${r.n} · ${an(od.a).name}의 주문`, body: [h('div', { class: 'kb-rhead' }, h('img', { src: r.img, alt: '' }), h('div', null, h('b', null, `${S.ic} ${S.n} · ${S.job}`), h('div', { class: 'kb-tags' }, ...reqTags(od).map(([c, t]) => h('i', { class: c }, t))), h('small', null, `💰 요청을 다 맞추면 ${won(bestPrice(r))}`), h('small', { class: 'kb-cost' }, `원가 ${r.cost.fish ? `생선 ${r.cost.fish} + ` : ''}작물 ${r.cost.crop} + 양념 ${r.cost.sauce} + 인건비 ${r.cost.labor} + 조리 시간 ${r.cost.time} = ${r.cost.sum}코인 → 기본 ${BASE_FEE} + 원가×${MARGIN}`))),
       h('div', { class: 'kb-rlist' }, ...rows), h('ol', { class: 'kb-steps' }, ...steps.map(t => h('li', null, t))),
       h('p', { class: 'center kb-can ' + (can ? 'ok' : 'no') }, can ? '✅ 지금 가진 재료로 만들 수 있어요!' : '❌ 재료가 모자라요. 못 만들면 "🙇 다음에 다시 오세요"로 돌려보내요(평점은 그대로).')], actions: [{ label: '닫기', primary: true }] }); }
-  function recipeBook() { modal({ title: '📖 카피백반 레시피북', body: h('div', { class: 'kb-book' }, ...Object.entries(STATIONS).map(([k, S]) => h('div', null, h('b', { class: 'kb-bh' }, `${S.ic} ${S.n} · ${S.job}${S.best ? ` · ${FIRE_N[S.best]}이 맛있어요` : ''}`),
-    ...RECIPES.filter(r => r.st === k).map(r => h('div', { class: 'kb-bi' }, h('img', { src: r.img, alt: '' }), h('div', null, h('b', null, `${r.n} · ${won(r.base)}`), h('small', null, [r.fz ? (r.fz >= 2 ? '중급 바다 생선' : '초급 바다 생선') : '', ...r.crops.map(cropName), r.rice ? '공깃밥' : ''].filter(Boolean).join(' + ') + ` · 양념 ${SAUCES[r.sauce][0]} ${SAUCES[r.sauce][1]}`))))))),
+  // 재료 등급별 가격(열고 닫는 탭): 등급 배수 · 생선 분류 배수 · 메뉴별 C/B/A/S 가격(요청 다 맞춘 값)
+  function gradeTab() { const G = ['C', 'B', 'A', 'S'], p = (r, g) => won(Math.round(bestPrice(r) * GRADE_X[g] / 10) * 10);
+    return h('details', { class: 'kb-gtab' }, h('summary', null, '📊 재료 등급별 가격 보기'),
+      h('div', { class: 'kb-gx' }, h('b', null, '재료 등급'), ...['S', 'A', 'B', 'C', 'D', 'F'].map(g => h('span', { class: 'g' + g }, `${g} ×${GRADE_X[g]}`)), h('small', null, '재료가 여러 개면 등급 배수의 평균이에요')),
+      h('div', { class: 'kb-gx' }, h('b', null, '생선 분류'), ...[1, 2, 3, 4].map(t => h('span', null, `${TIERS[t].s} ×${TIER_X[t]}`)), h('small', null, '귀한 생선일수록 값이 더 올라요')),
+      h('table', { class: 'kb-gt' }, h('tr', null, h('th', null, '메뉴'), ...G.map(g => h('th', { class: 'g' + g }, g + '급'))), ...RECIPES.slice().sort((a, b) => bestPrice(b) - bestPrice(a)).map(r => h('tr', null, h('td', null, r.n), ...G.map(g => h('td', null, p(r, g)))))),
+      h('small', { class: 'dim' }, '요청을 다 맞췄을 때 · 흔한 생선 기준 값이에요')); }
+  function recipeBook() { modal({ title: '📖 카피백반 레시피북', body: h('div', { class: 'kb-book' }, h('p', { class: 'kb-bnote' }, '🐟 물고기·🥕 재료 등급에 따라 가격이 상승합니다.'), gradeTab(), ...Object.entries(STATIONS).map(([k, S]) => h('div', null, h('b', { class: 'kb-bh' }, `${S.ic} ${S.n} · ${S.job}${S.best ? ` · ${FIRE_N[S.best]}이 맛있어요` : ''}`),
+    ...RECIPES.filter(r => r.st === k).map(r => h('div', { class: 'kb-bi' }, h('img', { src: r.img, alt: '' }), h('div', null, h('b', null, `${r.n} · ${won(bestPrice(r))}`), h('small', null, [r.fz ? (r.fz >= 2 ? '중급 바다 생선' : '초급 바다 생선') : '', ...r.crops.map(cropName), r.rice ? '공깃밥' : ''].filter(Boolean).join(' + ') + ` · 양념 ${SAUCES[r.sauce][0]} ${SAUCES[r.sauce][1]}`))))))),
     actions: [{ label: '닫기', primary: true }] }); }
   function pantry() { const s = o.sauces() || {}; modal({ title: '🧂 내 양념', body: [h('div', { class: 'kb-pan' }, ...Object.entries(SAUCES).map(([id, [ic, nm]]) => h('div', { class: 'kb-pi' + (s[id] ? '' : ' off') }, sauceIc(id), h('b', null, nm), h('small', null, `${s[id] || 0}번`)))), h('p', { class: 'dim center' }, '양념은 카피수퍼 구매 탭에서 사요.')], actions: [{ label: '닫기', primary: true }] }); }
 

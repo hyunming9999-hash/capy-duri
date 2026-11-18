@@ -1909,3 +1909,12 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .kb-bill { padding: 10px 12px; border-radius: 12px; background: #fff; border: 2px dashed #D9C29B; font-size: 13px; } .kb-bl { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; } .kb-bl em { font-style: normal; font-weight: 800; color: #2F8A3E; } .kb-bl em.down { color: #C4281F; }
 .kb-bl.total { margin-top: 6px; padding-top: 8px; border-top: 2px solid #EFE2CB; font: 900 16px/1.2 var(--head); } .kb-bl.total b { color: #A86A00; font-size: 20px; }
 .kb-skip { width: 100%; margin: 0 0 8px; }
+
+/* 레시피북: 등급별 가격 탭 */
+.kb-bnote { margin: 0; padding: 8px 10px; border-radius: 12px; background: #FFF1D6; color: #8A5A16; font-weight: 800; font-size: 13px; text-align: center; }
+.kb-gtab { border: 2px solid #E8D3AE; border-radius: 14px; background: #FFFCF4; padding: 0 10px; } .kb-gtab summary { cursor: pointer; padding: 10px 2px; font: 900 14px/1.2 var(--head); color: #6B5038; list-style: none; } .kb-gtab summary::-webkit-details-marker { display: none; }
+.kb-gtab summary::after { content: '▼ 열기'; float: right; font-size: 12px; color: #A86A00; } .kb-gtab[open] summary::after { content: '▲ 닫기'; }
+.kb-gtab[open] { padding-bottom: 10px; }
+.kb-gx { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 4px 0 8px; } .kb-gx b { font-size: 12.5px; margin-right: 4px; } .kb-gx span { font-size: 12px; font-weight: 800; padding: 2px 8px; border-radius: 10px; background: #F3E9D6; } .kb-gx small { flex-basis: 100%; color: #8a7a66; font-size: 11px; }
+.kb-gx .gS, .kb-gt .gS { color: #C4281F; } .kb-gx .gA, .kb-gt .gA { color: #D9822B; } .kb-gx .gB, .kb-gt .gB { color: #2F8A3E; } .kb-gx .gC { color: #6B5038; }
+.kb-gt { width: 100%; border-collapse: collapse; font-size: 11.5px; margin-bottom: 4px; } .kb-gt th, .kb-gt td { padding: 4px 3px; text-align: right; border-bottom: 1px solid #EFE2CB; white-space: nowrap; } .kb-gt th:first-child, .kb-gt td:first-child { text-align: left; white-space: normal; } .kb-gt th { font-size: 12px; background: #FFF1D6; }
