@@ -13,7 +13,7 @@ import { openCook, SAUCES, SAUCE_PACK, SAUCE_IMG } from './cook.js';
 import { farmCrow } from './farmcrow.js';
 import { createQuest } from './quest.js';
 import { recOf } from './cook.js';
-import { openFishing, seaBattle, PIRATE_LOOT, FLEE_FEE, FISH, TIERS, RODS, ZONES, BAIT, BALL, CANNON, WBOAT, BOAT_FIX, fishSvg } from './fishing.js';
+import { openFishing, seaBattle, PIRATE_LOOT, FLEE_FEE, CBOAT_FIX, FISH, TIERS, RODS, ZONES, BAIT, BALL, CANNON, WBOAT, BOAT_FIX, fishSvg } from './fishing.js';
 
 // 동물마다: 성격, 좋아하는 것, 싫어하는 것, 상징 액세서리, 제일 좋아하는 선물
 const P = (trait, likes, hates, pin, fav) => ({ trait, likes, hates, pin, fav });
@@ -332,7 +332,7 @@ export function mount(el, ctx) {
   const saveBag = patch => { bag = { ...bag, ...patch }; drawHp(); if (!trial && qloan) { const rest = {}; Object.keys(patch).forEach(k => { if (k in QLOAN) qloan.g[k] = patch[k]; else rest[k] = patch[k]; }); if (!Object.keys(rest).length) return Promise.resolve(); patch = rest; } if (trial) { const rest = {}; Object.keys(patch).forEach(k => { if (TRIAL_KEYS.includes(k)) trial.g[k] = patch[k]; else rest[k] = patch[k]; }); if (!Object.keys(rest).length) return Promise.resolve(); patch = rest; } return ctx.store.update('bag/' + ctx.uid, patch).catch(() => {}); };
   const addCoins = n => trial ? Promise.resolve() : ctx.store.tx('money/' + ctx.uid, c => ({ ...(c || {}), c: Math.max(0, ((c && c.c) || 0) + n), total: ((c && c.total) || 0) + Math.max(0, n) })).catch(() => {});
   let farmBarn = {}, farmSeeds = {}, farmSprk = 0, fishOpen = false, hintAt = 0, fishBtn = null, fishMode = -1, dex = {}, rockKey = '', battle = null, battleDir = 1, camX = null, sbPanel = null, heave = 0;
-  const boatD = () => (bag.boatD == null ? 100 : bag.boatD), BOAT_MIN = 20;
+  const boatD = () => (bag.boatD == null ? 100 : bag.boatD), cboatD = () => (bag.cboatD == null ? 100 : bag.cboatD), BOAT_MIN = 20; // 흰 배 · 카피보트 내구도
   function goCook() { if (fishOpen || battle) return; if (me.boat) return toast('배에서 내린 뒤에 들어갈 수 있어요'); if (trial) return toast('체험 중에는 카피백반에 못 들어가요'); fishOpen = true; keys.clear(); sfx('pop');
     openCook({ ctx, animals: ANIMALS.map((a, i) => ({ i, name: a.name, svg: animalSvg(i) })), svgFull: (i, m) => animalSvg(i, true, m), A, affinity: (i, d) => setRel(i, { a: A(i) + d }), toned,
       fish: () => Object.entries(bag.fish || {}).filter(([, v]) => v).map(([k, v]) => [k, v, fishOf(v.id)]),
@@ -437,7 +437,7 @@ export function mount(el, ctx) {
   // 낚시: 낚시터에서 내 배를 탄 채 🎣. 중급부터는 가끔 갈매기 해적단이 먼저 덤빈다
   function goFish() { const zone = zoneOf(me.x); if (!zone || fishOpen || battle || !(me.boat && (me.boat.own || me.boat.pass))) return; const guest = !!me.boat.pass; fishOpen = true; keys.clear();
     const done = () => { fishOpen = false; if (!voice.on) bgm.duck(false); lastT = performance.now(); };
-    openFishing({ ctx, zone, trial: !!trial, boat: boatSvg(me.boat.skin), bag: () => bag, save: saveBag, coins: addCoins, keep: trial ? null : keepFish, seen: trial ? null : id => !!dex[id], dex: (id, cm, shiny) => trial ? null : ctx.store.tx(`fishdex/${ctx.uid}/${id}`, c => ({ ...(c || {}), n: ((c && c.n) || 0) + 1, best: Math.max((c && c.best) || 0, cm), ...(shiny ? { s: ((c && c.s) || 0) + 1 } : {}) })).catch(() => {}), onClose: done, onPirate: guest ? null : () => pirates(zone) }); }
+    openFishing({ ctx, zone, trial: !!trial, cboat: !trial && !bag.wboat, boat: boatSvg(me.boat.skin), bag: () => bag, save: saveBag, coins: addCoins, keep: trial ? null : keepFish, seen: trial ? null : id => !!dex[id], dex: (id, cm, shiny) => trial ? null : ctx.store.tx(`fishdex/${ctx.uid}/${id}`, c => ({ ...(c || {}), n: ((c && c.n) || 0) + 1, best: Math.max((c && c.best) || 0, cm), ...(shiny ? { s: ((c && c.s) || 0) + 1 } : {}) })).catch(() => {}), onClose: done, onPirate: guest ? null : () => pirates(zone) }); }
   // 갈매기 해적단: 낚시하던 그 바다에서, 멀찍이 떨어져 포를 주고받는다. 지면 배 내구도가 반으로 줄고 500코인을 뺏긴다
   // 해적단 보물: 화면 가운데에서 보물 상자가 열리고 금화가 쏟아진다
   function lootFx(n) { const CHEST = '<svg viewBox="0 0 120 100"><path class="lid" d="M14 44 Q14 12 60 12 Q106 12 106 44z" fill="#B5741B" stroke="#5A3A12" stroke-width="4" stroke-linejoin="round"/><path class="lid" d="M36 14 V44M84 14 V44" stroke="#F2C230" stroke-width="7"/><ellipse cx="60" cy="46" rx="42" ry="9" fill="#FFE066"/><circle cx="44" cy="42" r="8" fill="#FFD43B" stroke="#C98A00" stroke-width="2"/><circle cx="62" cy="38" r="9" fill="#FFD43B" stroke="#C98A00" stroke-width="2"/><circle cx="79" cy="43" r="8" fill="#FFD43B" stroke="#C98A00" stroke-width="2"/><rect x="14" y="44" width="92" height="46" rx="6" fill="#9A5F16" stroke="#5A3A12" stroke-width="4"/><path d="M36 44 V90M84 44 V90" stroke="#F2C230" stroke-width="7"/><rect x="51" y="52" width="18" height="20" rx="4" fill="#F2C230" stroke="#8A5A00" stroke-width="3"/><circle cx="60" cy="61" r="3" fill="#5A3A12"/></svg>';
@@ -550,10 +550,10 @@ export function mount(el, ctx) {
     if ((mx || my) && me.ride) getOff();
     const wet = me.x > WATER_X && !me.ride;
     // 낚시터 문턱: 배가 없으면 못 넘고, 중급부터는 대포를 단 흰 배가 있어야 한다
-    const own = !!(me.boat && me.boat.own), lim = !own ? FISH_X - 14 : bag.wboat && bag.cannon && boatD() >= BOAT_MIN ? WIDTH - 40 : FISH_X + TILE - 18;
+    const own = !!(me.boat && me.boat.own), cbroke = own && !bag.wboat && cboatD() < BOAT_MIN, lim = !own || cbroke ? FISH_X - 14 : bag.wboat && bag.cannon && boatD() >= BOAT_MIN ? WIDTH - 40 : FISH_X + TILE - 18;
     if (own && me.boat.skin !== myBoatSkin()) { me.boat.skin = myBoatSkin(); boatEl.innerHTML = boatSvg(me.boat.skin); }
     if (mx) { me.f = mx; const nx = me.x + mx * ME_SP * (own ? (bag.wboat ? 1.7 : 1.1) : me.boat ? 1.1 : wet ? 0.7 : scoot ? 1.8 : 1) * dt; me.x = Math.max(40, Math.min(Math.max(lim, Math.min(me.x, WIDTH - 40)), nx));
-      if (mx > 0 && nx > lim && now > hintAt) { hintAt = now + 3500; toast(!own ? '여기부터는 낚시터예요. 내 배(카피수퍼)를 타야 갈 수 있어요' : !bag.wboat ? '중급 낚시터부터는 흰 배(2,000코인)가 있어야 해요' : !bag.cannon ? '중급 낚시터부터는 대포(500코인)를 달아야 해요. 갈매기 해적단이 나와요' : '배가 너무 상했어요. 카피수퍼에서 배를 수리해야 중급 바다에 나갈 수 있어요', 3000); } }
+      if (mx > 0 && nx > lim && now > hintAt) { hintAt = now + 3500; toast(cbroke ? '카피보트가 많이 상했어요. 카피수퍼에서 수리(300코인)해야 바다에 나갈 수 있어요' : !own ? '여기부터는 낚시터예요. 내 배(카피수퍼)를 타야 갈 수 있어요' : !bag.wboat ? '중급 낚시터부터는 흰 배(2,000코인)가 있어야 해요' : !bag.cannon ? '중급 낚시터부터는 대포(500코인)를 달아야 해요. 갈매기 해적단이 나와요' : '배가 너무 상했어요. 카피수퍼에서 배를 수리해야 중급 바다에 나갈 수 있어요', 3000); } }
     if (trial && now > trial.until && !fishOpen && !battle) endTrial('낚싯배 체험 10분이 끝났어요');
     if (kingTrial && now > kingTrial) endKing();
     if (me.boat && me.boat.pass) { if (palShip()) { me.x = Math.max(40, pal.dx - SEAT); me.y = Math.max(0, Math.min(Y_MAX, pal.y)); me.f = pal.f; me.boat.skin = pal.boat; }
@@ -944,7 +944,8 @@ export function mount(el, ctx) {
         ['sec', '🚤 배·낚시 용품'],
         { ic: '🚤', name: '카피보트', sub: bag.boat ? '가지고 있어요 · 바닷가 물에서 🚤 내 보트' : `${won(BOAT_PRICE)} · 바닷가에서 타면 파도가 일어요`, price: BOAT_PRICE, off: bag.boat, line: bag.boat ? '이미 한 척 있잖나. 잘 타고 다니게, 허허.' : '바닷가에서 타면 물살이 시원하게 갈라지지. 초급 낚시터까지는 이걸로 충분하네.', act: () => buy(BOAT_PRICE, { boat: true }) },
         { ic: boatSvg(MY_WBOAT), name: '흰 배', sub: bag.wboat ? '가지고 있어요 · 더 빠르고 중급·고급 낚시터에 가요' : `${won(WBOAT)} · 더 빠르고 중급·고급 낚시터에 가요`, price: WBOAT, off: bag.wboat, line: bag.wboat ? '흰 배는 벌써 있잖나. 바다 끝까지 잘 다녀오게.' : '흰 배면 중급·고급 바다까지 거뜬하지. 큰 놈 잡으려면 이게 있어야 해.', act: () => buy(WBOAT, { wboat: true, boat: true }) },
-        bag.wboat && { ic: '🛠️', name: '배 수리', sub: `${won(BOAT_FIX)} · 배 내구도 ${boatD()}/100 → 100${boatD() < BOAT_MIN ? ' · 지금은 중급 바다에 못 나가요' : ''}`, price: BOAT_FIX, off: boatD() >= 100, line: boatD() >= 100 ? '배가 멀쩡하구먼. 고칠 데가 없네.' : boatD() < BOAT_MIN ? '어이쿠, 배가 많이 상했구먼! 해적 놈들한테 당했나? 얼른 고쳐야지.' : `배 내구도가 ${boatD()}이구먼. 손 좀 봐 주겠네.`, act: () => buy(BOAT_FIX, { boatD: 100 }) },
+        bag.boat && !bag.wboat && { ic: '🛠️', name: '카피보트 수리', sub: `${won(CBOAT_FIX)} · 카피보트 내구도 ${cboatD()}/100 → 100${cboatD() < BOAT_MIN ? ' · 지금은 바다에 못 나가요' : ''}`, price: CBOAT_FIX, off: cboatD() >= 100, line: cboatD() >= 100 ? '카피보트가 멀쩡하구먼. 고칠 데가 없네.' : cboatD() < BOAT_MIN ? '어이쿠, 풍랑에 카피보트가 많이 상했구먼! 얼른 고쳐야지.' : `카피보트 내구도가 ${cboatD()}이구먼. 손 좀 봐 주겠네.`, act: () => buy(CBOAT_FIX, { cboatD: 100 }) },
+        bag.wboat && { ic: '🛠️', name: '흰 배 수리', sub: `${won(BOAT_FIX)} · 배 내구도 ${boatD()}/100 → 100${boatD() < BOAT_MIN ? ' · 지금은 중급 바다에 못 나가요' : ''}`, price: BOAT_FIX, off: boatD() >= 100, line: boatD() >= 100 ? '배가 멀쩡하구먼. 고칠 데가 없네.' : boatD() < BOAT_MIN ? '어이쿠, 배가 많이 상했구먼! 해적 놈들한테 당했나? 얼른 고쳐야지.' : `배 내구도가 ${boatD()}이구먼. 손 좀 봐 주겠네.`, act: () => buy(BOAT_FIX, { boatD: 100 }) },
         { ic: CANNON_IC, name: '대포', sub: bag.cannon ? '달았어요' : `${won(CANNON)} · 흰 배에 달아요. 갈매기 해적단과 싸워요`, price: CANNON, off: bag.cannon || !bag.wboat, line: !bag.wboat ? '대포는 흰 배에만 달 수 있네. 흰 배부터 장만하게.' : bag.cannon ? '벌써 달려 있구먼. 해적 놈들 혼쭐내 주게!' : '갈매기 해적단이 설치는 바다엔 대포가 있어야 마음이 놓이지.', act: () => buy(CANNON, { cannon: true }) },
         { ic: '⚫', name: '포탄 10개', sub: `${won(BALL * 10)} · 한 발에 1개 · 가진 것 ${bag.balls || 0}개`, price: BALL * 10, off: !bag.cannon, line: !bag.cannon ? '대포도 없는데 포탄을 어디 쓰려고? 허허.' : (bag.balls || 0) < 5 ? '포탄이 간당간당하구먼. 넉넉히 챙기게.' : '포탄은 많을수록 든든하지.', act: () => buy(BALL * 10, { balls: (bag.balls || 0) + 10 }) },
         ['note', R ? `지금 낚싯대: ${R.name} (내구도 ${bag.rodD || 0}/${R.dur}) · 미끼 ${bag.bait || 0}개` : `낚싯대 없음 · 미끼 ${bag.bait || 0}개`],

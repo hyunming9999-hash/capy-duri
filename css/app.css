@@ -2039,3 +2039,4 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fm-sprkor { text-align: center; font-size: 11px; color: #6D88A0; }
 .fm-payask { text-align: center; } .fm-payask img { width: 72px; height: 72px; object-fit: contain; } .fm-payask p { margin: 4px 0; font-size: 14px; } .fm-paytot { font: 900 22px/1.2 var(--head); color: #C2410C; } .fm-payask small { color: #7A6248; }
 .fm-time { font-size: 14px; padding: 7px 3px; }
+.storm-loss.boat { color: #8A5A2B; } .storm-warn { display: block; color: #C2410C; font-weight: 800; margin: 2px 0 6px; }
