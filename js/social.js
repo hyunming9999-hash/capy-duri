@@ -350,7 +350,7 @@ export function mount(el, ctx) {
   try { const ft = +new URLSearchParams(location.search).get('fishtest'); if (ft >= 1 && ft <= 3) setTimeout(() => { if (fishOpen || battle) return; document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); fishOpen = true; keys.clear();
       const rq = +new URLSearchParams(location.search).get('rod'), rt = rq >= 1 && rq <= 3 ? rq : ft; // &rod=1·2·3 으로 낚싯대 등급을 따로 고를 수 있다
       const tb = { rod: rt, rodD: RODS[rt].dur, bait: 99, bait2: 99, bait3: 99, [`sp${ft}`]: (bag[`sp${ft}`] || {}) };
-      openFishing({ ctx, zone: ft, trial: true, boat: boatSvg(ft >= 2 ? MY_WBOAT : MY_BOAT), bag: () => tb, save: patch => Object.assign(tb, patch), coins: () => {}, keep: null, seen: null, dex: () => null, onClose: () => { fishOpen = false; if (!voice.on) bgm.duck(false); lastT = performance.now(); toast('낚시 연습 끝 · 다시 하려면 링크를 다시 열어요', 2400); }, onPirate: null }); }, 1400); } catch {}
+      openFishing({ ctx, zone: ft, trial: true, shinyTest: new URLSearchParams(location.search).has('shiny'), boat: boatSvg(ft >= 2 ? MY_WBOAT : MY_BOAT), bag: () => tb, save: patch => Object.assign(tb, patch), coins: () => {}, keep: null, seen: null, dex: () => null, onClose: () => { fishOpen = false; if (!voice.on) bgm.duck(false); lastT = performance.now(); toast('낚시 연습 끝 · 다시 하려면 링크를 다시 열어요', 2400); }, onPirate: null }); }, 1400); } catch {}
   // 요리 연습 링크(?cooktest=메뉴id, 예: maeun): 임대료 없이 그 메뉴를 주문하는 손님 1명과 필요한 재료(A급)를 빌려준다. 돈·평점·친밀도·가방·헛간에는 아무 영향 없음
   function cookTest(rid) { const r = recOf(rid) || recOf('maeun'); if (!r) return; fishOpen = true; keys.clear();
     const data = {}, subs = {}, get = k => data[k], fire = k => (subs[k] || []).forEach(f => f(data[k]));

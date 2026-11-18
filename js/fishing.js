@@ -88,16 +88,16 @@ function fishSvg0(f, big) {
 }
 const pick = a => a[Math.floor(Math.random() * a.length)], rnd = (a, b) => a + Math.random() * (b - a);
 // 무엇이 물었나: 진주 차례면 진주, 가끔 쓰레기, 아니면 그 구역 물고기(귀한 것은 드물게). 한 단계 낮은 낚싯대로는 귀한 것·대장은 안 문다
-export function rollCatch(zone, rodT, isPearl, power) {
+export function rollCatch(zone, rodT, isPearl, power, forceShiny) {
   if (isPearl) return { f: PEARL, cm: 0, price: PEARL_PRICE, d: 9.5, p: power };
-  if (power < TRASH_FAR && Math.random() < trashP(power)) { const t = pick(TRASH), k = Math.random(), cm = Math.round((t.cm[0] + (t.cm[1] - t.cm[0]) * k) * 10) / 10; return { f: t, cm, g: 'F', price: -Math.round(50 + 200 * k), d: 1, p: power }; }
-  const under = rodT < zone, pool = FISH.filter(f => f.z === zone && !(under && (f.rare || f.king)));
+  if (!forceShiny && power < TRASH_FAR && Math.random() < trashP(power)) { const t = pick(TRASH), k = Math.random(), cm = Math.round((t.cm[0] + (t.cm[1] - t.cm[0]) * k) * 10) / 10; return { f: t, cm, g: 'F', price: -Math.round(50 + 200 * k), d: 1, p: power }; }
+  const under = rodT < zone, pool = forceShiny ? SHINY_LIST[zone].map(id => FISH.find(f => f.id === id)) : FISH.filter(f => f.z === zone && !(under && (f.rare || f.king)));
   const w = pool.map(f => TIERS[f.tier || 1].w * (f.tier >= 3 ? 1 + power * 1.2 : 1)), tot = w.reduce((a, b) => a + b, 0); let r = Math.random() * tot, f = pool[0]; for (let i = 0; i < pool.length; i++) { r -= w[i]; if (r <= 0) { f = pool[i]; break; } }
   // 등급(크기): 같은 물고기라도 D~S. S일수록 드물고 크고 비싸다. 멀리 던질수록 높은 등급이 조금 더 잘 문다
   const g = rollGrade(power), [b0, b1] = GRADE[g].band, t = b0 + (b1 - b0) * Math.random(), cm = Math.round((f.cm[0] + (f.cm[1] - f.cm[0]) * t) * 10) / 10;
   const price = Math.round((f.price[0] + (f.price[1] - f.price[0]) * Math.pow(t, 1.3)) * GRADE[g].x);
   const d = zone === 1 ? 1 + t * 2 : zone === 2 ? 4 + t * 2 + (f.rare ? 1 : 0) : 6.5 + t * 2 + (f.king ? 1 : 0); // 낚싯대 차이는 '끊어짐 칸을 몇 번 버티나'로 따로 매긴다
-  const shiny = SHINY_IDS.has(f.id) && Math.random() < TIERS[3].w * (1 + power * 1.2) / TIERS[f.tier || 1].w; // 이로치 한 종 = 희귀 물고기 한 종만큼 드물게
+  const shiny = !!forceShiny || SHINY_IDS.has(f.id) && Math.random() < TIERS[3].w * (1 + power * 1.2) / TIERS[f.tier || 1].w; // 이로치 한 종 = 희귀 물고기 한 종만큼 드물게
   return { f, cm, g, price: shiny ? Math.round(price * SHINY_X) : price, d, p: power, shiny };
 }
 // 등급 확인하기: 이 물고기가 몇 등급인지, 등급표(확률·크기·값)에서 어디쯤인지 보여 준다
@@ -170,7 +170,7 @@ export function openFishing(o) {
     if (zone >= 2 && o.onPirate) { const gap = () => 15 + Math.floor(Math.random() * 6), pn = (b.pcasts || 0) + 1, at = b.pirNext > 0 ? b.pirNext : pn - 1 + gap(), hit = pn >= at; o.save({ pcasts: pn, pirNext: hit ? pn + gap() : at }); if (hit) { close(); return o.onPirate(); } }
     // 진주는 고급 바다에서만: 평소엔 던질 때마다 0.2%, 진주부적을 썼으면 10번 안의 정해진 한 번에 문다
     const isPearl = deep && (boost ? bk >= boost.at : Math.random() < PEARL_P); o.save({ [BAIT_KEY[zone]]: b[BAIT_KEY[zone]] - 1, rodD: b.rodD - 1, casts: (b.casts || 0) + 1, ...(deep ? { casts3: n, ...(boost ? { pboost: isPearl ? null : { k: bk, at: boost.at } } : {}) } : {}) }); pboosted = !!(boost && isPearl);
-    cur = rollCatch(zone, rodT(), isPearl, power / 100);
+    cur = rollCatch(zone, rodT(), isPearl, power / 100, o.shinyTest);
     { const key = 'sp' + zone, sp = (o.bag()[key]) || {}, n = (sp.n || 0) % 10 + 1, at = n === 1 || !Array.isArray(sp.at) ? stormPlan() : sp.at, due = !!sp.due || at.includes(n); stormIn = due && !cur.f.pearl; o.save({ [key]: { n, at, due } }); }
     stormAt = 0; phase = 'cast'; c0 = performance.now(); castTo = 48 + power * 0.44; flew = false; shown = false; setBar(power, 'pow'); drawInfo();
     rodEl.className = 'fs-rod back'; float.className = 'fs-float fly'; hook.classList.add('up'); say(power >= 85 ? '아주 멀리! 큰 물고기가 잘 물고 줄도 덜 끊어져요.' : power >= 55 ? '꽤 멀리 던졌어요.' : '가까이 떨어졌어요. 멀리 던질수록 유리해요.'); btn.textContent = '…'; btn.onclick = null;
@@ -219,23 +219,29 @@ export function openFishing(o) {
       wrap.append(card); setTimeout(() => card.classList.remove('wait'), 1200); }, 3200); } // 3.2초 동안 비바람이 친 뒤 카드
   function fail(text) { sfx(/끊어/.test(text) ? 'snap' : 'bad'); ready(text); }
   function landed() {
-    const { f, cm, price, shiny } = cur; sfx(price <= 0 ? 'bad' : f.king || f.rare || f.pearl || shiny ? 'bigfish' : 'coin'); if (price > 0) splash(34, true); phase = 'done'; patEl.hidden = true; pearlTxt.hidden = true; if (!f.pearl) wrap.classList.remove('pearl'); wrap.classList.remove('fight', 'reel'); float.style.display = rl.style.display = hook.style.display = 'none'; fishEl.className = 'fs-fish';
+    const { f, cm, price, shiny } = cur; sfx(price <= 0 ? 'bad' : f.king || f.rare || f.pearl ? 'bigfish' : shiny ? 'fanfare' : 'coin'); if (price > 0) splash(34, true); phase = 'done'; patEl.hidden = true; pearlTxt.hidden = true; if (!f.pearl) wrap.classList.remove('pearl'); wrap.classList.remove('fight', 'reel'); float.style.display = rl.style.display = hook.style.display = 'none'; fishEl.className = 'fs-fish';
     const isNew = !f.icon && !f.pearl && !!o.seen && !o.seen(f.id);
     const keep = price > 0 && o.keep; if (keep) o.keep({ id: f.id, cm, p: price, ...(cur.g ? { g: cur.g } : {}), ...(shiny ? { shiny: 1 } : {}) }); else o.coins(price); if (!f.icon) o.dex(f.id, cm, shiny); // 물고기는 바로 돈이 아니라 가방에 담아 카피마켓에 판다
     // 릴을 연타하다가 결과 창 버튼이 눌려 바로 닫히지 않게: 창이 뜨고 1.2초 동안은 버튼이 안 먹는다. 창은 버튼을 누르기 전까지 그대로 있다
     const shownAt = performance.now(), safe = () => performance.now() - shownAt > 1200;
     const g = cur.g; let gEl = null; // 등급은 '등급 확인하기'를 누르기 전까지 ?로 가려 둔다
-    const w = weightOf(f, cm), card = h('div', { class: 'fs-card' + (f.pearl ? ' pearl' : f.king ? ' king' : f.rare || shiny ? ' rare' : f.icon ? ' trash' : '') + (shiny ? ' shiny' : '') }, h('div', { class: 'fs-pic', html: fishSvg(f, true, shiny) }), shiny && h('em', { class: 'fs-shiny' }, '✨ 이로치! 색이 다른 귀한 녀석 · 값 1.5배 ✨'),
+    const w = weightOf(f, cm), card = h('div', { class: 'fs-card' + (f.pearl ? ' pearl' : f.king ? ' king' : f.rare || shiny ? ' rare' : f.icon ? ' trash' : '') + (shiny ? ' shiny' : '') }, h('div', { class: 'fs-pic' + (shiny ? ' shy' : ''), html: fishSvg(f, true, shiny) }), shiny && h('em', { class: 'fs-shiny' }, `✨ 이로치! 색이 다른 귀한 녀석 · 값 ${SHINY_X.toFixed(1)}배 ✨`),
       h('b', null, f.pearl ? '✨ 바다 진주! ✨' : f.king ? `👑 ${f.name}` : f.name), cur.g && (gEl = h('span', { class: g === 'F' ? 'fs-grade gF' : 'fs-grade hide' }, g === 'F' ? 'F등급' : '?등급')), !f.pearl && cm > 0 && h('p', null, f.icon ? `${cm}cm` : `${cm}cm · ${kg(w)}`), keep ? h('p', { class: 'fs-won kept' }, '🧺 가방에 담았어요 · 카피수퍼 물고기 판매에서 팔아요') : h('p', { class: 'fs-won' }, price > 0 ? `+${price.toLocaleString('ko-KR')} 🪙` : `${price} 🪙`), o.trial && h('small', null, '체험 중이라 돈과 도감은 저장되지 않아요.'),
       f.icon && h('small', null, '바다 쓰레기가 걸려서 수거했어요. 한번 걸리면 놓아줄 수 없고, 클수록 처리 비용이 커요(50~250코인).'),
       cur.g && g !== 'F' && h('button', { class: 'btn sm fs-gbtn', onClick: () => { if (gEl.classList.contains('hide')) { gEl.className = 'fs-grade pop g' + g; gEl.textContent = `${g}등급` + (f.tier ? ` · ${TIERS[f.tier].n}` : ''); sfx(g === 'S' || g === 'A' ? 'bigfish' : 'point'); setTimeout(() => gradeInfo(f, cm, g), 650); } else gradeInfo(f, cm, g); } }, h('i', { class: 'fs-gico', html: '<svg viewBox="0 0 20 20"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12.6 12.6 L17 17" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>' }), '등급 확인하기'),
       h('div', { class: 'fs-acts' }, h('button', { class: 'btn primary', onClick: () => { if (safe()) { card.remove(); ready(); } } }, '또 던지기'), h('button', { class: 'btn', onClick: () => { if (safe()) { card.remove(); close(); } } }, '그만하기')));
     wrap.append(card); say(''); btn.textContent = '…'; btn.onclick = null; card.classList.add('wait'); setTimeout(() => card.classList.remove('wait'), 1200);
     // 와! ○○○을 잡았다! — 화면 가득 터지는 글자, 그 아래 등급
-    if (!f.icon) { const wow = h('div', { class: 'fs-wow' + (isNew ? ' new' : f.pearl || f.king ? ' gold' : '') }, h('b', null, isNew ? '와! 새로운 물고기다!' : `와! ${josaUl(f.pearl ? '바다 진주' : f.name)} 잡았다!`), isNew ? h('small', null, `📖 ${f.name} · 도감에 새로 올렸어요`) : cur.g && h('small', null, '몇 등급일까? 등급 확인하기를 눌러 보세요'));
+    if (!f.icon && shiny) { // 이로치: 화면이 무지갯빛으로 번쩍이고 반짝이가 터진다
+      const fl = h('div', { class: 'fs-shyflash' }); (wrap.querySelector('.fs-view') || wrap).append(fl); setTimeout(() => fl.remove(), 1600);
+      const wow = h('div', { class: 'fs-wow shy' }, h('b', null, '✨ 이로치다! ✨'), h('small', null, `색이 다른 ${f.name} · 📖 이로치 도감에 기록`));
+      for (let k = 0; k < 20; k++) wow.append(h('i', { class: 'fs-spark', style: { '--a': (k / 20 * 360) + 'deg', '--d': (70 + Math.random() * 90).toFixed(0) + 'px', color: ['#FF7EB6', '#8F7CFF', '#5ED3F3', '#FFE066'][k % 4] } }, k % 2 ? '✦' : '✨'));
+      (wrap.querySelector('.fs-view') || wrap).append(wow); setTimeout(() => wow.classList.add('out'), 2600); setTimeout(() => wow.remove(), 3100); }
+    else if (!f.icon) { const wow = h('div', { class: 'fs-wow' + (isNew ? ' new' : f.pearl || f.king ? ' gold' : '') }, h('b', null, isNew ? '와! 새로운 물고기다!' : `와! ${josaUl(f.pearl ? '바다 진주' : f.name)} 잡았다!`), isNew ? h('small', null, `📖 ${f.name} · 도감에 새로 올렸어요`) : cur.g && h('small', null, '몇 등급일까? 등급 확인하기를 눌러 보세요'));
       if (isNew) { sfx('bigfish'); for (let k = 0; k < 14; k++) wow.append(h('i', { class: 'fs-spark', style: { '--a': (k / 14 * 360) + 'deg', '--d': (60 + Math.random() * 70).toFixed(0) + 'px' } }, '✨')); }
       (wrap.querySelector('.fs-view') || wrap).append(wow); setTimeout(() => wow.classList.add('out'), 1900); setTimeout(() => wow.remove(), 2400); }
   }
+  if (o.shinyTest) window.__fsLand = () => { cur = rollCatch(zone, rodT(), false, 0.5, true); landed(); }; // 이로치 결과 화면 확인용(?fishtest=1&shiny)
   // 찔끔찔끔 누르기: 0.3초도 안 되게 눌렀다 떼면 물고기가 눈치채고 인내심이 깎인다(깊은 바다일수록 많이)
   const down = () => { if (!hold) pressAt = performance.now(); hold = true; };
   const up = () => { if (hold && phase === 'fight' && !cur.f.icon && performance.now() - pressAt < 300) { taps++; pat -= [0, 0.7, 1.2, 1.8][zone] + (cur.f.king || cur.f.pearl ? 0.6 : 0); eyeAt = performance.now() + 700; if (taps === 2 || taps % 5 === 0) say('찔끔찔끔 감으면 물고기가 눈치채고 떠나요! 길게 감으세요.', 'warn'); } hold = false; };
