@@ -13,7 +13,7 @@ import { openCook, SAUCES, SAUCE_PACK, SAUCE_IMG } from './cook.js';
 import { farmCrow } from './farmcrow.js';
 import { createQuest } from './quest.js';
 import { recOf } from './cook.js';
-import { openFishing, seaBattle, PIRATE_LOOT, FLEE_FEE, CBOAT_FIX, FISH, TIERS, RODS, ZONES, BAIT, BALL, CANNON, WBOAT, BOAT_FIX, fishSvg } from './fishing.js';
+import { openFishing, seaBattle, PIRATE_LOOT, FLEE_FEE, CBOAT_FIX, FISH, TIERS, RODS, ZONES, BAIT, BAIT2, BAIT3, baitIc, BALL, CANNON, WBOAT, BOAT_FIX, fishSvg } from './fishing.js';
 
 // 동물마다: 성격, 좋아하는 것, 싫어하는 것, 상징 액세서리, 제일 좋아하는 선물
 const P = (trait, likes, hates, pin, fav) => ({ trait, likes, hates, pin, fav });
@@ -322,11 +322,11 @@ export function mount(el, ctx) {
   function myBoat() { me.boat = { i: -1, own: true, t: 0, gain: 0, wave: 0, pulse: 0, skin: myBoatSkin() }; boatEl.innerHTML = boatSvg(me.boat.skin); sfx('jump'); }
   // 가방 고치기·돈 넣고 빼기·도감(낚시에서 쓴다)
   // 낚싯배 체험: 10분 동안 장비를 빌린다. 빌린 장비와 체험 중 번 돈·잃은 돈·도감은 저장하지 않는다
-  const TRIAL_MS = 600000, TRIAL_KEYS = ['boat', 'wboat', 'cannon', 'boatD', 'rod', 'rodD', 'bait', 'balls', 'casts', 'pearlAt', 'casts3', 'pearlAt3', 'pcasts', 'pirAt', 'pirNext']; let trial = null, rawBag = {};
+  const TRIAL_MS = 600000, TRIAL_KEYS = ['boat', 'wboat', 'cannon', 'boatD', 'rod', 'rodD', 'bait', 'bait2', 'bait3', 'balls', 'casts', 'pearlAt', 'casts3', 'pearlAt3', 'pcasts', 'pirAt', 'pirNext']; let trial = null, rawBag = {};
   // 퀘스트 해적전: 흰 배·대포를 퀘스트 동안만 빌려준다(저장하지 않는 덮어쓰기)
   const QLOAN = { boat: true, wboat: true, cannon: true, boatD: 100, balls: 20 }; let qloan = null;
   const mergeBag = () => ({ ...rawBag, ...(qloan ? qloan.g : {}), ...(trial ? trial.g : {}) });
-  function startTrial() { trial = { until: performance.now() + TRIAL_MS, g: { boat: true, wboat: true, cannon: true, boatD: 100, rod: 3, rodD: 200, bait: 40, balls: 20, casts: 0, pearlAt: 999, pcasts: 0, pirNext: 4 } }; bag = mergeBag(); toast('🧪 낚싯배 체험 시작! 10분 동안 흰 배·대포·고급 낚싯대를 빌려요. 바다에서 "내 보트"를 누르세요', 4200); }
+  function startTrial() { trial = { until: performance.now() + TRIAL_MS, g: { boat: true, wboat: true, cannon: true, boatD: 100, rod: 3, rodD: 200, bait: 40, bait2: 40, bait3: 40, balls: 20, casts: 0, pearlAt: 999, pcasts: 0, pirNext: 4 } }; bag = mergeBag(); toast('🧪 낚싯배 체험 시작! 10분 동안 흰 배·대포·고급 낚싯대를 빌려요. 바다에서 "내 보트"를 누르세요', 4200); }
   function endTrial(why) { if (!trial) return; trial = null; bag = mergeBag(); if (battle) { battle.stop(); battle = null; camX = null; } const f = document.querySelector('.fs .fs-quit'); if (f) f.click();
     if (me.boat && me.boat.own && !bag.boat) { leaveBoat(); if (me.x > FISH_X - 40) me.x = FISH_X - 60; } else if (me.boat && me.boat.own && me.x > FISH_X + TILE - 30 && !(bag.wboat && bag.cannon)) me.x = FISH_X + TILE - 60; toast(why || '낚싯배 체험이 끝났어요', 3000); drawHp(); }
   const saveBag = patch => { bag = { ...bag, ...patch }; drawHp(); if (!trial && qloan) { const rest = {}; Object.keys(patch).forEach(k => { if (k in QLOAN) qloan.g[k] = patch[k]; else rest[k] = patch[k]; }); if (!Object.keys(rest).length) return Promise.resolve(); patch = rest; } if (trial) { const rest = {}; Object.keys(patch).forEach(k => { if (TRIAL_KEYS.includes(k)) trial.g[k] = patch[k]; else rest[k] = patch[k]; }); if (!Object.keys(rest).length) return Promise.resolve(); patch = rest; } return ctx.store.update('bag/' + ctx.uid, patch).catch(() => {}); };
@@ -349,7 +349,7 @@ export function mount(el, ctx) {
   // 낚시 연습 링크(?fishtest=1·2·3): 그 바다에 같은 등급 낚싯대를 빌려 바로 낚시. 가방·돈·도감·미끼에는 아무 영향 없음(해적단도 안 나옴)
   try { const ft = +new URLSearchParams(location.search).get('fishtest'); if (ft >= 1 && ft <= 3) setTimeout(() => { if (fishOpen || battle) return; document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); fishOpen = true; keys.clear();
       const rq = +new URLSearchParams(location.search).get('rod'), rt = rq >= 1 && rq <= 3 ? rq : ft; // &rod=1·2·3 으로 낚싯대 등급을 따로 고를 수 있다
-      const tb = { rod: rt, rodD: RODS[rt].dur, bait: 99, [`sp${ft}`]: (bag[`sp${ft}`] || {}) };
+      const tb = { rod: rt, rodD: RODS[rt].dur, bait: 99, bait2: 99, bait3: 99, [`sp${ft}`]: (bag[`sp${ft}`] || {}) };
       openFishing({ ctx, zone: ft, trial: true, boat: boatSvg(ft >= 2 ? MY_WBOAT : MY_BOAT), bag: () => tb, save: patch => Object.assign(tb, patch), coins: () => {}, keep: null, seen: null, dex: () => null, onClose: () => { fishOpen = false; if (!voice.on) bgm.duck(false); lastT = performance.now(); toast('낚시 연습 끝 · 다시 하려면 링크를 다시 열어요', 2400); }, onPirate: null }); }, 1400); } catch {}
   // 요리 연습 링크(?cooktest=메뉴id, 예: maeun): 임대료 없이 그 메뉴를 주문하는 손님 1명과 필요한 재료(A급)를 빌려준다. 돈·평점·친밀도·가방·헛간에는 아무 영향 없음
   function cookTest(rid) { const r = recOf(rid) || recOf('maeun'); if (!r) return; fishOpen = true; keys.clear();
@@ -962,11 +962,13 @@ export function mount(el, ctx) {
         bag.wboat && { ic: '🛠️', name: '흰 배 수리', sub: `${won(BOAT_FIX)} · 배 내구도 ${boatD()}/100 → 100${boatD() < BOAT_MIN ? ' · 지금은 중급 바다에 못 나가요' : ''}`, price: BOAT_FIX, off: boatD() >= 100, line: boatD() >= 100 ? '배가 멀쩡하구먼. 고칠 데가 없네.' : boatD() < BOAT_MIN ? '어이쿠, 배가 많이 상했구먼! 해적 놈들한테 당했나? 얼른 고쳐야지.' : `배 내구도가 ${boatD()}이구먼. 손 좀 봐 주겠네.`, act: () => buy(BOAT_FIX, { boatD: 100 }) },
         { ic: CANNON_IC, name: '대포', sub: bag.cannon ? '달았어요' : `${won(CANNON)} · 흰 배에 달아요. 갈매기 해적단과 싸워요`, price: CANNON, off: bag.cannon || !bag.wboat, line: !bag.wboat ? '대포는 흰 배에만 달 수 있네. 흰 배부터 장만하게.' : bag.cannon ? '벌써 달려 있구먼. 해적 놈들 혼쭐내 주게!' : '갈매기 해적단이 설치는 바다엔 대포가 있어야 마음이 놓이지.', act: () => buy(CANNON, { cannon: true }) },
         { ic: '⚫', name: '포탄 10개', sub: `${won(BALL * 10)} · 한 발에 1개 · 가진 것 ${bag.balls || 0}개`, price: BALL * 10, off: !bag.cannon, line: !bag.cannon ? '대포도 없는데 포탄을 어디 쓰려고? 허허.' : (bag.balls || 0) < 5 ? '포탄이 간당간당하구먼. 넉넉히 챙기게.' : '포탄은 많을수록 든든하지.', act: () => buy(BALL * 10, { balls: (bag.balls || 0) + 10 }) },
-        ['note', R ? `지금 낚싯대: ${R.name} (내구도 ${bag.rodD || 0}/${R.dur}) · 미끼 ${bag.bait || 0}개` : `낚싯대 없음 · 미끼 ${bag.bait || 0}개`],
+        ['note', R ? `지금 낚싯대: ${R.name} (내구도 ${bag.rodD || 0}/${R.dur}) · 미끼 ${bag.bait || 0} · 중급 ${bag.bait2 || 0} · 고급 ${bag.bait3 || 0}` : `낚싯대 없음 · 미끼 ${bag.bait || 0} · 중급 ${bag.bait2 || 0} · 고급 ${bag.bait3 || 0}`],
         ...RODS.slice(1).map(r => { const using = (bag.rod || 0) === r.t && bag.rodD > 0; return { ic: rodIc(r.t), name: r.name, sub: `${won(r.price)} · ${['', '나무', '흰색', '파란색'][r.t]} · ${r.dur}번 쓸 수 있어요${r.t < 3 ? ` · 솜씨로 ${ZONES[r.t + 1].slice(0, 2)} 물고기도 일부` : ''}${using ? ' · 쓰는 중' : ''}`, price: r.price, off: using,
           line: using ? '지금 쓰는 거랑 똑같은 걸세. 닳으면 고쳐 쓰게.' : ['', '처음엔 나무 낚싯대가 손에 착 붙지. 초급 바다에 딱이여.', '흰 낚싯대면 중급 바다도 해볼 만하지. 귀한 놈도 물 게야.', '파란 낚싯대라… 고래킹 잡으러 가는 겐가? 허허, 기대되는구먼.'][r.t], act: () => buy(r.price, { rod: r.t, rodD: r.dur }) }; }),
         R && { ic: '🔧', name: '낚싯대 수리', sub: `${won(R.fix)} · 내구도를 ${R.dur}로 다시 채워요`, price: R.fix, off: bag.rodD >= R.dur, line: bag.rodD >= R.dur ? '낚싯대가 새것 같구먼. 고칠 게 없네.' : !(bag.rodD > 0) ? '줄이 다 닳았구먼! 이래선 한 마리도 못 낚지.' : `내구도가 ${bag.rodD}이구먼. 줄 갈고 손잡이 조여 주지.`, act: () => buy(R.fix, { rodD: R.dur }) },
-        { ic: '🪱', name: '미끼 10개', sub: `${won(BAIT * 10)} · 한 번 던질 때 1개`, price: BAIT * 10, line: (bag.bait || 0) < 3 ? '미끼가 다 떨어져 가는구먼. 싱싱한 놈으로 담아 주지.' : '싱싱한 지렁이여. 물고기들이 환장하지.', act: () => buy(BAIT * 10, { bait: (bag.bait || 0) + 10 }) }].filter(Boolean); }
+        { ic: baitIc(1), name: '미끼 10개 (초급 바다)', sub: `${won(BAIT * 10)} · 한 번 던질 때 1개 · 가진 것 ${bag.bait || 0}`, price: BAIT * 10, line: (bag.bait || 0) < 3 ? '미끼가 다 떨어져 가는구먼. 싱싱한 놈으로 담아 주지.' : '싱싱한 지렁이여. 물고기들이 환장하지.', act: () => buy(BAIT * 10, { bait: (bag.bait || 0) + 10 }) },
+        { ic: baitIc(2), name: '중급 미끼 10개 (중급 바다)', sub: `${won(BAIT2 * 10)} · 중급 바다에서만 써요 · 가진 것 ${bag.bait2 || 0}`, price: BAIT2 * 10, line: '중급 바다 물고기는 입맛이 까다롭지. 파란 미끼여야 문다네.', act: () => buy(BAIT2 * 10, { bait2: (bag.bait2 || 0) + 10 }) },
+        { ic: baitIc(3), name: '고급 미끼 10개 (고급 바다)', sub: `${won(BAIT3 * 10)} · 고급 바다에서만 써요 · 가진 것 ${bag.bait3 || 0}`, price: BAIT3 * 10, line: '금빛 미끼라네. 깊은 바다 녀석들도 이건 못 참지.', act: () => buy(BAIT3 * 10, { bait3: (bag.bait3 || 0) + 10 }) }].filter(Boolean); }
     function sellItems() { const out = [], uidOwned = ctx.owned[ctx.uid] || {};
       const L = Object.entries(bag.fish || {}).filter(([, v]) => v).sort((a, b) => (b[1].t || 0) - (a[1].t || 0)), total = L.reduce((n, [, v]) => n + v.p, 0);
       out.push(['sec', `🐟 물고기 ${L.length}마리`]);
@@ -996,7 +998,7 @@ export function mount(el, ctx) {
       if (bag.cannon) { const p = half(CANNON); gear.push({ ic: CANNON_IC, name: '대포', sub: `${won(p)}에 팔아요`, price: p, line: `해적 놈들이랑 싸우던 대포구먼. 아직 쓸 만해. ${won(p)} 쳐 주지.`, act: () => sell(p, () => saveBag({ cannon: null })) }); }
       if (R && bag.rod) { const p = Math.max(10, Math.round(R.price / 2 * (0.5 + 0.5 * Math.min(1, (bag.rodD || 0) / R.dur)))); gear.push({ ic: rodIc(R.t), name: R.name, sub: `${won(p)}에 팔아요 · 내구도 ${bag.rodD || 0}/${R.dur}`, price: p, line: (bag.rodD || 0) >= R.dur * 0.8 ? `거의 새것이구먼! ${won(p)} 쳐 주지.` : `많이 썼구먼. 닳은 만큼 빼서 ${won(p)}이여.`, act: () => sell(p, () => saveBag({ rod: 0, rodD: 0 })) }); }
       if ((bag.balls || 0) >= 10) gear.push({ ic: '⚫', name: '포탄 10개', sub: `${won(half(BALL * 10))}에 팔아요 · 가진 것 ${bag.balls}개`, price: half(BALL * 10), line: '포탄 열 개라… 화약 냄새가 나는구먼. 반값에 사 주지.', act: () => sell(half(BALL * 10), () => saveBag({ balls: bag.balls - 10 })) });
-      if ((bag.bait || 0) >= 10) gear.push({ ic: '🪱', name: '미끼 10개', sub: `${won(half(BAIT * 10))}에 팔아요 · 가진 것 ${bag.bait}개`, price: half(BAIT * 10), line: '미끼가 남았구먼. 아직 꿈틀대니 반값은 쳐 주지.', act: () => sell(half(BAIT * 10), () => saveBag({ bait: bag.bait - 10 })) });
+      if ((bag.bait || 0) >= 10) gear.push({ ic: baitIc(1), name: '미끼 10개', sub: `${won(half(BAIT * 10))}에 팔아요 · 가진 것 ${bag.bait}개`, price: half(BAIT * 10), line: '미끼가 남았구먼. 아직 꿈틀대니 반값은 쳐 주지.', act: () => sell(half(BAIT * 10), () => saveBag({ bait: bag.bait - 10 })) });
       if (gear.length) out.push(['sec', '🚤 배·낚시 용품'], ...gear);
       const goods = [...Object.entries(GIFTS).filter(([k]) => bag[k] > 0).map(([k, [ic, nm, price]]) => ({ ic, name: nm, sub: `${won(half(price))}에 팔아요 · 가진 것 ${bag[k]}개`, price: half(price), line: `${nm} 말인가? 선물로 주면 동물들이 좋아할 텐데… 반값 ${won(half(price))}이여.`, act: () => sell(half(price), () => saveBag({ [k]: bag[k] - 1 })) })),
         (bag.potion || 0) > 0 && { ic: '🧪', name: '회복 포션', sub: `${won(half(POTION[0]))}에 팔아요 · 가진 것 ${bag.potion}개`, price: half(POTION[0]), line: '포션은 아껴 두는 게 좋을 텐데? 그래도 판다면 사 주지.', act: () => sell(half(POTION[0]), () => saveBag({ potion: bag.potion - 1 })) }].filter(Boolean);
