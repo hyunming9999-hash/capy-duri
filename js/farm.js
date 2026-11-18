@@ -69,9 +69,9 @@ export function openFarm(o) {
   const plotEls = Array.from({ length: PLOTS }, (_, k) => { const e = h('button', { class: 'fm-plot', style: { left: plotX(k) + 'px', width: PW + 'px', height: PH + 'px' }, onClick: () => goPlot(k) }); world.append(e); return e; });
   const shop = h('button', { class: 'fm-shop', style: { left: HX + 'px', width: HW * 1.46 + 'px' }, onClick: () => { walkTo(HX + HW * 0.7, openShop); } }, h('img', { src: 'img/farm/hardware.webp', alt: '카피철물' }), h('b', { class: 'fm-shop-t' }, '카피철물'));
   const exitSign = h('button', { class: 'fm-exit', style: { left: WIDTH - Math.round(TW * 0.11) + 'px' }, onClick: () => close() }, '놀이터로 →');
-  const sc = o.scoot ? o.scoot() : null, meSvg = () => capy(ctx.capyOf(ctx.uid, { face: 'happy' })), meEl = h('div', { class: 'fm-me' + (sc ? ' scoot' : ''), html: sc || meSvg() }); // 스쿠터를 타고 왔으면 농장에서도 탄 채로, 1.8배 빠르게
+  const sc = o.scoot ? o.scoot() : null, meSvg = (back = false) => capy(ctx.capyOf(ctx.uid, back ? { view: 'back' } : { face: 'happy' })), meEl = h('div', { class: 'fm-me' + (sc ? ' scoot' : ''), html: sc || meSvg() }); // 스쿠터를 타고 왔으면 농장에서도 탄 채로, 1.8배 빠르게
   // 손에 든 농기구: 캐릭터 그림(svg) 안에 직접 그려 넣고 오른손(앞발)으로 감싸 쥔다 → 걷고 뒤집혀도 손에서 안 떨어진다
-  let heldK = 'hoe', heldUse = 0, heldT = 0; const drawHeld = () => { if (sc) return; const t = tool(); if (t === heldT && meEl.dataset.k === heldK) return; heldT = t; meEl.dataset.k = heldK; meEl.innerHTML = holdSvg(meSvg(), heldK, t); };
+  let heldK = 'hoe', heldUse = 0, heldT = 0; const drawHeld = () => { if (sc) return; const t = tool(); if (t === heldT && meEl.dataset.k === heldK) return; heldT = t; meEl.dataset.k = heldK; meEl.innerHTML = holdSvg(meSvg(heldK === 'can'), heldK, t); meEl.classList.toggle('turned', heldK === 'can'); }; // 물 줄 땐 밭 쪽으로 돌아서서(뒷모습) 준다
   const useHeld = k => { if (sc) return; clearTimeout(heldUse); heldK = k; drawHeld(); meEl.classList.remove('use'); void meEl.offsetWidth; meEl.classList.add('use'); heldUse = setTimeout(() => { heldUse = 0; meEl.classList.remove('use'); heldK = 'hoe'; drawHeld(); }, k === 'can' ? 1500 : 1100); };
   world.append(shop, exitSign, meEl);
   const scroller = h('div', { class: 'fm-scroll' }, world);
@@ -117,7 +117,7 @@ export function openFarm(o) {
       const ripeN = rows.filter(r => live(r) && ripe(r, t)).length, growing = rows.filter(r => live(r) && !ripe(r, t)), emptyN = rows.filter(r => !live(r)).length;
       const soon = growing.length ? Math.min(...growing.map(r => r.at + r.ms - t)) : 0;
       const lab = !open ? `🔒 땅 문서 ${DEEDS[k - 1].toLocaleString('ko-KR')}코인` : !any ? (who === ctx.uid ? '빈 밭 · 눌러서 씨앗 심기' : '빈 밭') : ripeN ? `수확! ${ripeN}이랑` : emptyN && who === ctx.uid ? `빈 이랑 ${emptyN}` : ''; // 남은 시간은 아래 밭 현황에서 본다
-      if (lab) kids.push(h('span', { class: 'fm-lab' + (ripeN ? ' ripe' : '') }, lab));
+      kids.push(h('span', { class: 'fm-lab' + (ripeN ? ' ripe' : '') + (open ? '' : ' lock') }, `${k + 1}밭${open ? '' : ' 🔒'}`)); // 알약은 밭 번호만(남은 시간·상태는 아래 밭 현황에서)
       if (open) ROWBOX.forEach((b, i) => kids.push(h('small', { class: 'fm-rlab', style: { top: b.t + b.h / 2 + '%', right: Math.max(1, b.r - 7) + '%' } }, `${i + 1}번 이랑`)));
       if (open && growing.length) kids.push(h('span', { class: 'fm-bub' }, [growing.some(r => dryNow(r, t)) && '💧', growing.some(r => weedNow(r, t)) && '🌿'].filter(Boolean).join('')));
       rc(e, kids); });
