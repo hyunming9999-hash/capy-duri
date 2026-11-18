@@ -2017,3 +2017,15 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .kb-tlb { position: absolute; left: 50%; bottom: 5px; transform: translateX(-50%); white-space: nowrap; background: rgba(60,20,12,.82); color: #FFE9C7; font-size: 11px; font-weight: 800; padding: 2px 9px; border-radius: 8px; }
 .kb-tray.kb-table.on { box-shadow: 0 0 0 3px #3E9A50; }
 .fc-lost .fc-loot:nth-of-type(3) { right: 44px; bottom: 14px; } .fc-lost .fc-loot:nth-of-type(4) { right: 82px; bottom: 2px; }
+/* 스프링클러: 밭 한가운데에서 물방울이 사방으로 */
+.fm-sprk { position: absolute; left: 50%; top: 46%; width: 0; height: 0; z-index: 3; pointer-events: none; }
+.fm-sphead { position: absolute; left: -9px; top: -14px; width: 18px; height: 22px; border-radius: 6px 6px 3px 3px; background: linear-gradient(90deg, #8A97A3, #DCE4EA 45%, #7C8893); border: 2px solid #3E4A55; box-shadow: 0 3px 3px rgba(0,0,0,.35); }
+.fm-sphead::before { content: ''; position: absolute; left: 2px; right: 2px; top: -6px; height: 6px; border-radius: 4px 4px 0 0; background: #3D8FD1; border: 2px solid #1E5E92; border-bottom: 0; }
+.fm-sprk.on .fm-sphead::before { animation: fmSpin 0.6s linear infinite; } @keyframes fmSpin { 50% { transform: scaleX(.6); } }
+.fm-sprk em { position: absolute; left: -3px; top: -20px; width: 6px; height: 8px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: #7CC8FF; box-shadow: 0 0 3px #fff; opacity: 0; animation: fmDrop 0.9s ease-out infinite; }
+@keyframes fmDrop { 0% { transform: rotate(var(--a)) translateY(0) scale(.6); opacity: 0; } 15% { opacity: 1; } 100% { transform: rotate(var(--a)) translateY(-46px) scale(1); opacity: 0; } }
+.fm-sprkp { margin: 8px 0; padding: 9px 10px; border-radius: 12px; background: #EAF5FF; border: 2px solid #9CCBF0; display: flex; flex-direction: column; gap: 5px; } .fm-sprkp b { color: #1E5E92; } .fm-sprkp small { color: #4A6278; line-height: 1.4; }
+.fm-sprkp.on { background: #E3F2FF; } .fm-sprkx { display: flex; align-items: center; gap: 6px; } .fm-sprkx > span { flex: 1; display: flex; flex-direction: column; align-items: center; } .fm-sprkx > span small { font-size: 11px; } .fm-sprkx .btn.primary { white-space: nowrap; }
+.fm-sprkic { font-size: 34px; display: grid; place-items: center; width: 48px; }
+.fm-sprk { transform: scale(1.7); } .fm-sprk em { width: 7px; height: 9px; background: #5EB8FF; box-shadow: 0 0 4px #E8F6FF, 0 0 1px #1E5E92; } .fm-sprk.on::after { content: ''; position: absolute; left: -50px; top: -48px; width: 100px; height: 60px; border-radius: 50%; background: radial-gradient(ellipse, rgba(120,200,255,.35), rgba(120,200,255,0) 70%); animation: fmMist 1.2s ease-in-out infinite; } @keyframes fmMist { 50% { opacity: .5; transform: scale(1.1); } }
+.fm-qb.sprk.on { border-color: #3BA7E5; background: #E3F2FC; box-shadow: 0 3px 0 #2A86C0; animation: fmBob 1.2s ease-in-out infinite; } .fm-qb.sprk small { color: #1E5E92; } .so-sprk { color: #1E5E92; font-weight: 800; }

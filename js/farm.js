@@ -17,7 +17,7 @@ const C = [
 export const CROPS = C.map(([id, name, t, min, seed, base]) => ({ id, name, t, ms: min * 60000, seed: Math.max(10, Math.round(seed / 3 / 5) * 5), base })); // 씨앗 하나 = 이랑 한 줄(밭 한 칸은 3줄)
 export const cropOf = id => CROPS.find(c => c.id === id);
 export const cropImg = id => `img/farm/crop/${id}.webp`;
-export const TOOLS = [null, { t: 1, name: '초급 농기구', price: 0, note: '구리 호미·구리 물뿌리개 · 물은 한 번에 1이랑 · 처음부터 있어요' }, { t: 2, name: '중급 농기구', price: 1500, note: '은 호미·은 물뿌리개 · 물은 한 번에 2이랑 · 중급 작물을 심어요' }, { t: 3, name: '고급 농기구', price: 4000, note: '황금 낫·황금 스프링클러 · 물은 한 번에 밭 전체(3이랑) · 고급 작물을 심어요' }];
+export const TOOLS = [null, { t: 1, name: '초급 농기구', price: 0, note: '구리 호미·구리 물뿌리개 · 물은 한 번에 1이랑 · 처음부터 있어요' }, { t: 2, name: '중급 농기구', price: 1500, note: '은 호미·은 물뿌리개 · 물은 한 번에 2이랑 · 중급 작물을 심어요' }, { t: 3, name: '고급 농기구', price: 4000, note: '황금 낫·황금 물뿌리개 · 물은 한 번에 밭 전체(3이랑) · 고급 작물을 심어요' }];
 export const TIER_NAME = ['', '초급', '중급', '고급'];
 // 농기구 그림: 상점은 세트(tool), 들고 다니는 것·잡초 베기는 hoe(고급은 낫), 물 주기는 can(고급은 스프링클러). 물 주기 한 번에 적시는 이랑 수 = 농기구 등급
 export const toolImg = (t, k = 'tool') => `img/farm/${k}${Math.max(1, Math.min(3, t || 1))}.webp`;
@@ -43,17 +43,29 @@ const SELL_A = (() => { const rg = {}; CROPS.forEach(c => { const r = rg[c.t] ||
 export const cropPrice = (id, g) => (GRADE_X[g] && SELL_A[id] ? Math.max(1, Math.round(SELL_A[id] * GRADE_X[g] / GRADE_X.A)) : 0);
 
 // 밭 한 칸의 컨디션 계산(순수 함수): 물이 마른 시간과 잡초가 자란 채로 둔 시간만큼 깎인다. 다 자란 뒤로는 셈하지 않는다
+export const SPRK_PRICE = 1500, SPRK_HOUR = 150, SPRK_FROM = 0, SPRK_TO = 10; // 스프링클러: 밭 1칸에 1개, 밤 12시~아침 10시 자동, 그 밖은 1시간 150코인
+const HR = 3600000, WIN = new WeakMap(); // 이랑 → 그 밭 스프링클러가 도는 시간들
+// 밭 하나의 스프링클러 작동 구간([시작, 끝] 목록): 매일 밤 12시~아침 10시 + 돈 내고 늘린 시간
+export function sprkWins(sp, a, b) { if (!sp || !sp.on) return []; const out = []; const d = new Date(a - 86400000); d.setHours(0, 0, 0, 0);
+  for (let t0 = d.getTime(); t0 < b; t0 += 86400000) { const x = new Date(t0); x.setHours(SPRK_FROM, 0, 0, 0); const s0 = x.getTime(); x.setHours(SPRK_TO, 0, 0, 0); out.push([s0, x.getTime()]); }
+  (sp.paid || []).forEach(w => out.push([w[0], w[1]])); out.sort((p, q) => p[0] - q[0]);
+  const m = []; out.forEach(w => { if (w[1] <= a || w[0] >= b) return; const l = m[m.length - 1]; if (l && w[0] <= l[1]) l[1] = Math.max(l[1], w[1]); else m.push([w[0], w[1]]); }); return m; }
+export const sprkOn = (sp, t) => sprkWins(sp, t - 1, t + 1).some(w => w[0] <= t && t < w[1]);
+export const linkSprk = (rows, sp) => rows.forEach(r => { if (r) WIN.set(r, sp); }); // 이랑 계산 때 그 밭 스프링클러를 함께 본다
 const WET = p => Math.max(p.ms * 0.7, 30 * 60000); // 물 한 번이면 자라는 시간의 70%(최소 30분): 30분 안에 자라는 작물은 심을 때 준 물로 끝, 나머지도 한 번만 더 주면 돼요
 export function settle(p, t) {
   const end = p.at + p.ms, to = Math.min(t, end), from = Math.min(p.calc || p.at, end); if (to <= from) return p;
-  const dry = Math.max(0, to - Math.max(from, p.wet)), wd = p.weedAt && !p.cut ? Math.max(0, to - Math.max(from, p.weedAt)) : 0;
+  const sp = WIN.get(p); let dry = 0;
+  if (sp && sp.on) { let wetU = p.wet, cur = from; sprkWins(sp, from, to).forEach(([s0, e0]) => { const s1 = Math.max(s0, from), e1 = Math.min(e0, to); dry += Math.max(0, s1 - Math.max(cur, wetU)); cur = Math.max(cur, e1); wetU = Math.max(wetU, e0 + WET(p)); }); dry += Math.max(0, to - Math.max(cur, wetU)); } // 스프링클러가 도는 동안은 젖어 있고, 멈춘 뒤에도 물 한 번 준 것만큼 버틴다
+  else dry = Math.max(0, to - Math.max(from, p.wet));
+  const wd = p.weedAt && !p.cut ? Math.max(0, to - Math.max(from, p.weedAt)) : 0;
   return { ...p, dry: (p.dry || 0) + dry, wd: (p.wd || 0) + wd, calc: to };
 }
 export const scoreOf = (p, t) => { const q = settle(p, t), seen = Math.max(1, Math.min(t, p.at + p.ms) - p.at); return Math.max(0, 1 - 0.8 * (q.dry || 0) / seen - 0.4 * (q.wd || 0) / seen); }; // 한 번도 안 돌봐도 C급, 3일 넘게 안 거두면 F
 export const ripe = (p, t) => p && p.c && t >= p.at + p.ms;
 export const rotten = (p, t) => ripe(p, t) && t > p.at + p.ms + ROT_MS;
 export const weedNow = (p, t) => p && p.weedAt && !p.cut && t >= p.weedAt && t < p.at + p.ms;
-export const dryNow = (p, t) => p && p.c && t >= p.wet && t < p.at + p.ms;
+export const dryNow = (p, t) => { if (!(p && p.c && t >= p.wet && t < p.at + p.ms)) return false; const sp = WIN.get(p); if (!sp || !sp.on) return true; const ws = sprkWins(sp, t - 86400000 * 2, t + 1); return !ws.some(([a, b]) => a <= t && t < b + WET(p)); };
 export function gradeOf(p, t) { if (rotten(p, t)) return 'F'; const s = scoreOf(p, t); return s >= 0.85 ? (Math.random() < 0.3 ? 'S' : 'A') : s >= 0.6 ? 'B' : s >= 0.3 ? 'C' : 'F'; }
 export function plant(id, t) { const c = cropOf(id); return { c: id, at: t, ms: c.ms, wet: t + WET(c), calc: t, dry: 0, wd: 0, weedAt: t + c.ms * (0.35 + Math.random() * 0.3), cut: 0 }; }
 export const water = (p, t) => { const q = settle(p, t); return { ...q, wet: t + WET(p) }; };
@@ -97,8 +109,9 @@ export function openFarm(o) {
     return lw && lw.left > 0 && t - lw.t < 300000 ? '한 번 더 줘요' : '한 번에 2이랑씩 물줘요'; }
   const lastWater = {}; // 밭마다 방금 물 준 때와 아직 못 적신 이랑 수(중급 '한 번 더' 안내용)
   function drawQuick() { const t = now(), k = meEl.classList.contains('walk') ? -1 : plotEls.findIndex((_, i) => Math.abs(me.x - (plotX(i) + PW / 2)) < PW / 2), open = k >= 0 && isOpen(k), rs = open ? rowsOf(k).filter(live) : [], grow = rs.filter(r => !ripe(r, t)), rip = who === ctx.uid ? rs.filter(r => ripe(r, t)) : [], dry = grow.some(r => dryNow(r, t)), wd = who === ctx.uid ? grow.filter(r => weedNow(r, t)).length : 0;
-    const wh = k >= 0 ? waterHint(k) : '', key = `${k}|${grow.length}|${rip.length}|${dry}|${tool()}|${wh}|${wd}`; if (key === quickKey) return; quickKey = key;
-    rc(quickEl, wd > 0 && h('button', { class: 'fm-qb weed on', onClick: () => doWeed(k) }, h('img', { src: toolImg(tool(), 'hoe'), alt: '' }), h('span', null, '잡초 베기'), h('small', null, `잡초 ${wd}개 · ${tool() >= 3 ? '밭 전체' : `${tool()}이랑씩`}`)),
+    const wh = k >= 0 ? waterHint(k) : '', inv = mine.sprkInv || 0, canSp = open && who === ctx.uid && inv > 0 && !((data.sprk || {})[k] || {}).on, key = `${k}|${grow.length}|${rip.length}|${dry}|${tool()}|${wh}|${wd}|${canSp}|${inv}`; if (key === quickKey) return; quickKey = key;
+    rc(quickEl, canSp && h('button', { class: 'fm-qb sprk on', onClick: () => installSprk(k) }, h('b', null, '💦'), h('span', null, '스프링클러 설치'), h('small', null, `가방에 ${inv}개`)),
+      wd > 0 && h('button', { class: 'fm-qb weed on', onClick: () => doWeed(k) }, h('img', { src: toolImg(tool(), 'hoe'), alt: '' }), h('span', null, '잡초 베기'), h('small', null, `잡초 ${wd}개 · ${tool() >= 3 ? '밭 전체' : `${tool()}이랑씩`}`)),
       grow.length > 0 && h('button', { class: 'fm-qb water' + (dry ? ' on' : ''), onClick: () => doWater(k) }, h('img', { src: toolImg(tool(), 'can'), alt: '' }), h('span', null, '물 주기'), h('small', null, wh)),
       rip.length > 0 && h('button', { class: 'fm-qb harv on', onClick: () => harvestTap(k) }, h('b', null, '🧺'), h('span', null, '수확'), h('small', null, ['', '하나씩', '한 이랑', '밭 전체'][tool()]))); }
   const scene = h('div', { class: 'fm-scene' }, scroller, h('div', { class: 'fm-pad' }, padBtn('L', '◀'), enterBtn, quickEl, padBtn('R', '▶')));
@@ -115,7 +128,7 @@ export function openFarm(o) {
   const savePlot = (k, p) => ctx.store.set(`${curRef()}/plots/${k}`, p).catch(() => {});
 
   // 밭 한 칸 = 이랑 3줄. 씨앗 하나로 한 이랑을 채운다(이랑마다 다른 작물도 된다)
-  const rowsOf = k => { const p = plotOf(k); if (!p) return [null, null, null]; if (p.c) return [p, null, null]; const r = p.rows || {}; return [0, 1, 2].map(i => r[i] || null); };
+  const rowsOf = k => { const p = plotOf(k), sp = (data.sprk || {})[k]; let out; if (!p) out = [null, null, null]; else if (p.c) out = [p, null, null]; else { const r = p.rows || {}; out = [0, 1, 2].map(i => r[i] || null); } linkSprk(out, sp); return out; };
   const live = r => r && r.c && !r.lost;
   const ROWBOX = [{ t: 2, h: 24, l: 13, r: 13, n: 7 }, { t: 20, h: 27, l: 10, r: 10, n: 8 }, { t: 40, h: 29, l: 8, r: 8, n: 9 }];
   const SPROUT = '<svg viewBox="0 0 40 40"><path d="M20 38 V20" stroke="#4E8A2E" stroke-width="3" stroke-linecap="round"/><path d="M20 22 C10 22 6 14 7 8 C14 8 20 13 20 22Z" fill="#7BC74D" stroke="#4E8A2E" stroke-width="2"/><path d="M20 20 C29 20 34 13 33 6 C25 6 20 11 20 20Z" fill="#8FD45A" stroke="#4E8A2E" stroke-width="2"/></svg>';
@@ -136,6 +149,7 @@ export function openFarm(o) {
       const lab = !open ? `🔒 땅 문서 ${DEEDS[k - 1].toLocaleString('ko-KR')}코인` : !any ? (who === ctx.uid ? '빈 밭 · 눌러서 씨앗 심기' : '빈 밭') : ripeN ? `수확! ${ripeN}이랑` : emptyN && who === ctx.uid ? `빈 이랑 ${emptyN}` : ''; // 남은 시간은 아래 밭 현황에서 본다
       kids.push(h('span', { class: 'fm-lab' + (ripeN ? ' ripe' : '') + (open ? '' : ' lock') }, `${k + 1}밭${open ? '' : ' 🔒'}`)); // 알약은 밭 번호만(남은 시간·상태는 아래 밭 현황에서)
       if (open) ROWBOX.forEach((b, i) => kids.push(h('small', { class: 'fm-rlab', style: { top: b.t + b.h / 2 + '%', right: Math.max(1, b.r - 7) + '%' } }, `${i + 1}번 이랑`)));
+      const sp = (data.sprk || {})[k]; if (open && sp && sp.on) { const on = sprkOn(sp, t); kids.push(h('div', { class: 'fm-sprk' + (on ? ' on' : '') }, h('i', { class: 'fm-sphead' }), ...(on ? Array.from({ length: 10 }, (_, j) => h('em', { style: { '--a': (j * 36) + 'deg', animationDelay: (j % 5) * 0.16 + 's' } })) : []))); }
       if (open && growing.length) kids.push(h('span', { class: 'fm-bub' }, [growing.some(r => dryNow(r, t)) && '💧', growing.some(r => weedNow(r, t)) && '🌿'].filter(Boolean).join('')));
       rc(e, kids); });
     coinsEl.textContent = '🪙 ' + ctx.coins().toLocaleString('ko-KR');
@@ -184,12 +198,12 @@ export function openFarm(o) {
     const rowCard = (r, i) => { if (!live(r)) return h('div', { class: 'fm-rcard empty' }, h('span', { class: 'fm-rn' }, `${i + 1}`), h('b', null, r && r.lost ? '까마귀가 가져갔어요 🐦‍⬛' : '빈 이랑'), !visit && h('button', { class: 'btn sm primary', onClick: () => { pickRow = i; drawSheet(); } }, '🌱 심기'));
       const c = cropOf(r.c), rp = ripe(r, t), s = scoreOf(r, t);
       return h('div', { class: 'fm-rcard' }, h('span', { class: 'fm-rn' }, `${i + 1}`), h('img', { src: cropImg(c.id), alt: '' }), h('div', { class: 'fm-rbody' }, h('b', null, `${c.name} · ${rp ? (rotten(r, t) ? '시들었어요' : '수확!') : left(r.at + r.ms - t) + ' 남음'}`),
-        rp ? [h('small', null, rotten(r, t) ? '3일 넘게 안 거둬서 F' : `컨디션 ${Math.round(s * 100)}% · ${left(r.at + r.ms + ROT_MS - t)} 안에 거두기${r.got ? ` · ${YIELD_ROW - r.got}개 남음` : ''}`), !visit && tool() < 3 && h('button', { class: 'btn sm primary fm-rharv', onClick: () => harvestTap(k, i) }, tool() === 2 ? '🧺 이 이랑 거두기' : '🧺 하나 거두기')] : [gauge('자람', Math.min(1, (t - r.at) / r.ms), 'grow'), gauge('컨디션', s, s >= 0.85 ? 'good' : s >= 0.6 ? 'ok' : 'bad'), gauge('물', Math.min(1, Math.max(0, r.wet - t) / (r.ms * 0.5)), 'water'), h('button', { class: 'btn sm fm-rwater' + (dryNow(r, t) ? ' dry' : ''), onClick: e => { e.stopPropagation(); walkTo(plotX(k) + PW / 2, () => doWater(k, i)); } }, h('img', { src: toolImg(tool(), 'can'), alt: '' }), tool() >= 3 ? '💧 밭 전체 물 주기' : tool() === 2 ? `💧 ${i + 1}번부터 2이랑 물 주기` : `💧 ${i + 1}번 이랑 물 주기`), !visit && weedNow(r, t) && h('button', { class: 'btn sm fm-rwater weed', onClick: e => { e.stopPropagation(); walkTo(plotX(k) + PW / 2, () => doWeed(k, i)); } }, h('img', { src: toolImg(tool(), 'hoe'), alt: '' }), tool() >= 3 ? '🌿 밭 전체 잡초 베기' : tool() === 2 ? `🌿 ${i + 1}번부터 2이랑 잡초 베기` : `🌿 ${i + 1}번 이랑 잡초 베기`)])); };
+        rp ? [h('small', null, rotten(r, t) ? '3일 넘게 안 거둬서 F' : `컨디션 ${Math.round(s * 100)}% · ${left(r.at + r.ms + ROT_MS - t)} 안에 거두기${r.got ? ` · ${YIELD_ROW - r.got}개 남음` : ''}`), !visit && tool() < 3 && h('button', { class: 'btn sm primary fm-rharv', onClick: () => harvestTap(k, i) }, tool() === 2 ? '🧺 이 이랑 거두기' : '🧺 하나 거두기')] : [gauge('자람', Math.min(1, (t - r.at) / r.ms), 'grow'), gauge('컨디션', s, s >= 0.85 ? 'good' : s >= 0.6 ? 'ok' : 'bad'), (sprkOn((data.sprk || {})[k], t) ? gauge('💦 물', 1, 'water') : gauge('물', Math.min(1, Math.max(0, r.wet - t) / WET(r)), 'water')), h('button', { class: 'btn sm fm-rwater' + (dryNow(r, t) ? ' dry' : ''), onClick: e => { e.stopPropagation(); walkTo(plotX(k) + PW / 2, () => doWater(k, i)); } }, h('img', { src: toolImg(tool(), 'can'), alt: '' }), tool() >= 3 ? '💧 밭 전체 물 주기' : tool() === 2 ? `💧 ${i + 1}번부터 2이랑 물 주기` : `💧 ${i + 1}번 이랑 물 주기`), !visit && weedNow(r, t) && h('button', { class: 'btn sm fm-rwater weed', onClick: e => { e.stopPropagation(); walkTo(plotX(k) + PW / 2, () => doWeed(k, i)); } }, h('img', { src: toolImg(tool(), 'hoe'), alt: '' }), tool() >= 3 ? '🌿 밭 전체 잡초 베기' : tool() === 2 ? `🌿 ${i + 1}번부터 2이랑 잡초 베기` : `🌿 ${i + 1}번 이랑 잡초 베기`)])); };
     const acts = [];
     if (growing.length) { acts.push(h('button', { class: 'btn' + (growing.some(r => dryNow(r, t)) ? ' primary' : ''), onClick: () => doWater(k) }, h('img', { class: 'fm-ic', src: toolImg(tool(), 'can'), alt: '' }), (visit ? '물 주고 오기' : '물 주기') + ` · ${waterHint(k)}`));
       if (!visit && growing.some(r => weedNow(r, t))) acts.push(h('button', { class: 'btn primary', onClick: () => doWeed(k) }, h('img', { class: 'fm-ic', src: toolImg(tool(), 'hoe'), alt: '' }), `잡초 베기 · ${tool() >= 3 ? '밭 전체' : `${tool()}이랑씩`}`)); }
     if (ripeRows.length && !visit) { const left1 = ripeRows.reduce((a, r) => a + (rotten(r, t) ? 1 : YIELD_ROW - (r.got || 0)), 0); acts.push(h('button', { class: 'btn primary', onClick: () => harvestTap(k) }, tool() >= 3 ? '🧺 밭 전체 수확' : tool() === 2 ? `🧺 한 이랑 수확 (${ripeRows.length}이랑 남음)` : `🧺 하나 수확 (${left1}개 남음)`)); }
-    rc(sheet, closeB, h('b', null, `${k + 1}번 밭`), ...rows.map(rowCard),
+    rc(sheet, closeB, h('b', null, `${k + 1}번 밭`), ...rows.map(rowCard), sprkPanel(k, visit),
       h('p', { class: 'dim fm-tip' }, `물은 한 번 주면 자라는 시간의 70%(최소 30분) 동안 버텨요. 30분 안에 자라는 작물은 심을 때 준 물로 충분하고, 나머지도 한 번만 더 주면 돼요(물은 농기구 등급만큼 이랑을 적셔요: 초급 1줄·중급 2줄·고급 밭 전체). 이랑마다 잡초가 한 번 나요${visit ? '(잡초는 밭 주인만 벨 수 있어요)' : ''}. 컨디션 85% 이상 A급(가끔 S), 60% 이상 B급, 그 아래 C급, 다 자란 뒤 3일 넘게 안 거두면 F.`),
       h('div', { class: 'fm-row' }, acts));
   }
@@ -234,6 +248,7 @@ export function openFarm(o) {
   // 내 가방(농장): 가진 씨앗 세트와 농기구. 씨앗 1세트 = 이랑 1줄
   function bagView() { const sd = Object.entries(mine.seeds || {}).filter(([, n]) => n > 0).map(([id, n]) => [cropOf(id), n]).filter(([c]) => c).sort((a, b) => a[0].t - b[0].t || a[0].ms - b[0].ms), total = sd.reduce((a, [, n]) => a + n, 0);
     return h('div', { class: 'fm-bag' }, h('div', { class: 'fm-bagtool' }, h('img', { src: toolImg(tool()), alt: '' }), h('div', null, h('b', null, TOOLS[tool()].name), h('small', null, `${TIER_NAME[tool()]} 작물까지 심어요 · 물은 한 번에 ${tool() >= 3 ? '밭 전체' : `이랑 ${tool()}줄`}`))),
+      (mine.sprkInv || 0) > 0 && h('div', { class: 'fm-bagtool' }, h('span', { class: 'fm-sprkic' }, '💦'), h('div', null, h('b', null, `스프링클러 ${mine.sprkInv}개`), h('small', null, '밭 앞에 서면 "스프링클러 설치" 버튼이 떠요'))),
       h('b', { class: 'so-sellh' }, `🌱 가진 씨앗 ${total}세트 · 1세트 = 이랑 1줄`),
       sd.length ? h('div', { class: 'fm-sgrid' }, ...sd.map(([c, n]) => { const can = c.t <= tool(); return h('div', { class: 'fm-sbuy have' + (can ? '' : ' off') }, h('i', { class: 'fm-have' }, `${n}세트`), h('img', { src: cropImg(c.id), alt: '' }), h('b', null, c.name), h('small', null, `${TIER_NAME[c.t]} · 이랑 ${n}줄 심을 수 있어요`), h('small', null, can ? `${left(c.ms)} 걸려요` : `${TOOLS[c.t].name}가 있어야 심어요`)); }))
         : h('p', { class: 'dim center' }, '가진 씨앗이 없어요. 카피철물에서 사 오세요.')); }
@@ -247,7 +262,7 @@ export function openFarm(o) {
       const upd = () => { num.textContent = q; tot.textContent = `${(c.seed * q).toLocaleString('ko-KR')}코인`; go.textContent = `🛒 ${q}세트 구매`; };
       const step = d => h('button', { class: 'btn fm-qbtn', onClick: () => { q = Math.max(1, Math.min(20, q + d)); upd(); } }, d > 0 ? '+' : '−');
       let cl; go.onclick = async () => { const n = have(); cl(); await buy(c.seed * q, { [`seeds/${c.id}`]: n + q }, `${c.name} 씨앗 ${q}세트를 샀어요 (가진 것 ${n + q})`); };
-      upd(); cl = modal({ title: `🌱 ${c.name} 씨앗`, body: [h('div', { class: 'fm-bs' }, h('img', { src: cropImg(c.id), alt: '' }), h('div', null, h('b', null, `${TIER_NAME[c.t]} 작물 · ${left(c.ms)}`), h('small', null, `1세트 ${c.seed.toLocaleString('ko-KR')}코인 · 이랑 1줄`), h('small', null, `거두면 하나 ${c.base}~${c.base * 2}코인 · 가진 씨앗 ${have()}세트`))),
+      upd(); cl = modal({ title: `🌱 ${c.name} 씨앗`, body: [h('div', { class: 'fm-bs' }, h('img', { src: cropImg(c.id), alt: '' }), h('div', null, h('b', null, `${TIER_NAME[c.t]} 작물 · ${left(c.ms)}`), h('small', null, `1세트 ${c.seed.toLocaleString('ko-KR')}코인 · 이랑 1줄`), h('small', null, `카피수퍼에서 하나 ${cropPrice(c.id, 'C')}~${cropPrice(c.id, 'S')}코인 · 가진 씨앗 ${have()}세트`))),
         h('div', { class: 'fm-qrow' }, step(-1), num, step(1)), h('p', { class: 'center' }, '합계 ', tot), go], actions: [{ label: '취소' }] }); }
     const buy = async (price, patch, msg) => { if (price > 0 && !(await ctx.spend(price))) { toast(`돈이 모자라요 (${price.toLocaleString('ko-KR')}코인 필요)`); return; } await save(patch); sfx('coin'); toast(msg, 1800); draw(); };
     function draw() {
@@ -256,18 +271,35 @@ export function openFarm(o) {
       if (tab === 'seed') [1, 2, 3].forEach(tr => { rows.push(h('b', { class: 'so-sellh' }, `${TIER_NAME[tr]} 작물${tr > tool() ? ` · ${TOOLS[tr].name} 필요` : ''}`));
         rows.push(h('div', { class: 'fm-sgrid' }, ...CROPS.filter(c => c.t === tr).map(c => { const lock = c.t > tool(), n = (mine.seeds || {})[c.id] || 0;
           return h('button', { class: 'fm-sbuy' + (lock ? ' off' : '') + (n ? ' have' : ''), onClick: () => lock ? toast(`${TOOLS[c.t].name}를 먼저 사야 해요`) : buySeed(c) },
-            n > 0 && h('i', { class: 'fm-have' }, `🎒 ${n}세트`), h('img', { src: cropImg(c.id), alt: '' }), h('b', null, c.name), h('small', null, `${c.seed.toLocaleString('ko-KR')}코인 · 1세트 = 이랑 1줄 · ${left(c.ms)}`), h('small', null, `하나 ${c.base}~${c.base * 2}코인`)); }))); });
+            n > 0 && h('i', { class: 'fm-have' }, `🎒 ${n}세트`), h('img', { src: cropImg(c.id), alt: '' }), h('b', null, c.name), h('small', null, `${c.seed.toLocaleString('ko-KR')}코인 · 1세트 = 이랑 1줄 · ${left(c.ms)}`), h('small', null, `하나 ${cropPrice(c.id, 'C')}~${cropPrice(c.id, 'S')}코인`)); }))); });
       if (tab === 'bag') rows.push(bagView());
       if (tab === 'seed') rows.unshift(h('p', { class: 'dim center fm-seednote' }, '씨앗 1세트로 이랑 1줄을 심어요. 밭 한 칸은 이랑 3줄이에요. 초록 테두리 = 가지고 있는 씨앗'));
       if (tab === 'tool') TOOLS.slice(1).forEach(tl => { const have = tool() >= tl.t;
         rows.push(h('button', { class: 'so-row big' + (have ? ' off' : '') , onClick: () => have ? toast('이미 가지고 있어요') : tl.t > tool() + 1 ? toast(`${TOOLS[tl.t - 1].name}부터 사야 해요`) : buy(tl.price, { tool: tl.t }, `${tl.name}를 샀어요! ${TIER_NAME[tl.t]} 작물을 심을 수 있어요`) },
           h('span', { class: 'so-rodic' }, h('img', { src: toolImg(tl.t), alt: '', style: { width: '48px' } })), h('b', null, tl.name), h('small', null, have ? '가지고 있어요 · 한 번 사면 계속 써요' : `${tl.price.toLocaleString('ko-KR')}코인 · ${tl.note}`))); });
+      if (tab === 'tool') { const inv = mine.sprkInv || 0, put = Object.values(mine.sprk || {}).filter(x => x && x.on).length;
+        rows.push(h('button', { class: 'so-row big', onClick: () => buy(SPRK_PRICE, { sprkInv: inv + 1 }, '스프링클러를 샀어요! 가방에 넣었어요. 밭 앞에 서면 설치 버튼이 떠요 💦') }, h('span', { class: 'so-rodic fm-sprkic' }, '💦'), h('b', null, `스프링클러${inv ? ` (가진 것 ${inv})` : ''}${put ? ` · 설치 ${put}밭` : ''}`), h('small', null, `${SPRK_PRICE.toLocaleString('ko-KR')}코인 · 밭 1칸에 1개 · 밤 12시~아침 10시 자동으로 물 주기(등급이 안 떨어져요) · 다른 시간은 1시간 ${SPRK_HOUR}코인`))); }
       if (tab === 'deed') { const n = data.open || 1; rows.push(h('p', { class: 'dim center' }, `지금 열린 밭 ${n} / ${PLOTS}칸 · 밭은 순서대로 열려요`));
         DEEDS.forEach((pr, i) => { const k = i + 1, have = n > k, next = n === k;
           rows.push(h('button', { class: 'so-row big' + (have || !next ? ' off' : ''), onClick: () => have ? toast('이미 연 밭이에요') : !next ? toast('앞의 밭부터 열어야 해요') : buy(pr, { open: k + 1 }, `${k + 1}번 밭이 열렸어요! 🌱`) },
             h('span', null, '📜'), h('b', null, `${k + 1}번 밭 땅 문서`), h('small', null, have ? '열었어요' : `${pr.toLocaleString('ko-KR')}코인`))); }); }
       rc(body, tabs, rows); }
     draw(); modal({ title: '🔨 카피철물', body: [body], actions: [{ label: '나가기', primary: true }] }); }
+
+  // 스프링클러: 밭마다 하나. 밤 12시~아침 10시는 그냥 돌고, 그 밖의 시간은 1시간 150코인으로 늘린다(버튼으로 시간을 고른 뒤 결제)
+  const sprkN = {}, hhmm = ms => { const d = new Date(ms), td = new Date(); const day = d.toDateString() === td.toDateString() ? '' : d.getDate() === new Date(td.getTime() + 86400000).getDate() ? '내일 ' : `${d.getMonth() + 1}/${d.getDate()} `; return `${day}${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+  const sprkEnd = (sp, t) => { const w = sprkWins(sp, t - 1, t + 7 * 86400000).find(([a, b]) => a <= t && t < b); return w ? w[1] : 0; };
+  function sprkPanel(k, visit) { const sp = (data.sprk || {})[k], t = now(), inv = mine.sprkInv || 0;
+    if (!sp || !sp.on) return visit ? null : h('div', { class: 'fm-sprkp' }, h('b', null, '💦 스프링클러'), h('small', null, inv ? `가진 스프링클러 ${inv}개 · 설치하면 밤 12시~아침 10시에 자동으로 물을 줘서 등급이 안 떨어져요` : `밤 12시~아침 10시에 자동으로 물을 줘요 · 카피철물 🧰 농기구에서 ${SPRK_PRICE.toLocaleString('ko-KR')}코인`),
+      inv ? h('button', { class: 'btn primary', onClick: () => installSprk(k) }, '이 밭에 설치하기') : h('button', { class: 'btn', onClick: () => openShop('tool') }, '사러 가기'));
+    const end = sprkEnd(sp, t), on = end > 0, n = sprkN[k] || 1, base = on ? end : t, upto = base + n * HR;
+    const step = d => h('button', { class: 'btn fm-qbtn', onClick: () => { sprkN[k] = Math.max(1, Math.min(24, n + d)); drawSheet(); } }, d > 0 ? '+' : '−');
+    return h('div', { class: 'fm-sprkp on' }, h('b', null, on ? `💦 스프링클러 작동 중 · ${hhmm(end)}까지` : '💦 스프링클러 쉬는 중 · 밤 12시에 다시 켜져요'),
+      h('small', null, '밤 12시~아침 10시는 자동이에요. 다른 시간에 쓰거나 더 늘리려면 1시간에 150코인이에요.'),
+      !visit && h('div', { class: 'fm-sprkx' }, step(-1), h('span', null, h('b', null, `${n}시간`), h('small', null, `${hhmm(upto)}까지`)), step(1), h('button', { class: 'btn primary', onClick: () => buySprkTime(k, base, n) }, `${(n * SPRK_HOUR).toLocaleString('ko-KR')}코인 결제`))); }
+  async function installSprk(k) { const inv = mine.sprkInv || 0; if (inv <= 0 || who !== ctx.uid) return; await save({ [`sprk/${k}`]: { on: 1, paid: [] }, sprkInv: inv - 1 > 0 ? inv - 1 : null }); sfx('splash'); toast(`${k + 1}번 밭에 스프링클러를 설치했어요 💦`, 1600); }
+  async function buySprkTime(k, base, n) { if (who !== ctx.uid) return; const cost = n * SPRK_HOUR; if (!(await ctx.spend(cost))) return toast(`돈이 모자라요 (${cost.toLocaleString('ko-KR')}코인 필요)`); const t = now(), sp = (mine.sprk || {})[k] || { on: 1 };
+    const paid = (sp.paid || []).filter(w => w[1] > t - 2 * 86400000).concat([[base, base + n * HR]]); await save({ [`sprk/${k}/paid`]: paid }); sprkN[k] = 1; sfx('coin'); toast(`💦 ${hhmm(base + n * HR)}까지 물을 줘요 (${cost.toLocaleString('ko-KR')}코인)`, 1800); }
 
   // 화면: 내 카피바라가 걸어가고, 1초마다 밭 시간 표시를 고친다
   let lastT = performance.now(), tick = 0;
