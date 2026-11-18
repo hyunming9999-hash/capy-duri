@@ -1924,3 +1924,5 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fm-rowc.tapw { pointer-events: auto; cursor: pointer; }
 .fm-rwater { margin-top: 4px; align-self: flex-start; display: inline-flex; align-items: center; gap: 3px; } .fm-rwater img { width: 18px; height: 18px; } .fm-rwater.dry { border-color: #3BA7E5; background: #E3F2FC; color: #1F6EA6; }
 .fm-rwater.weed { border-color: #5FA846; background: #E6F4DA; color: #2F5A1A; margin-left: 4px; }
+.fm-bs { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 14px; background: #FFF6E5; } .fm-bs img { width: 64px; height: 64px; object-fit: contain; } .fm-bs div { display: flex; flex-direction: column; gap: 2px; } .fm-bs small { color: #8a7a66; font-size: 12px; }
+.fm-qrow { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 12px 0 4px; } .fm-qbtn { width: 48px; height: 48px; font-size: 24px; padding: 0; } .fm-qn { min-width: 40px; text-align: center; font: 900 26px/1 var(--head); } .fm-qt { color: #A86A00; font-size: 18px; }
