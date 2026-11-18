@@ -334,7 +334,7 @@ export function mount(el, ctx) {
   let farmBarn = {}, farmSeeds = {}, fishOpen = false, hintAt = 0, fishBtn = null, fishMode = -1, dex = {}, rockKey = '', battle = null, battleDir = 1, camX = null, sbPanel = null, heave = 0;
   const boatD = () => (bag.boatD == null ? 100 : bag.boatD), BOAT_MIN = 20;
   function goCook() { if (fishOpen || battle) return; if (me.boat) return toast('배에서 내린 뒤에 들어갈 수 있어요'); if (trial) return toast('체험 중에는 카피백반에 못 들어가요'); fishOpen = true; keys.clear(); sfx('pop');
-    openCook({ ctx, animals: ANIMALS.map((a, i) => ({ i, name: a.name, svg: animalSvg(i) })), A, affinity: (i, d) => setRel(i, { a: A(i) + d }), toned,
+    openCook({ ctx, animals: ANIMALS.map((a, i) => ({ i, name: a.name, svg: animalSvg(i) })), svgFull: (i, m) => animalSvg(i, true, m), A, affinity: (i, d) => setRel(i, { a: A(i) + d }), toned,
       fish: () => Object.entries(bag.fish || {}).filter(([, v]) => v).map(([k, v]) => [k, v, fishOf(v.id)]),
       useFish: key => { const left = { ...(bag.fish || {}) }; delete left[key]; bag = { ...bag, fish: left }; ctx.store.update('bag/' + ctx.uid + '/fish', { [key]: null }).catch(() => {}); },
       barn: () => farmBarn, useCrops: use => ctx.store.update('farm/' + ctx.uid + '/barn', Object.fromEntries(Object.entries(use).map(([k, n]) => { const v = (farmBarn[k] || 0) - n; return [k, v > 0 ? v : null]; }))).catch(() => {}),

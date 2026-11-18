@@ -220,33 +220,44 @@ export function openCook(o) {
   // 손님에게 내기: 맞는 요리인지, 익힘·양념·뺀 재료를 보고 값과 별점을 매긴다
   async function serve() {
     const od = sess.cs[sess.i]; if (!od) return; const d = tray[selT >= 0 ? selT : 0]; if (!d) return toast('완성된 요리가 없어요. 조리도구에서 꺼내 와요');
-    tray.splice(selT >= 0 ? selT : 0, 1); selT = -1; const r = recOf(od.rec), a = an(od.a); let stars = 5, mul = 1; const why = [];
+    tray.splice(selT >= 0 ? selT : 0, 1); selT = -1; const r = recOf(od.rec), a = an(od.a); let mul = 1; const why = [], bill = [];
     const wrong = d.rec !== od.rec, ruined = !wrong && r.st !== 'board' && (d.zone === 'raw' || d.zone === 'burnt');
     if (!wrong && !ruined) {
-      if (r.st !== 'board') { if (d.zone === od.pref) mul *= 1.2; else { mul *= 0.8; stars--; why.push(`${ZN[od.pref]} 원했는데 ${ZN[d.zone]}`); } }
+      if (r.st !== 'board') { if (d.zone === od.pref) { mul *= 1.2; bill.push([`🔥 ${ZN[od.pref]} 익힘 딱 맞음`, 1.2]); } else { mul *= 0.8; why.push(`${ZN[od.pref]} 원했는데 ${ZN[d.zone]}`); bill.push([`🔥 익힘이 달라요 (${ZN[d.zone]})`, 0.8]); } }
       const want = { [od.sauce]: od.sn }, same = Object.keys(want).length === Object.keys(d.sauce).length && Object.entries(want).every(([k, n]) => d.sauce[k] === n);
-      if (same) mul *= 1.1; else { mul *= 0.85; stars--; why.push(Object.keys(d.sauce).length ? '양념이 달라' : '양념이 없어'); }
-      const noOk = od.no ? d.miss.length === 1 && d.miss[0] === od.no : !d.miss.length; if (!noOk) { mul *= 0.7; stars--; why.push(od.no && !d.miss.length ? `${cropName(od.no)} 빼 달라고 했는데` : '재료가 하나 빠졌어'); }
-      if (od.fany && (d.fz || 0) < od.fany) { mul *= 0.85; stars--; why.push(`${ZNM[od.fany]} 물고기로 해 달라고 했는데`); }
-      if (od.fid && d.fid !== od.fid) { mul *= 0.85; stars--; why.push(`${ro(fishOf(od.fid) ? fishOf(od.fid).name : '그 생선')} 해 달라고 했는데`); }
-      if (d.fireGood && r.st !== 'board') mul *= 1.1; }
-    else stars = wrong ? 1 : 2;
-    const price = wrong || ruined ? 0 : Math.round(r.base * d.gx * d.tx * mul);
-    const taste = tasteOf(od.a), fan = (taste === 'fish' && !r.veg) || (taste === 'veg' && r.veg);
-    const aff = stars >= 5 ? 4 + (fan ? 2 : 0) : stars === 4 ? 2 + (fan ? 1 : 0) : stars === 3 ? 1 : A(od.a) >= 60 ? 0 : -1;
-    const say = wrong ? `이건 ${r.n}이(가) 아닌데…?` : ruined ? (d.zone === 'burnt' ? '콜록콜록… 다 탔잖아…' : '으앗, 아직 날것이잖아…') : stars >= 5 ? pick([`와! 딱 내가 원하던 ${r.n}이야!`, '이 맛이야! 또 올게!', '최고의 한 끼였어!']) : stars === 4 ? `맛있어! 근데… ${why[0]}.` : `음… ${why.join(', ')}.`;
-    let joke = null; if (price > 0 && !sess.quest && CARD.includes(od.a) && Math.random() < 0.7) joke = pick(['계산은 카드로… 36개월 할부 되죠? …농담이야! 현금으로 낼게', '사장님, 이거 12개월 무이자 할부 되나요? 히히, 농담이고 여기 현금!', '카드 긁을게요~ 할부는 60개월로! …에이, 농담이야 농담']);
-    if (sess.quest) { if (!wrong && !ruined) { await o.questDone(od.quest); sfx('bigfish'); } else sfx('bad'); }
-    else { if (price) { o.coins(price); st = { ...st, sales: (st.sales || 0) + price }; ctx.store.update(ref, { sales: st.sales }).catch(() => {}); }
-      sfx(stars >= 4 ? 'coin' : stars >= 3 ? 'point' : 'bad'); }
-    const dv = sess.quest ? 0 : stars >= 5 ? RATE_GOOD : -RATE_MISS, ban = dv ? await rateBy(dv) : false;
-    if (aff) o.affinity(od.a, aff);
+      if (same) { mul *= 1.1; bill.push([`${SAUCES[od.sauce][0]} 양념 딱 맞음`, 1.1]); } else { mul *= 0.85; why.push(Object.keys(d.sauce).length ? '양념이 달라' : '양념이 없어'); bill.push(['🧂 양념이 달라요', 0.85]); }
+      const noOk = od.no ? d.miss.length === 1 && d.miss[0] === od.no : !d.miss.length; if (!noOk) { mul *= 0.7; why.push(od.no && !d.miss.length ? `${cropName(od.no)} 빼 달라고 했는데` : '재료가 하나 빠졌어'); bill.push([od.no && !d.miss.length ? `✕ ${cropName(od.no)} 안 뺐어요` : '재료가 하나 빠졌어요', 0.7]); }
+      if (od.fany && (d.fz || 0) < od.fany) { mul *= 0.85; why.push(`${ZNM[od.fany]} 물고기로 해 달라고 했는데`); bill.push([`🐟 ${ZNM[od.fany]} 물고기가 아니에요`, 0.85]); }
+      if (od.fid && d.fid !== od.fid) { mul *= 0.85; why.push(`${ro(fishOf(od.fid) ? fishOf(od.fid).name : '그 생선')} 해 달라고 했는데`); bill.push([`🐟 ${fishOf(od.fid) ? fishOf(od.fid).name : '그 생선'}이 아니에요`, 0.85]); }
+      if (d.fireGood && r.st !== 'board') { mul *= 1.1; bill.push(['👨‍🍳 불 조절 완벽', 1.1]); } }
+    // 요청을 2개 이상 못 맞추면(또는 다른 요리·날것·탄 것) 0원
+    const fail = wrong || ruined || why.length >= 2, stars = fail ? (wrong ? 1 : 2) : why.length ? 4 : 5;
+    const price = fail ? 0 : Math.round(r.base * d.gx * d.tx * mul);
+    if (d.gx !== 1) bill.unshift([`🥇 재료 등급`, Math.round(d.gx * 100) / 100]); if (d.tx !== 1) bill.unshift([`🐟 귀한 생선`, d.tx]);
+    const aff = fail ? (A(od.a) >= 60 ? 0 : -1) : 5;
     const quest = sess.quest, ok = !wrong && !ruined;
-    modal({ title: quest ? (ok ? `${r.n} 완성! 📜` : '다시 만들어야 해요') : `${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}`, body: [h('div', { class: 'ck-res' + (ok ? '' : ' bad') }, h('img', { src: d.img, alt: '' }), h('span', { class: 'ck-an', html: a.svg })),
-      h('p', { class: 'center' }, h('b', null, `${a.name}: "${o.toned(od.a, quest && ok ? `고마워! ${r.n} 잘 받았어. 이따 나한테 와 줘!` : say)}"`)), joke && h('p', { class: 'center kb-joke' }, `💳 ${a.name}: "${o.toned(od.a, joke)}"`),
-      !quest && h('p', { class: 'center kb-rd' + (dv < 0 ? ' down' : '') }, dv < 0 ? `손님 요청을 못 맞췄어요 · 가게 평점 -${RATE_MISS} → ★ ${rateV().toFixed(1)}` : `요청을 다 맞췄어요 · 가게 평점 +${RATE_GOOD} → ★ ${rateV().toFixed(1)}`),
-      h('p', { class: 'center dim' }, quest ? (ok ? '퀘스트 요리를 완성했어요. 동물에게 가서 퀘스트를 완료하세요.' : '맞는 요리를, 날것이나 타지 않게 다시 만들어 주세요.') : price ? `+${won(price)}${aff ? ` · 친밀도 ${aff > 0 ? '+' : ''}${aff}` : ''}` : `재료만 쓰고 돈은 못 받았어요${aff < 0 ? ' · 친밀도 -1' : ''}.`)].filter(Boolean),
-      actions: [{ label: '다음', primary: true }], onClose: () => (ban ? closeShop() : nextCust(quest && !ok)) }); }
+    if (quest) { if (ok) { await o.questDone(od.quest); sfx('bigfish'); } else sfx('bad');
+      modal({ title: ok ? `${r.n} 완성! 🔍` : '다시 만들어야 해요', body: [h('div', { class: 'ck-res' + (ok ? '' : ' bad') }, h('img', { src: d.img, alt: '' }), h('span', { class: 'ck-an', html: a.svg })),
+        h('p', { class: 'center' }, h('b', null, `${a.name}: "${o.toned(od.a, ok ? `고마워! ${r.n} 잘 받았어. 이따 나한테 와 줘!` : wrong ? `이건 ${r.n}이(가) 아닌데…?` : '앗, 제대로 익지 않았어…')}"`)),
+        h('p', { class: 'center dim' }, ok ? '퀘스트 요리를 완성했어요. 동물에게 가서 퀘스트를 완료하세요.' : '맞는 요리를, 날것이나 타지 않게 다시 만들어 주세요.')], actions: [{ label: '다음', primary: true }], onClose: () => nextCust(!ok) }); return; }
+    const dv = stars >= 5 ? RATE_GOOD : -RATE_MISS, ban = await rateBy(dv);
+    if (aff) o.affinity(od.a, aff);
+    const rateLine = h('p', { class: 'center kb-rd' + (dv < 0 ? ' down' : '') }, dv < 0 ? `손님 요청을 못 맞췄어요 · 가게 평점 -${RATE_MISS} → ★ ${rateV().toFixed(1)}` : `요청을 다 맞췄어요 · 가게 평점 +${RATE_GOOD} → ★ ${rateV().toFixed(1)}`);
+    const after = () => (ban ? closeShop() : nextCust(false));
+    if (fail) { sfx('bad'); const say = wrong ? `이건 ${r.n}이(가) 아닌데…?` : ruined ? (d.zone === 'burnt' ? '콜록콜록… 다 탔잖아…' : '으앗, 아직 날것이잖아…') : `음… ${why.join(', ')}. 이건 돈 못 내겠어.`;
+      modal({ title: `${'★'.repeat(stars)}${'☆'.repeat(5 - stars)}`, body: [h('div', { class: 'ck-res bad' }, h('img', { src: d.img, alt: '' }), h('span', { class: 'ck-an', html: o.svgFull ? o.svgFull(od.a, 'sad') : a.svg })), h('p', { class: 'center' }, h('b', null, `${a.name}: "${o.toned(od.a, say)}"`)), rateLine,
+        h('p', { class: 'center kb-zero' }, `💸 0코인 · ${why.length >= 2 ? '요청을 2개 넘게 못 맞췄어요' : '다른 요리이거나 날것·탄 요리예요'}${aff < 0 ? ' · 친밀도 -1' : ''}`)], actions: [{ label: '다음', primary: true }], onClose: after }); return; }
+    // 1) 맛있게 먹는 모습 + 칭찬 + 친밀도 +5
+    sfx('pop'); const praise = why.length ? `맛있어! 근데… ${why[0]}. 그래도 잘 먹었어!` : pick([`와! 딱 내가 원하던 ${r.n}이야!`, '이 맛이야! 너 요리 천재구나!', '최고의 한 끼였어! 또 올게!', `${r.n} 진짜 끝내준다…!`]);
+    const eat = h('div', { class: 'kb-eat' }, h('div', { class: 'kb-eatan', html: o.svgFull ? o.svgFull(od.a, 'love') : a.svg }), h('img', { class: 'kb-eatdish', src: d.img, alt: '' }), h('b', { class: 'kb-nyam' }, '냠냠'), ...[0, 1, 2].map(k => h('i', { class: 'kb-heart', style: { left: 30 + k * 20 + '%', animationDelay: k * 0.35 + 's' } }, '💗')));
+    modal({ title: `${'★'.repeat(stars)}${'☆'.repeat(5 - stars)} 냠냠 냠냠`, body: [eat, h('p', { class: 'center' }, h('b', null, `${a.name}: "${o.toned(od.a, praise)}"`)), h('p', { class: 'center kb-aff' }, `💗 ${a.name} 친밀도 +5`), rateLine],
+      actions: [{ label: '다 먹었어요 →', primary: true }], onClose: () => {
+        // 2) "자, 계산할게!" — 영수증을 보고 최종 금액을 받는다
+        const joke = CARD.includes(od.a) && Math.random() < 0.7 ? pick(['계산은 카드로… 36개월 할부 되죠? …농담이야! 현금으로 낼게', '사장님, 이거 12개월 무이자 할부 되나요? 히히, 농담이고 여기 현금!', '카드 긁을게요~ 할부는 60개월로! …에이, 농담이야 농담']) : null;
+        const rows = [[`${r.n} 기본`, won(r.base)], ...bill.map(([t, x]) => [t, `×${x}`])];
+        modal({ title: '🧾 자, 계산할게!', body: [h('div', { class: 'kb-pay' }, h('span', { class: 'kb-payan', html: a.svg }), h('b', null, `${a.name}: "${o.toned(od.a, joke || '자, 계산할게! 잘 먹었어~')}"`)),
+          h('div', { class: 'kb-bill' }, ...rows.map(([t, v]) => h('div', { class: 'kb-bl' }, h('span', null, t), h('em', { class: /×0\./.test(v) ? 'down' : '' }, v))), h('div', { class: 'kb-bl total' }, h('span', null, '받을 돈'), h('b', null, won(price))))],
+          actions: [{ label: `💰 ${won(price)} 받기`, primary: true }], onClose: () => { o.coins(price); st = { ...st, sales: (st.sales || 0) + price }; ctx.store.update(ref, { sales: st.sales }).catch(() => {}); sfx('coin'); toast(`+${won(price)} 💰`, 1400); after(); } }); } }); }
   // "다음에 다시 오세요": 재료가 없을 때 손님을 정중히 돌려보낸다. 평점은 깎이지 않는다(친하지 않으면 친밀도만 -1)
   function noStock() { const od = sess.cs[sess.i], a = an(od.a), r = recOf(od.rec), fond = A(od.a) >= 60;
     if (!fond) o.affinity(od.a, -1); sfx('pop');
