@@ -52,8 +52,8 @@ const tubeSvg = (c = '#FF6B6B', part = 'front') => { const ring = `<ellipse cx="
   return part === 'back' ? `<svg viewBox="0 0 100 44"><defs><clipPath id="${id}"><rect x="0" y="0" width="100" height="20"/></clipPath></defs><ellipse cx="50" cy="20" rx="34" ry="7" fill="#7FD3EA" opacity=".55"/><g clip-path="url(#${id})">${ring}</g></svg>`
     : `<svg viewBox="0 0 100 44"><defs><clipPath id="${id}"><rect x="0" y="20" width="100" height="24"/></clipPath></defs><g clip-path="url(#${id})"><ellipse cx="50" cy="26" rx="48" ry="16" fill="#BFEFFF" opacity=".55"/>${ring}</g></svg>`; };
 // 동물마다 다른 보트: 몸 색 선체 + 뱃머리의 귀 + 상징이 그려진 돛
-// 초레어 보물: 단짝(100점)이 된 동물에게서만 1500코인에 산다. 걸치면 몸에서 빛이 나서 지나가는 동물이 모두 칭찬한다
-export const RARE_PRICE = 1500, RARE_AT = 100;
+// 초레어 보물: 단짝(100점)이 된 동물에게서만 5,000~8,000코인에 산다. 걸치면 몸에서 빛이 나서 지나가는 동물이 모두 칭찬한다
+export const RARE_AT = 100, RARE_BASE = i => 5000 + (i * 5 % 7) * 500, PIN_PRICE = i => 2500 + (i * 7 % 6) * 100; // 황금 장비 5,000~8,000 · 상징 액세서리 2,500~3,000(동물마다 다르게)
 const RARE_NAMES = ['황금 뼈다귀 왕홀', '황금 고양이귀 티아라', '황금 치즈 방패', '황금 하트 선글라스', '황금 당근 검', '황금 구미호 예복', '황금 꿀단지 왕관', '황금 대나무 선글라스', '황금 모피옷', '황금 호피 갑옷', '황금 사자 갈기 왕관', '황금 뿔 투구', '황금 모피 부츠', '황금 수정구슬 구두', '황금 여의봉', '황금 볏 투구', '황금 눈꽃 고글', '황금 병아리 날개', '황금 오리 튜브', '황금 부엉이 날개', '황금 늑대 털 조끼', '황금 엄니 투구', '황금 기마 재킷', '황금 유니콘 티아라', '황금 거북 등껍질 갑옷', '황금 문어 삼지창', '황금 세일러 상의', '황금 가시 망토', '황금 다람쥐 꼬리', '황금 너구리 가면'];
 export const rareName = i => RARE_NAMES[i] || `빛나는 ${ANIMALS[i].name} 보물`;
 // 걸친 보물은 여섯 개까지(자리가 겹치지 않게 다 채우면 여섯). 저장 값은 예전처럼 숫자 하나일 수도, 목록일 수도 있다
@@ -83,7 +83,7 @@ export function eqInv({ owned, worn, wear }) {
   return h('div', { class: 'eq eq-invw' }, h('div', { class: 'eq-inv-h' }, h('b', null, `✨ 가진 황금 장비 ${owned.length} / ${ANIMALS.length}`), h('small', null, '누르면 걸치기·벗기 · 같은 자리는 바꿔 걸쳐요')),
     owned.length ? h('div', { class: 'eq-inv' }, owned.map(i => { const on = worn.includes(i);
       return h('button', { class: 'eq-item' + (on ? ' on' : ''), title: rareName(i), onClick: () => wear(i) }, h('img', { src: `img/rare/ic/${i}.webp`, alt: '' }), h('em', null, ({ hand: '무기', shield: '방패' })[slotOf(i)] || EQ_NAME[slotOf(i)] || ''), on && h('i', null, '착용'), h('small', null, rareName(i).replace('황금 ', ''))); }))
-      : h('p', { class: 'eq-empty' }, `동물과 단짝(${RARE_AT}점)이 되면 그 동물에게서 ${RARE_PRICE.toLocaleString('ko-KR')}코인에 황금 장비를 살 수 있어요.`));
+      : h('p', { class: 'eq-empty' }, `동물과 단짝(${RARE_AT}점)이 되면 그 동물에게서 5,000~8,000코인에 황금 장비를 살 수 있어요.`));
 }
 // 피팅룸에서 걸치기·벗기: 같은 자리 것은 바꿔 걸치고, 여섯 개를 넘지 않는다
 export async function wearGold(ctx, i) {
@@ -214,7 +214,7 @@ export function mount(el, ctx) {
   const setRel = (i, patch, cake) => { if (patch.a != null) patch = { ...patch, a: capA(i, patch.a, cake) }; if (patch.a === 100 && A(i) < 100) patch = { ...patch, hit100: true, ...((mine[i] || {}).crowed ? { x2: true } : {}) }; if ((patch.a != null && patch.a > A(i)) || (patch.mem && !String((patch.mem[patch.mem.length - 1] || {}).s || '').startsWith('(')) || patch.fedAt) patch = { ...patch, fedAt: ctx.store.now(), dropN: 0, dropL: 0, lowAt: 0 }; mine = { ...mine, [i]: { ...(mine[i] || {}), ...patch } }; return ctx.store.update(`social/${ctx.uid}/${i}`, patch).catch(() => {}); };
   const pinOf = u => (ctx.members[u] || {}).pin;
   // 황금옷 값: 까마귀 이간질로 100에서 떨어졌다가 다시 100이 된 동물은 그 동물의 황금옷만 2배
-  const rarePrice = i => RARE_PRICE * ((mine[i] || {}).x2 ? 2 : 1);
+  const rarePrice = i => RARE_BASE(i) * ((mine[i] || {}).x2 ? 2 : 1);
   // 받은 액세서리 달기, 산 옷 입기(다시 누르면 벗는다). 내 카피바라에 바로 보인다
   const SLOT = { t: 'top', b: 'bottom', h: 'hat', s: 'shoe' };
   async function wearPin(i) { await ctx.store.update('members/' + ctx.uid, { pin: i }).catch(() => {}); ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), pin: i }; scores(); }
@@ -881,7 +881,7 @@ export function mount(el, ctx) {
       if (v < 0) return say('너한텐 아무것도 안 팔아. 저리 가!', 'angry');
       const row = (ic, nm, sub, price, owned, fn) => h('button', { class: 'so-row' + (typeof ic === 'string' ? '' : ' big'), disabled: owned, onClick: fn }, typeof ic === 'string' ? h('span', null, ic) : ic, h('b', null, nm), h('small', null, owned ? '이미 갖고 있어요' : `${won(price)} · ${sub}`));
       const cl = modal({ title: `🤝 ${a.name}와 거래`, body: h('div', { class: 'so-list' },
-        row(p.pin, `${a.name}의 상징 액세서리`, v >= 10 ? '친해지면(50점) 그냥 줘요' : '아는 사이(10점)부터 팔아요', 500, hasPin, async () => { if (v < 10) return toast('아직 그 정도로 친하지 않대요'); if (!(await ctx.spend(500))) return; await ctx.store.update('bag/' + ctx.uid + '/pins', { [i]: true }).catch(() => {}); bag = { ...bag, pins: { ...(bag.pins || {}), [i]: true } }; await setRel(i, { got: true }); await wearPin(i); cl(); say(`자, ${p.pin} 여기. 내가 달아 줬어, 잘 달고 다녀!`, 'glad'); }),
+        row(p.pin, `${a.name}의 상징 액세서리`, v >= 10 ? '친해지면(50점) 그냥 줘요' : '아는 사이(10점)부터 팔아요', PIN_PRICE(i), hasPin, async () => { if (v < 10) return toast('아직 그 정도로 친하지 않대요'); if (!(await ctx.spend(PIN_PRICE(i)))) return; await ctx.store.update('bag/' + ctx.uid + '/pins', { [i]: true }).catch(() => {}); bag = { ...bag, pins: { ...(bag.pins || {}), [i]: true } }; await setRel(i, { got: true }); await wearPin(i); cl(); say(`자, ${p.pin} 여기. 내가 달아 줬어, 잘 달고 다녀!`, 'glad'); }),
         h('button', { class: 'so-row big rare' + (v >= RARE_AT ? ' open' : ''), disabled: !!(bag.rares || {})[i], onClick: async () => { if (v < RARE_AT) return toast(`단짝(${RARE_AT}점)이 되어야 열려요. 지금 ${v}점`); if (!(await ctx.spend(rarePrice(i)))) return; bag = { ...bag, rares: { ...(bag.rares || {}), [i]: true } }; await ctx.store.update('bag/' + ctx.uid + '/rares', { [i]: true }).catch(() => {}); await wearRare(i); cl(); goldGet(i); say('이건 단짝한테만 주는 내 보물이야. 네가 걸치니까 눈이 부셔!', 'gift'); } },
           h('span', { class: 'so-try', html: capy({ color: ctx.me.color, acc: 'none', face: 'happy', rare: rareOf(i) }) }), h('b', null, `✨ 초레어 · ${rareName(i)}`), h('small', null, (bag.rares || {})[i] ? '이미 갖고 있어요' : v >= RARE_AT ? `${won(rarePrice(i))}${(mine[i] || {}).x2 ? ' (까마귀 사건 뒤라 2배)' : ''} · 걸치면 모두가 칭찬해요` : `🔒 단짝(${RARE_AT}점)이 되면 열려요 · ${won(rarePrice(i))}`)),
         row(tryOn(ware.id), `${ware.name} (${a.name} 전용)`, disc < 1 ? `친구 할인 ${Math.round((1 - disc) * 100)}%` : '친해지면 깎아 줘요', wp, ctx.owns(ware.id), async () => { if (!(await ctx.spend(wp))) return; await ctx.store.set(`owned/${ctx.uid}/${ware.id}`, true).catch(() => {}); ctx.owned[ctx.uid] = { ...(ctx.owned[ctx.uid] || {}), [ware.id]: true }; await wearCloth(ware.id); cl(); say(`${ware.name}, 입혀 줬어. 잘 어울린다! (가방이나 옷놀이에서 갈아입을 수 있어)`, 'glad'); })), actions: [{ label: '닫기' }] });
@@ -983,7 +983,7 @@ export function mount(el, ctx) {
       const rares = Object.keys(bag.rares || {}).filter(k => bag.rares[k]).map(Number), pins = Object.keys(bag.pins || {}).filter(k => bag.pins[k]).map(Number), hats = ANIMALS.map((_, i) => i).filter(i => uidOwned[wareOf(i).id]);
       const clothes = Object.keys(uidOwned).filter(id => uidOwned[id] && !id.startsWith('h-zoo') && priceOf(id) > 0);
       if (rares.length || pins.length) out.push(['sec', '✨ 장신구']);
-      rares.forEach(i => { const p = half(RARE_PRICE); out.push({ big: 1, gold: 1, ic: h('span', { class: 'so-try', html: capy({ color: ctx.me.color, acc: 'none', face: 'happy', rare: rareOf(i) }) }), name: rareName(i), sub: `${won(p)}에 팔아요 · 다시 사려면 단짝 100점에 ${won(RARE_PRICE)}`, price: p, line: `허허… 단짝 ${iga(ANIMALS[i].name)} 준 보물을 판다고? 금은 금이니 ${won(p)} 쳐 주겠네만, 아깝구먼.`, done: '귀한 걸 맡았구먼. 잘 간직해 두지.',
+      rares.forEach(i => { const p = half(RARE_BASE(i)); out.push({ big: 1, gold: 1, ic: h('span', { class: 'so-try', html: capy({ color: ctx.me.color, acc: 'none', face: 'happy', rare: rareOf(i) }) }), name: rareName(i), sub: `${won(p)}에 팔아요 · 다시 사려면 단짝 100점에 ${won(RARE_PRICE)}`, price: p, line: `허허… 단짝 ${iga(ANIMALS[i].name)} 준 보물을 판다고? 금은 금이니 ${won(p)} 쳐 주겠네만, 아깝구먼.`, done: '귀한 걸 맡았구먼. 잘 간직해 두지.',
         act: () => sell(p, async () => { if (myRares().includes(i)) await wearRare(i); bag = { ...bag, rares: { ...(bag.rares || {}), [i]: null } }; await ctx.store.update('bag/' + ctx.uid + '/rares', { [i]: null }).catch(() => {}); }) }); });
       pins.forEach(i => out.push({ ic: PERSONA[i].pin, name: `${ANIMALS[i].name}의 증표`, sub: `${won(sellPin(i))}에 팔아요 · 다시 받으려면 그 동물에게 500코인`, price: sellPin(i), line: `${iga(ANIMALS[i].name)} 우정의 표시로 준 증표구먼. ${won(sellPin(i))} 쳐 주지. 판 증표는 선물로 다시 못 받네.`,
         act: () => sell(sellPin(i), async () => { bag = { ...bag, pins: { ...(bag.pins || {}), [i]: null } }; await ctx.store.update('bag/' + ctx.uid + '/pins', { [i]: null }).catch(() => {}); if (pinOf(ctx.uid) === i) await wearPin(null); }) }));

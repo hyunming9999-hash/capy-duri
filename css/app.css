@@ -2042,3 +2042,6 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .storm-loss.boat { color: #8A5A2B; } .storm-warn { display: block; color: #C2410C; font-weight: 800; margin: 2px 0 6px; }
 .so-sinkpic { position: relative; width: 120px; height: 90px; margin: 0 auto; font-size: 54px; text-align: center; animation: soSink 1.6s ease-in forwards; } .so-sinkpic span { position: absolute; left: 0; right: 0; bottom: -8px; font-size: 46px; } @keyframes soSink { 0% { transform: rotate(0); } 60% { transform: rotate(-18deg) translateY(10px); } 100% { transform: rotate(-24deg) translateY(22px); opacity: .55; } }
 .so-sinkloss { font-weight: 900; color: #C2410C; line-height: 1.6; }
+/* 초희귀 물고기: 걸리는 순간부터 그림자가 금빛으로 번쩍인다 */
+.fs-fish.ultra svg { filter: drop-shadow(0 0 6px #FFE066) drop-shadow(0 0 14px #FFB800) brightness(1.4); animation: fsUltra 0.9s ease-in-out infinite; } @keyframes fsUltra { 50% { filter: drop-shadow(0 0 12px #FFF3B0) drop-shadow(0 0 24px #FFB800) brightness(1.9); } }
+.fs-fish.ultra::after { content: '✨'; position: absolute; left: 50%; top: -14px; font-size: 22px; animation: fsUltraS 1.2s ease-in-out infinite; } @keyframes fsUltraS { 50% { transform: translateY(-6px) scale(1.3); opacity: .6; } }

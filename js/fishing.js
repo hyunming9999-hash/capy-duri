@@ -12,7 +12,7 @@ export const RODS = [null, { t: 1, name: '초급 낚싯대', price: 500, dur: 50
 export const BAIT2 = 30, BAIT3 = 60, BAIT_KEY = ['', 'bait', 'bait2', 'bait3'], BAIT_NAME = ['', '미끼', '중급 미끼', '고급 미끼'];
 const BAIT_COL = [null, ['#F28BA8', '#B4466A'], ['#5EB8FF', '#1E5E92'], ['#FFD24A', '#B07A00']];
 export const baitIc = t => { const [f, d] = BAIT_COL[t] || BAIT_COL[1]; return `<svg viewBox="0 0 48 48"><path d="M10 34 C4 26 12 18 20 22 C28 26 32 14 40 18 C46 21 44 30 38 30" fill="none" stroke="${d}" stroke-width="11" stroke-linecap="round"/><path d="M10 34 C4 26 12 18 20 22 C28 26 32 14 40 18 C46 21 44 30 38 30" fill="none" stroke="${f}" stroke-width="7.5" stroke-linecap="round"/><path d="M15 22 v6 M22 22.5 v6 M29 19 v6 M35 16.5 v6" stroke="${d}" stroke-width="1.6" stroke-linecap="round" opacity=".6"/><circle cx="38.5" cy="29" r="1.6" fill="#3A2210"/>${t === 3 ? '<path d="M41 8 l1.4 3 3 1.4 -3 1.4 -1.4 3 -1.4 -3 -3 -1.4 3 -1.4z" fill="#FFF3B0"/>' : ''}</svg>`; };
-export const BAIT = 10, BALL = 10, CANNON = 500, WBOAT = 2000, PEARL_PRICE = 10000;
+export const BAIT = 10, BALL = 10, CANNON = 500, WBOAT = 2000, PEARL_PRICE = 50000;
 
 // 물고기 80종: [이름, 최소cm, 최대cm, 최소값, 최대값, 표시(r=귀한 것, k=대장)]
 // 값은 가게 시세에 맞췄다(옷 한 벌 200~310, 게임 한 판 50쯤, 한 번 던지는 데 미끼·낚싯대 값 13쯤): 초급 평균 85, 중급 165, 고급 300쯤
@@ -188,8 +188,8 @@ export function openFishing(o) {
     if (shown && now > biteEnd) return;
     pat0 = pat = cur.f.icon ? 99 : PATIENCE[zone] + (cur.f.king || cur.f.pearl ? 4 : 0) + D_PAT[K()]; bar.style.setProperty('--lo', (BAND_LO[zone] - D_BAND[K()]) + '%'); bar.style.setProperty('--hi', BRK() + '%'); tele = 0; nextSpike = cur.f.icon ? Infinity : now + rnd(...SPIKE_GAP[zone]) * 1000; taps = 0; patEl.hidden = !!cur.f.icon;
     if (cur.f.pearl) { pearlTxt.textContent = '✨ 바다 진주다! ✨'; sfx('bigfish'); }
-    sfx('hookset'); strikes = 0; drawPips(true); phase = 'fight'; dist = 100; ten = 35; burst = 0; slack = 0; nextBurst = now + rnd(900, 1800); wrap.classList.add('fight'); fishEl.className = 'fs-fish on'; fishEl.innerHTML = shadow();
-    say(cur.f.icon ? '누르고 있으면 감아요.' : `줄을 주황 칸에 맞춰야 끌려와요! 빨간 칸은 ${lim()}번 닿으면 끝이에요.`); btn.textContent = '꾹 눌러\n감기'; btn.onclick = null;
+    sfx('hookset'); strikes = 0; drawPips(true); phase = 'fight'; dist = 100; ten = 35; burst = 0; slack = 0; nextBurst = now + rnd(900, 1800); wrap.classList.add('fight'); const ultra = (cur.f.tier || 1) === 4 && !cur.f.pearl && !cur.f.icon; fishEl.className = 'fs-fish on' + (ultra ? ' ultra' : ''); fishEl.innerHTML = shadow(); // 초희귀는 그림자부터 빛난다
+    const tip = cur.f.icon ? '누르고 있으면 감아요.' : `줄을 주황 칸에 맞춰야 끌려와요! 빨간 칸은 ${lim()}번 닿으면 끝이에요.`; if (ultra) { say('어? 심상치 않은데?? ✨', 'warn'); sfx('bigfish'); setTimeout(() => { if (alive && phase === 'fight') say(tip); }, 1800); } else say(tip); btn.textContent = '꾹 눌러\n감기'; btn.onclick = null;
   }
   // 풍랑: 하늘이 어두워지고 비바람이 치며 배가 크게 흔들리다가 줄이 풀려 물고기가 달아난다
   function storm() { stormAt = 0; phase = 'storm'; { const key = 'sp' + zone, sp = o.bag()[key] || {}; o.save({ [key]: { ...sp, due: false } }); } hold = false; o.coins(-STORM_LOSS[zone]); const hit = o.boatHit ? o.boatHit(CBOAT_HIT) : null, cbd = hit ? hit.d : -1; // 타고 있는 배(카피보트·흰 배)가 상한다. 0이 되면 가라앉는다 wrap.classList.remove('reel'); wrap.classList.add('storm'); sfx('splash'); setTimeout(() => sfx('bad'), 500); // 이번 풍랑을 썼다(위) · 화면이 어두워지고 비바람이 친다(아래)
