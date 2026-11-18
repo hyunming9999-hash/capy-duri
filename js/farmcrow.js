@@ -69,8 +69,12 @@ export function farmCrow(ctx, { goFarm }) {
       const k = Math.min(1, Math.hypot(drag.px - sx, vy) / MAXP), dist = 120 + k * (sy - 60), ux = -vx / len, uy = -vy / len; return { sx, sy, tx: sx + ux * dist, ty: sy + uy * dist, k }; };
     const drawAim = () => { if (!drag) { aimSvg.innerHTML = ''; sling.classList.remove('drag'); return; } const g = geo(), a = aimOf(), [px, py] = [drag.px, drag.py];
       let html = `<path d="M${g.L[0]} ${g.L[1]} L${px} ${py} L${g.R[0]} ${g.R[1]}" stroke="#C2410C" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${px}" cy="${py}" r="11" fill="#8B5A2B" stroke="#4A2E18" stroke-width="2"/><circle cx="${px}" cy="${py}" r="7" fill="#9CA3AF" stroke="#374151" stroke-width="2"/>`;
-      if (a) { const n = 9; for (let q = 1; q <= n; q++) { const u = q / (n + 1), x = a.sx + (a.tx - a.sx) * u, y = a.sy + (a.ty - a.sy) * u - Math.sin(u * Math.PI) * 40; html += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(4 - u * 2).toFixed(1)}" fill="#fff" stroke="#3E2A1E" stroke-width="1.2" opacity="${(1 - u * 0.4).toFixed(2)}"/>`; }
-        html += `<g transform="translate(${a.tx.toFixed(1)} ${a.ty.toFixed(1)})"><circle r="${lv.r * 0.55}" fill="none" stroke="#E5484D" stroke-width="3"/><path d="M-${lv.r * 0.8} 0 H-6 M6 0 H${lv.r * 0.8} M0 -${lv.r * 0.8} V-6 M0 6 V${lv.r * 0.8}" stroke="#E5484D" stroke-width="3" stroke-linecap="round"/></g>`; }
+      if (a) { const P = u => [a.sx + (a.tx - a.sx) * u, a.sy + (a.ty - a.sy) * u - Math.sin(u * Math.PI) * 40];
+        // 겨냥선이 까마귀에 닿으면 거기서 막힌다(그 뒤로는 안 그린다)
+        let end = 1, lock = false; for (let q = 1; q <= 80; q++) { const u = q / 80, [x, y] = P(u); if (Math.hypot(cr.x - x, cr.y - y) < lv.r * 0.8) { end = u; lock = true; break; } }
+        const n = Math.max(2, Math.round(9 * end)); for (let q = 1; q <= n; q++) { const u = end * q / (n + 1), [x, y] = P(u); html += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(4 - u * 2).toFixed(1)}" fill="${lock ? '#FFE066' : '#fff'}" stroke="#3E2A1E" stroke-width="1.2" opacity="${(1 - u * 0.4).toFixed(2)}"/>`; }
+        const [ex, ey] = P(end), col = lock ? '#FF3B30' : '#E5484D';
+        html += `<g transform="translate(${ex.toFixed(1)} ${ey.toFixed(1)})"><circle r="${lv.r * 0.55}" fill="${lock ? 'rgba(255,59,48,.18)' : 'none'}" stroke="${col}" stroke-width="${lock ? 4 : 3}"/><path d="M-${lv.r * 0.8} 0 H-6 M6 0 H${lv.r * 0.8} M0 -${lv.r * 0.8} V-6 M0 6 V${lv.r * 0.8}" stroke="${col}" stroke-width="3" stroke-linecap="round"/></g>`; }
       aimSvg.innerHTML = html; sling.classList.add('drag'); };
     const clampPull = (cx, cy) => { const g = geo(), [sx, sy] = g.rest; let vx = cx - g.r.left - sx, vy = cy - g.r.top - sy; const len = Math.hypot(vx, vy); if (len > MAXP) { vx *= MAXP / len; vy *= MAXP / len; } return { px: sx + vx, py: sy + vy }; };
     el.addEventListener('pointerdown', e => { if (over || reload > performance.now()) return; e.preventDefault(); drag = clampPull(e.clientX, e.clientY); drag.id = e.pointerId; sfx('tock'); drawAim(); msg.textContent = '아래로 당겨서 겨누고, 손을 떼면 발사!'; });
@@ -97,8 +101,9 @@ export function farmCrow(ctx, { goFarm }) {
       drawSling();
       shots = shots.filter(s => { const u = Math.min(1, (now - s.at) / s.dur), x = s.sx + (s.tx - s.sx) * u, y = s.sy + (s.ty - s.sy) * u - Math.sin(u * Math.PI) * 40; s.st.style.transform = `translate(${x - 9}px, ${y - 9}px) scale(${1.15 - u * 0.5})`;
         if (now - s.tr > 28 && u < 1) { s.tr = now; const tr = h('i', { class: 'fc-trail', style: { transform: `translate(${x - 5}px, ${y - 5}px)` } }); arena.append(tr); setTimeout(() => tr.remove(), 280); } // 날아가는 길에 잔상
-        if (u < 1) return true; s.st.remove();
-        if (Math.hypot(cr.x - s.tx, cr.y - s.ty) < lv.r) { hits++; cr.flash = 0.5; aim(); cr.turn = lv.turn; drawDots(); sfx('hit'); const p = h('b', { class: 'fc-pow', style: { left: s.tx + 'px', top: s.ty + 'px' } }, '퍽!'); arena.append(p); setTimeout(() => p.remove(), 600); msg.textContent = hits >= lv.need ? '' : `맞혔다! ${lv.need - hits}번 더!`; if (hits >= lv.need) end(true); }
+        const near = Math.hypot(cr.x - x, cr.y - y) < lv.r * 0.8; // 날아가다 까마귀에 닿으면 그 자리에서 맞는다(뒤로 흘러가지 않음)
+        if (u < 1 && !near) return true; s.st.remove(); if (near) { s.tx = x; s.ty = y; }
+        if (near || Math.hypot(cr.x - s.tx, cr.y - s.ty) < lv.r) { hits++; cr.flash = 0.5; aim(); cr.turn = lv.turn; drawDots(); sfx('hit'); const p = h('b', { class: 'fc-pow', style: { left: s.tx + 'px', top: s.ty + 'px' } }, '퍽!'); arena.append(p); setTimeout(() => p.remove(), 600); msg.textContent = hits >= lv.need ? '' : `맞혔다! ${lv.need - hits}번 더!`; if (hits >= lv.need) end(true); }
         else sfx('miss');
         return false; });
       if (!over && el2 >= GAME_S) end(false);
