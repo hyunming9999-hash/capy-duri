@@ -5,7 +5,7 @@ import { sfx } from './sound.js';
 import { cropOf, cropImg } from './farm.js';
 
 const LIMIT = 60000;
-const LV = [null, { n: '초급', need: 2, sp: 150, turn: 1.9, dash: 0, r: 46 }, { n: '중급', need: 2, sp: 230, turn: 1.3, dash: 0.1, r: 40 }, { n: '고급', need: 2, sp: 320, turn: 0.8, dash: 0.25, r: 34 }]; // 속도·맞는 범위는 원래대로, 방향 바꾸기·돌진만 느긋하게
+const LV = [null, { n: '초급', need: 2, sp: 110, turn: 1.9, dash: 0, r: 60 }, { n: '중급', need: 2, sp: 170, turn: 1.3, dash: 0.1, r: 52 }, { n: '고급', need: 2, sp: 240, turn: 0.8, dash: 0.25, r: 46 }]; // 맞히기 쉽게: 까마귀는 느리게, 맞는 범위는 넓게
 const GAME_S = 20;
 
 export function farmCrow(ctx, { goFarm }) {
