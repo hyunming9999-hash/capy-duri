@@ -32,7 +32,7 @@ export function filletEl(f, v, big) { return h('div', { class: 'ck-fil' + (big ?
 export const SAUCES = { salt: ['🧂', '소금', 15], soy: ['🫙', '간장', 30], doenjang: ['🫘', '된장', 30], ssamjang: ['🥬', '쌈장', 30], gochu: ['🌶️', '고춧가루', 45], pepper: ['⚫', '후추', 45], chojang: ['🥫', '초고추장', 45], herb: ['🌿', '허브', 60], butter: ['🧈', '버터', 75], tartar: ['🥚', '타르타르', 75], honey: ['🍯', '조청', 60] };
 export const SAUCE_PACK = 3;
 // 그림이 있는 양념은 그림으로, 없으면 이모지로
-export const SAUCE_IMG = { doenjang: 'img/cook/s-doenjang.webp', ssamjang: 'img/cook/s-ssamjang.webp', gochu: 'img/cook/s-gochu.webp' };
+export const SAUCE_IMG = Object.fromEntries(['salt', 'soy', 'doenjang', 'ssamjang', 'gochu', 'pepper', 'chojang', 'herb', 'butter', 'tartar', 'honey'].map(k => [k, `img/cook/s-${k}.webp`]));
 export const sauceIc = (id, cls = '') => SAUCE_IMG[id] ? h('img', { class: 'kb-sic ' + cls, src: SAUCE_IMG[id], alt: SAUCES[id][1] }) : h('span', { class: cls }, SAUCES[id][0]);
 const SWAP = ['salt', 'soy', 'gochu', 'pepper', 'herb', 'butter'];
 // 조리도구: 도마(날것) · 냄비 · 프라이팬 · 튀김기. best 는 맛이 제일 좋은 불(1 약 · 2 중 · 3 강)
@@ -160,7 +160,9 @@ export function openCook(o) {
       actions: [{ label: '그만두기' }, { label: '넘기기', primary: true, onClick: c => { c(); const nn = n + 1; st = { ...st, n: nn, next: null }; ctx.store.update(ref, { n: nn, next: null }).catch(() => {}); sfx('pop'); toast(nn >= SESSIONS ? '오늘 장사 기회를 다 썼어요' : `다음 손님이 왔어요 · 남은 기회 ${SESSIONS - nn}번`, 1800); draw(); } }] }); }
   function startSession() { if (banned()) return toast('영업정지 중이에요'); if (!st.rent) return toast('먼저 임대료를 내요'); if ((st.n || 0) >= SESSIONS) return;
     const cs = Array.isArray(st.next) && st.next.length ? st.next.slice(0, PER) : newCust(); st = { ...st, next: null }; ctx.store.update(ref, { next: null }).catch(() => {});
-    sess = { cs, i: 0 }; resetKitchen(); ctx.store.update(ref, { cur: { ...sess } }).catch(() => {}); sfx('point'); draw(); }
+    sess = { cs, i: 0 }; resetKitchen(); ctx.store.update(ref, { cur: { ...sess } }).catch(() => {}); sfx('point'); draw(); riceWarn(); }
+  // 장사를 시작할 때마다: 공깃밥 유무를 꼭 확인하라는 경고
+  function riceWarn() { modal({ title: '⚠️ 공깃밥 꼭 확인!', body: h('div', { class: 'kb-warn' }, h('div', { class: 'kb-warnic' }, '🍚'), h('p', null, h('b', null, '손님마다 공깃밥 요청이 달라요.'), h('br'), '말풍선의 ', h('i', { class: 'hot' }, '🍚 공깃밥 추가'), ' / ', h('i', null, '🍚 공깃밥 없이'), '를 보고,'), h('p', null, '요리가 완성되면 나오는 ', h('b', null, '"공깃밥도 추가할까요?"'), '에서 요청대로 골라요.'), h('p', { class: 'kb-warnx' }, '틀리면 요청 하나를 놓친 걸로 쳐서 값이 깎여요!')), noX: true, actions: [{ label: '알겠어요!', primary: true }] }); }
   function startQuest(q) { sess = { cs: [makeOrder(q.i, q)], i: 0, quest: 1 }; resetKitchen(); draw(); }
   function resetKitchen() { board = []; tray = []; slots = []; slotsFor = null; selT = -1; sel = null; Object.keys(stn).forEach(k => { stn[k] = null; }); }
 
