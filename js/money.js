@@ -5,9 +5,9 @@ import { sfx } from './sound.js';
 
 const FREE_N = 10; // 종류마다 앞의 10벌은 처음부터 갖고 있다
 const FREE = new Set([TOPS, BOTTOMS, HATS].flatMap(a => a.slice(0, FREE_N).map(x => x.id)));
-const PRICES = {}; // 게임 한 판에 50쯤 벌어서, 다섯 판쯤 하면 한 벌
-[[TOPS, 250], [BOTTOMS, 250], [HATS, 200]].forEach(([a, p]) => a.forEach((x, i) => { PRICES[x.id] = p + (i % 3) * 30; }));
-SHOES.forEach((x, i) => { PRICES[x.id] = [320, 320, 320, 380, 380, 380, 300, 280, 300][i]; }); // 신발 9켤레: 처음부터 주는 건 없고 전부 사야 한다
+const PRICES = {}; // 물가 기준: 미니게임 2~4판 또는 낚시 15~20분이면 한 벌(상의·하의 800~1,100 · 모자 600~900 · 신발 900~1,300)
+[[TOPS, 800], [BOTTOMS, 800], [HATS, 600]].forEach(([a, p]) => a.forEach((x, i) => { PRICES[x.id] = p + (i % 4) * 100; }));
+SHOES.forEach((x, i) => { PRICES[x.id] = [1000, 1000, 1000, 1300, 1300, 1300, 1100, 900, 1100][i]; }); // 신발 9켤레: 처음부터 주는 건 없고 전부 사야 한다
 ZOO_HATS.forEach((x, i) => { PRICES[x.id] = 2500 + ((i * 5 + 2) % 6) * 100; }); // 친목회 전용 모자: 동물에게서만 산다
 export const priceOf = id => (FREE.has(id) ? 0 : PRICES[id] || 0);
 // 게임별 환산 규칙(게임 목록과 적립 카드에 그대로 보여 준다)

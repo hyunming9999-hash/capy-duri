@@ -5,7 +5,7 @@ import { sfx, sizzle } from './sound.js';
 import { FISH, TIERS } from './fishing.js';
 import { cropOf } from './farm.js';
 
-const RENT = 100, SESSIONS = 3, PER = 1; // 원테이블 식당: 한 번 장사에 손님 한 명
+const RENT = 300, SESSIONS = 3, PER = 1; // 원테이블 식당: 한 번 장사에 손님 한 명
 // 가게 평점: 날마다 5점 만점에서 시작(하루가 지나면 회복). 손님 요청을 1개 못 맞추면 -0.5, 2개 이상(또는 다른 요리·날것·탄 것)은 -1, 다 맞추면 +0.1. 3점 이하가 되면 하루 영업정지, 풀리면 다시 5점
 const RATE_MAX = 5, RATE_MISS = 0.5, RATE_MISS2 = 1, RATE_GOOD = 0.1, RATE_BAN = 3, RATE_BACK = 5, BAN_MS = 86400000;
 // 생선은 머리 없이 손질된 살로만 보여 준다. 이름 속 낱말로 곁들임 소품을 고른다
@@ -29,7 +29,7 @@ export function filletEl(f, v, big) { return h('div', { class: 'ck-fil' + (big ?
 
 
 // 양념·소스: 카피수퍼에서 3번 쓸 만큼씩 판다
-export const SAUCES = { salt: ['🧂', '소금', 15], soy: ['🫙', '간장', 30], doenjang: ['🫘', '된장', 30], ssamjang: ['🥬', '쌈장', 30], gochu: ['🌶️', '고춧가루', 45], pepper: ['⚫', '후추', 45], chojang: ['🥫', '초고추장', 45], herb: ['🌿', '허브', 60], butter: ['🧈', '버터', 75], tartar: ['🥚', '타르타르', 75], honey: ['🍯', '조청', 60] };
+export const SAUCES = { salt: ['🧂', '소금', 45], soy: ['🫙', '간장', 90], doenjang: ['🫘', '된장', 90], ssamjang: ['🥬', '쌈장', 90], gochu: ['🌶️', '고춧가루', 135], pepper: ['⚫', '후추', 135], chojang: ['🥫', '초고추장', 135], herb: ['🌿', '허브', 180], butter: ['🧈', '버터', 225], tartar: ['🥚', '타르타르', 225], honey: ['🍯', '조청', 180] }; // 양념 한 통(3번 쓰기) 값: 물가에 맞춰 3배
 export const SAUCE_PACK = 3;
 // 그림이 있는 양념은 그림으로, 없으면 이모지로
 export const RICE_IMG = 'img/cook/rice.webp';
@@ -51,7 +51,7 @@ export const RECIPES = [
   R('ssam', '생선 상추쌈', 'pan', 1, ['lettuce'], 0, 'ssamjang', 180), R('gui', '대파 생선구이', 'pan', 2, ['scallion', 'garlic'], 0, 'salt', 520), R('gamjajeon', '감자전', 'pan', 0, ['potato', 'onion'], 0, 'soy', 120), R('gaji', '가지 대파볶음', 'pan', 0, ['eggplant', 'scallion'], 0, 'soy', 360),
   R('croq', '생선 고로케', 'fry', 1, ['potato'], 0, 'tartar', 250), R('kkaseu', '생선까스', 'fry', 1, ['cabbage'], 0, 'tartar', 210), R('mattang', '고구마 맛탕', 'fry', 0, ['sweetpotato'], 0, 'honey', 130), R('tempura', '채소튀김', 'fry', 0, ['carrot', 'sweetpotato', 'onion'], 0, 'soy', 150)];
 // 메뉴 값 = 기본 600 + (생선 시세 + 작물 시세 + 양념 1번 값 + 인건비 + 조리 시간 값) × 1.6. 생선 시세는 그 바다 흔한 물고기 평균값, 작물은 B급 값(기본값 ×1.2)
-const LABOR = { board: 40, pot: 70, pan: 60, fry: 70 }, TIME = { board: 20, pot: 50, pan: 40, fry: 40 }, MARGIN = 1.6, BASE_FEE = 600;
+const LABOR = { board: 40, pot: 70, pan: 60, fry: 70 }, TIME = { board: 20, pot: 50, pan: 40, fry: 40 }, MARGIN = 1.9, BASE_FEE = 800;
 const fishAvg = z => { const L = FISH.filter(f => f.z === z && !f.king && !f.pearl && !f.icon && (f.tier || 1) <= 2); return L.length ? Math.round(L.reduce((t, f) => t + (f.price[0] + f.price[1]) / 2, 0) / L.length) : 0; };
 RECIPES.forEach(r => { const fish = r.fz ? fishAvg(r.fz) : 0, crop = Math.round(r.crops.reduce((t, id) => t + ((cropOf(id) || {}).base || 0) * 1.2, 0)), sauce = Math.round(SAUCES[r.sauce][2] / SAUCE_PACK), labor = LABOR[r.st], time = TIME[r.st];
   r.cost = { fish, crop, sauce, labor, time, sum: fish + crop + sauce + labor + time }; r.base = BASE_FEE + Math.round(r.cost.sum * MARGIN / 10) * 10; });
