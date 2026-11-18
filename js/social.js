@@ -567,7 +567,7 @@ export function mount(el, ctx) {
     const own = !!(me.boat && me.boat.own), cbroke = own && !bag.wboat && cboatD() < BOAT_MIN, lim = !own || cbroke ? FISH_X - 14 : !bag.wboat || boatD() < BOAT_MIN ? FISH_X + TILE - 18 : !bag.cannon ? FISH_X + 2 * TILE - 18 : WIDTH - 40; // 중급 바다는 흰 배만, 고급 바다는 흰 배 + 대포
     if (own && me.boat.skin !== myBoatSkin()) { me.boat.skin = myBoatSkin(); boatEl.innerHTML = boatSvg(me.boat.skin); }
     if (mx) { me.f = mx; const nx = me.x + mx * ME_SP * (own ? (bag.wboat ? 1.7 : 1.1) : me.boat ? 1.1 : wet ? 0.7 : scoot ? 1.8 : 1) * dt; me.x = Math.max(40, Math.min(Math.max(lim, Math.min(me.x, WIDTH - 40)), nx));
-      if (mx > 0 && nx > lim && lim < WIDTH - 40 && now > hintAt) { hintAt = now + 3500; toast(cbroke ? '카피보트가 많이 상했어요. 카피수퍼에서 수리(300코인)해야 바다에 나갈 수 있어요' : !own ? '여기부터는 낚시터예요. 내 배(카피수퍼)를 타야 갈 수 있어요' : !bag.wboat ? '중급 낚시터부터는 흰 배(2,000코인)가 있어야 해요' : boatD() < BOAT_MIN ? '배가 너무 상했어요. 카피수퍼에서 배를 수리해야 중급 바다에 나갈 수 있어요' : '고급 낚시터는 대포(500코인)를 달아야 해요. 갈매기 해적단이 거세요', 3000); } }
+      if (mx > 0 && nx > lim && lim < WIDTH - 40 && now > hintAt) { hintAt = now + 3500; toast(cbroke ? '카피보트가 많이 상했어요. 카피수퍼에서 수리(300코인)해야 바다에 나갈 수 있어요' : !own ? '여기부터는 낚시터예요. 내 배(카피수퍼)를 타야 갈 수 있어요' : !bag.wboat ? `중급 낚시터부터는 흰 배(${WBOAT.toLocaleString('ko-KR')}코인)가 있어야 해요` : boatD() < BOAT_MIN ? '배가 너무 상했어요. 카피수퍼에서 배를 수리해야 중급 바다에 나갈 수 있어요' : `고급 낚시터는 대포(${CANNON.toLocaleString('ko-KR')}코인)를 달아야 해요. 갈매기 해적단이 거세요`, 3000); } }
     if (trial && now > trial.until && !fishOpen && !battle) endTrial('낚싯배 체험 10분이 끝났어요');
     if (kingTrial && now > kingTrial) endKing();
     if (me.boat && me.boat.pass) { if (palShip()) { me.x = Math.max(40, pal.dx - SEAT); me.y = Math.max(0, Math.min(Y_MAX, pal.y)); me.f = pal.f; me.boat.skin = pal.boat; }
@@ -799,7 +799,7 @@ export function mount(el, ctx) {
     const fx = h('div', { class: 'charm-fx', onClick: () => fx.remove() }, h('i', { class: 'cf-rays' }), h('i', { class: 'cf-ring' }), h('i', { class: 'cf-ring r2' }),
       ...Array.from({ length: 22 }, (_, k) => h('em', { class: 'cf-sp', style: { left: (4 + (k * 41) % 92) + '%', top: (6 + (k * 59) % 86) + '%', animationDelay: (k % 8) * 0.12 + 's', fontSize: (14 + (k * 7) % 18) + 'px' } }, k % 3 ? '✦' : '🫧')),
       h('img', { class: 'cf-card', src: 'img/crow/pearl-win.webp', alt: '진주부적' }),
-      h('b', { class: 'cf-t' }, '앗…! 전설의 진주부적이다!'), h('small', { class: 'cf-s' }, n >= 3 ? `진주부적 ${n}장 · 진주가 걸리면 써서 90% 확률로 낚아요!` : `진주부적 ${n} / 3 · 3장 모으면 진주 성공률 90%`));
+      h('b', { class: 'cf-t' }, '앗…! 전설의 진주부적이다!'), h('small', { class: 'cf-s' }, n >= 3 ? `진주부적 ${n}장 · 고급 바다에서 쓰면 10번 안에 진주가 걸리고 90%로 낚아요!` : `진주부적 ${n} / 3 · 3장 모아 고급 바다에서 쓰면 10번 안에 진주!`));
     document.body.append(fx); setTimeout(() => fx.classList.add('out'), 4200); setTimeout(() => fx.remove(), 4800);
   }
 
@@ -1025,7 +1025,7 @@ export function mount(el, ctx) {
         (() => { const sd = Object.entries(farmSeeds).filter(([k, n]) => n > 0 && cropOf(k)); return h('div', { class: 'so-seeds' }, h('b', null, `🌱 가진 씨앗 ${sd.reduce((a, [, n]) => a + n, 0)}세트`), h('small', { class: 'dim' }, ' · 씨앗 1세트 = 이랑 1줄'), farmSprk > 0 && h('small', { class: 'so-sprk' }, ' · ', h('img', { src: 'img/farm/sprinkler.webp', alt: '' }), ` 스프링클러 ${farmSprk}개(밭 앞에서 설치)`),
           sd.length ? h('div', { class: 'so-seedl' }, sd.map(([k, n]) => h('span', { class: 'so-seed' }, h('img', { src: cropImg(k), alt: '' }), `${cropOf(k).name} ${n}`))) : h('p', { class: 'dim center' }, '씨앗이 없어요. 농장의 카피철물에서 사요.')); })(),
         h('p', { class: 'center' }, Object.entries(GIFTS).map(([k, [ic, nm]]) => `${ic} ${nm} ${bag[k] || 0}개`).join(' · ')),
-        h('p', { class: 'center so-charm' }, h('img', { src: 'img/crow/pearl-win.webp', alt: '' }), ` 진주부적 ${bag.pcharm || 0}장`, h('small', { class: 'dim' }, (bag.pcharm || 0) >= 3 ? ' · 진주가 걸리면 3장으로 성공률 90%' : ' · 3장 모으면 진주 성공률 90%')),
+        h('p', { class: 'center so-charm' }, h('img', { src: 'img/crow/pearl-win.webp', alt: '' }), ` 진주부적 ${bag.pcharm || 0}장`, h('small', { class: 'dim' }, (bag.pcharm || 0) >= 3 ? ' · 고급 바다에서 3장 쓰면 10번 안에 진주(90%)' : ' · 3장 모으면 진주 성공률 90%')),
         h('b', null, `동물에게 받은 액세서리 ${pins.length} / ${ANIMALS.length}`),
         pins.length ? h('div', { class: 'so-pins' }, pins.map(i => h('button', { class: 'so-pin' + (worn === i ? ' on' : ''), onClick: async () => { await wearPin(worn === i ? null : i); draw(); } }, h('span', null, PERSONA[i].pin), h('small', null, worn === i ? '착용 중' : ANIMALS[i].name), h('small', { class: 'dim' }, PIN_CHEST.has(PERSONA[i].pin) ? '가슴에' : '손에')))) : h('p', { class: 'dim center' }, `동물과 ${PIN_AT}점까지 친해지면 그 동물의 상징을 선물로 받아요.`),
         h('b', null, `🐟 물고기 도감 ${Object.keys(dex).length} / ${FISH.length}${dex.pearl ? ' · 진주 ' + dex.pearl.n + '개' : ''}`),

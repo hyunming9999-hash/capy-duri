@@ -7,12 +7,12 @@ import { gullSvg } from './animals.js';
 
 export const PIRATE_EVERY = 10, PIRATE_LOOT = 600, FLEE_FEE = 250, BOAT_FIX = 700, CBOAT_FIX = 300, CBOAT_HIT = 20; // 흰 배 수리 700 · 카피보트 수리 300 · 풍랑 한 번에 카피보트 내구도 -20
 export const ZONES = ['', '초급 낚시터', '중급 낚시터', '고급 낚시터'];
-export const RODS = [null, { t: 1, name: '초급 낚싯대', price: 500, dur: 50, fix: 150 }, { t: 2, name: '중급 낚싯대', price: 1000, dur: 100, fix: 300 }, { t: 3, name: '고급 낚싯대', price: 2000, dur: 200, fix: 600 }];
+export const RODS = [null, { t: 1, name: '초급 낚싯대', price: 500, dur: 50, fix: 150 }, { t: 2, name: '중급 낚싯대', price: 1500, dur: 100, fix: 450 }, { t: 3, name: '고급 낚싯대', price: 4000, dur: 200, fix: 1200 }];
 // 미끼: 바다마다 따로(초급 1개 10코인 · 중급 10개 300코인 · 고급 10개 600코인). 색으로 구분(분홍·파랑·금색)
 export const BAIT2 = 30, BAIT3 = 60, BAIT_KEY = ['', 'bait', 'bait2', 'bait3'], BAIT_NAME = ['', '미끼', '중급 미끼', '고급 미끼'];
 const BAIT_COL = [null, ['#F28BA8', '#B4466A'], ['#5EB8FF', '#1E5E92'], ['#FFD24A', '#B07A00']];
 export const baitIc = t => { const [f, d] = BAIT_COL[t] || BAIT_COL[1]; return `<svg viewBox="0 0 48 48"><path d="M10 34 C4 26 12 18 20 22 C28 26 32 14 40 18 C46 21 44 30 38 30" fill="none" stroke="${d}" stroke-width="11" stroke-linecap="round"/><path d="M10 34 C4 26 12 18 20 22 C28 26 32 14 40 18 C46 21 44 30 38 30" fill="none" stroke="${f}" stroke-width="7.5" stroke-linecap="round"/><path d="M15 22 v6 M22 22.5 v6 M29 19 v6 M35 16.5 v6" stroke="${d}" stroke-width="1.6" stroke-linecap="round" opacity=".6"/><circle cx="38.5" cy="29" r="1.6" fill="#3A2210"/>${t === 3 ? '<path d="M41 8 l1.4 3 3 1.4 -3 1.4 -1.4 3 -1.4 -3 -3 -1.4 3 -1.4z" fill="#FFF3B0"/>' : ''}</svg>`; };
-export const BAIT = 10, BALL = 10, CANNON = 500, WBOAT = 2000, PEARL_PRICE = 50000;
+export const BAIT = 10, BALL = 10, CANNON = 1000, WBOAT = 3000, PEARL_PRICE = 20000, PEARL_P = 0.002; // 진주: 고급 바다에서 던질 때마다 0.2% · 진주부적(3장)을 쓰면 10번 안에 한 번 걸리고 90%로 낚는다
 
 // 물고기 80종: [이름, 최소cm, 최대cm, 최소값, 최대값, 표시(r=귀한 것, k=대장)]
 // 값은 가게 시세에 맞췄다(옷 한 벌 200~310, 게임 한 판 50쯤, 한 번 던지는 데 미끼·낚싯대 값 13쯤): 초급 평균 85, 중급 165, 고급 300쯤
@@ -124,14 +124,15 @@ const kg = w => (w >= 1000 ? (w / 1000).toFixed(2) + 't' : w >= 1 ? w.toFixed(1)
 // o = { ctx, zone, bag(), save(patch), coins(n), dex(id, cm), onClose() }
 export function openFishing(o) {
   let c0 = 0, castTo = 60, flew = false, clickAt = 0, creakAt = 0, pressAt = 0, eyeAt = 0, taps = 0, pat = 0, pat0 = 1, nextSpike = 0, tele = 0;
-  let stormAt = 0, stormIn = false, armed = true, ptrDown = false, alive = true, raf = 0, last = 0, phase = 'ready', power = 0, pdir = 1, t0 = 0, biteAt = 0, biteEnd = 0, nibAt = 0, cur = null, dist = 100, ten = 30, hold = false, burst = 0, nextBurst = 0, slack = 0, shown = false;
+  let pboosted = false, stormAt = 0, stormIn = false, armed = true, ptrDown = false, alive = true, raf = 0, last = 0, phase = 'ready', power = 0, pdir = 1, t0 = 0, biteAt = 0, biteEnd = 0, nibAt = 0, cur = null, dist = 100, ten = 30, hold = false, burst = 0, nextBurst = 0, slack = 0, shown = false;
   const zone = o.zone, rodT = () => o.bag().rod || 0, rod = () => RODS[rodT()];
   const float = h('i', { class: 'fs-float' }), hook = h('i', { class: 'fs-hook' }), rl = h('div', { class: 'fs-rl', html: '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="" fill="none" stroke="#fff" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>' }), fishEl = h('div', { class: 'fs-fish' }), mark = h('b', { class: 'fs-mark' });
   const me = h('div', { class: 'fs-me', html: capy(o.ctx.capyOf(o.ctx.uid, { face: 'happy' })) }), rodTip = h('b', { class: 'fs-tip' }), rodEl = h('i', { class: 'fs-rod' }, rodTip);
   // 위: 타고 온 배가 그대로 물 위에 떠 있다. 아래: 물속(구역마다 그림이 다르다)
   const surf = h('div', { class: 'fs-surf' }, rl, h('div', { class: 'fs-boat' }, me, h('div', { class: 'fs-hull', html: o.boat || '' }), rodEl), float, mark), under = h('div', { class: 'fs-under z' + zone }, hook, fishEl), msg = h('p', { class: 'fs-msg' }), bar = h('div', { class: 'fs-bar' }, h('u'), h('i')), info = h('div', { class: 'fs-info' });
   const pearlTxt = h('b', { class: 'fs-pearltxt', hidden: true }), sparks = h('div', { class: 'fs-sparks' }, ...Array.from({ length: 14 }, (_, k) => h('i', { style: { left: (6 + (k * 37) % 88) + '%', top: (8 + (k * 53) % 80) + '%', animationDelay: (k % 7) * 0.17 + 's' } }, '✦'))), patEl = h('div', { class: 'fs-pat', hidden: true }, h('u'), h('span', null, '🐟 물고기 인내심')), pipsEl = h('span', { class: 'fs-pips' }), gl = h('div', { class: 'fs-gl' }, h('b'), h('span')), btn = h('button', { class: 'fs-btn' }), quit = h('button', { class: 'top-x fs-quit', 'aria-label': '그만하기', onClick: () => close() }, '✕');
-  const wrap = h('div', { class: 'fs' }, h('div', { class: 'fs-top' }, h('b', null, `🎣 ${ZONES[zone]}`), info, quit), h('div', { class: 'fs-view z' + zone }, surf, under, sparks, pearlTxt, patEl), msg, h('div', { class: 'fs-deck' }, h('div', { class: 'fs-gauge' }, gl, bar, h('div', { class: 'fs-ticks' }, h('small'), pipsEl, h('small'))), btn));
+  const charmB = h('button', { class: 'fs-charmb', hidden: true, onClick: () => useCharm() }, h('img', { src: 'img/crow/pearl-win.webp', alt: '' }), '진주부적 쓰기');
+  const wrap = h('div', { class: 'fs' }, h('div', { class: 'fs-top' }, h('b', null, `🎣 ${ZONES[zone]}`), info, quit), h('div', { class: 'fs-view z' + zone }, surf, under, sparks, pearlTxt, patEl, charmB), msg, h('div', { class: 'fs-deck' }, h('div', { class: 'fs-gauge' }, gl, bar, h('div', { class: 'fs-ticks' }, h('small'), pipsEl, h('small'))), btn));
   // 낚싯줄은 매 프레임 낚싯대 끝(배가 흔들리고 낚싯대가 휘둘려도 그 끝)에서 찌까지 이어 그린다 → 낚싯대와 줄이 한 몸처럼 움직인다
   const tipAt = () => { const r = rl.getBoundingClientRect(), t = rodTip.getBoundingClientRect(); return r.width ? [(t.left - r.left) / r.width * 100, (t.top - r.top) / r.height * 100] : [34, 34]; };
   let fx = 60, fb = 10, ftaut = false; const drawLine = () => { if (rl.style.display === 'none') return; const [sx, sy] = tipAt(), x = fx, y = 92 - fb, sag = ftaut ? 2 : 10 + Math.abs(x - sx) * 0.22; rl.firstChild.firstChild.setAttribute('d', `M${sx.toFixed(2)} ${sy.toFixed(2)} Q${((sx + x) / 2).toFixed(2)} ${((sy + y) / 2 + sag).toFixed(2)} ${x} ${y}`); };
@@ -139,7 +140,7 @@ export function openFishing(o) {
   const shadow = () => `<svg viewBox="0 0 120 80"><ellipse cx="60" cy="40" rx="${cur.f.pearl ? 20 : 34 + Math.min(20, cur.d * 2)}" ry="${cur.f.pearl ? 16 : 14 + cur.d}" fill="${zone === 3 ? 'rgba(170,215,255,.42)' : 'rgba(20,40,80,.55)'}"/></svg>`;
   const K = () => Math.max(0, Math.min(4, rodT() - zone + 2)), BRK = () => D_BRK[K()]; let strikes = 0; const lim = () => strikesOf(rodT(), zone), drawPips = on => { pipsEl.replaceChildren(...(on ? Array.from({ length: lim() }, (_, k) => h('i', { class: k < lim() - strikes ? '' : 'off' })) : [])); };
   const say = (t, cls = '') => { msg.className = 'fs-msg ' + cls; msg.textContent = t; };
-  const drawInfo = () => { const b = o.bag(), r = rod(); info.textContent = r ? `${r.name.slice(0, 2)} ${b.rodD || 0}/${r.dur} · ${BAIT_NAME[zone]} ${b[BAIT_KEY[zone]] || 0}` : '낚싯대 없음'; };
+  const drawInfo = () => { const b = o.bag(), r = rod(), pb = zone === 3 && b.pboost && b.pboost.at ? b.pboost : null; info.textContent = r ? `${r.name.slice(0, 2)} ${b.rodD || 0}/${r.dur} · ${BAIT_NAME[zone]} ${b[BAIT_KEY[zone]] || 0}${pb ? ` · 🦪 ${10 - (pb.k || 0)}번 안에 진주` : ''}` : '낚싯대 없음'; if (charmB) charmB.hidden = !(zone === 3 && !o.trial && (b.pcharm || 0) >= 3 && !pb); };
   const setBar = (v, cls = '') => { v = Math.max(0, Math.min(100, v)); const pow = cls.startsWith('pow'), ten = cls.startsWith('ten'); bar.className = 'fs-bar ' + cls; bar.firstChild.style.width = v + '%'; bar.lastChild.style.left = v + '%'; gl.firstChild.textContent = pow ? '던지는 힘' : ten ? '줄 팽팽함' : '낚싯대'; gl.lastChild.textContent = pow || ten ? Math.round(v) : ''; const tk = bar.nextSibling; tk.firstChild.textContent = pow ? '가까이' : ten ? '느슨(안 끌려옴)' : ''; tk.lastChild.textContent = pow ? '멀리 ★' : ten ? '끊어짐!' : ''; };
   function close() { if (!alive) return; if (phase === 'fight' && cur && cur.f.icon && cur.price < 0) o.coins(cur.price); alive = false; cancelAnimationFrame(raf); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); window.removeEventListener('pointerup', pu); window.removeEventListener('pointercancel', pu); wrap.remove(); o.onClose && o.onClose(); }
   function ready(text) {
@@ -151,11 +152,11 @@ export function openFishing(o) {
     drawPips(true); say(text || (r.t < zone ? `낚싯대보다 깊은 바다예요. 귀한 물고기는 안 물어요. 끊어짐 칸을 ${lim()}번 건드리면 놓쳐요.` : `끊어짐 칸을 ${lim()}번 건드리면 놓쳐요. 릴을 눌러 힘을 모으고 한 번 더 눌러 던지세요.`)); btn.textContent = '던질\n준비'; btn.onclick = () => { if (!armed) return; phase = 'power'; power = 0; pdir = 1; say('멀리 던질수록 큰 물고기·귀한 물고기가 잘 물고, 줄도 덜 끊어져요. 85 넘게 던지면 쓰레기도 안 걸려요!'); btn.textContent = '던지기!'; btn.onclick = cast; };
   }
   function cast() {
-    const b = o.bag(), deep = zone === 3, n = (b.casts3 || 0) + (deep ? 1 : 0), at = b.pearlAt3 || (1 + Math.floor(Math.random() * 100));
+    const b = o.bag(), deep = zone === 3, n = (b.casts3 || 0) + (deep ? 1 : 0), boost = deep && b.pboost && b.pboost.at ? b.pboost : null, bk = boost ? (boost.k || 0) + 1 : 0;
     // 중급·고급에서는 한 번 나타난 뒤 15~20번 던지면 다시 갈매기 해적단이 나타난다
     if (zone >= 2 && o.onPirate) { const gap = () => 15 + Math.floor(Math.random() * 6), pn = (b.pcasts || 0) + 1, at = b.pirNext > 0 ? b.pirNext : pn - 1 + gap(), hit = pn >= at; o.save({ pcasts: pn, pirNext: hit ? pn + gap() : at }); if (hit) { close(); return o.onPirate(); } }
-    // 진주는 고급 바다에서만: 고급에서 100번 던질 때마다 그 안의 어느 한 번에 문다
-    const isPearl = deep && ((n - 1) % 100) + 1 === at; o.save({ [BAIT_KEY[zone]]: b[BAIT_KEY[zone]] - 1, rodD: b.rodD - 1, casts: (b.casts || 0) + 1, ...(deep ? { casts3: n, pearlAt3: n % 100 === 0 ? 1 + Math.floor(Math.random() * 100) : at } : {}) });
+    // 진주는 고급 바다에서만: 평소엔 던질 때마다 0.2%, 진주부적을 썼으면 10번 안의 정해진 한 번에 문다
+    const isPearl = deep && (boost ? bk >= boost.at : Math.random() < PEARL_P); o.save({ [BAIT_KEY[zone]]: b[BAIT_KEY[zone]] - 1, rodD: b.rodD - 1, casts: (b.casts || 0) + 1, ...(deep ? { casts3: n, ...(boost ? { pboost: isPearl ? null : { k: bk, at: boost.at } } : {}) } : {}) }); pboosted = !!(boost && isPearl);
     cur = rollCatch(zone, rodT(), isPearl, power / 100);
     { const key = 'sp' + zone, sp = (o.bag()[key]) || {}, n = (sp.n || 0) % 10 + 1, at = n === 1 || !Array.isArray(sp.at) ? stormPlan() : sp.at, due = !!sp.due || at.includes(n); stormIn = due && !cur.f.pearl; o.save({ [key]: { n, at, due } }); }
     stormAt = 0; phase = 'cast'; c0 = performance.now(); castTo = 48 + power * 0.44; flew = false; shown = false; setBar(power, 'pow'); drawInfo();
@@ -171,13 +172,14 @@ export function openFishing(o) {
     fishEl.className = 'fs-fish on far'; fishEl.innerHTML = shadow(); fishEl.style.left = '125%'; setBar(0);
     say('찌가 쑥 들어가면 바로 챔질!'); btn.textContent = '챔질!'; btn.onclick = strike;
     // 진주가 걸리면 "앗, 진주 같아!" 그리고 진주부적 3장이 있으면 쓸지 묻는다(쓰면 90% 확률로 낚고 부적 3장이 사라진다)
-    if (cur.f.pearl) { say('앗, 진주 같아!'); if ((o.bag().pcharm || 0) >= 3 && !o.trial) { phase = 'ask'; btn.textContent = '…'; btn.onclick = null; setTimeout(() => alive && usePearlSet(), 700); } }
+    if (cur.f.pearl) { say('앗, 진주 같아!'); if (pboosted) { phase = 'ask'; btn.textContent = '…'; btn.onclick = null; setTimeout(() => alive && usePearlSet(), 700); } } // 부적으로 불러낸 진주는 바로 부적이 끌어올린다(90%)
   }
+  // 진주부적 쓰기(고급 바다, 3장): 앞으로 10번 던지는 동안 진주가 꼭 한 번 걸린다
+  async function useCharm() { const b = o.bag(); if (zone !== 3 || o.trial || (b.pcharm || 0) < 3 || (b.pboost && b.pboost.at) || phase !== 'ready') return;
+    const yes = await ask('🦪 진주부적 3장을 쓸까요? 앞으로 10번 던지는 동안 진주가 꼭 한 번 걸리고, 걸리면 90% 확률로 낚아요.', '쓰기', '안 쓸래'); if (!yes || !alive) return;
+    o.save({ pcharm: Math.max(0, (o.bag().pcharm || 0) - 3), pboost: { k: 0, at: 1 + Math.floor(Math.random() * 10) } }); sfx('point'); pearlTxt.hidden = false; pearlTxt.textContent = '🦪 진주부적 발동! 🦪'; setTimeout(() => { if (alive) pearlTxt.hidden = true; }, 1600); say('부적이 빛나요… 10번 안에 진주가 찾아와요!'); drawInfo(); }
   async function usePearlSet() {
-    const yes = await ask('✨ 앗, 진주 같아! 진주부적 세트(3장)를 사용할까요? 사용하면 이번 진주를 90% 확률로 낚아요.', '사용하기', '안 쓸래');
-    if (!alive || phase !== 'ask') return;
-    if (!yes) { phase = 'wait'; t0 = performance.now(); biteAt = t0 + rnd(1400, 4200); nibAt = 0; say('찌가 쑥 들어가면 바로 챔질!'); btn.textContent = '챔질!'; btn.onclick = strike; return; }
-    o.save({ pcharm: Math.max(0, (o.bag().pcharm || 0) - 3) }); sfx('point'); pearlTxt.hidden = false; pearlTxt.textContent = '🦪 진주부적 발동! 🦪'; say('부적이 빛나요… 진주를 끌어올리는 중!');
+    if (!alive || phase !== 'ask') return; sfx('point'); pearlTxt.hidden = false; pearlTxt.textContent = '🦪 진주부적 발동! 🦪'; say('부적이 빛나요… 진주를 끌어올리는 중!');
     phase = 'charm'; wrap.classList.add('fight', 'reel'); fishEl.className = 'fs-fish on'; fishEl.innerHTML = shadow();
     setTimeout(() => { if (!alive) return; wrap.classList.remove('reel'); if (Math.random() < 0.9) landed(); else fail('앗… 진주가 마지막에 빠져나갔어요. (부적은 사용됐어요)'); }, 1800);
   }
