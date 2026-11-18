@@ -35,8 +35,12 @@ export const DEEDS = [300, 700, 1400, 2000]; // 2~5번째 밭 땅 문서
 export const PLOTS = 5, YIELD_ROW = 9, ROT_MS = 3 * 86400000; // 이랑 한 줄에서 9개(밭 한 칸 3줄이면 27개)
 const BAD = [null, [1, 3], [0, 2], [0, 1]]; // 이랑마다 불량 개수: 초급 1~3 · 중급 0~2 · 고급 0~1 (그 이랑을 처음 거둘 때 든 농기구로 정한다)
 export const GRADE_X = { S: 2, A: 1.5, B: 1.2, C: 1, F: 0 };
-export const SELL_X = 1 / 3; // 카피수퍼 매입가: 이랑당 9개로 늘어난 만큼 낮춘 값(요리 원가는 base 그대로)
-export const cropPrice = (id, g) => (GRADE_X[g] ? Math.max(1, Math.round((cropOf(id) || { base: 0 }).base * GRADE_X[g] * SELL_X)) : 0);
+// 카피수퍼 매입가(A급 1개): 같은 등급이면 시간당 버는 돈이 비슷하게(오래 걸리는 작물이 최대 20% 더), 등급이 높을수록 조금 더.
+// 이랑 9개 중 불량을 뺀 평균(초급 7 · 중급 8 · 고급 8.5)으로 맞춘다. 요리 원가는 base 그대로라 팔기보다 요리가 이득
+const SELL_RATE = [0, 120, 150, 180], SELL_AVG = [0, 7, 8, 8.5];
+const SELL_A = (() => { const rg = {}; CROPS.forEach(c => { const r = rg[c.t] || (rg[c.t] = [1e9, 0]); r[0] = Math.min(r[0], c.ms); r[1] = Math.max(r[1], c.ms); });
+  return Object.fromEntries(CROPS.map(c => { const [lo, hi] = rg[c.t], pos = hi > lo ? (c.ms - lo) / (hi - lo) : 0, prof = SELL_RATE[c.t] * (1 + 0.2 * pos) * c.ms / 3600000; return [c.id, Math.max(1, Math.round((prof + c.seed) / SELL_AVG[c.t]))]; })); })();
+export const cropPrice = (id, g) => (GRADE_X[g] && SELL_A[id] ? Math.max(1, Math.round(SELL_A[id] * GRADE_X[g] / GRADE_X.A)) : 0);
 
 // 밭 한 칸의 컨디션 계산(순수 함수): 물이 마른 시간과 잡초가 자란 채로 둔 시간만큼 깎인다. 다 자란 뒤로는 셈하지 않는다
 const WET = p => p.ms * 0.5;
