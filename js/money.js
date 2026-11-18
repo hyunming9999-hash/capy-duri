@@ -19,18 +19,19 @@ export const TETRIS_PAY = { e: { base: 40, per: 5, max: 800 }, m: { base: 60, pe
 // 게임 결과 → 돈
 export const PAY = { burger: s => Math.floor(Math.max(0, s) / 2), bubble: (s, d) => { const t = TETRIS_PAY[d] || TETRIS_PAY.e; return Math.min(t.max, t.base + Math.floor(Math.max(0, s) / (t.per * 2))); }, bubbleStage: n => Math.round((120 + n * 20) * (n >= 15 ? 1.5 : 1)), tetris: (s, d) => { const t = TETRIS_PAY[d] || TETRIS_PAY.e; return Math.min(t.max, t.base + Math.floor(Math.max(0, s) / t.per)); }, yuzu: s => Math.max(0, s) * 8, board: r => ({ win: 200, draw: 100, lose: 60, solo: 40 })[r] || 0, volley: w => (w ? 200 : 60), mahjong: s => Math.floor(Math.max(0, s) * 4 / 3) };
 
+export const ENTRY = 50; // 게임 참가비: 한 판 끝날 때마다 50코인(정산에서 뺀다). 50코인이 없으면 게임에 못 들어간다
 export const STREAK_X = [1, 1.5, 1.8, 2.3]; // 연승 배율(4연승까지)
 export function setupMoney(ctx, onChange) {
   ctx.money = {}; ctx.owned = {};
   ctx.coins = (u = ctx.uid) => ((ctx.money[u] || {}).c) || 0;
   ctx.owns = id => !id || FREE.has(id) || !!((ctx.owned[ctx.uid] || {})[id]);
   // 게임이 끝나면: 점수가 얼마로 환산됐고 얼마가 쌓였는지 카드로 보여 준다. lines = 환산 내역(글 줄들)
-  ctx.earn = (n, why, lines = [], opt = {}) => { n = Math.max(0, Math.round(n)); const lose = Math.max(0, Math.round(opt.lose || 0)), bonus = Math.max(0, Math.round(opt.bonus || 0)), before = ctx.coins();
+  ctx.earn = (n, why, lines = [], opt = {}) => { n = Math.max(0, Math.round(n)); const fee = opt.fee === 0 ? 0 : ENTRY, lose0 = Math.max(0, Math.round(opt.lose || 0)), lose = lose0 + fee, bonus = Math.max(0, Math.round(opt.bonus || 0)), before = ctx.coins();
     const show = after => { document.querySelectorAll('.earn-card').forEach(e => e.remove());
-      const sum = n > 0 || lose || bonus ? [n > 0 && `+${n.toLocaleString('ko-KR')}코인`, bonus && `내기 +${bonus.toLocaleString('ko-KR')}코인`, lose && `-${lose.toLocaleString('ko-KR')}코인`].filter(Boolean).join(' ') : '이번 판은 적립 없음';
+      const sum = n > 0 || lose || bonus ? [n > 0 && `+${n.toLocaleString('ko-KR')}코인`, bonus && `내기 +${bonus.toLocaleString('ko-KR')}코인`, lose0 && `-${lose0.toLocaleString('ko-KR')}코인`, fee && `참가비 -${fee}코인`].filter(Boolean).join(' ') : '이번 판은 적립 없음';
       const stop = opt.stop && h('button', { class: 'btn sm primary', onClick: e => { e.stopPropagation(); ctx.stopStreak(opt.stop); card.remove(); } }, '💰 연승 그만하고 챙기기');
-      const card = h('div', { class: 'earn-card' + (lose ? ' lost' : opt.stop ? ' hot' : ''), onClick: () => card.remove() }, h('b', null, `🪙 ${why || '게임'} 정산`), ...lines.map(t => h('p', null, t)), h('p', { class: 'sum' }, sum), stop, h('small', null, `내 돈 ${before.toLocaleString('ko-KR')} → ${after.toLocaleString('ko-KR')}코인 · 누르면 닫혀요`));
-      document.body.append(card); setTimeout(() => card.remove(), opt.stop || lose ? 11000 : 7000); };
+      const card = h('div', { class: 'earn-card' + (lose0 ? ' lost' : opt.stop ? ' hot' : ''), onClick: () => card.remove() }, h('b', null, `🪙 ${why || '게임'} 정산`), ...lines.map(t => h('p', null, t)), h('p', { class: 'sum' }, sum), stop, h('small', null, `내 돈 ${before.toLocaleString('ko-KR')} → ${after.toLocaleString('ko-KR')}코인 · 누르면 닫혀요`));
+      document.body.append(card); setTimeout(() => card.remove(), opt.stop || lose0 ? 11000 : 7000); };
     if (!(n > 0) && !lose && !bonus) { show(before); return Promise.resolve(0); }
     let after = before;
     return ctx.store.tx('money/' + ctx.uid, c => { const have = (c && c.c) || 0; after = Math.max(0, have + n + bonus - lose); return { ...(c || {}), c: after, total: ((c && c.total) || 0) + n }; }).then(() => { show(after); return n - lose; }).catch(() => 0); };

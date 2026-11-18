@@ -8,7 +8,7 @@ import * as burger from './g-burger.js';
 import * as tetris from './g-tetris.js';
 import * as mahjong from './g-mahjong.js';
 import * as bubble from './g-bubble.js';
-import { RATE } from './money.js';
+import { RATE, ENTRY } from './money.js';
 
 const HOTTEOK = 'https://hyunming9999-hash.github.io/hotteok-tekken/';
 
@@ -79,9 +79,12 @@ function partnerPlaying(ctx) {
 export function mount(el, ctx, sub) {
   const g = GAMES.find(x => x.id === sub);
   if (sub === 'watch') return watchView(el, ctx);
+  // 참가비가 모자라면 못 들어간다. 돈 정보가 아직 안 왔을 때는 막지 않는다(정산에서 0 아래로는 안 내려감)
+  if (g && ctx.money[ctx.uid] && ctx.coins() < ENTRY) { toast(`게임 한 판에 참가비 ${ENTRY}코인이 들어요. 지금 ${ctx.coins()}코인이라 모자라요`, 2600); setTimeout(() => ctx.go('game'), 0); return; }
   if (g) { ctx.setTitle(g.title); el.classList.add('game-' + g.id); const bar = PVP.has(g.id) ? betBar(ctx, g) : null; if (bar) el.append(bar.el); const eye = h('div', { class: 'spect-eye', hidden: true }, `👀 ${ctx.nameOf(ctx.partnerId)} 관전 중`); el.append(eye);
     const off = g.mod.mount(el, ctx), cast = caster(el, ctx, g, eye); return () => { cast(); bar && bar.stop(); off && off(); }; }
   const pp = partnerPlaying(ctx); el.append(pp.el);
+  el.append(h('div', { class: 'g-streak g-fee' }, h('b', null, `🎟️ 참가비 한 판 ${ENTRY}코인`), h('small', null, `판이 끝날 때 정산에서 ${ENTRY}코인이 빠져요. ${ENTRY}코인이 없으면 게임에 들어갈 수 없어요.`)));
   el.append(h('div', { class: 'g-streak' }, h('b', null, '🔥 연승 보너스'), h('small', null, '컴퓨터전·경쟁전에서 이기면 1승 ×1 → 2연승 ×1.5 → 3연승 ×1.8 → 4연승 ×2.3 (4연승에서 확정). 연승 중에 지면 연승으로 번 돈의 2/3를 잃어요. 이길 때마다 그만두고 챙길 수 있고, 컴퓨터는 연승할수록 강해져요. 기록 모드는 해당 없어요.')));
   el.append(h('div', { class: 'game-list' }, GAMES.map((x, i) => h('button', { class: 'game-card', style: { animationDelay: i * 50 + 'ms' }, onClick: () => ctx.go('game-' + x.id) },
     capyEl({ color: ['brown', 'cream', 'choco', 'peach'][i % 4], acc: x.acc, face: x.face, head: true }), h('div', null, h('b', null, x.title), h('small', null, x.sub), RATE[x.id] && h('small', { class: 'g-rate' }, '🪙 ' + RATE[x.id])), h('span', { class: 'go' }, '›'))),
