@@ -1923,3 +1923,4 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fm-qb.weed.on { border-color: #5FA846; background: #E6F4DA; box-shadow: 0 3px 0 #3E7D2A; animation: fmBob 1.2s ease-in-out infinite; } .fm-qb.weed small { color: #3E7D2A; }
 .fm-rowc.tapw { pointer-events: auto; cursor: pointer; }
 .fm-rwater { margin-top: 4px; align-self: flex-start; display: inline-flex; align-items: center; gap: 3px; } .fm-rwater img { width: 18px; height: 18px; } .fm-rwater.dry { border-color: #3BA7E5; background: #E3F2FC; color: #1F6EA6; }
+.fm-rwater.weed { border-color: #5FA846; background: #E6F4DA; color: #2F5A1A; margin-left: 4px; }
