@@ -73,7 +73,7 @@ const pick = a => a[Math.floor(Math.random() * a.length)], rnd = (a, b) => a + M
 // 무엇이 물었나: 진주 차례면 진주, 가끔 쓰레기, 아니면 그 구역 물고기(귀한 것은 드물게). 한 단계 낮은 낚싯대로는 귀한 것·대장은 안 문다
 export function rollCatch(zone, rodT, isPearl, power) {
   if (isPearl) return { f: PEARL, cm: 0, price: PEARL_PRICE, d: 9.5, p: power };
-  if (Math.random() < 0.2 - power * 0.1) { const t = pick(TRASH), k = Math.random(), cm = Math.round((t.cm[0] + (t.cm[1] - t.cm[0]) * k) * 10) / 10; return { f: t, cm, g: 'F', price: -Math.round(50 + 200 * k), d: 1, p: power }; }
+  if (Math.random() < TRASH_P) { const t = pick(TRASH), k = Math.random(), cm = Math.round((t.cm[0] + (t.cm[1] - t.cm[0]) * k) * 10) / 10; return { f: t, cm, g: 'F', price: -Math.round(50 + 200 * k), d: 1, p: power }; }
   const under = rodT < zone, pool = FISH.filter(f => f.z === zone && !(under && (f.rare || f.king)));
   const w = pool.map(f => TIERS[f.tier || 1].w * (f.tier >= 3 ? 1 + power * 1.2 : 1)), tot = w.reduce((a, b) => a + b, 0); let r = Math.random() * tot, f = pool[0]; for (let i = 0; i < pool.length; i++) { r -= w[i]; if (r <= 0) { f = pool[i]; break; } }
   // 등급(크기): 같은 물고기라도 D~S. S일수록 드물고 크고 비싸다. 멀리 던질수록 높은 등급이 조금 더 잘 문다
@@ -94,21 +94,23 @@ export function gradeInfo(f, cm, g) {
     h('p', { class: 'dim center' }, 'S에 가까울수록 드물고, 크고, 비싸요. 멀리 던질수록 S·A가 조금 더 잘 물어요.')),
     actions: [{ label: '확인', primary: true }] });
 }
-// 풍랑이 불 확률(물고기와 싸울 때마다)
-const STORM_P = 0.07;
+// 풍랑: 던질 때마다 1/20 꼴(쓰레기·진주가 걸렸을 땐 안 분다 → 그만큼 보정), 쓰레기: 던질 때마다 1/10
+const TRASH_P = 0.1, STORM_P = 0.05 / (1 - TRASH_P);
 // 등급표: 확률(기본) · 크기 구간(물고기 크기 범위 안에서) · 값 배수
 export const GRADE = { S: { p: 3, band: [0.9, 1], x: 2 }, A: { p: 9, band: [0.75, 0.9], x: 1.5 }, B: { p: 18, band: [0.55, 0.75], x: 1.25 }, C: { p: 30, band: [0.3, 0.55], x: 1.1 }, D: { p: 40, band: [0, 0.3], x: 1 } };
 function rollGrade(power) { const w = Object.entries(GRADE).map(([k, v]) => [k, v.p * (k === 'S' || k === 'A' ? 1 + power * 0.6 : 1)]), tot = w.reduce((a, [, x]) => a + x, 0); let r = Math.random() * tot; for (const [k, x] of w) { r -= x; if (r <= 0) return k; } return 'D'; }
 const josaUl = w => { const c = (w || '').charCodeAt(w.length - 1) - 0xAC00; return w + (c >= 0 && c <= 11171 && c % 28 !== 0 ? '을' : '를'); };
 // 물고기가 화내며 팔짝 뛸 때: 줄이 한순간에 확 팽팽해진다(누르고 있으면 그대로, 손을 뗐으면 절반). [초급, 중급, 고급]
 const SPIKE = [0, 14, 20, 26], SPIKE_GAP = [[0, 0], [5, 8], [4, 6.5], [3, 5]], TELE = 400;
-// 난이도 맞춤(가상 플레이로 맞춘 값): 손이 빠른 사람이 초급 낚싯대로 초급 56%·중급 48%·고급 39%쯤, 고급 낚싯대로 79%·79%·71%쯤 잡는다. 서툴면 거의 못 잡는다
-// BAND_LO = 이 값부터 끊어짐 칸(80) 전까지가 '주황 칸'. 줄이 주황 칸에 있을 때 감아야 끌려온다(깊은 바다일수록 좁다)
+// 난이도 맞춤(2026-11-18 가상 플레이 /tmp/vb/fsim2.mjs): 보통 솜씨 기준 제 바다에 맞는 낚싯대면 거의 잡고, 한 단계 낮은 낚싯대면 중급 70%·고급 38%쯤. 서툴수록 낚싯대 차이가 크게 난다
+// BAND_LO = 이 값부터 끊어짐 칸(BREAK) 전까지가 '주황 칸'. 줄이 주황 칸에 있을 때 감아야 끌려온다(깊은 바다일수록 좁다)
 // ZONE_TEN = 바다별로 줄이 팽팽해지는 빠르기, ZONE_REEL = 감기는 빠르기, PATIENCE = 물고기 인내심(초, 깊을수록 짧다), ROD_TEN = 좋은 낚싯대일수록 줄이 덜 팽팽해진다
 // 낚싯대가 바다보다 높으면(EZ 단계 = 낚싯대 등급 - 바다 등급) 더 쉽게: 줄이 덜 팽팽해지고, 감는 칸이 넓고, 더 잘 감기고, 물고기가 더 오래 버틴다
-const EZ_TEN = [1, 0.8, 0.66], EZ_BAND = [0, 7, 12], EZ_REEL = [1, 1.25, 1.5], EZ_PAT = [0, 4, 7], EZ_BITE = [0, 150, 260];
-const BAND_LO = [0, 55, 64, 68], ZONE_TEN = [0, 1.3, 1, 0.92], ZONE_REEL = [0, 1, 1.4, 2.3], PATIENCE = [0, 17, 15, 14], ROD_TEN = [1, 1, 0.91, 0.84];
-export const strikesOf = () => 2;
+// BREAK = 낚싯대별 끊어짐 칸이 시작되는 곳(좋은 낚싯대일수록 빨간 칸이 좁다), strikesOf = 끊어짐 칸을 몇 번 버티나(초급 2·중급 3·고급 3)
+const EZ_TEN = [1, 0.8, 0.66], EZ_BAND = [0, 8, 14], EZ_REEL = [1, 1.25, 1.5], EZ_PAT = [0, 4, 7], EZ_BITE = [0, 150, 260];
+const BAND_LO = [0, 54, 60, 64], ZONE_TEN = [0, 1.25, 1, 0.92], ZONE_REEL = [0, 1, 1.4, 2.3], PATIENCE = [0, 17, 16, 15], ROD_TEN = [1, 1, 0.9, 0.8];
+const BREAK = [80, 80, 84, 87];
+export const strikesOf = t => [2, 2, 3, 3][t] || 2;
 export const weightOf = (f, cm) => (f.pearl || f.icon ? 0 : Math.max(0.01, Math.pow(cm, 3) * (f.name === '고래킹' ? 0.00003 : 0.000013)));
 const kg = w => (w >= 1000 ? (w / 1000).toFixed(2) + 't' : w >= 1 ? w.toFixed(1) + 'kg' : Math.round(w * 1000) + 'g');
 
@@ -116,7 +118,7 @@ const kg = w => (w >= 1000 ? (w / 1000).toFixed(2) + 't' : w >= 1 ? w.toFixed(1)
 // o = { ctx, zone, bag(), save(patch), coins(n), dex(id, cm), onClose() }
 export function openFishing(o) {
   let c0 = 0, castTo = 60, flew = false, clickAt = 0, creakAt = 0, pressAt = 0, eyeAt = 0, taps = 0, pat = 0, pat0 = 1, nextSpike = 0, tele = 0;
-  let stormAt = 0, alive = true, raf = 0, last = 0, phase = 'ready', power = 0, pdir = 1, t0 = 0, biteAt = 0, biteEnd = 0, nibAt = 0, cur = null, dist = 100, ten = 30, hold = false, burst = 0, nextBurst = 0, slack = 0, shown = false;
+  let stormAt = 0, stormIn = false, armed = true, ptrDown = false, alive = true, raf = 0, last = 0, phase = 'ready', power = 0, pdir = 1, t0 = 0, biteAt = 0, biteEnd = 0, nibAt = 0, cur = null, dist = 100, ten = 30, hold = false, burst = 0, nextBurst = 0, slack = 0, shown = false;
   const zone = o.zone, rodT = () => o.bag().rod || 0, rod = () => RODS[rodT()], ez = () => Math.max(0, Math.min(2, rodT() - zone));
   const float = h('i', { class: 'fs-float' }), hook = h('i', { class: 'fs-hook' }), rl = h('div', { class: 'fs-rl', html: '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="" fill="none" stroke="#fff" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>' }), fishEl = h('div', { class: 'fs-fish' }), mark = h('b', { class: 'fs-mark' });
   const me = h('div', { class: 'fs-me', html: capy(o.ctx.capyOf(o.ctx.uid, { face: 'happy' })) }), rodTip = h('b', { class: 'fs-tip' }), rodEl = h('i', { class: 'fs-rod' }, rodTip);
@@ -129,18 +131,18 @@ export function openFishing(o) {
   let fx = 60, fb = 10, ftaut = false; const drawLine = () => { if (rl.style.display === 'none') return; const [sx, sy] = tipAt(), x = fx, y = 92 - fb, sag = ftaut ? 2 : 10 + Math.abs(x - sx) * 0.22; rl.firstChild.firstChild.setAttribute('d', `M${sx.toFixed(2)} ${sy.toFixed(2)} Q${((sx + x) / 2).toFixed(2)} ${((sy + y) / 2 + sag).toFixed(2)} ${x} ${y}`); };
   const setFloat = (x, b = 10, taut = false) => { fx = x; fb = b; ftaut = taut; float.style.left = hook.style.left = mark.style.left = x + '%'; float.style.bottom = b + '%'; drawLine(); };
   const shadow = () => `<svg viewBox="0 0 120 80"><ellipse cx="60" cy="40" rx="${cur.f.pearl ? 20 : 34 + Math.min(20, cur.d * 2)}" ry="${cur.f.pearl ? 16 : 14 + cur.d}" fill="${zone === 3 ? 'rgba(170,215,255,.42)' : 'rgba(20,40,80,.55)'}"/></svg>`;
-  let strikes = 0; const lim = () => strikesOf(rodT(), zone), drawPips = on => { pipsEl.replaceChildren(...(on ? Array.from({ length: lim() }, (_, k) => h('i', { class: k < lim() - strikes ? '' : 'off' })) : [])); };
+  const BRK = () => BREAK[rodT()] || 80; let strikes = 0; const lim = () => strikesOf(rodT(), zone), drawPips = on => { pipsEl.replaceChildren(...(on ? Array.from({ length: lim() }, (_, k) => h('i', { class: k < lim() - strikes ? '' : 'off' })) : [])); };
   const say = (t, cls = '') => { msg.className = 'fs-msg ' + cls; msg.textContent = t; };
   const drawInfo = () => { const b = o.bag(), r = rod(); info.textContent = r ? `${r.name.slice(0, 2)} ${b.rodD || 0}/${r.dur} · 미끼 ${b.bait || 0}` : '낚싯대 없음'; };
   const setBar = (v, cls = '') => { v = Math.max(0, Math.min(100, v)); const pow = cls.startsWith('pow'), ten = cls.startsWith('ten'); bar.className = 'fs-bar ' + cls; bar.firstChild.style.width = v + '%'; bar.lastChild.style.left = v + '%'; gl.firstChild.textContent = pow ? '던지는 힘' : ten ? '줄 팽팽함' : '낚싯대'; gl.lastChild.textContent = pow || ten ? Math.round(v) : ''; const tk = bar.nextSibling; tk.firstChild.textContent = pow ? '가까이' : ten ? '느슨(안 끌려옴)' : ''; tk.lastChild.textContent = pow ? '멀리 ★' : ten ? '끊어짐!' : ''; };
-  function close() { if (!alive) return; if (phase === 'fight' && cur && cur.f.icon && cur.price < 0) o.coins(cur.price); alive = false; cancelAnimationFrame(raf); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); wrap.remove(); o.onClose && o.onClose(); }
+  function close() { if (!alive) return; if (phase === 'fight' && cur && cur.f.icon && cur.price < 0) o.coins(cur.price); alive = false; cancelAnimationFrame(raf); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); window.removeEventListener('pointerup', pu); window.removeEventListener('pointercancel', pu); wrap.remove(); o.onClose && o.onClose(); }
   function ready(text) {
-    phase = 'ready'; hold = false; strikes = 0; patEl.hidden = true; tele = 0; wrap.classList.remove('pearl'); pearlTxt.hidden = true; wrap.classList.remove('reel'); rodEl.className = 'fs-rod'; rodEl.dataset.t = rodT(); hook.classList.remove('up'); fishEl.className = 'fs-fish'; fishEl.innerHTML = ''; mark.textContent = ''; float.style.display = rl.style.display = hook.style.display = 'none'; setBar(0); wrap.classList.remove('fight'); drawInfo();
+    phase = 'ready'; hold = false; strikes = 0; stormAt = 0; armed = !ptrDown; patEl.hidden = true; tele = 0; wrap.classList.remove('pearl'); pearlTxt.hidden = true; wrap.classList.remove('reel'); rodEl.className = 'fs-rod'; rodEl.dataset.t = rodT(); hook.classList.remove('up'); fishEl.className = 'fs-fish'; fishEl.innerHTML = ''; mark.textContent = ''; float.style.display = rl.style.display = hook.style.display = 'none'; setBar(0); wrap.classList.remove('fight'); drawInfo();
     const b = o.bag(), r = rod();
     if (!r) { say('낚싯대가 없어요. 카피수퍼에서 사 오세요.', 'warn'); btn.textContent = '닫기'; btn.onclick = close; return; }
     if (!(b.rodD > 0)) { say('낚싯대가 다 닳았어요. 카피수퍼에서 수리하세요.', 'warn'); btn.textContent = '닫기'; btn.onclick = close; return; }
     if (!(b.bait > 0)) { say('미끼가 없어요. 카피수퍼에서 사 오세요(1개 10코인).', 'warn'); btn.textContent = '닫기'; btn.onclick = close; return; }
-    drawPips(true); say(text || (r.t < zone ? `낚싯대보다 깊은 바다예요. 귀한 물고기는 안 물어요. 끊어짐 칸을 ${lim()}번 건드리면 놓쳐요.` : `끊어짐 칸을 ${lim()}번 건드리면 놓쳐요. 릴을 눌러 힘을 모으고 한 번 더 눌러 던지세요.`)); btn.textContent = '던질\n준비'; btn.onclick = () => { phase = 'power'; power = 0; pdir = 1; say('멀리 던질수록 큰 물고기·귀한 물고기가 잘 물고, 줄도 덜 끊어져요. 지금이다 싶을 때!'); btn.textContent = '던지기!'; btn.onclick = cast; };
+    drawPips(true); say(text || (r.t < zone ? `낚싯대보다 깊은 바다예요. 귀한 물고기는 안 물어요. 끊어짐 칸을 ${lim()}번 건드리면 놓쳐요.` : `끊어짐 칸을 ${lim()}번 건드리면 놓쳐요. 릴을 눌러 힘을 모으고 한 번 더 눌러 던지세요.`)); btn.textContent = '던질\n준비'; btn.onclick = () => { if (!armed) return; phase = 'power'; power = 0; pdir = 1; say('멀리 던질수록 큰 물고기·귀한 물고기가 잘 물고, 줄도 덜 끊어져요. 지금이다 싶을 때!'); btn.textContent = '던지기!'; btn.onclick = cast; };
   }
   function cast() {
     const b = o.bag(), deep = zone === 3, n = (b.casts3 || 0) + (deep ? 1 : 0), at = b.pearlAt3 || (1 + Math.floor(Math.random() * 100));
@@ -148,13 +150,13 @@ export function openFishing(o) {
     if (zone >= 2 && o.onPirate) { const gap = () => 15 + Math.floor(Math.random() * 6), pn = (b.pcasts || 0) + 1, at = b.pirNext > 0 ? b.pirNext : pn - 1 + gap(), hit = pn >= at; o.save({ pcasts: pn, pirNext: hit ? pn + gap() : at }); if (hit) { close(); return o.onPirate(); } }
     // 진주는 고급 바다에서만: 고급에서 100번 던질 때마다 그 안의 어느 한 번에 문다
     const isPearl = deep && ((n - 1) % 100) + 1 === at; o.save({ bait: b.bait - 1, rodD: b.rodD - 1, casts: (b.casts || 0) + 1, ...(deep ? { casts3: n, pearlAt3: n % 100 === 0 ? 1 + Math.floor(Math.random() * 100) : at } : {}) });
-    cur = rollCatch(zone, rodT(), isPearl, power / 100); phase = 'cast'; c0 = performance.now(); castTo = 48 + power * 0.44; flew = false; shown = false; setBar(power, 'pow'); drawInfo();
+    cur = rollCatch(zone, rodT(), isPearl, power / 100); stormIn = !cur.f.icon && !cur.f.pearl && Math.random() < STORM_P; stormAt = 0; phase = 'cast'; c0 = performance.now(); castTo = 48 + power * 0.44; flew = false; shown = false; setBar(power, 'pow'); drawInfo();
     rodEl.className = 'fs-rod back'; float.className = 'fs-float fly'; hook.classList.add('up'); say(power >= 85 ? '아주 멀리! 큰 물고기가 잘 물고 줄도 덜 끊어져요.' : power >= 55 ? '꽤 멀리 던졌어요.' : '가까이 떨어졌어요. 멀리 던질수록 유리해요.'); btn.textContent = '…'; btn.onclick = null;
   }
   // 찌가 물에 닿았다: 물이 튀고, 줄이 가라앉고, 그때부터 입질을 기다린다
   function splash(x, big) { const r = h('i', { class: 'fs-splash' + (big ? ' big' : ''), style: { left: x + '%' } }); surf.append(r); setTimeout(() => r.remove(), 700); }
   function touch() {
-    const p = cur.p; phase = 'wait'; t0 = performance.now(); biteAt = t0 + rnd(1400, 4200) * (1 - p * 0.35); nibAt = Math.random() < 0.6 ? t0 + rnd(400, Math.max(450, biteAt - t0 - 450)) : 0;
+    const p = cur.p; phase = 'wait'; t0 = performance.now(); biteAt = t0 + rnd(1400, 4200) * (1 - p * 0.35); stormAt = stormIn ? t0 + rnd(1500, 7000) : 0; // 풍랑은 입질을 기다리는 중이나 싸우는 중에 분다 nibAt = Math.random() < 0.6 ? t0 + rnd(400, Math.max(450, biteAt - t0 - 450)) : 0;
     if (cur.f.pearl) { wrap.classList.add('pearl'); sfx('bigfish'); pearlTxt.hidden = false; pearlTxt.textContent = '✨ 물속에서 뭔가 반짝여요! ✨'; }
     setFloat(castTo); float.className = 'fs-float'; hook.style.display = ''; hook.classList.remove('up'); rodEl.className = 'fs-rod'; splash(castTo, true); sfx('splash');
     fishEl.className = 'fs-fish on far'; fishEl.innerHTML = shadow(); fishEl.style.left = '125%'; setBar(0);
@@ -175,11 +177,10 @@ export function openFishing(o) {
     if (phase !== 'wait') return;
     if (now < biteAt) { sfx('miss'); return ready('너무 빨랐어요. 물고기가 놀라 달아났어요. (미끼 1개 사용)'); }
     if (shown && now > biteEnd) return;
-    pat0 = pat = cur.f.icon ? 99 : PATIENCE[zone] + (cur.f.king || cur.f.pearl ? 4 : 0) + EZ_PAT[ez()]; bar.style.setProperty('--lo', (BAND_LO[zone] - EZ_BAND[ez()]) + '%'); tele = 0; nextSpike = cur.f.icon ? Infinity : now + rnd(...SPIKE_GAP[zone]) * 1000; taps = 0; patEl.hidden = !!cur.f.icon;
+    pat0 = pat = cur.f.icon ? 99 : PATIENCE[zone] + (cur.f.king || cur.f.pearl ? 4 : 0) + EZ_PAT[ez()]; bar.style.setProperty('--lo', (BAND_LO[zone] - EZ_BAND[ez()]) + '%'); bar.style.setProperty('--hi', BRK() + '%'); tele = 0; nextSpike = cur.f.icon ? Infinity : now + rnd(...SPIKE_GAP[zone]) * 1000; taps = 0; patEl.hidden = !!cur.f.icon;
     if (cur.f.pearl) { pearlTxt.textContent = '✨ 바다 진주다! ✨'; sfx('bigfish'); }
-    stormAt = !cur.f.icon && Math.random() < STORM_P ? now + rnd(1200, 4000) : 0; // 가끔 풍랑: 싸우는 도중에 불면 무조건 놓친다(진주부적을 쓴 진주는 싸움 없이 끌어올려서 안 걸린다)
     sfx('hookset'); strikes = 0; drawPips(true); phase = 'fight'; dist = 100; ten = 35; burst = 0; slack = 0; nextBurst = now + rnd(900, 1800); wrap.classList.add('fight'); fishEl.className = 'fs-fish on'; fishEl.innerHTML = shadow();
-    say(cur.f.icon ? '누르고 있으면 감아요.' : '줄을 주황 칸에 맞춰야 끌려와요! 빨간 칸은 2번 닿으면 끝이에요.'); btn.textContent = '꾹 눌러\n감기'; btn.onclick = null;
+    say(cur.f.icon ? '누르고 있으면 감아요.' : `줄을 주황 칸에 맞춰야 끌려와요! 빨간 칸은 ${lim()}번 닿으면 끝이에요.`); btn.textContent = '꾹 눌러\n감기'; btn.onclick = null;
   }
   // 풍랑: 하늘이 어두워지고 비바람이 치며 배가 크게 흔들리다가 줄이 풀려 물고기가 달아난다
   function storm() { stormAt = 0; phase = 'storm'; hold = false; wrap.classList.remove('reel'); wrap.classList.add('storm'); sfx('splash'); setTimeout(() => sfx('bad'), 500); say('🌊 풍랑이다! 배가 크게 흔들려요…', 'warn'); btn.textContent = '…'; btn.onclick = null;
@@ -212,11 +213,14 @@ export function openFishing(o) {
   const down = () => { if (!hold) pressAt = performance.now(); hold = true; };
   const up = () => { if (hold && phase === 'fight' && !cur.f.icon && performance.now() - pressAt < 300) { taps++; pat -= [0, 0.7, 1.2, 1.8][zone] + (cur.f.king || cur.f.pearl ? 0.6 : 0); eyeAt = performance.now() + 700; if (taps === 2 || taps % 5 === 0) say('찔끔찔끔 감으면 물고기가 눈치채고 떠나요! 길게 감으세요.', 'warn'); } hold = false; };
   const press = e => { if (phase === 'fight') { e.preventDefault(); down(); } }, lift = up;
+  // 감고 있던 손가락을 놓칠 때 떼면 그 클릭이 '던질 준비'로 넘어가 버리던 문제: 끝날 때 누르고 있었다면 그 한 번의 클릭은 무시
+  const pd = () => { ptrDown = true; }, pu = () => { ptrDown = false; if (!armed) setTimeout(() => { armed = true; }, 0); };
+  btn.addEventListener('pointerdown', pd); window.addEventListener('pointerup', pu); window.addEventListener('pointercancel', pu);
   btn.addEventListener('pointerdown', press); ['pointerup', 'pointercancel', 'pointerleave'].forEach(n => btn.addEventListener(n, lift));
   const kd = e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (phase === 'fight') { if (!e.repeat) down(); } else if (!e.repeat && btn.onclick) btn.onclick(); } }, ku = e => { if (e.key === ' ' || e.key === 'Enter') up(); };
   window.addEventListener('keydown', kd); window.addEventListener('keyup', ku);
   function step(now) {
-    if (!alive) return; const dt = Math.min(0.05, (now - last) / 1000); last = now; drawLine();
+    if (!alive) return; raf = requestAnimationFrame(step); const dt = Math.min(0.05, (now - last) / 1000); last = now; drawLine(); // 다음 프레임을 먼저 예약: 놓침·풍랑으로 중간에 return 해도 루프가 멈추지 않는다
     if (phase === 'cast') { const u = (now - c0) / 1000; // 낚싯대를 뒤로 젖혔다가(0.25초) 휘두르면 찌가 포물선으로 날아간다(0.6초)
       if (u >= 0.25 && !flew) { flew = true; rodEl.className = 'fs-rod cast'; sfx('cast'); float.style.display = rl.style.display = ''; hook.style.display = 'none'; }
       if (flew) { const k = Math.min(1, (u - 0.25) / 0.6), e = k * (2 - k) * 0.35 + k * 0.65, [tx, ty] = tipAt(), tb = 92 - ty; setFloat(tx + (castTo - tx) * e, tb * (1 - e) + 10 * e + 34 * Math.sin(Math.PI * k) * (0.5 + power / 200), true); if (k >= 1) touch(); } }
@@ -225,6 +229,7 @@ export function openFishing(o) {
       float.classList.toggle('nib', !!nibAt && now > nibAt && now < nibAt + 350);
       if (now >= biteAt && !shown) { shown = true; biteEnd = now + [0, 900, 700, 520][zone] + EZ_BITE[ez()] + cur.p * 260 - (rodT() < zone ? 130 : 0) - (cur.f.pearl ? 180 : 0); float.classList.add('bite'); mark.textContent = '!'; splash(fx); sfx('bite'); }
       if (!shown) fishEl.style.left = fx + (1 - Math.min(1, (now - t0) / (biteAt - t0))) * 65 + (nibAt && now > nibAt && now < nibAt + 350 ? -3 : 4) + '%'; else fishEl.style.left = fx + '%';
+      if (stormAt && now > stormAt) return void storm();
       if (shown && now > biteEnd) fail('놓쳤어요. 미끼만 먹고 갔어요.');
     } else if (phase === 'fight') {
       if (stormAt && now > stormAt) return void storm();
@@ -232,15 +237,15 @@ export function openFishing(o) {
       if (!burst && now > nextBurst) { burst = now + (450 + d * 50); } if (burst && now > burst) { burst = 0; nextBurst = now + Math.max(1100, 3000 - d * 150) * rnd(0.7, 1.3); }
       const B = !!burst, TM = ZONE_TEN[zone] * ROD_TEN[rodT()] * EZ_TEN[ez()], LO = cur.f.icon ? 0 : BAND_LO[zone] - EZ_BAND[ez()]; pat -= dt; patEl.firstChild.style.width = Math.max(0, pat / pat0 * 100) + '%'; patEl.classList.toggle('low', pat < pat0 * 0.3);
       if (pat <= 0) { delete fishEl.dataset.rev; return void fail(taps >= 4 ? '물고기가 눈치채고 떠났어요. 찔끔찔끔 감으면 안 돼요.' : '너무 오래 끌었어요. 물고기가 바늘을 털고 떠났어요.'); }
-      wrap.classList.toggle('reel', hold); if (hold && now > clickAt) { clickAt = now + (B ? 150 : 75); sfx('reel'); } if (ten > 74 && now > creakAt) { creakAt = now + 260; sfx('strain'); }
+      wrap.classList.toggle('reel', hold); if (hold && now > clickAt) { clickAt = now + (B ? 150 : 75); sfx('reel'); } if (ten > BRK() - 6 && now > creakAt) { creakAt = now + 260; sfx('strain'); }
       // 화내기: 0.4초 동안 빨갛게 부르르 떨다가(신호) 팔짝 뛰면서 줄이 확 팽팽해진다
       if (!tele && now > nextSpike) { tele = now + TELE; fishEl.classList.add('mad'); sfx('tock'); }
       if (tele && now >= tele) { tele = 0; nextSpike = now + rnd(...SPIKE_GAP[zone]) * 1000; ten += SPIKE[zone] * TM * (hold ? 1 : 0.5); fishEl.classList.remove('mad'); fishEl.classList.add('jump'); setTimeout(() => fishEl.classList.remove('jump'), 520); splash(fx, true); sfx('splash'); bar.classList.add('spike'); setTimeout(() => bar.classList.remove('spike'), 300); }
       if (hold) { dist -= (cur.f.icon ? 34 : Math.max(7, 27 - d * 1.5) * ZONE_REEL[zone] * (ten >= LO ? 1 : 0.15)) * (1 + cur.p * 0.2) * EZ_REEL[ez()] * dt * (B ? 0.5 : 1); ten += (25 + d * 1.1) * 1.12 * TM * (1 - cur.p * 0.25) * (B ? 1.35 : 1) * dt; } // 멀리 던졌으면 더 잘 감기고 줄이 덜 팽팽해진다
       else { ten -= (50 - d * 0.8) * dt; dist += (0.8 + d * 0.42) * 1.2 * (B ? 1.4 : 1) * dt; }
-      // 끊어짐 칸(80)을 건드리면 한 번으로 센다. 줄이 튕기며 물고기가 조금 달아나고, 정해진 횟수를 다 쓰면 놓친다
-      if (ten >= 80) { strikes++; drawPips(true); if (strikes >= lim()) { delete fishEl.dataset.rev; return void (cur.f.icon ? landed() : fail('줄이 끊어졌어요! 끊어짐 칸을 두 번 건드렸어요.')); }
-        ten = Math.max(LO + 2, 58); dist += 6; hold = false; sfx('strain'); wrap.classList.add('jolt'); setTimeout(() => wrap.classList.remove('jolt'), 300); say('줄이 끊어질 뻔! 한 번만 더 건드리면 놓쳐요. 손을 뗐다가 다시 감으세요.', 'warn'); }
+      // 끊어짐 칸(BREAK)을 건드리면 한 번으로 센다. 줄이 튕기며 물고기가 조금 달아나고, 정해진 횟수를 다 쓰면 놓친다
+      if (ten >= BRK()) { strikes++; drawPips(true); if (strikes >= lim()) { delete fishEl.dataset.rev; return void (cur.f.icon ? landed() : fail(`줄이 끊어졌어요! 끊어짐 칸을 ${lim()}번 건드렸어요.`)); }
+        ten = Math.max(LO + 2, BRK() - 22); dist += 6; hold = false; sfx('strain'); wrap.classList.add('jolt'); setTimeout(() => wrap.classList.remove('jolt'), 300); say(lim() - strikes === 1 ? '줄이 끊어질 뻔! 한 번만 더 건드리면 놓쳐요. 손을 뗐다가 다시 감으세요.' : `줄이 끊어질 뻔! ${lim() - strikes}번 더 건드리면 놓쳐요.`, 'warn'); }
       ten = Math.max(0, ten); slack = ten < 6 && !B ? slack + dt : 0;
       setBar(ten, 'ten' + (ten >= LO ? ' hot' : '') + (B ? ' burst' : '')); setFloat(34 + Math.max(0, Math.min(130, dist)) * 0.45, 8, true); fishEl.style.left = fx + '%'; fishEl.classList.toggle('burst', B); mark.textContent = tele ? '💥' : B ? '💢' : now < eyeAt ? '👀' : '';
       if (dist < 45 && cur.f.icon && !fishEl.dataset.rev) { fishEl.dataset.rev = 1; fishEl.innerHTML = fishSvg(cur.f); say('어… 쓰레기 같아요. 걸린 이상 꼭 수거해야 해요!', 'warn'); }
@@ -249,7 +254,6 @@ export function openFishing(o) {
       if (slack > 2.4 - Math.min(1.2, d * 0.1)) { delete fishEl.dataset.rev; return void fail('줄이 느슨해져서 바늘이 빠졌어요.'); }
       if (dist <= 0) { delete fishEl.dataset.rev; landed(); }
     }
-    raf = requestAnimationFrame(step);
   }
   document.body.append(wrap); ready(); last = performance.now(); raf = requestAnimationFrame(step);
   return { close };
