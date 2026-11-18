@@ -31,11 +31,10 @@ export function farmCrow(ctx, { goFarm }) {
   function hideBanner() { if (banner) { banner.remove(); banner = null; } }
 
   // 연습 모드: 주소 끝에 ?crowtest (또는 ?crowtest=2·3 단계) 를 붙이고 농장에 들어가면 바로 새총 놀이를 한다. 기록·작물에는 아무 영향 없음
-  const TEST = (() => { try { const v = new URLSearchParams(location.search).get('crowtest'); return v == null ? 0 : Math.max(1, Math.min(3, +v || 1)); } catch { return 0; } })(); let testOn = false;
+  const TEST = (() => { try { const v = new URLSearchParams(location.search).get('crowtest'); return v == null ? 0 : Math.max(1, Math.min(3, +v || 1)); } catch { return 0; } })(); 
   function tick(now, where) {
     if (dead || !ready) return;
-    if (TEST && where !== 'farm') testOn = false;
-    if (TEST && where === 'farm' && !game && !testOn && !document.querySelector('.modal-wrap')) { testOn = true; startGame(TEST, true); return; } const dt = last ? Math.min(1000, now - last) : 0; last = now; const c = plan(), t = ctx.store.now();
+    const dt = last ? Math.min(1000, now - last) : 0; last = now; const c = plan(), t = ctx.store.now();
     if (c.res) return hideBanner();
     if (game) return;
     if (c.until) { // 나타난 상태
@@ -67,7 +66,7 @@ export function farmCrow(ctx, { goFarm }) {
       sling.style.transform = `rotate(${Math.max(-25, Math.min(25, Math.atan2(tx - sx, sy - ty) * 57))}deg)`; // 겨눈 쪽으로 새총을 살짝 기울인다
       pullTo = { sx, sy, tx, ty, t: performance.now() }; reload = performance.now() + 420; sfx('tock'); });
     function end(win) { if (over) return; over = true; cancelAnimationFrame(raf);
-      if (test) { crowEl.classList.add(win ? 'flee' : 'grab'); msg.textContent = win ? '연습 성공! 까마귀가 도망갔어요 🎉' : '연습 실패… (진짜였다면 이랑 하나를 뺏겼어요)'; sfx(win ? 'bigfish' : 'bad'); setTimeout(() => { el.remove(); game = null; toast('연습 끝 · 다시 하려면 농장에서 나갔다가 다시 들어와요', 2600); }, 1700); return; }
+      if (test) { crowEl.classList.add(win ? 'flee' : 'grab'); msg.textContent = win ? '연습 성공! 까마귀가 도망갔어요 🎉' : '연습 실패… (진짜였다면 이랑 하나를 뺏겼어요)'; sfx(win ? 'bigfish' : 'bad'); setTimeout(() => { el.remove(); game = null; toast('연습 끝 · 다시 하려면 링크를 다시 열어요', 2600); }, 1700); return; }
       if (win) { crowEl.classList.add('flee'); msg.textContent = '까마귀가 도망갔어요! 밭을 지켰어요 🎉'; sfx('bigfish'); put({ res: 'win' }); data = { ...data, crow: { ...cw(), res: 'win' } }; setTimeout(() => { el.remove(); game = null; toast('오늘 까마귀는 다시 오지 않아요', 2200); }, 1700); }
       else { msg.textContent = '놓쳤어요… 까마귀가 이랑을 노려요!'; crowEl.classList.add('grab'); setTimeout(() => { el.remove(); game = null; steal('새총을 피한 까마귀가'); }, 1400); } }
     function frame(now) { if (dead) return; const dt = Math.min(0.05, (now - lastF) / 1000); lastF = now; const el2 = (now - t0) / 1000, w = W(), hh = H();
@@ -93,6 +92,8 @@ export function farmCrow(ctx, { goFarm }) {
     sfx('bad'); raf = requestAnimationFrame(frame); }
 
   // 앱을 껐다 켜는 사이 1분이 지났으면 그때 가져간다(tick 에서 처리)
-  return { tick, dispose: () => { dead = true; off && off(); hideBanner(); if (game) { game.el.remove(); game = null; } },
+  // 연습 시작(링크로 들어왔을 때 친목회가 부른다): 떠 있는 창을 닫고 바로 새총 놀이
+  function practice() { if (!TEST || game || dead) return; document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); hideBanner(); startGame(TEST, true); }
+  return { tick, practice, dispose: () => { dead = true; off && off(); hideBanner(); if (game) { game.el.remove(); game = null; } },
     debug: () => { stay = 1e9; const c = plan(); data = { ...data, crow: { ...c, at: 0, until: null, res: null, arrived: null } }; put({ at: 0, until: null, res: null, arrived: null }); } };
 }
