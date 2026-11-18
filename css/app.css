@@ -1908,3 +1908,4 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .kb-pay { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; } .kb-payan { flex: none; width: 56px; } .kb-payan svg { width: 100%; display: block; } .kb-pay b { font-size: 14px; line-height: 1.4; }
 .kb-bill { padding: 10px 12px; border-radius: 12px; background: #fff; border: 2px dashed #D9C29B; font-size: 13px; } .kb-bl { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; } .kb-bl em { font-style: normal; font-weight: 800; color: #2F8A3E; } .kb-bl em.down { color: #C4281F; }
 .kb-bl.total { margin-top: 6px; padding-top: 8px; border-top: 2px solid #EFE2CB; font: 900 16px/1.2 var(--head); } .kb-bl.total b { color: #A86A00; font-size: 20px; }
+.kb-skip { width: 100%; margin: 0 0 8px; }
