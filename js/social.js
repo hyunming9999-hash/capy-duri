@@ -9,7 +9,7 @@ import { makeVoice } from './walk.js';
 import { PUSH_URL } from './push.js';
 import { isMock } from './store.js';
 import { openFarm, cropOf, cropImg, cropPrice } from './farm.js';
-import { openCook } from './cook.js';
+import { openCook, SAUCES, SAUCE_PACK } from './cook.js';
 import { farmCrow } from './farmcrow.js';
 import { openFishing, seaBattle, PIRATE_LOOT, FLEE_FEE, FISH, TIERS, RODS, ZONES, BAIT, BALL, CANNON, WBOAT, BOAT_FIX, fishSvg } from './fishing.js';
 
@@ -328,11 +328,14 @@ export function mount(el, ctx) {
       fish: () => Object.entries(bag.fish || {}).filter(([, v]) => v).map(([k, v]) => [k, v, fishOf(v.id)]),
       useFish: key => { const left = { ...(bag.fish || {}) }; delete left[key]; bag = { ...bag, fish: left }; ctx.store.update('bag/' + ctx.uid + '/fish', { [key]: null }).catch(() => {}); },
       barn: () => farmBarn, useCrops: use => ctx.store.update('farm/' + ctx.uid + '/barn', Object.fromEntries(Object.entries(use).map(([k, n]) => { const v = (farmBarn[k] || 0) - n; return [k, v > 0 ? v : null]; }))).catch(() => {}),
+      sauces: () => bag.sauce || {}, useSauce: use => { const cur = { ...(bag.sauce || {}) }, patch = {}; Object.entries(use).forEach(([k, n]) => { const v = (cur[k] || 0) - n; cur[k] = v > 0 ? v : 0; patch[k] = v > 0 ? v : null; }); bag = { ...bag, sauce: cur }; return ctx.store.update('bag/' + ctx.uid + '/sauce', patch).catch(() => {}); },
+      quests: () => (quest ? quest.cooks() : []), questDone: q => quest && quest.cooked(q),
       coins: addCoins, cropName: id => (cropOf(id) || { name: id }).name, cropImg, fishSvg, onClose: () => { fishOpen = false; lastT = performance.now(); } }); }
   let farmOpen = false;
   function goFarm() { if (farmOpen) return; if (fishOpen || battle) return toast('하던 걸 끝내고 농장에 갈 수 있어요'); if (me.boat) return toast('배에서 내린 뒤에 농장에 갈 수 있어요'); fishOpen = true; farmOpen = true; keys.clear(); sfx('pop');
     openFarm({ ctx, onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); } }); }
   const fcrow = farmCrow(ctx, { goFarm: () => goFarm() });
+  let quest = null;
   // 낚시: 낚시터에서 내 배를 탄 채 🎣. 중급부터는 가끔 갈매기 해적단이 먼저 덤빈다
   function goFish() { const zone = zoneOf(me.x); if (!zone || fishOpen || battle || !(me.boat && (me.boat.own || me.boat.pass))) return; const guest = !!me.boat.pass; fishOpen = true; keys.clear();
     const done = () => { fishOpen = false; if (!voice.on) bgm.duck(false); lastT = performance.now(); };
@@ -836,6 +839,8 @@ export function mount(el, ctx) {
       return [['sec', '🎁 선물·회복'],
         ...Object.entries(GIFTS).map(([k, [ic, nm, price, up]]) => ({ ic, name: nm, sub: `${won(price)} · 친밀도 +${up} · 가진 것 ${bag[k] || 0}개`, price, line: GP[k], act: () => buy(price, { [k]: (bag[k] || 0) + 1 }) })),
         { ic: '🧪', name: '회복 포션', sub: `${won(POTION[0])} · 체력 +${POTION[1]} · 가진 것 ${bag.potion || 0}개`, price: POTION[0], line: hpNow() < HP_MAX ? GP.potion : '지금은 쌩쌩하구먼. 그래도 하나쯤 챙겨 두면 든든하지.', act: () => buy(POTION[0], { potion: (bag.potion || 0) + 1 }) },
+        ['sec', '🧂 카피백반 양념'],
+        ...Object.entries(SAUCES).map(([k, [ic, nm, price]]) => ({ ic, name: `${nm} (${SAUCE_PACK}번 쓰기)`, sub: `${won(price)} · 가진 것 ${((bag.sauce || {})[k]) || 0}번`, price, line: '카피백반 요리에 넣는 양념이여. 손님 입맛 따라 골라 쓰게.', act: () => buy(price, { sauce: { ...(bag.sauce || {}), [k]: (((bag.sauce || {})[k]) || 0) + SAUCE_PACK } }) })),
         ['note', '동물마다 제일 좋아하는 선물이 있어요. 그걸 주면 친밀도가 1.5배 올라요. 포션은 화면 위 🧪 를 눌러 마셔요.'],
         ['sec', '🚤 배·낚시 용품'],
         { ic: '🚤', name: '카피보트', sub: bag.boat ? '가지고 있어요 · 바닷가 물에서 🚤 내 보트' : `${won(BOAT_PRICE)} · 바닷가에서 타면 파도가 일어요`, price: BOAT_PRICE, off: bag.boat, line: bag.boat ? '이미 한 척 있잖나. 잘 타고 다니게, 허허.' : '바닷가에서 타면 물살이 시원하게 갈라지지. 초급 낚시터까지는 이걸로 충분하네.', act: () => buy(BOAT_PRICE, { boat: true }) },
