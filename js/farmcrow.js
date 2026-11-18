@@ -5,7 +5,7 @@ import { sfx } from './sound.js';
 import { cropOf, cropImg } from './farm.js';
 
 const LIMIT = 60000;
-const LV = [null, { n: '초급', need: 2, sp: 150, turn: 1.6, dash: 0, r: 46 }, { n: '중급', need: 2, sp: 230, turn: 1.0, dash: 0.15, r: 40 }, { n: '고급', need: 2, sp: 320, turn: 0.55, dash: 0.35, r: 34 }];
+const LV = [null, { n: '초급', need: 2, sp: 110, turn: 1.9, dash: 0, r: 60 }, { n: '중급', need: 2, sp: 170, turn: 1.3, dash: 0.1, r: 52 }, { n: '고급', need: 2, sp: 240, turn: 0.8, dash: 0.25, r: 46 }]; // 맞히기 쉽게: 까마귀는 느리게, 맞는 범위는 넓게
 const GAME_S = 20;
 
 export function farmCrow(ctx, { goFarm }) {
@@ -65,17 +65,17 @@ export function farmCrow(ctx, { goFarm }) {
     const aimSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); aimSvg.setAttribute('class', 'fc-aim'); arena.append(aimSvg);
     const MAXP = 110; let drag = null; // { px, py } 당긴 주머니 자리(arena 좌표)
     const geo = () => { const r = arena.getBoundingClientRect(), sr = sling.getBoundingClientRect(), P = (vx, vy) => [sr.left - r.left + vx / 80 * sr.width, sr.top - r.top + (vy + 10) / 110 * sr.height]; return { r, rest: P(40, 31), L: P(16, 14), R: P(64, 14) }; };
-    const aimOf = () => { const g = geo(), [sx, sy] = g.rest, vx = drag.px - sx, vy = drag.py - sy, len = Math.hypot(vx, vy); if (len < 14 || vy < 4) return null;
-      const k = Math.min(1, len / MAXP), dist = 120 + k * (sy - 60), ux = -vx / len, uy = -vy / len; return { sx, sy, tx: sx + ux * dist, ty: sy + uy * dist, k }; };
+    const aimOf = () => { const g = geo(), [sx, sy] = g.rest, vy = drag.py - sy, vx = (drag.px - sx) * 0.45, len = Math.hypot(vx, vy); if (len < 14 || vy < 4) return null; // 좌우는 덜 민감하게(손을 많이 움직여야 조금 돈다)
+      const k = Math.min(1, Math.hypot(drag.px - sx, vy) / MAXP), dist = 120 + k * (sy - 60), ux = -vx / len, uy = -vy / len; return { sx, sy, tx: sx + ux * dist, ty: sy + uy * dist, k }; };
     const drawAim = () => { if (!drag) { aimSvg.innerHTML = ''; sling.classList.remove('drag'); return; } const g = geo(), a = aimOf(), [px, py] = [drag.px, drag.py];
       let html = `<path d="M${g.L[0]} ${g.L[1]} L${px} ${py} L${g.R[0]} ${g.R[1]}" stroke="#C2410C" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${px}" cy="${py}" r="11" fill="#8B5A2B" stroke="#4A2E18" stroke-width="2"/><circle cx="${px}" cy="${py}" r="7" fill="#9CA3AF" stroke="#374151" stroke-width="2"/>`;
       if (a) { const n = 9; for (let q = 1; q <= n; q++) { const u = q / (n + 1), x = a.sx + (a.tx - a.sx) * u, y = a.sy + (a.ty - a.sy) * u - Math.sin(u * Math.PI) * 40; html += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(4 - u * 2).toFixed(1)}" fill="#fff" stroke="#3E2A1E" stroke-width="1.2" opacity="${(1 - u * 0.4).toFixed(2)}"/>`; }
         html += `<g transform="translate(${a.tx.toFixed(1)} ${a.ty.toFixed(1)})"><circle r="${lv.r * 0.55}" fill="none" stroke="#E5484D" stroke-width="3"/><path d="M-${lv.r * 0.8} 0 H-6 M6 0 H${lv.r * 0.8} M0 -${lv.r * 0.8} V-6 M0 6 V${lv.r * 0.8}" stroke="#E5484D" stroke-width="3" stroke-linecap="round"/></g>`; }
-      aimSvg.innerHTML = html; sling.classList.add('drag'); sling.style.transform = a ? `rotate(${Math.max(-25, Math.min(25, Math.atan2(a.tx - a.sx, a.sy - a.ty) * 57))}deg)` : ''; };
+      aimSvg.innerHTML = html; sling.classList.add('drag'); };
     const clampPull = (cx, cy) => { const g = geo(), [sx, sy] = g.rest; let vx = cx - g.r.left - sx, vy = cy - g.r.top - sy; const len = Math.hypot(vx, vy); if (len > MAXP) { vx *= MAXP / len; vy *= MAXP / len; } return { px: sx + vx, py: sy + vy }; };
     el.addEventListener('pointerdown', e => { if (over || reload > performance.now()) return; e.preventDefault(); drag = clampPull(e.clientX, e.clientY); drag.id = e.pointerId; sfx('tock'); drawAim(); msg.textContent = '아래로 당겨서 겨누고, 손을 떼면 발사!'; });
     const onMove = e => { if (!drag || e.pointerId !== drag.id) return; e.preventDefault(); Object.assign(drag, clampPull(e.clientX, e.clientY)); drawAim(); };
-    const onUp = e => { if (!drag || e.pointerId !== drag.id) return; const a = aimOf(); drag = null; drawAim(); sling.style.transform = '';
+    const onUp = e => { if (!drag || e.pointerId !== drag.id) return; const a = aimOf(); drag = null; drawAim();
       if (!a || over) { if (!over) msg.textContent = '조금 더 아래로 당겨서 놓아요!'; return; }
       const d = Math.hypot(a.tx - a.sx, a.ty - a.sy), dur = Math.max(240, Math.min(520, d * 0.8)), st = h('i', { class: 'fc-stone' }); arena.append(st); shots.push({ st, sx: a.sx, sy: a.sy, tx: a.tx, ty: a.ty, at: performance.now(), dur, tr: 0 });
       reload = performance.now() + 300; pull = 1; sfx('swing'); sling.classList.remove('snap'); void sling.offsetWidth; sling.classList.add('snap'); };
