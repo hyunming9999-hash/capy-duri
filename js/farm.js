@@ -80,9 +80,16 @@ export function openFarm(o) {
   const enterBtn = h('button', { class: 'fm-enter', hidden: true, onClick: () => openShop() }, '🔨 카피철물 들어가기');
   // 밭 앞에 서면 화면 아래에 💧 물 주기·🧺 수확 버튼이 뜬다(농기구 등급만큼 한 번에)
   const quickEl = h('div', { class: 'fm-quick' }); let quickKey = '', quickAt = 0;
+  // 물 주기 안내: 초급은 'N번 이랑 차례에요'(물이 가장 먼저 마를 이랑부터 한 줄씩), 중급은 2줄씩·남으면 '한 번 더', 고급은 밭 전체
+  function waterHint(k) { const t = now(), cur = rowsOf(k), idx = cur.map((r, i) => i).filter(i => live(cur[i]) && !ripe(cur[i], t)); if (!idx.length) return '';
+    const T = tool(); if (T >= 3) return '한 번에 밭을 적셔요';
+    const order = idx.slice().sort((a, b) => (cur[a].wet || 0) - (cur[b].wet || 0)), lw = lastWater[k];
+    if (T === 1) return `${order[0] + 1}번 이랑 차례에요`;
+    return lw && lw.left > 0 && t - lw.t < 300000 ? '한 번 더 줘요' : '한 번에 2이랑씩 물줘요'; }
+  const lastWater = {}; // 밭마다 방금 물 준 때와 아직 못 적신 이랑 수(중급 '한 번 더' 안내용)
   function drawQuick() { const t = now(), k = meEl.classList.contains('walk') ? -1 : plotEls.findIndex((_, i) => Math.abs(me.x - (plotX(i) + PW / 2)) < PW / 2), open = k >= 0 && isOpen(k), rs = open ? rowsOf(k).filter(live) : [], grow = rs.filter(r => !ripe(r, t)), rip = who === ctx.uid ? rs.filter(r => ripe(r, t)) : [], dry = grow.some(r => dryNow(r, t));
-    const key = `${k}|${grow.length}|${rip.length}|${dry}|${tool()}`; if (key === quickKey) return; quickKey = key;
-    rc(quickEl, grow.length > 0 && h('button', { class: 'fm-qb water' + (dry ? ' on' : ''), onClick: () => doWater(k) }, h('img', { src: toolImg(tool(), 'can'), alt: '' }), h('span', null, '물 주기'), h('small', null, tool() >= 3 ? '밭 전체' : `${tool()}이랑`)),
+    const wh = k >= 0 ? waterHint(k) : '', key = `${k}|${grow.length}|${rip.length}|${dry}|${tool()}|${wh}`; if (key === quickKey) return; quickKey = key;
+    rc(quickEl, grow.length > 0 && h('button', { class: 'fm-qb water' + (dry ? ' on' : ''), onClick: () => doWater(k) }, h('img', { src: toolImg(tool(), 'can'), alt: '' }), h('span', null, '물 주기'), h('small', null, wh)),
       rip.length > 0 && h('button', { class: 'fm-qb harv on', onClick: () => harvestTap(k) }, h('b', null, '🧺'), h('span', null, '수확'), h('small', null, ['', '하나씩', '한 이랑', '밭 전체'][tool()]))); }
   const scene = h('div', { class: 'fm-scene' }, scroller, h('div', { class: 'fm-pad' }, padBtn('L', '◀'), enterBtn, quickEl, padBtn('R', '▶')));
   const onKey = e => { const k = e.key === 'ArrowLeft' ? 'L' : e.key === 'ArrowRight' ? 'R' : ''; if (!k || document.querySelector('.modal-wrap')) return; e.preventDefault(); if (e.type === 'keydown') keys.add(k); else keys.delete(k); };
@@ -169,7 +176,7 @@ export function openFarm(o) {
       return h('div', { class: 'fm-rcard' }, h('span', { class: 'fm-rn' }, `${i + 1}`), h('img', { src: cropImg(c.id), alt: '' }), h('div', { class: 'fm-rbody' }, h('b', null, `${c.name} · ${rp ? (rotten(r, t) ? '시들었어요' : '수확!') : left(r.at + r.ms - t) + ' 남음'}`),
         rp ? [h('small', null, rotten(r, t) ? '3일 넘게 안 거둬서 F' : `컨디션 ${Math.round(s * 100)}% · ${left(r.at + r.ms + ROT_MS - t)} 안에 거두기${r.got ? ` · ${YIELD_ROW - r.got}개 남음` : ''}`), !visit && tool() < 3 && h('button', { class: 'btn sm primary fm-rharv', onClick: () => harvestTap(k, i) }, tool() === 2 ? '🧺 이 이랑 거두기' : '🧺 하나 거두기')] : [gauge('자람', Math.min(1, (t - r.at) / r.ms), 'grow'), gauge('컨디션', s, s >= 0.85 ? 'good' : s >= 0.6 ? 'ok' : 'bad'), gauge('물', Math.min(1, Math.max(0, r.wet - t) / (r.ms * 0.5)), 'water')])); };
     const acts = [];
-    if (growing.length) { acts.push(h('button', { class: 'btn' + (growing.some(r => dryNow(r, t)) ? ' primary' : ''), onClick: () => doWater(k) }, h('img', { class: 'fm-ic', src: toolImg(tool(), 'can'), alt: '' }), (visit ? '물 주고 오기' : '물 주기') + (tool() >= 3 ? ' (밭 전체)' : ` (${tool()}이랑)`)));
+    if (growing.length) { acts.push(h('button', { class: 'btn' + (growing.some(r => dryNow(r, t)) ? ' primary' : ''), onClick: () => doWater(k) }, h('img', { class: 'fm-ic', src: toolImg(tool(), 'can'), alt: '' }), (visit ? '물 주고 오기' : '물 주기') + ` · ${waterHint(k)}`));
       if (!visit && growing.some(r => weedNow(r, t))) acts.push(h('button', { class: 'btn primary', onClick: () => doWeed(k) }, h('img', { class: 'fm-ic', src: toolImg(tool(), 'hoe'), alt: '' }), '잡초 베기')); }
     if (ripeRows.length && !visit) { const left1 = ripeRows.reduce((a, r) => a + (rotten(r, t) ? 1 : YIELD_ROW - (r.got || 0)), 0); acts.push(h('button', { class: 'btn primary', onClick: () => harvestTap(k) }, tool() >= 3 ? '🧺 밭 전체 수확' : tool() === 2 ? `🧺 한 이랑 수확 (${ripeRows.length}이랑 남음)` : `🧺 하나 수확 (${left1}개 남음)`)); }
     rc(sheet, closeB, h('b', null, `${k + 1}번 밭`), ...rows.map(rowCard),
@@ -183,7 +190,7 @@ export function openFarm(o) {
     // 농기구 등급만큼 이랑을 적신다: 물이 마른 이랑부터, 그다음 가장 먼저 마를 이랑부터
     const order = cur.map((r, i) => i).filter(i => live(cur[i]) && !ripe(cur[i], t)).sort((a, b) => (cur[a].wet || 0) - (cur[b].wet || 0)), pick = order.slice(0, n);
     if (!pick.length) return; const rows = cur.map((r, i) => (pick.includes(i) ? water(r, t) : r)); sfx('splash'); useHeld('can'); await setRows(k, rows);
-    const more = order.length - pick.length, what = n >= 3 ? '밭 전체에' : `${pick.map(i => i + 1).join('·')}번째 이랑에`;
+    const more = order.length - pick.length; lastWater[k] = { t, left: lastWater[k] && lastWater[k].left > 0 ? 0 : more }; const what = n >= 3 ? '밭 전체에' : `${pick.map(i => i + 1).join('·')}번째 이랑에`;
     if (who !== ctx.uid) { ctx.store.set(`farm/${who}/note`, { by: ctx.uid, at: t, k }).catch(() => {}); toast(`${ctx.nameOf(who)}네 ${k + 1}번 밭 ${what} 물을 줬어요 💧`, 2000); } else toast(`${what} 물을 줬어요 💧${more > 0 ? ` (남은 이랑 ${more}줄은 한 번 더)` : ''}`, 1600); }
   async function doWeed(k) { const t = now(), rows = rowsOf(k).map(r => (live(r) && weedNow(r, t) ? weed(r, t) : r)); sfx('tock'); useHeld('hoe'); await setRows(k, rows); toast('잡초를 베었어요 🌿', 1200); }
   // 수확: 초급 농기구는 작물 하나씩(누를 때마다 1개), 중급은 한 이랑씩, 고급은 밭 전체를 한 번에. 등급은 그 이랑에서 처음 거둘 때 정해진다
