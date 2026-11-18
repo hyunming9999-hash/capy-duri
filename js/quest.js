@@ -139,8 +139,8 @@ export function createQuest(d) {
   function markOf(i) { if (!ready) return ''; const s = cur(); if (!s) return ''; if (!q.on) return s.who === i && !capped() ? '!' : '';
     if (s.to !== i) return ''; return s.type === 'talk' || s.type === 'accuse' || have(s) ? '?' : '…'; }
   const goalText = s => { const n = s.need, nm = d.names[s.to];
-    return s.type === 'talk' ? `💬 ${nm}에게 가서 이야기하기` : s.type === 'fish' ? `🐟 ${n.z >= 2 ? '중급' : '초급'} 바다 물고기 1마리를 ${nm}에게` : s.type === 'crop' ? `🥕 ${d.cropName(n.id)} ${n.n}개를 ${nm}에게`
-      : s.type === 'gift' ? `🎁 ${n.k === 'any' ? '선물(사탕·꽃다발·케이크) 하나' : GIFT_N[n.k]}를 ${nm}에게` : s.type === 'cook' ? `🍚 카피백반에서 ${d.recName(n.rec)} 만들어 ${nm}에게` : s.type === 'pirate' ? `⚔️ 빌린 흰 배로 중급 바다에 나가 갈매기 해적단 물리치기 (하루 ${PIRATE_TRIES}번)` : '🔎 범인 지목하기'; };
+    return s.type === 'talk' ? `🗣️ ${nm}에게 가서 탐문하기` : s.type === 'fish' ? `🎣 ${n.z >= 2 ? '중급' : '초급'} 바다 물고기 1마리를 ${nm}에게` : s.type === 'crop' ? `🌾 ${d.cropName(n.id)} ${n.n}개를 ${nm}에게`
+      : s.type === 'gift' ? `🎀 ${n.k === 'any' ? '선물(사탕·꽃다발·케이크) 하나' : GIFT_N[n.k]}를 ${nm}에게` : s.type === 'cook' ? `🍳 카피백반에서 ${d.recName(n.rec)} 만들어 ${nm}에게` : s.type === 'pirate' ? `⚔️ 빌린 흰 배로 중급 바다에 나가 갈매기 해적단 물리치기 (하루 ${PIRATE_TRIES}번)` : '⚖️ 범인 지목하기'; };
   const rewardOf = s => (s.final ? FINAL : REWARD[s.type]);
   // 해적 퀘스트: 하루 두 번 기회. 진행 중이고 기회가 남았을 때만 흰 배·대포를 빌려준다
   const triesLeft = () => PIRATE_TRIES - (q.pday === ymd() ? q.pt || 0 : 0);
@@ -165,25 +165,25 @@ export function createQuest(d) {
       el.addEventListener('click', () => { if (k < lines.length - 1) { k++; show(); } else if (!(buttons && buttons.length)) end(true); });
       show(); }); }
   const goalRow = (s, prog) => h('div', { class: 'qw-goal' }, h('b', null, '목표'), h('span', null, goalText(s)), prog && h('em', null, prog));
-  const rwRow = s => { const [c, a] = rewardOf(s); return h('div', { class: 'qw-rw' }, h('b', null, '보상'), h('span', null, `🪙 ${c}코인`), h('span', null, s.final ? `💗 모든 동물 +${a}` : `💗 친밀도 +${a}`), s.end && !s.final && h('span', null, `📜 장 보너스 ${END_BONUS}`)); };
+  const rwRow = s => { const [c, a] = rewardOf(s); return h('div', { class: 'qw-rw' }, h('b', null, '보상'), h('span', null, `🪙 ${c}코인`), h('span', null, s.final ? `💗 모든 동물 +${a}` : `💗 친밀도 +${a}`), s.end && !s.final && h('span', null, `📁 장 보너스 ${END_BONUS}`)); };
 
-  // 동물 창의 📜 퀘스트 버튼
+  // 동물 창의 🔍 퀘스트 버튼
   async function open(i) { const s = cur(), ch = s && STORY[s.ci];
-    if (!s) return vn(['{happy}고마워. 너 덕분에 섬이 다시 하나가 됐어.'], i, '📜 사건 해결!', [h('p', { class: 'vn-sub' }, '메인 이야기 「누가 왕관을 훔쳤나」를 모두 마쳤어요.')]);
-    const title = `📜 ${ch.t}`;
-    if (!q.on && capped()) return vn(['{smile}오늘은 수사를 많이 했네. 푹 쉬고 내일 이어서 하자!'], i, '📜 오늘은 여기까지!', [h('p', { class: 'vn-sub' }, `메인 퀘스트는 하루에 ${DAY_MAX}단계까지 할 수 있어요. 내일 ${d.names[s.who]}에게서 이어져요.`)]);
+    if (!s) return vn(['{happy}고마워. 너 덕분에 섬이 다시 하나가 됐어.'], i, '👑 사건 해결!', [h('p', { class: 'vn-sub' }, '메인 이야기 「누가 왕관을 훔쳤나」를 모두 마쳤어요.')]);
+    const title = `🔍 ${ch.t}`;
+    if (!q.on && capped()) return vn(['{smile}오늘은 수사를 많이 했네. 푹 쉬고 내일 이어서 하자!'], i, '🌙 오늘은 수사 끝!', [h('p', { class: 'vn-sub' }, `메인 퀘스트는 하루에 ${DAY_MAX}단계까지 할 수 있어요. 내일 ${d.names[s.who]}에게서 이어져요.`)]);
     if (!q.on && s.who === i) { if (s.type === 'accuse') return accuse(i, s, title);
       const same = s.type === 'talk' && s.to === s.who, v = await vn(s.say, i, title, [goalRow(s), rwRow(s)], [{ label: '나중에', value: 0 }, { label: same ? '듣기' : '수락', primary: true, value: 1 }]);
       if (!v) return; if (same) { await save({ on: 1 }); return finish(i, s, title); } return accept(s); }
     if (q.on && s.to === i) { if (s.type === 'talk') return finish(i, s, title);
-      if (have(s)) { const v = await vn([s.type === 'cook' ? '{wow}와, 정말 만들어 왔구나!' : '{happy}오, 가져왔구나!'], i, title + ' · 완료 가능', [goalRow(s, '✔'), rwRow(s)], [{ label: '나중에', value: 0 }, { label: '🎁 건네고 완료하기', primary: true, value: 1 }]); if (v) finish(i, s, title); return; }
+      if (have(s)) { const v = await vn([s.type === 'cook' ? '{wow}와, 정말 만들어 왔구나!' : '{happy}오, 가져왔구나!'], i, title + ' · 완료 가능', [goalRow(s, '✔'), rwRow(s)], [{ label: '나중에', value: 0 }, { label: '🫴 건네고 완료하기', primary: true, value: 1 }]); if (v) finish(i, s, title); return; }
       return vn(s.say.slice(-1), i, title, [goalRow(s, '진행 중'), hint(s)]); }
     // 이 동물 차례가 아닐 때: 지금 할 일을 알려 준다
     const who = q.on ? s.to : s.who;
-    return vn([`{think}지금은 부탁할 게 없어. ${d.names[who]}에게 가 봐!`], i, '📜 퀘스트', [h('div', { class: 'qw-goal' }, h('b', null, '지금'), h('span', null, `${ch.t} · ${q.on ? goalText(s) : `${d.names[s.who]}에게 이야기 듣기`}`))]); }
-  const hint = s => s.type === 'pirate' ? h('p', { class: 'dim' }, triesLeft() > 0 ? `친목회 바다에서 가방의 "내 보트"(빌린 흰 배)를 타고 중급 바다로 나가면 해적단이 나타나요. 오늘 남은 기회 ${triesLeft()}번.` : '오늘 기회를 다 썼어요. 배와 대포는 돌려줬어요. 내일 다시 도전해요.') : s.type === 'cook' ? h('p', { class: 'dim' }, '카피백반 첫 화면의 "📜 퀘스트 요리"에서 만들 수 있어요. 임대료는 안 내도 돼요.') : s.type === 'crop' ? h('p', { class: 'dim' }, '작물은 카피 농장에서 길러요.') : s.type === 'fish' ? h('p', { class: 'dim' }, '물고기는 바다 낚시로 잡아요.') : s.type === 'gift' ? h('p', { class: 'dim' }, '선물은 카피수퍼에서 사요.') : null;
+    return vn([`{think}지금은 부탁할 게 없어. ${d.names[who]}에게 가 봐!`], i, '🔍 수사 중', [h('div', { class: 'qw-goal' }, h('b', null, '지금'), h('span', null, `${ch.t} · ${q.on ? goalText(s) : `${d.names[s.who]}에게 이야기 듣기`}`))]); }
+  const hint = s => s.type === 'pirate' ? h('p', { class: 'dim' }, triesLeft() > 0 ? `친목회 바다에서 가방의 "내 보트"(빌린 흰 배)를 타고 중급 바다로 나가면 해적단이 나타나요. 오늘 남은 기회 ${triesLeft()}번.` : '오늘 기회를 다 썼어요. 배와 대포는 돌려줬어요. 내일 다시 도전해요.') : s.type === 'cook' ? h('p', { class: 'dim' }, '카피백반 첫 화면의 "🔍 퀘스트 요리"에서 만들 수 있어요. 임대료는 안 내도 돼요.') : s.type === 'crop' ? h('p', { class: 'dim' }, '작물은 카피 농장에서 길러요.') : s.type === 'fish' ? h('p', { class: 'dim' }, '물고기는 바다 낚시로 잡아요.') : s.type === 'gift' ? h('p', { class: 'dim' }, '선물은 카피수퍼에서 사요.') : null;
   const clueBox = () => { const L = (q.clues || []); return L.length ? h('div', { class: 'qw-clue' }, h('b', null, '🔎 수사 수첩'), ...L.map(t => h('small', null, '· ' + t))) : null; };
-  function accept(s) { save({ on: 1, ok: 0 }); sfx('point'); toast(s.type === 'pirate' ? `⛵ 흰 배와 대포(포탄 20발)를 빌렸어요! 퀘스트 동안만 쓸 수 있어요` : `📜 퀘스트 수락 · ${goalText(s)}`, 3200); }
+  function accept(s) { save({ on: 1, ok: 0 }); sfx('point'); toast(s.type === 'pirate' ? `⛵ 흰 배와 대포(포탄 20발)를 빌렸어요! 퀘스트 동안만 쓸 수 있어요` : `🔍 수사 시작 · ${goalText(s)}`, 3200); }
   async function finish(i, s, title) {
     if (s.type !== 'talk' && s.type !== 'accuse' && !have(s)) return toast('아직 목표를 다 채우지 못했어요');
     if (s.type === 'fish') { const L = d.fish().filter(([, , f]) => f && (f.z || 1) >= s.need.z).sort((a, b) => (a[1].p || 0) - (b[1].p || 0)); d.useFish(L[0][0]); }
@@ -193,15 +193,15 @@ export function createQuest(d) {
     if (s.final) { d.names.forEach((_, k) => { if (k !== 10) d.affinity(k, a); }); d.affinity(10, Math.max(0, 100 - d.A(10))); await d.saveBag({ scooter: 1 }); } else { d.affinity(i, a); if (s.who !== i) d.affinity(s.who, 2); }
     const clues = s.clue ? [...(q.clues || []), s.clue] : q.clues || [];
     await save({ s: (q.s || 0) + 1, on: 0, ok: 0, clues, day: ymd(), dn: doneToday() + 1 }); sfx(s.end ? 'bigfish' : 'coin');
-    const next = FLAT[(q.s || 0)], nextT = next && capped() ? `오늘 ${DAY_MAX}단계를 모두 했어요. 내일 ${d.names[next.who]}에게서 이어져요!` : next ? (next.ci !== s.ci ? `다음: ${STORY[next.ci].t} — ${d.names[next.who]}에게 가 보세요` : `다음: ${d.names[next.who]}에게 가 보세요`) : '메인 이야기 끝! 🎉';
-    await vn(s.done, i, title + (s.end ? ' · 장 완료!' : ' · 완료'), [s.clue && h('p', { class: 'qw-new' }, `🔎 수첩에 적었어요: ${s.clue}`)], [{ label: '보상 받기 🎁', primary: true, value: 1 }]);
+    const next = FLAT[(q.s || 0)], nextT = next && capped() ? `오늘 ${DAY_MAX}단계를 모두 했어요. 내일 ${d.names[next.who]}에게서 이어져요!` : next ? (next.ci !== s.ci ? `다음: ${STORY[next.ci].t} — ${d.names[next.who]}에게 가 보세요` : `다음: ${d.names[next.who]}에게 가 보세요`) : '메인 이야기 끝! 👑';
+    await vn(s.done, i, title + (s.end ? ' · 장 완료!' : ' · 완료'), [s.clue && h('p', { class: 'qw-new' }, `🔎 수첩에 적었어요: ${s.clue}`)], [{ label: '🏅 보상 받기', primary: true, value: 1 }]);
     // 보상 알림 창: (보상 내용)을 받았습니다
     const items = s.final ? [['🛴', '전설의 황금사자 스쿠터', '가방에서 타기 · 육지와 농장에서 빠르게 달려요'], ['🪙', `${(c + bonus).toLocaleString('ko-KR')}코인`, ''], ['🦁', '사자 친밀도 100', '단짝이 됐어요!'], ['💗', `다른 동물 친밀도 +${a}`, '']]
       : [['🪙', `${(c + bonus).toLocaleString('ko-KR')}코인`, bonus ? `(장 보너스 ${bonus} 포함)` : ''], ['💗', `${d.names[i]} 친밀도 +${a}`, ''], ...(s.who !== i ? [['💗', `${d.names[s.who]} 친밀도 +2`, '']] : [])];
-    sfx(s.final ? 'bigfish' : 'coin'); modal({ title: s.final ? '🏆 전설의 보상!' : s.end ? '🎉 장 완료 보상' : '🎁 퀘스트 보상', body: [s.final && h('img', { class: 'rw-sc', src: 'img/scooter-b.webp', alt: '황금사자 스쿠터' }), h('div', { class: 'rw-pop' }, ...items.map(([ic, t, sub]) => h('div', { class: 'rw-it' }, h('span', null, ic), h('b', null, t), sub && h('small', null, sub)))),
+    sfx(s.final ? 'bigfish' : 'coin'); modal({ title: s.final ? '🏆 전설의 보상!' : s.end ? '📁 장 완료! 수사 보상' : '🏅 수사 보상', body: [s.final && h('img', { class: 'rw-sc', src: 'img/scooter-b.webp', alt: '황금사자 스쿠터' }), h('div', { class: 'rw-pop' }, ...items.map(([ic, t, sub]) => h('div', { class: 'rw-it' }, h('span', null, ic), h('b', null, t), sub && h('small', null, sub)))),
       h('p', { class: 'center rw-msg' }, `${items.map(x => x[1]).join(', ')}을(를) 받았습니다.`), h('p', { class: 'center dim' }, nextT)], actions: [{ label: '확인', primary: true }] }); }
   async function accuse(i, s, title) {
-    const c = await vn(s.say, i, title, [clueBox()], s.need.opts.map(([nm], k) => ({ label: `👉 ${nm}`, value: k + 1 }))); if (!c) return;
+    const c = await vn(s.say, i, title, [clueBox()], s.need.opts.map(([nm], k) => ({ label: `☝️ ${nm}`, value: k + 1 }))); if (!c) return;
     const [, ok, why] = s.need.opts[c - 1]; if (ok) { await save({ on: 1 }); return finish(i, s, title); }
     sfx('bad'); const again = await vn([why], i, title, [], [{ label: '다시 고르기', primary: true, value: 1 }]); if (again) accuse(i, s, title); }
   // 카피백반과 이어지는 부분

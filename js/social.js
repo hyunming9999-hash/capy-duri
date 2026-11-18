@@ -345,7 +345,7 @@ export function mount(el, ctx) {
   function goFarm() { if (farmOpen) return; if (fishOpen || battle) return toast('하던 걸 끝내고 농장에 갈 수 있어요'); if (me.boat) return toast('배에서 내린 뒤에 농장에 갈 수 있어요'); fishOpen = true; farmOpen = true; keys.clear(); sfx('pop');
     openFarm({ ctx, scoot: () => (scoot ? scootHtml() : null), onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); } }); }
   const fcrow = farmCrow(ctx, { goFarm: () => goFarm() });
-  // 메인 퀘스트: 동물 머리 위 ! ? 표시와 동물 창의 📜 퀘스트 버튼
+  // 메인 퀘스트: 동물 머리 위 ! ? 표시와 동물 창의 🔍 퀘스트 버튼
   let vnOn = false;
   const quest = createQuest({ ctx, names: ANIMALS.map(a => a.name), svg: i => animalSvg(i), svgFull: (i, mood) => animalSvg(i, true, mood || undefined), meSvg: face => capy(ctx.capyOf(ctx.uid, { face })), meName: ctx.me.name,
     host: () => (worldEl && worldEl.parentElement && worldEl.isConnected ? worldEl.parentElement : null), pause: on => { vnOn = on; keys.clear(); }, A, affinity: (i, d) => setRel(i, { a: A(i) + d }), toned, coins: addCoins, bag: () => bag, saveBag,
@@ -357,7 +357,7 @@ export function mount(el, ctx) {
   let nudgeAt = performance.now() + 3500;
   function nudgeTick(now) { if (!nudgeAt || now < nudgeAt) return; if (document.querySelector('.modal-wrap') || fishOpen || battle || trial) { nudgeAt = now + 3000; return; } nudgeAt = 0;
     let seen = ''; try { seen = localStorage.getItem('capy-qnudge') || ''; } catch {} if (!quest.fresh() || seen === ymd()) return; try { localStorage.setItem('capy-qnudge', ymd()); } catch {}
-    sfx('point'); modal({ title: '📜 섬에 사건이 일어났어요!', body: [h('div', { class: 'qn' }, h('span', { class: 'qn-an', html: animalSvg(10) }), h('div', null, h('b', null, `"${toned(10, '짐의 황금 왕관이 사라졌도다! 누가 좀 도와다오!')}"`), h('p', null, '사자가 엉엉 울고 있어요. 부엉이 탐정의 조수가 되어 범인을 찾아볼래요?'))),
+    sfx('point'); modal({ title: '👑 섬에 사건이 일어났어요!', body: [h('div', { class: 'qn' }, h('span', { class: 'qn-an', html: animalSvg(10) }), h('div', null, h('b', null, `"${toned(10, '짐의 황금 왕관이 사라졌도다! 누가 좀 도와다오!')}"`), h('p', null, '사자가 엉엉 울고 있어요. 부엉이 탐정의 조수가 되어 범인을 찾아볼래요?'))),
       h('p', { class: 'dim center qn-tip' }, '메인 퀘스트 「누가 왕관을 훔쳤나」 · 언제든 사자를 눌러 시작할 수 있어요')],
       actions: [{ label: '나중에' }, { label: '🦁 사자 도와주기', primary: true, onClick: c => { c(); quest.open(10); } }] }); }
   // 해적 퀘스트 동안만 빌린 배를 쓰고, 끝나거나 기회를 다 쓰면 돌려준다. 빌린 흰 배로 중급 바다에 들어서면 해적단이 나온다
@@ -835,7 +835,7 @@ export function mount(el, ctx) {
     close = modal({ title: `${a.name} · ${p.trait}`, body: h('div', { class: 'so-meet' },
       h('div', { class: 'so-face' }, faceEl, bubble), meter, fedNote, quick,
       h('div', { class: 'so-say' }, input, h('button', { class: 'btn primary', onClick: () => talk(input.value) }, '말하기')),
-      h('div', { class: 'so-acts' }, scoot && scPas < 0 && (actors[i].wantRide || 0) > performance.now() && h('button', { class: 'btn so-ridebtn', onClick: () => { close(); takePas(i); } }, '🛴 태우기'), h('button', { class: 'btn so-qbtn', 'data-m': quest.markOf(i), onClick: () => quest.open(i) }, '📜 퀘스트', quest.markOf(i) && h('i', null, quest.markOf(i))), h('button', { class: 'btn', onClick: give }, '🎁 선물'), h('button', { class: 'btn', onClick: trade }, '🤝 거래'), h('button', { class: 'btn', onClick: memBtn }, '📜 기억'))), actions: [{ label: '닫기' }], onClose: () => { if (demand && actors[i]) actors[i].rage = true; if (held === i) held = -1; const o = actors[i]; if (o && o.st === 'walk') o.e.classList.add('walk'); } });
+      h('div', { class: 'so-acts' }, scoot && scPas < 0 && (actors[i].wantRide || 0) > performance.now() && h('button', { class: 'btn so-ridebtn', onClick: () => { close(); takePas(i); } }, '🛴 태우기'), h('button', { class: 'btn so-qbtn', 'data-m': quest.markOf(i), onClick: () => quest.open(i) }, '🔍 퀘스트', quest.markOf(i) && h('i', null, quest.markOf(i))), h('button', { class: 'btn', onClick: give }, '🎁 선물'), h('button', { class: 'btn', onClick: trade }, '🤝 거래'), h('button', { class: 'btn', onClick: memBtn }, '📜 기억'))), actions: [{ label: '닫기' }], onClose: () => { if (demand && actors[i]) actors[i].rage = true; if (held === i) held = -1; const o = actors[i]; if (o && o.st === 'walk') o.e.classList.add('walk'); } });
     const v = A(i); say(v <= ROB_AT ? pick(LINES.cold) : v >= PIN_AT ? `${ctx.me.name}! 왔구나, 보고 싶었어!` : v >= 10 ? `안녕, ${ctx.me.name}! 또 만났네.` : `안녕? 난 ${a.name}야. ${p.likes[0]} 좋아해.`); drawMeter(); drawQuick();
   }
 
