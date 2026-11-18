@@ -1753,7 +1753,7 @@ body.vb-on .modal-wrap { z-index: 4600; }
 .kb-bi { display: flex; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px dashed #EADBC0; } .kb-bi img { width: 52px; height: 44px; object-fit: contain; } .kb-bi b { display: block; font-size: 13px; } .kb-bi small { font-size: 11px; color: #7A5236; word-break: keep-all; }
 .kb-pan { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; } .kb-pi { text-align: center; background: #FFF8EA; border-radius: 12px; padding: 6px; } .kb-pi span { font-size: 24px; display: block; } .kb-pi b { display: block; font-size: 12px; } .kb-pi small { font-size: 11px; color: #9C8160; } .kb-pi.off { opacity: .45; }
 /* ===== 📜 퀘스트 (메이플풍 대화창) ===== */
-.so-qm { position: absolute; left: 50%; top: -30px; transform: translateX(-50%); width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: 900 15px/1 var(--head); font-style: normal; background: #FFD23F; border: 2px solid #C98A00; color: #7A4A00; z-index: 3; animation: qb 1s ease-in-out infinite; pointer-events: none; }
+.so-qm { position: absolute; left: 50%; top: -58px; transform: translateX(-50%); width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font: 900 19px/1 var(--head); box-shadow: 0 2px 0 rgba(0,0,0,.2); font-style: normal; background: #FFD23F; border: 2px solid #C98A00; color: #7A4A00; z-index: 3; animation: qb 1s ease-in-out infinite; pointer-events: none; }
 .so-qm[data-m="?"] { background: #7BC74D; border-color: #3E7D2A; color: #fff; } .so-qm[data-m="…"] { background: #fff; border-color: #CDB48A; color: #9C8160; animation: none; font-size: 12px; }
 @keyframes qb { 50% { transform: translate(-50%, -3px); } }
 .so-acts { grid-template-columns: repeat(2, 1fr) !important; }
