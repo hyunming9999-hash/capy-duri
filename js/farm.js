@@ -71,8 +71,8 @@ export function openFarm(o) {
   const exitSign = h('button', { class: 'fm-exit', style: { left: WIDTH - Math.round(TW * 0.11) + 'px' }, onClick: () => close() }, '놀이터로 →');
   const sc = o.scoot ? o.scoot() : null, meSvg = (back = false) => capy(ctx.capyOf(ctx.uid, back ? { view: 'back' } : { face: 'happy' })), meEl = h('div', { class: 'fm-me' + (sc ? ' scoot' : ''), html: sc || meSvg() }); // 스쿠터를 타고 왔으면 농장에서도 탄 채로, 1.8배 빠르게
   // 손에 든 농기구: 캐릭터 그림(svg) 안에 직접 그려 넣고 오른손(앞발)으로 감싸 쥔다 → 걷고 뒤집혀도 손에서 안 떨어진다
-  let heldK = 'hoe', heldUse = 0, heldT = 0; const drawHeld = () => { if (sc) return; const t = tool(); if (t === heldT && meEl.dataset.k === heldK) return; heldT = t; meEl.dataset.k = heldK; meEl.innerHTML = holdSvg(meSvg(heldK === 'can'), heldK, t); meEl.classList.toggle('turned', heldK === 'can'); }; // 물 줄 땐 밭 쪽으로 돌아서서(뒷모습) 준다
-  const useHeld = k => { if (sc) return; clearTimeout(heldUse); heldK = k; drawHeld(); meEl.classList.remove('use'); void meEl.offsetWidth; meEl.classList.add('use'); heldUse = setTimeout(() => { heldUse = 0; meEl.classList.remove('use'); heldK = 'hoe'; drawHeld(); }, k === 'can' ? 1500 : 1100); };
+  let heldK = 'hoe', heldBack = false, heldUse = 0, heldT = 0; const drawHeld = () => { if (sc) return; const t = tool(), id = heldK + (heldBack ? 'b' : ''); if (t === heldT && meEl.dataset.k === id) return; heldT = t; meEl.dataset.k = id; meEl.innerHTML = holdSvg(meSvg(heldBack), heldK, t); meEl.classList.toggle('turned', heldBack); }; // 물 주기·잡초 베기는 밭 쪽으로 돌아서서(뒷모습) 한다
+  const useHeld = (k, back = k === 'can') => { if (sc) return; clearTimeout(heldUse); heldK = k; heldBack = back; drawHeld(); meEl.classList.remove('use'); void meEl.offsetWidth; meEl.classList.add('use'); heldUse = setTimeout(() => { heldUse = 0; meEl.classList.remove('use'); heldK = 'hoe'; heldBack = false; drawHeld(); }, k === 'can' ? 1500 : 1100); };
   world.append(shop, exitSign, meEl);
   const scroller = h('div', { class: 'fm-scroll' }, world);
   // 방향키(◀ ▶)로 걷는다. 밭 앞에 서면 그 밭이 열리고, 카피철물 앞에 서면 들어가기 버튼이 뜬다
@@ -87,9 +87,10 @@ export function openFarm(o) {
     if (T === 1) return `${order[0] + 1}번 이랑 차례에요`;
     return lw && lw.left > 0 && t - lw.t < 300000 ? '한 번 더 줘요' : '한 번에 2이랑씩 물줘요'; }
   const lastWater = {}; // 밭마다 방금 물 준 때와 아직 못 적신 이랑 수(중급 '한 번 더' 안내용)
-  function drawQuick() { const t = now(), k = meEl.classList.contains('walk') ? -1 : plotEls.findIndex((_, i) => Math.abs(me.x - (plotX(i) + PW / 2)) < PW / 2), open = k >= 0 && isOpen(k), rs = open ? rowsOf(k).filter(live) : [], grow = rs.filter(r => !ripe(r, t)), rip = who === ctx.uid ? rs.filter(r => ripe(r, t)) : [], dry = grow.some(r => dryNow(r, t));
-    const wh = k >= 0 ? waterHint(k) : '', key = `${k}|${grow.length}|${rip.length}|${dry}|${tool()}|${wh}`; if (key === quickKey) return; quickKey = key;
-    rc(quickEl, grow.length > 0 && h('button', { class: 'fm-qb water' + (dry ? ' on' : ''), onClick: () => doWater(k) }, h('img', { src: toolImg(tool(), 'can'), alt: '' }), h('span', null, '물 주기'), h('small', null, wh)),
+  function drawQuick() { const t = now(), k = meEl.classList.contains('walk') ? -1 : plotEls.findIndex((_, i) => Math.abs(me.x - (plotX(i) + PW / 2)) < PW / 2), open = k >= 0 && isOpen(k), rs = open ? rowsOf(k).filter(live) : [], grow = rs.filter(r => !ripe(r, t)), rip = who === ctx.uid ? rs.filter(r => ripe(r, t)) : [], dry = grow.some(r => dryNow(r, t)), wd = who === ctx.uid ? grow.filter(r => weedNow(r, t)).length : 0;
+    const wh = k >= 0 ? waterHint(k) : '', key = `${k}|${grow.length}|${rip.length}|${dry}|${tool()}|${wh}|${wd}`; if (key === quickKey) return; quickKey = key;
+    rc(quickEl, wd > 0 && h('button', { class: 'fm-qb weed on', onClick: () => doWeed(k) }, h('img', { src: toolImg(tool(), 'hoe'), alt: '' }), h('span', null, '잡초 베기'), h('small', null, `잡초 ${wd}개`)),
+      grow.length > 0 && h('button', { class: 'fm-qb water' + (dry ? ' on' : ''), onClick: () => doWater(k) }, h('img', { src: toolImg(tool(), 'can'), alt: '' }), h('span', null, '물 주기'), h('small', null, wh)),
       rip.length > 0 && h('button', { class: 'fm-qb harv on', onClick: () => harvestTap(k) }, h('b', null, '🧺'), h('span', null, '수확'), h('small', null, ['', '하나씩', '한 이랑', '밭 전체'][tool()]))); }
   const scene = h('div', { class: 'fm-scene' }, scroller, h('div', { class: 'fm-pad' }, padBtn('L', '◀'), enterBtn, quickEl, padBtn('R', '▶')));
   const onKey = e => { const k = e.key === 'ArrowLeft' ? 'L' : e.key === 'ArrowRight' ? 'R' : ''; if (!k || document.querySelector('.modal-wrap')) return; e.preventDefault(); if (e.type === 'keydown') keys.add(k); else keys.delete(k); };
@@ -120,7 +121,7 @@ export function openFarm(o) {
         kids.push(h('div', { class: 'fm-rowc' + (rp ? ' ripe' : ' grow') + (rotten(r, t) ? ' rot' : '') + (rp && who === ctx.uid ? ' tap' : ''), style: { top: b.t + '%', height: b.h + '%', left: b.l + '%', right: b.r + '%', gridTemplateColumns: `repeat(${b.n}, 1fr)` },
             onClick: rp && who === ctx.uid ? e => { e.stopPropagation(); walkTo(plotX(k) + PW / 2, () => harvestTap(k, i)); } : null },
           ...Array.from({ length: b.n }, (_, j) => rp ? (j < shownN ? h('img', { src: cropImg(c.id), alt: '' }) : h('i')) : h('span', { html: SPROUT, style: { transform: `scale(${(0.45 + 0.55 * Math.min(1, (t - r.at) / r.ms)).toFixed(2)})` } }))));
-        if (weedNow(r, t)) kids.push(h('img', { class: 'fm-weed', src: 'img/farm/weed.webp', alt: '잡초', style: { top: b.t + 4 + '%', left: 22 + i * 22 + '%' } })); });
+        if (weedNow(r, t)) kids.push(h('img', { class: 'fm-weed', src: 'img/farm/weed.webp', alt: '잡초', style: { top: b.t + 4 + '%', left: 22 + i * 22 + '%' } }), h('small', { class: 'fm-weedt', style: { top: b.t + 1 + '%', left: 22 + i * 22 + 6.5 + '%' } }, '잡초')); });
       const ripeN = rows.filter(r => live(r) && ripe(r, t)).length, growing = rows.filter(r => live(r) && !ripe(r, t)), emptyN = rows.filter(r => !live(r)).length;
       const soon = growing.length ? Math.min(...growing.map(r => r.at + r.ms - t)) : 0;
       const lab = !open ? `🔒 땅 문서 ${DEEDS[k - 1].toLocaleString('ko-KR')}코인` : !any ? (who === ctx.uid ? '빈 밭 · 눌러서 씨앗 심기' : '빈 밭') : ripeN ? `수확! ${ripeN}이랑` : emptyN && who === ctx.uid ? `빈 이랑 ${emptyN}` : ''; // 남은 시간은 아래 밭 현황에서 본다
@@ -192,7 +193,7 @@ export function openFarm(o) {
     if (!pick.length) return; const rows = cur.map((r, i) => (pick.includes(i) ? water(r, t) : r)); sfx('splash'); useHeld('can'); await setRows(k, rows);
     const more = order.length - pick.length; lastWater[k] = { t, left: lastWater[k] && lastWater[k].left > 0 ? 0 : more }; const what = n >= 3 ? '밭 전체에' : `${pick.map(i => i + 1).join('·')}번째 이랑에`;
     if (who !== ctx.uid) { ctx.store.set(`farm/${who}/note`, { by: ctx.uid, at: t, k }).catch(() => {}); toast(`${ctx.nameOf(who)}네 ${k + 1}번 밭 ${what} 물을 줬어요 💧`, 2000); } else toast(`${what} 물을 줬어요 💧${more > 0 ? ` (남은 이랑 ${more}줄은 한 번 더)` : ''}`, 1600); }
-  async function doWeed(k) { const t = now(), rows = rowsOf(k).map(r => (live(r) && weedNow(r, t) ? weed(r, t) : r)); sfx('tock'); useHeld('hoe'); await setRows(k, rows); toast('잡초를 베었어요 🌿', 1200); }
+  async function doWeed(k) { const t = now(), rows = rowsOf(k).map(r => (live(r) && weedNow(r, t) ? weed(r, t) : r)); sfx('tock'); useHeld('hoe', true); await setRows(k, rows); toast('잡초를 베었어요 🌿', 1200); }
   // 수확: 초급 농기구는 작물 하나씩(누를 때마다 1개), 중급은 한 이랑씩, 고급은 밭 전체를 한 번에. 등급은 그 이랑에서 처음 거둘 때 정해진다
   let harvBusy = false;
   async function harvestTap(k, only) { if (harvBusy || who !== ctx.uid) return; const t = now(), rows = rowsOf(k), T = tool();
