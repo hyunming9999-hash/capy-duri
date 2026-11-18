@@ -8,7 +8,7 @@ const FREE = new Set([TOPS, BOTTOMS, HATS].flatMap(a => a.slice(0, FREE_N).map(x
 const PRICES = {}; // 게임 한 판에 50쯤 벌어서, 다섯 판쯤 하면 한 벌
 [[TOPS, 250], [BOTTOMS, 250], [HATS, 200]].forEach(([a, p]) => a.forEach((x, i) => { PRICES[x.id] = p + (i % 3) * 30; }));
 SHOES.forEach((x, i) => { PRICES[x.id] = [320, 320, 320, 380, 380, 380, 300, 280, 300][i]; }); // 신발 9켤레: 처음부터 주는 건 없고 전부 사야 한다
-ZOO_HATS.forEach((x, i) => { PRICES[x.id] = 2500 + (i * 3 % 6) * 100; }); // 친목회 전용 모자: 동물에게서만 산다
+ZOO_HATS.forEach((x, i) => { PRICES[x.id] = 2500 + ((i * 5 + 2) % 6) * 100; }); // 친목회 전용 모자: 동물에게서만 산다
 export const priceOf = id => (FREE.has(id) ? 0 : PRICES[id] || 0);
 // 게임별 환산 규칙(게임 목록과 적립 카드에 그대로 보여 준다)
 export const RATE = { burger: '8점당 1코인', bubble: '기록 하 40점·중 28점·상 20점당 1코인 · 스테이지 클리어 35~270', tetris: '하 20점·중 14점·상 10점당 1코인 (최대 200·350·500) · 이기면 +30', yuzu: '1점당 2코인', mahjong: '3점당 1코인 · 이기면 +20', omok: '승 50 · 무 25 · 패 15 · 혼자 10코인', four: '승 50 · 무 25 · 패 15 · 혼자 10코인', match: '승 50 · 무 25 · 패 15 · 혼자 10코인', volley: '승 50 · 패 15코인 (컴퓨터전은 60%)' };
