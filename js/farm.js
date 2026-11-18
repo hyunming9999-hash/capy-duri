@@ -32,7 +32,8 @@ export function holdSvg(svg, k, t) {
   return svg.replace(/<\/svg>$/, `<g class="fm-hand">${g}${paw}</g></svg>`).replace('<svg ', '<svg style="overflow:visible" ');
 }
 export const DEEDS = [300, 700, 1400, 2000]; // 2~5번째 밭 땅 문서
-export const PLOTS = 5, YIELD_ROW = 2, ROT_MS = 3 * 86400000; // 이랑 한 줄에서 2개, 밭 한 칸(3줄)이면 6개
+export const PLOTS = 5, YIELD_ROW = 9, ROT_MS = 3 * 86400000; // 이랑 한 줄에서 9개(밭 한 칸 3줄이면 27개)
+const BAD = [null, [1, 3], [0, 2], [0, 1]]; // 이랑마다 불량 개수: 초급 1~3 · 중급 0~2 · 고급 0~1 (그 이랑을 처음 거둘 때 든 농기구로 정한다)
 export const GRADE_X = { S: 2, A: 1.5, B: 1.2, C: 1, F: 0 };
 export const cropPrice = (id, g) => Math.round((cropOf(id) || { base: 0 }).base * (GRADE_X[g] || 0));
 
@@ -207,14 +208,15 @@ export function openFarm(o) {
     const ripeIdx = rows.map((r, i) => i).filter(i => live(rows[i]) && ripe(rows[i], t)); if (!ripeIdx.length) return;
     const targets = T >= 3 ? ripeIdx : [only != null && ripeIdx.includes(only) ? only : ripeIdx[0]];
     const got = [], patch = {}, add = {}; harvBusy = true;
-    targets.forEach(i => { const r = rows[i], g = r.g || gradeOf(r, t), take = g === 'F' ? 0 : T === 1 ? 1 : YIELD_ROW - (r.got || 0), done = g === 'F' || (r.got || 0) + take >= YIELD_ROW;
-      got.push([r.c, g, take]); if (take) { const key = `${r.c}|${g}`; add[key] = (add[key] || 0) + take; } rows[i] = done ? null : { ...r, g, got: (r.got || 0) + take }; });
+    targets.forEach(i => { const r = rows[i], g = r.g || gradeOf(r, t), left = YIELD_ROW - (r.got || 0), take = g === 'F' ? 0 : T === 1 ? 1 : left, done = g === 'F' || (r.got || 0) + take >= YIELD_ROW;
+      const bad = r.bad != null ? r.bad : BAD[T][0] + Math.floor(Math.random() * (BAD[T][1] - BAD[T][0] + 1)), badLeft = Math.max(0, bad - (r.badGot || 0)), badNow = !take ? 0 : T === 1 ? (Math.random() < badLeft / left ? 1 : 0) : Math.min(take, badLeft), good = take - badNow;
+      got.push([r.c, g, good, badNow]); if (good) { const key = `${r.c}|${g}`; add[key] = (add[key] || 0) + good; } rows[i] = done ? null : { ...r, g, got: (r.got || 0) + take, bad, badGot: (r.badGot || 0) + badNow }; });
     Object.entries(add).forEach(([key, n]) => { patch[`barn/${key}`] = ((mine.barn || {})[key] || 0) + n; });
     try { if (Object.keys(patch).length) await ctx.store.update(myRef(), patch).catch(() => {}); await setRows(k, rows); } finally { harvBusy = false; }
     useHeld('hoe'); sfx(got.some(([, g]) => g === 'S') ? 'bigfish' : got.every(([, g]) => g === 'F') ? 'bad' : 'coin');
-    if (T < 3) { const [id, g, n] = got[0]; harvPop(k, g === 'F' ? '시들었어요' : `+${n} ${cropOf(id).name} ${g}급`, g); if (!rows.some(r => live(r) && ripe(r, t))) toast(`${k + 1}번 밭 수확 끝! 헛간에 담았어요 🧺`, 1600); drawPlots(); return; }
+    if (T < 3) { const [id, g, n, b] = got[0]; harvPop(k, g === 'F' ? '시들었어요' : !n ? `불량이에요 🗑` : `+${n} ${cropOf(id).name} ${g}급${b ? ` (불량 ${b})` : ''}`, !n ? 'F' : g); if (!rows.some(r => live(r) && ripe(r, t))) toast(`${k + 1}번 밭 수확 끝! 헛간에 담았어요 🧺`, 1600); drawPlots(); return; }
     drawPlots();
-    modal({ title: `${k + 1}번 밭 수확!`, body: [h('div', { class: 'fm-hlist' }, ...got.map(([id, g, n]) => h('div', { class: 'fm-harv g' + g }, h('img', { src: cropImg(id), alt: '' }), h('b', { class: 'fm-gr g' + g }, g === 'F' ? 'F' : g + '급'), h('small', null, g === 'F' ? '시들었어요' : `${cropOf(id).name} ×${n}`)))),
+    modal({ title: `${k + 1}번 밭 수확!`, body: [h('div', { class: 'fm-hlist' }, ...got.map(([id, g, n, b]) => h('div', { class: 'fm-harv g' + g }, h('img', { src: cropImg(id), alt: '' }), h('b', { class: 'fm-gr g' + g }, g === 'F' ? 'F' : g + '급'), h('small', null, g === 'F' ? '시들었어요' : `${cropOf(id).name} ×${n}${b ? ` · 불량 ${b}` : ''}`)))),
       h('p', { class: 'center' }, got.some(([, g]) => g !== 'F') ? '헛간에 담았어요. 카피수퍼에서 팔 수 있어요.' : '다 자란 뒤 3일 넘게 거두지 않아 시들었어요.')], actions: [{ label: '확인', primary: true }] }); }
   // 밭 위로 '+1 감자 A급'이 떠오른다
   function harvPop(k, text, g) { const e = h('b', { class: 'fm-hpop g' + g, style: { left: plotX(k) + PW / 2 + 'px' } }, text); world.append(e); setTimeout(() => e.remove(), 1300); }
