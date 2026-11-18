@@ -35,7 +35,8 @@ export const DEEDS = [300, 700, 1400, 2000]; // 2~5번째 밭 땅 문서
 export const PLOTS = 5, YIELD_ROW = 9, ROT_MS = 3 * 86400000; // 이랑 한 줄에서 9개(밭 한 칸 3줄이면 27개)
 const BAD = [null, [1, 3], [0, 2], [0, 1]]; // 이랑마다 불량 개수: 초급 1~3 · 중급 0~2 · 고급 0~1 (그 이랑을 처음 거둘 때 든 농기구로 정한다)
 export const GRADE_X = { S: 2, A: 1.5, B: 1.2, C: 1, F: 0 };
-export const cropPrice = (id, g) => Math.round((cropOf(id) || { base: 0 }).base * (GRADE_X[g] || 0));
+export const SELL_X = 0.25; // 카피수퍼 매입가: 이랑당 9개로 늘어난 만큼 낮춘 값(요리 원가는 base 그대로)
+export const cropPrice = (id, g) => (GRADE_X[g] ? Math.max(1, Math.round((cropOf(id) || { base: 0 }).base * GRADE_X[g] * SELL_X)) : 0);
 
 // 밭 한 칸의 컨디션 계산(순수 함수): 물이 마른 시간과 잡초가 자란 채로 둔 시간만큼 깎인다. 다 자란 뒤로는 셈하지 않는다
 const WET = p => p.ms * 0.5;

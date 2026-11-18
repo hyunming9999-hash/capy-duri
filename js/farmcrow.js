@@ -20,10 +20,11 @@ export function farmCrow(ctx, { goFarm }) {
 
   async function steal(why) { if (busy) return; busy = true; const L = liveRows(), c = cw(); put({ res: 'lost' }); data = { ...data, crow: { ...c, res: 'lost' } }; hideBanner();
     if (!L.length) { busy = false; return; }
-    const v = L[Math.floor(Math.random() * L.length)], path = v.i == null ? `plots/${v.k}/lost` : `plots/${v.k}/rows/${v.i}/lost`;
-    await ctx.store.update(ref, { [path]: true }).catch(() => {}); sfx('bad'); const cr = cropOf(v.r.c) || { name: '작물' };
-    modal({ title: '🐦‍⬛ 까마귀가 가져갔어요…', body: [h('div', { class: 'fc-lost' }, h('img', { src: 'img/crow/crow.webp', alt: '' }), h('img', { class: 'fc-loot', src: cropImg(v.r.c), alt: '' })),
-      h('p', { class: 'center' }, `${why} ${Number(v.k) + 1}번 밭의 ${cr.name} 이랑 하나를 통째로 물고 날아갔어요.`), h('p', { class: 'center dim' }, '까마귀는 하루에 한 번 와요. 나타나면 1분 안에 농장으로!')], actions: [{ label: '확인', primary: true }] });
+    // 밭 하나를 골라 이랑 1~3줄을 털어 간다(1줄 50% · 2줄 35% · 3줄 15%, 그 밭에 남은 만큼만)
+    const ks = [...new Set(L.map(x => x.k))], pk = ks[Math.floor(Math.random() * ks.length)], inK = L.filter(x => x.k === pk).sort(() => Math.random() - 0.5), q = Math.random(), want = q < 0.5 ? 1 : q < 0.85 ? 2 : 3, took = inK.slice(0, want), v = took[0];
+    await ctx.store.update(ref, Object.fromEntries(took.map(x => [x.i == null ? `plots/${x.k}/lost` : `plots/${x.k}/rows/${x.i}/lost`, true]))).catch(() => {}); sfx('bad'); const cr = cropOf(v.r.c) || { name: '작물' }, names = [...new Set(took.map(x => (cropOf(x.r.c) || cr).name))].join('·');
+    modal({ title: '🐦‍⬛ 까마귀가 가져갔어요…', body: [h('div', { class: 'fc-lost' }, h('img', { src: 'img/crow/crow.webp', alt: '' }), ...took.map(x => h('img', { class: 'fc-loot', src: cropImg(x.r.c), alt: '' }))),
+      h('p', { class: 'center' }, `${why} ${Number(v.k) + 1}번 밭의 ${names} 이랑 ${took.length}줄을 통째로 물고 날아갔어요.`), h('p', { class: 'center dim' }, '까마귀는 하루에 한 번 와요. 나타나면 1분 안에 농장으로!')], actions: [{ label: '확인', primary: true }] });
     busy = false; }
 
   function showBanner() { if (banner) return; const tm = h('b', { class: 'fc-t' }), go = h('button', { class: 'fc-go', onClick: () => goFarm() }, '🌾 농장으로 가기');
