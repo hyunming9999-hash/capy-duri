@@ -1,6 +1,6 @@
 // 카피 농장 — 놀이터 왼쪽 '농장 가는 길' 팻말로 들어가는 따로 된 공간. 사람마다 밭 5칸(처음엔 1칸만 열림)
 // 씨앗 심기 → 물 주기·잡초 뽑기(컨디션) → 다 자라면 수확(S·A·B·C·F). 상대 농장은 구경하고 물만 줄 수 있다
-// 앱을 오래 꺼 둬도 괜찮게: 물은 자라는 시간의 절반 동안 버티고, 잡초는 한 번만 나고, 다 자란 뒤로는 컨디션이 줄지 않는다(3일 넘게 안 거두면 시든다)
+// 앱을 오래 꺼 둬도 괜찮게: 물은 자라는 시간의 70%(최소 30분) 동안 버티고, 잡초는 한 번만 나고, 다 자란 뒤로는 컨디션이 줄지 않는다(3일 넘게 안 거두면 시든다)
 import { h, toast, modal, holdBtn } from './ui.js';
 import { capy } from './capy.js';
 import { sfx } from './sound.js';
@@ -43,7 +43,7 @@ const SELL_A = (() => { const rg = {}; CROPS.forEach(c => { const r = rg[c.t] ||
 export const cropPrice = (id, g) => (GRADE_X[g] && SELL_A[id] ? Math.max(1, Math.round(SELL_A[id] * GRADE_X[g] / GRADE_X.A)) : 0);
 
 // 밭 한 칸의 컨디션 계산(순수 함수): 물이 마른 시간과 잡초가 자란 채로 둔 시간만큼 깎인다. 다 자란 뒤로는 셈하지 않는다
-const WET = p => p.ms * 0.5;
+const WET = p => Math.max(p.ms * 0.7, 30 * 60000); // 물 한 번이면 자라는 시간의 70%(최소 30분): 30분 안에 자라는 작물은 심을 때 준 물로 끝, 나머지도 한 번만 더 주면 돼요
 export function settle(p, t) {
   const end = p.at + p.ms, to = Math.min(t, end), from = Math.min(p.calc || p.at, end); if (to <= from) return p;
   const dry = Math.max(0, to - Math.max(from, p.wet)), wd = p.weedAt && !p.cut ? Math.max(0, to - Math.max(from, p.weedAt)) : 0;
@@ -55,7 +55,7 @@ export const rotten = (p, t) => ripe(p, t) && t > p.at + p.ms + ROT_MS;
 export const weedNow = (p, t) => p && p.weedAt && !p.cut && t >= p.weedAt && t < p.at + p.ms;
 export const dryNow = (p, t) => p && p.c && t >= p.wet && t < p.at + p.ms;
 export function gradeOf(p, t) { if (rotten(p, t)) return 'F'; const s = scoreOf(p, t); return s >= 0.85 ? (Math.random() < 0.3 ? 'S' : 'A') : s >= 0.6 ? 'B' : s >= 0.3 ? 'C' : 'F'; }
-export function plant(id, t) { const c = cropOf(id); return { c: id, at: t, ms: c.ms, wet: t + c.ms * 0.5, calc: t, dry: 0, wd: 0, weedAt: t + c.ms * (0.35 + Math.random() * 0.3), cut: 0 }; }
+export function plant(id, t) { const c = cropOf(id); return { c: id, at: t, ms: c.ms, wet: t + WET(c), calc: t, dry: 0, wd: 0, weedAt: t + c.ms * (0.35 + Math.random() * 0.3), cut: 0 }; }
 export const water = (p, t) => { const q = settle(p, t); return { ...q, wet: t + WET(p) }; };
 export const weed = (p, t) => { const q = settle(p, t); return { ...q, cut: t }; };
 const left = ms => { const m = Math.ceil(ms / 60000); return m >= 60 ? `${Math.floor(m / 60)}시간 ${m % 60 ? (m % 60) + '분' : ''}`.trim() : `${m}분`; };
@@ -190,7 +190,7 @@ export function openFarm(o) {
       if (!visit && growing.some(r => weedNow(r, t))) acts.push(h('button', { class: 'btn primary', onClick: () => doWeed(k) }, h('img', { class: 'fm-ic', src: toolImg(tool(), 'hoe'), alt: '' }), `잡초 베기 · ${tool() >= 3 ? '밭 전체' : `${tool()}이랑씩`}`)); }
     if (ripeRows.length && !visit) { const left1 = ripeRows.reduce((a, r) => a + (rotten(r, t) ? 1 : YIELD_ROW - (r.got || 0)), 0); acts.push(h('button', { class: 'btn primary', onClick: () => harvestTap(k) }, tool() >= 3 ? '🧺 밭 전체 수확' : tool() === 2 ? `🧺 한 이랑 수확 (${ripeRows.length}이랑 남음)` : `🧺 하나 수확 (${left1}개 남음)`)); }
     rc(sheet, closeB, h('b', null, `${k + 1}번 밭`), ...rows.map(rowCard),
-      h('p', { class: 'dim fm-tip' }, `물은 한 번 주면 자라는 시간의 절반 동안 버텨요(물은 농기구 등급만큼 이랑을 적셔요: 초급 1줄·중급 2줄·고급 밭 전체). 이랑마다 잡초가 한 번 나요${visit ? '(잡초는 밭 주인만 벨 수 있어요)' : ''}. 컨디션 85% 이상 A급(가끔 S), 60% 이상 B급, 그 아래 C급, 다 자란 뒤 3일 넘게 안 거두면 F.`),
+      h('p', { class: 'dim fm-tip' }, `물은 한 번 주면 자라는 시간의 70%(최소 30분) 동안 버텨요. 30분 안에 자라는 작물은 심을 때 준 물로 충분하고, 나머지도 한 번만 더 주면 돼요(물은 농기구 등급만큼 이랑을 적셔요: 초급 1줄·중급 2줄·고급 밭 전체). 이랑마다 잡초가 한 번 나요${visit ? '(잡초는 밭 주인만 벨 수 있어요)' : ''}. 컨디션 85% 이상 A급(가끔 S), 60% 이상 B급, 그 아래 C급, 다 자란 뒤 3일 넘게 안 거두면 F.`),
       h('div', { class: 'fm-row' }, acts));
   }
   const setRows = (k, rows) => ctx.store.set(`${curRef()}/plots/${k}`, rows.some(Boolean) ? { rows: Object.fromEntries(rows.map((r, i) => [i, r]).filter(([, r]) => r)) } : null).catch(() => {});
