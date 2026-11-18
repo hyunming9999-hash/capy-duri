@@ -2040,3 +2040,5 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fm-payask { text-align: center; } .fm-payask img { width: 72px; height: 72px; object-fit: contain; } .fm-payask p { margin: 4px 0; font-size: 14px; } .fm-paytot { font: 900 22px/1.2 var(--head); color: #C2410C; } .fm-payask small { color: #7A6248; }
 .fm-time { font-size: 14px; padding: 7px 3px; }
 .storm-loss.boat { color: #8A5A2B; } .storm-warn { display: block; color: #C2410C; font-weight: 800; margin: 2px 0 6px; }
+.so-sinkpic { position: relative; width: 120px; height: 90px; margin: 0 auto; font-size: 54px; text-align: center; animation: soSink 1.6s ease-in forwards; } .so-sinkpic span { position: absolute; left: 0; right: 0; bottom: -8px; font-size: 46px; } @keyframes soSink { 0% { transform: rotate(0); } 60% { transform: rotate(-18deg) translateY(10px); } 100% { transform: rotate(-24deg) translateY(22px); opacity: .55; } }
+.so-sinkloss { font-weight: 900; color: #C2410C; line-height: 1.6; }
