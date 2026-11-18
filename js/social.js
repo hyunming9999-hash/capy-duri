@@ -350,6 +350,24 @@ export function mount(el, ctx) {
       const rq = +new URLSearchParams(location.search).get('rod'), rt = rq >= 1 && rq <= 3 ? rq : ft; // &rod=1·2·3 으로 낚싯대 등급을 따로 고를 수 있다
       const tb = { rod: rt, rodD: RODS[rt].dur, bait: 99, [`sp${ft}`]: (bag[`sp${ft}`] || {}) };
       openFishing({ ctx, zone: ft, trial: true, boat: boatSvg(ft >= 2 ? MY_WBOAT : MY_BOAT), bag: () => tb, save: patch => Object.assign(tb, patch), coins: () => {}, keep: null, seen: null, dex: () => null, onClose: () => { fishOpen = false; if (!voice.on) bgm.duck(false); lastT = performance.now(); toast('낚시 연습 끝 · 다시 하려면 링크를 다시 열어요', 2400); }, onPirate: null }); }, 1400); } catch {}
+  // 요리 연습 링크(?cooktest=메뉴id, 예: maeun): 임대료 없이 그 메뉴를 주문하는 손님 1명과 필요한 재료(A급)를 빌려준다. 돈·평점·친밀도·가방·헛간에는 아무 영향 없음
+  function cookTest(rid) { const r = recOf(rid) || recOf('maeun'); if (!r) return; fishOpen = true; keys.clear();
+    const data = {}, subs = {}, get = k => data[k], fire = k => (subs[k] || []).forEach(f => f(data[k]));
+    const mem = { on: (k, f) => { (subs[k] = subs[k] || []).push(f); setTimeout(() => f(data[k])); return () => { subs[k] = subs[k].filter(x => x !== f); }; }, update: (k, patch) => { data[k] = { ...(data[k] || {}), ...patch }; fire(k); return Promise.resolve(); }, set: (k, v) => { data[k] = v; fire(k); return Promise.resolve(); }, get: k => Promise.resolve(get(k)), now: () => Date.now(), tx: () => Promise.resolve() };
+    const tctx = Object.assign(Object.create(ctx), { store: mem, spend: async () => true, coins: () => ctx.coins() });
+    const z = r.fz || 0, fishes = z ? FISH.filter(f => f.z === z && !f.king && !f.pearl && (f.tier || 1) === 1).slice(0, 2) : [];
+    const tf = Object.fromEntries(fishes.map((f, k) => ['t' + k, { id: f.id, cm: f.cm[1], p: f.price[1], g: 'A', t: 1 }])), tb = Object.fromEntries(r.crops.map(c => [`${c}|A`, 3])), ts = { [r.sauce]: 6 };
+    const od = { a: 9, rec: r.id, pref: r.st === 'board' ? 'raw' : 'mid', sauce: r.sauce, sn: 1, no: null, fid: null, fany: z };
+    data[`cook/${ctx.uid}/${ymd()}`] = { rent: 1, next: [od] };
+    openCook({ ctx: tctx, animals: ANIMALS.map((a, i) => ({ i, name: a.name, svg: animalSvg(i) })), svgFull: (i, m) => animalSvg(i, true, m), A, affinity: () => {}, toned,
+      fish: () => Object.entries(tf).map(([k, v]) => [k, v, fishOf(v.id)]), useFish: key => { delete tf[key]; },
+      barn: () => tb, useCrops: use => { Object.entries(use).forEach(([k, n]) => { tb[k] = Math.max(0, (tb[k] || 0) - n); }); return Promise.resolve(); },
+      sauces: () => ts, useSauce: use => { Object.entries(use).forEach(([k, n]) => { ts[k] = Math.max(0, (ts[k] || 0) - n); }); return Promise.resolve(); },
+      quests: () => [], questDone: () => {}, coins: () => {}, cropName: id => (cropOf(id) || { name: id }).name, cropImg, fishSvg,
+      onClose: () => { fishOpen = false; lastT = performance.now(); toast('요리 연습 끝 · 다시 하려면 링크를 다시 열어요', 2400); } });
+    setTimeout(() => mem.set(`cook/${ctx.uid}/${ymd()}`, { rent: 1, next: [od] }), 60); // 로비가 먼저 다른 손님을 정해도 연습 손님으로 덮는다
+    toast(`🍳 요리 연습 · ${r.n} (돈·평점·재료에는 영향 없어요)`, 2600); }
+  try { const ct = new URLSearchParams(location.search).get('cooktest'); if (ct != null) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); if (!fishOpen && !battle) cookTest(ct || 'maeun'); }, 1400); } catch {}
   // 까마귀 연습 링크(?crowtest): 친목회에 들어오면 바로 농장으로 데려간다
   try { if (new URLSearchParams(location.search).has('crowtest')) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); if (!farmOpen && !me.boat && !fishOpen && !battle) goFarm(); setTimeout(() => fcrow.practice(), 900); }, 1200); } catch {}
   // 메인 퀘스트: 동물 머리 위 ! ? 표시와 동물 창의 🔍 퀘스트 버튼
