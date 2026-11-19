@@ -1,7 +1,8 @@
 // 보송 그림체(새 스킨): 카피·동물을 그림 파일로 바꿔 그린다. 시험판: 주소에 ?fluffy=1 이면 켜지고(기억됨), ?fluffy=0 이면 꺼진다
 const Q = new URLSearchParams(location.search).get('fluffy');
-try { if (Q === '1') localStorage.setItem('capy-fluffy', '1'); if (Q === '0') localStorage.removeItem('capy-fluffy'); } catch (e) { /* 저장 못 하면 이번만 */ }
-let on = Q === '1'; try { on = on || (Q !== '0' && localStorage.getItem('capy-fluffy') === '1'); } catch (e) { /* 무시 */ }
+// 이제 모두에게 기본으로 켜져 있다. 예전 그림으로 보려면 ?fluffy=0 (기억됨), 되돌리려면 ?fluffy=1
+try { if (Q === '1') localStorage.setItem('capy-fluffy', '1'); if (Q === '0') localStorage.setItem('capy-fluffy', '0'); } catch (e) { /* 저장 못 하면 이번만 */ }
+let on = Q !== '0'; try { if (Q == null && localStorage.getItem('capy-fluffy') === '0') on = false; } catch (e) { /* 무시 */ }
 export const FLUFFY = on;
 if (on && typeof document !== 'undefined') document.documentElement.classList.add('fluffy'); // 배경 그림은 CSS에서 이 표시를 보고 바꾼다
 const DIR = 'img/fl/';

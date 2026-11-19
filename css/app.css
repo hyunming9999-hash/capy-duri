@@ -2338,3 +2338,4 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 /* 농장에서 스쿠터를 타고 왼쪽으로 갈 때: 캐릭터만 뒤집히던 것을 스쿠터째 뒤집는다 */
 .fm-me.scoot.left .sc-rig { transform: scale(-.79, .79); margin-left: 0; margin-right: -20px; }
 .fm-me.scoot.left svg { transform: none; } .fm-me.scoot.walk svg { animation: none; }
+.fs-tail { animation: fsTail .5s ease-in-out infinite alternate; } @keyframes fsTail { from { rotate: -14deg; } to { rotate: 14deg; } }

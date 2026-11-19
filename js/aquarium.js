@@ -62,11 +62,11 @@ export function openAquarium(o) {
 
   function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
   // 화면 가로에 6m(작은 수족관은 전체)가 들어오는 비율이 기본(×1). －로 줄이면 수족관 전체, ＋로 키우면 작은 물고기까지 또렷하게
-  let base = 60, zMin = 1;
+  let base = 60, zMin = 1, fitAll = true; // 들어오면 수족관 전체가 한눈에 보이게 시작(초급·중급·고급 모두)
   function layout(keep) { const T = TANKS[tank], vw = Math.max(200, root.clientWidth - 16 - 18), cx = keep ? (view.scrollLeft + view.clientWidth / 2) / (W * ppm) : 0.5, cy = keep ? (view.scrollTop + view.clientHeight / 2) / (H * ppm) : 0.5;
     // 가로 화면 전용: 수족관 높이를 화면 높이에 맞춘다(작은 수족관은 작게 보여서 크기 차이가 그대로 느껴진다)
     const avail = Math.max(140, root.clientHeight - 24 - room.clientHeight + 10); view.style.height = avail + 'px'; // 위 버튼줄 자리까지 전부 수족관
-    W = T.w; H = T.h; base = Math.min(avail / T.v, vw / Math.min(W, 2.2)); zMin = Math.min(1, avail / (H * base)); // 화면에는 v미터 높이가 보이고 그 위는 위로 밀어서 본다. 가장 작게 줄이면 높이 전체가 한눈에
+    W = T.w; H = T.h; base = Math.min(avail / T.v, vw / Math.min(W, 2.2)); zMin = Math.min(1, avail / (H * base)); if (fitAll) { fitAll = false; zoom = zMin; } // 화면에는 v미터 높이가 보이고 그 위는 위로 밀어서 본다. 가장 작게 줄이면 높이 전체가 한눈에
     ppm = base * zoom; world.style.width = W * ppm + 'px'; world.style.height = H * ppm + 'px'; world.style.marginTop = Math.max(0, view.clientHeight - H * ppm) + 'px'; view.parentNode.style.width = Math.min(vw, W * ppm) + 18 + 'px'; // 작은 수족관은 유리도 작게
     const seg = H * ppm * (456 / 362), side = H * ppm * (360 / 362), n = Math.max(1, Math.round((W * ppm - 2 * side) / seg)), mids = n % 2 ? n : n + 1;
     // 물 배경: 가운데는 이음매 없이 이어지는 물 그림을 옆으로 반복, 양 끝에 산호 그림을 겹쳐 스르르 이어 붙인다
@@ -81,7 +81,7 @@ export function openAquarium(o) {
   // 렉 줄이기: 크기는 수족관 비율이 바뀔 때만 한 번 정하고, 앞뒤 크기 변화는 transform scale로만(다시 그리지 않음)
   function sizeFish(f) { const w = f.len * ppm / FISH_FILL; if (Math.abs(w - (f.lw || 0)) < 0.6) return; f.lw = w; f.el.style.width = w + 'px'; f.el.style.height = w * 2 / 3 + 'px'; f.zz.style.fontSize = Math.max(12, Math.min(40, w * 0.18)) + 'px'; f.tag.style.fontSize = Math.max(10, Math.min(18, w * 0.12)) + 'px'; }
   function build(list, dlist) {
-    layer.replaceChildren(); decos = []; editing = false; root.classList.remove('edit'); [...tabs.children].forEach(b => b.classList.toggle('on', +b.dataset.t === tank)); zoom = 1;
+    layer.replaceChildren(); decos = []; editing = false; root.classList.remove('edit'); [...tabs.children].forEach(b => b.classList.toggle('on', +b.dataset.t === tank)); zoom = 1; fitAll = true;
     const T = TANKS[tank]; W = T.w; H = T.h;
     fish = list.map(d => makeFish(d)).filter(Boolean);
     W = T.w; H = T.h; (dlist || []).forEach(d => makeDeco(d));
