@@ -338,23 +338,30 @@ export function seaBattle(e) {
   function myTurn() { turn = 'me'; moved = 0; ang.value = A0; pow.value = P0; wind = Math.round(rnd(-60, 60)); camTo = me.x + dir * 90; lab(); if (e.balls() <= 0) return end(false, '포탄이 떨어졌어요! 해적단에게 당했어요.'); msg.textContent = still >= 1 ? '⚠️ 가만히 있으면 해적단의 다음 포는 반드시 맞아요! 배를 움직이세요.' : '내 차례! 각도와 힘을 맞춰 쏘세요.'; fire.disabled = false; }
   function puff(x, y) { const f = h('i', { class: 'sb-fx sb-puff', style: { left: x + 'px', bottom: me.y + y + 'px' } }); e.world.append(f); setTimeout(() => f.remove(), 500); }
   const kick = (...els) => { els.forEach(n => n.classList.add('sb-kick')); setTimeout(() => els.forEach(n => n.classList.remove('sb-kick')), 260); };
-  function shoot() { if (turn !== 'me' || shot || !alive || fled) return; fleeB.hidden = true; e.useBall(); sfx('cannon'); const v = pow.value / 100 * VMAX, m = muzzle(e.boatEl, me.x + 3, dir, ang.value * Math.PI / 180); shot = { x: m.x, y: m.y, vx: dir * Math.cos(m.a) * v, vy: Math.sin(m.a) * v, by: 'me' }; puff(m.x, m.y); kick(e.boatEl, e.meEl); fire.disabled = true; turn = 'fly'; lab(); aim(); msg.textContent = '날아갑니다…'; }
+  function shoot() { if (turn !== 'me' || shot || !alive || fled) return; fleeB.hidden = true; e.useBall(); sfx('cannon'); const v = pow.value / 100 * VMAX, m = muzzle(e.boatEl, me.x + 3, dir, ang.value * Math.PI / 180); shot = { x: m.x, y: m.y, vx: dir * Math.cos(m.a) * v, vy: Math.sin(m.a) * v, by: 'me' }; puff(m.x, m.y); ball.classList.toggle('star', !!e.gun2); if (e.gun2) starMuzzle(m.x, m.y); kick(e.boatEl, e.meEl); fire.disabled = true; turn = 'fly'; lab(); aim(); msg.textContent = '날아갑니다…'; }
   function foeShoot() { turn = 'foe'; wind = Math.round(rnd(-60, 60)); lab(); camTo = foeX - dir * 90;
     // 맞힐지 빗나갈지 먼저 정하고, 그 자리에 떨어지는 각도와 힘을 찾는다 빗나갈 때는 내 앞에 떨어지거나 머리 위로 넉넉히 넘어간다(배에 스치면 맞은 것이 되므로)
     still++; const sure = still >= 2, hitNow = sure || Math.random() < acc(), want = me.x + (hitNow ? rnd(-14, 14) : Math.random() < 0.5 ? dir * rnd(HITR + 25, HITR + 150) : -dir * rnd(HITR + 120, HITR + 240)); if (sure) still = 0; round++;
     msg.textContent = sure ? '가만히 있었더니 해적단이 거리를 다 쟀어요! 피할 수 없어요!' : '갈매기 해적단이 포를 겨눠요!'; let best = { e: 1e9, a: 0.8, v: VMAX * 0.7 };
     for (let a = 0.72; a < 1.15; a += 0.05) for (let v = VMAX * 0.45; v <= VMAX * 1.15; v += VMAX / 90) { const q = fly(foeX - dir * (PX + BL * Math.cos(a)), PY + BL * Math.sin(a), -dir * Math.cos(a) * v, Math.sin(a) * v, 9), er = Math.abs(q.x - want); if (er < best.e) best = { e: er, a, v }; }
     setGun(foeGun, best.a * 180 / Math.PI, -1);
-    timer = 1.2; next = () => { sfx('cannon'); const mx = foeX - dir * (PX + BL * Math.cos(best.a)), my = PY + BL * Math.sin(best.a); shot = { x: mx, y: my, vx: -dir * Math.cos(best.a) * best.v, vy: Math.sin(best.a) * best.v, by: 'foe' }; puff(mx, my); kick(foeEl); turn = 'fly'; }; }
+    timer = 1.2; next = () => { sfx('cannon'); const mx = foeX - dir * (PX + BL * Math.cos(best.a)), my = PY + BL * Math.sin(best.a); shot = { x: mx, y: my, vx: -dir * Math.cos(best.a) * best.v, vy: Math.sin(best.a) * best.v, by: 'foe' }; puff(mx, my); ball.classList.remove('star'); kick(foeEl); turn = 'fly'; }; }
   // 한 발 쏘고 난 틈에 해적선이 앞뒤로 조금 움직일 수 있다. 움직이면 화면이 해적선을 비춘다
   function foeDrift(then) { if (Math.random() > 0.55) return then(); const to = Math.max(Math.min(foe0 - 140, foe0 + 140), Math.min(Math.max(foe0 - 140, foe0 + 140), Math.max(e.minX, Math.min(e.maxX, foeX + (Math.random() < 0.5 ? -1 : 1) * rnd(50, 130))))); if (Math.abs(to - foeX) < 20 || Math.abs(to - me.x) < NEAR + 40) return then();
     const closer = Math.abs(to - me.x) < dist(); foeTo = to; turn = 'drift'; camTo = to - dir * 60; setGun(foeGun, 0, -1); msg.textContent = `해적선이 ${closer ? '다가와요' : '물러나요'}! (${Math.round(Math.abs(to - foeX) / 4)}m)`; next = then; timer = 0; }
   // 카피 별빛포 명중: 분홍 번쩍 + 충격파 → 큰 불꽃·별빛 조각·나무 파편·깃털·"명중!" → 맞은 자리에 구멍과 연기·불씨가 남고 갈매기가 펄쩍
+  // 별빛포: 쏠 때 별 불꽃, 날아가는 동안 별 꼬리, 맞으면 겹겹이 퍼지는 고리·빛살·별 폭죽·별비
+  let trailAt = 0; const STARC = ['#FF9BE0', '#C9A0FF', '#FFE066', '#9BE7FF', '#fff'];
+  function starTrail(x, y) { const t = performance.now(); if (t - trailAt < 26) return; trailAt = t; const n = h('i', { class: 'sb-fx sb-trail', style: { left: x + 'px', bottom: me.y + Math.max(0, y) + 'px', '--r': rnd(-50, 50).toFixed(0) + 'deg', '--x': rnd(-10, 10).toFixed(0) + 'px', color: STARC[Math.floor(rnd(0, 4.99))] } }, Math.random() < 0.3 ? '★' : '✦'); e.world.append(n); setTimeout(() => n.remove(), 700); }
+  function starMuzzle(x, y) { const f = h('div', { class: 'sb-fx sb-smuz', style: { left: x + 'px', bottom: me.y + y + 'px' } }, ...Array.from({ length: 10 }, (_, k) => h('i', { style: { '--a': (k * 36).toFixed(0) + 'deg', color: STARC[k % 5] } }, '✦'))); e.world.append(f); setTimeout(() => f.remove(), 650); }
   function starHit(x, y) {
     const fl = h('div', { class: 'sb-starflash' }); e.stage.append(fl); setTimeout(() => fl.remove(), 700);
-    const at = (cls, kids = []) => { const n = h('div', { class: 'sb-fx ' + cls, style: { left: x + 'px', bottom: me.y + y + 'px' } }, ...kids); e.world.append(n); setTimeout(() => n.remove(), 1400); return n; };
-    at('sb-ring'); at('sb-boom2');
-    const bits = [...Array.from({ length: 10 }, (_, k) => h('i', { class: 'st', style: { '--a': (k * 36 + rnd(-10, 10)).toFixed(0) + 'deg', '--d': rnd(60, 110).toFixed(0) + 'px', color: ['#FF9BE0', '#C9A0FF', '#FFE066', '#fff'][k % 4] } }, '✦')),
+    const fl2 = h('div', { class: 'sb-starflash f2' }); e.stage.append(fl2); setTimeout(() => fl2.remove(), 1300);
+    setTimeout(() => { if (!alive) return; e.stage.classList.remove('sb-quake'); void e.stage.offsetWidth; e.stage.classList.add('sb-quake'); setTimeout(() => e.stage.classList.remove('sb-quake'), 420); sfx('point'); }, 260);
+    const at = (cls, kids = []) => { const n = h('div', { class: 'sb-fx ' + cls, style: { left: x + 'px', bottom: me.y + y + 'px' } }, ...kids); e.world.append(n); setTimeout(() => n.remove(), 1900); return n; };
+    at('sb-rays'); at('sb-ring'); at('sb-ring r2'); at('sb-ring r3'); at('sb-boom2');
+    at('sb-rain', Array.from({ length: 16 }, (_, k) => h('i', { style: { '--x': rnd(-120, 120).toFixed(0) + 'px', '--h': rnd(70, 150).toFixed(0) + 'px', '--t': rnd(0.15, 0.6).toFixed(2) + 's', color: STARC[k % 5] } }, k % 3 ? '✦' : '★')));
+    const bits = [...Array.from({ length: 22 }, (_, k) => h('i', { class: 'st' + (k % 3 === 0 ? ' big' : ''), style: { '--a': (k * 16.4 + rnd(-8, 8)).toFixed(0) + 'deg', '--d': rnd(55, 150).toFixed(0) + 'px', color: STARC[k % 5] } }, k % 4 === 0 ? '★' : '✦')),
       ...Array.from({ length: 6 }, (_, k) => h('i', { class: 'ch', style: { '--a': (k * 60 + rnd(-20, 20)).toFixed(0) + 'deg', '--d': rnd(50, 90).toFixed(0) + 'px', '--r': rnd(-300, 300).toFixed(0) + 'deg' } })),
       ...Array.from({ length: 3 }, (_, k) => h('i', { class: 'fe', style: { '--a': (240 + k * 30).toFixed(0) + 'deg', '--d': rnd(50, 80).toFixed(0) + 'px', '--r': rnd(-90, 90).toFixed(0) + 'deg' } }))];
     at('sb-bits', bits); at('sb-hitword', [h('b', null, '명중!')]);
@@ -375,7 +382,7 @@ export function seaBattle(e) {
     if (alive) { if (timer > 0) { timer -= dt; if (timer <= 0 && next) { const f = next; next = null; f(); } }
       if (turn === 'drift') { const d = foeTo - foeX, st = 70 * dt; if (Math.abs(d) <= st) { foeX = foeTo; place(); turn = 'wait'; lab(); msg.textContent += ` 이제 거리 ${Math.round(dist() / 4)}m`; timer = 0.9; } else { foeX += Math.sign(d) * st; place(); } }
       if (turn === 'me') { if (sailing) sail(sailing, dt); aim(); }
-      if (shot) { shot.vx += wind * dt; shot.vy -= G * dt; shot.x += shot.vx * dt; shot.y += shot.vy * dt; ball.style.display = ''; ball.style.left = shot.x + 'px'; ball.style.bottom = me.y + Math.max(0, shot.y) + 'px'; camTo = shot.x; const tx = shot.by === 'me' ? foeX : me.x; if (Math.abs(shot.x - tx) < HITR && shot.y < HITH && shot.y > 0) land(shot, true); else if (shot.y <= 0) land(shot); } }
+      if (shot) { shot.vx += wind * dt; shot.vy -= G * dt; shot.x += shot.vx * dt; shot.y += shot.vy * dt; ball.style.display = ''; ball.style.left = shot.x + 'px'; ball.style.bottom = me.y + Math.max(0, shot.y) + 'px'; if (e.gun2 && shot.by === 'me') starTrail(shot.x, shot.y); camTo = shot.x; const tx = shot.by === 'me' ? foeX : me.x; if (Math.abs(shot.x - tx) < HITR && shot.y < HITH && shot.y > 0) land(shot, true); else if (shot.y <= 0) land(shot); } }
     camX += (camTo - camX) * Math.min(1, dt * 5); e.cam(camX); raf = requestAnimationFrame(step); }
   // 등장: 먼저 외치고, 화면이 해적선 위치를 보여 준 다음 다시 내 보트로 돌아와 내 차례
   place(); hp(); lab(); fire.disabled = true; e.shout('앗! 해적선이다!'); sfx('bad'); msg.textContent = '앗! 해적선이다!'; timer = 1.1; next = () => { camTo = foeX - dir * 60; msg.textContent = '갈매기 해적단이 나타났어요! 서로 4방이면 끝나요.'; timer = 2.2; next = () => { camTo = me.x + dir * 90; timer = 0.9; next = myTurn; }; };

@@ -236,7 +236,7 @@ export function mount(el, ctx) {
   // 황금사자 스쿠터: 메인 퀘스트 최종 보상. 가방에서 타고 내린다(육지·농장). 뒤에 동물 하나를 태울 수 있다
   let scoot = false, scPas = -1, scAskAt = performance.now() + 120000, scFwAt = 0, scGainT = 0, scGain = 0;
   try { scoot = localStorage.getItem('capy-scoot') === '1'; scFwAt = +localStorage.getItem('capy-scfw') || 0; } catch {}
-  const meCapy = () => capy(ctx.capyOf(ctx.uid, { face: 'happy', rare: rareOf(myRares()) }));
+  const meCapy = () => capy(ctx.capyOf(ctx.uid, ctx.goldTest ? { face: 'happy' } : { face: 'happy', rare: rareOf(myRares()) })); // ?goldtest 링크면 빌려 입은 황금 장비 그대로
   const scootHtml = () => `<div class="sc-rig b"><img class="sc-img" src="img/scooter-b.webp" alt="">${scPas >= 0 ? `<div class="sc-pas">${animalSvg(scPas, true, 'happy')}</div>` : ''}<div class="sc-me">${meCapy()}</div></div>`;
   const refreshMe = () => { if (meEl) meEl.innerHTML = scoot ? scootHtml() : meCapy(); };
   function startKing() { if (kingTrial) return; kingTrial = performance.now() + 60000; refreshMe(); toast('👑 대왕 체험 1분 시작! 동물들 곁을 지나가 보세요', 3200); }
