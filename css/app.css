@@ -2391,3 +2391,5 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .aq-title { cursor: pointer; } .aq-fee { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; margin-top: 3px; padding-top: 3px; border-top: 1px dashed rgba(255,247,230,.5); font-size: 12.5px; font-weight: 800; } .aq-fee[hidden] { display: none; }
 .aq-fee small { flex-basis: 100%; font-size: 10.5px; font-weight: 500; opacity: .9; } .aq-fee em { margin-left: auto; font-style: normal; font-size: 10px; opacity: .75; }
 .aq.tio .aq-title { background: rgba(20,70,110,.72); } .aq.tio .aq-info { white-space: normal; } .aq.tio .aq-frame > .aq-bookb { top: 122px; }
+/* 낚시 화면: 캐릭터를 놀이터에서 배 탈 때와 같은 자리(돛대 뒤, 배 안)에 앉힌다 — 턱 아래는 뱃전에 가려진다 */
+.fluffy .fs-me { left: 11.3%; bottom: 17%; width: 48%; z-index: 2; } .fluffy .fs-me svg { clip-path: inset(-80% -80% 28.5% -80%); }
