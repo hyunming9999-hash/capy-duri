@@ -180,7 +180,7 @@ async function askAI(room, body) {
 export function mount(el, ctx) {
   let alive = true, mine = {}, theirs = {}, bag = {}, scroller, meEl, mePop;
   const pid = () => ctx.partnerId, A = i => (mine[i] && mine[i].a) || 0;
-  const H = Math.round(Math.min(innerHeight * 0.48, 470)), TILE = Math.round(H * 1213 / 520), TILES = 3, PW = TILE * TILES, FISH_X = PW + TILE * 2, WIDTH = FISH_X + PW, // FISH_X부터 끝까지는 낚시터(놀이터만큼 넓다): 배로만 갈 수 있고 동물은 못 들어온다
+  const H = Math.round(FLUFFY ? Math.max(innerHeight * 0.48, Math.min(innerHeight - 346, 520)) : Math.min(innerHeight * 0.48, 470)), TILE = Math.round(H * 1213 / 520), TILES = 3, PW = TILE * TILES, FISH_X = PW + TILE * 2, WIDTH = FISH_X + PW, // FISH_X부터 끝까지는 낚시터(놀이터만큼 넓다): 배로만 갈 수 있고 동물은 못 들어온다
     zoneOf = x => (x < FISH_X ? 0 : Math.min(3, 1 + Math.floor((x - FISH_X) / TILE))), WATER_X = PW + TILE * 0.275, // 놀이터 3장 + 오른쪽 바닷가 1장 + 넓은 바다 1장, WATER_X부터 끝까지 물
      IW = 1344, IH = 576;
   // 놀이기구 자리: [종류, 그림 속 가로 위치(0~1), 바닥에서 높이(0~1), 그네 번호]
@@ -289,7 +289,7 @@ export function mount(el, ctx) {
     scroller.append(world); worldEl = world;
     rideBtn = h('button', { class: 'dp so-dp so-ride', disabled: true, onClick: toggleRide }, '🎠', h('small', null, '타기'));
     const pad = h('div', { class: 'so-pad' }, h('div', { class: 'dpad so-dpad' }, [['U', '▲'], ['L', '◀'], ['D', '▼'], ['R', '▶']].map(([k, t]) => { const b = h('button', { class: 'dp so-dp dp-' + k, 'aria-label': k }, t); holdBtn(b, () => keys.add(k), () => keys.delete(k)); return b; })),
-      h('span', { class: 'so-sp' }), h('div', { class: 'so-acts2' }, rideBtn, (fishMode = -1, fishBtn = h('button', { class: 'dp so-dp so-hit', onClick: () => (fishMode > 0 ? goFish() : punch()) }, '👊', h('small', null, '때리기')))));
+      h('span', { class: 'so-sp' }), h('button', { class: 'so-chatbtn', 'aria-label': '말하기', onClick: () => { const on = el.classList.toggle('chat-open'); if (on) { const i = el.querySelector('.so-chatin'); if (i) i.focus(); } } }), h('span', { class: 'so-sp' }), h('div', { class: 'so-acts2' }, rideBtn, (fishMode = -1, fishBtn = h('button', { class: 'dp so-dp so-hit', onClick: () => (fishMode > 0 ? goFish() : punch()) }, '👊', h('small', null, '때리기')))));
     const chatIn = h('input', { class: 'so-chatin', maxLength: 80, placeholder: ctx.partnerId ? `${ctx.nameOf(ctx.partnerId)}에게 말하기` : '상대가 들어오면 말할 수 있어요', enterKeyHint: 'send' });
     chatIn.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); sendChat(chatIn); } }); chatIn.addEventListener('focus', () => keys.clear());
     micBtn = h('button', { class: 'btn sm so-mic', onClick: toggleMic }, '🎤', h('small', null, '음성')); drawMic();

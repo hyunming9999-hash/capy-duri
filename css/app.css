@@ -2183,21 +2183,49 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fluffy .so-me.onboat { margin-left: -52px; margin-bottom: 2px; transform-origin: 50% calc(100% + 18px); z-index: 13 !important; }
 .fluffy .so-me.onboat svg { clip-path: inset(-80% -80% 34% -80%); scale: .84; transform-origin: 50% 100%; }
 .fl-item { width: 36px; height: 36px; display: block; object-fit: contain; }
-/* ===== 보송 그림체: 친목회 화면 둘레를 인형 게임기처럼(게임 화면 크기는 그대로) ===== */
-.fluffy .page-social { --plush: #F4DFBB; --plush-d: #DDBB8A; --choc: #A66A3C; --choc-d: #7C4A26; background: radial-gradient(ellipse at 50% 0, #FBECCF 0, transparent 60%), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .36 0 0 0 0 .16 0 0 0 .55 -.18'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"), var(--plush); box-shadow: inset 0 0 0 3px #FBEFD8, inset 0 0 26px 6px rgba(166, 106, 60, .28); border-radius: 34px 34px 28px 28px; position: relative; }
-.fluffy .page-social .so-stage { border-radius: 22px; box-shadow: 0 0 0 5px var(--choc), 0 0 0 8px #C98B58, 0 5px 0 8px var(--choc-d), inset 0 0 0 2px rgba(255, 255, 255, .5); margin: 10px 0 14px; }
-.fluffy .page-social .so-pad { margin-top: 12px; padding: 0 4px; align-items: center; }
-.fluffy .page-social .so-dpad { gap: 0; grid-template-areas: ". U ." "L D R"; filter: drop-shadow(0 4px 0 var(--choc-d)); }
-.fluffy .page-social .so-dpad .so-dp { background: var(--choc); border: 0; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .16); color: #FFF3DC; border-radius: 0; width: min(16vw, 60px); height: 50px; font-size: 19px; }
-.fluffy .page-social .so-dpad .dp-U { border-radius: 16px 16px 0 0; } .fluffy .page-social .so-dpad .dp-L { border-radius: 16px 0 0 16px; } .fluffy .page-social .so-dpad .dp-R { border-radius: 0 16px 16px 0; } .fluffy .page-social .so-dpad .dp-D { border-radius: 0 0 16px 16px; }
-.fluffy .page-social .so-dpad .so-dp.held { background: var(--choc-d); transform: none; }
-.fluffy .page-social .so-acts2 { flex-direction: row; gap: 8px; align-items: flex-end; }
-.fluffy .page-social .so-acts2 .so-dp { width: min(20vw, 76px); height: min(20vw, 76px); border-radius: 50%; flex-direction: column; gap: 1px; font-size: 22px; border: 0; color: #fff; }
-.fluffy .page-social .so-acts2 .so-dp small { color: #fff; font-size: 12px; text-shadow: 0 1px 0 rgba(0, 0, 0, .25); }
-.fluffy .page-social .so-acts2 .so-ride { background: radial-gradient(circle at 35% 28%, #FFD08A, #F59A23 62%); box-shadow: 0 5px 0 #C46F0E, inset 0 -4px 6px rgba(160, 80, 0, .25); margin-bottom: 26px; order: 2; }
-.fluffy .page-social .so-acts2 .so-hit { background: radial-gradient(circle at 35% 28%, #C9EDB8, #7CC46A 62%); box-shadow: 0 5px 0 #4E9440, inset 0 -4px 6px rgba(40, 100, 30, .25); order: 1; }
-.fluffy .page-social .so-acts2 .so-dp:active, .fluffy .page-social .so-acts2 .so-dp.held { transform: translateY(4px); box-shadow: none; }
-.fluffy .page-social .so-chatbar { margin-top: 12px; padding: 0 4px; }
-.fluffy .page-social .so-chatbar .so-chatin { border-radius: 999px; border-color: var(--plush-d); }
-@media (min-height: 720px) { .fluffy .page-social .so-dpad { grid-template-areas: ". U ." "L C R" ". D ."; } .fluffy .page-social .so-dpad::after { content: ''; grid-area: C; background: var(--choc); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .16); border-radius: 0; background-image: radial-gradient(circle, var(--choc-d) 0 7px, transparent 8px); } .fluffy .page-social .so-dpad .so-dp { height: 44px; } }
-.fluffy .page-social { padding-bottom: 34px; } .fluffy .page-social .page-body::after { content: ''; display: block; width: 58px; height: 22px; margin: 14px auto 0; background: radial-gradient(circle, var(--choc-d) 0 3px, transparent 3.6px) 0 0 / 14.5px 11px; opacity: .8; }
+/* ===== 보송 그림체: 친목회 화면을 카피바라 인형 게임기처럼 ===== */
+.so-chatbtn { display: none; }
+.fluffy .page-social { --choc: #B5713C; --choc-d: #8A5226; --st: #D6A873; padding-top: 0; padding-bottom: 14px; position: relative; }
+.fluffy .page-social::before { content: ''; position: absolute; inset: 66px 0 0; z-index: -1; border-radius: 150px 150px 44px 44px / 60px 60px 44px 44px; background: radial-gradient(circle at 0 100%, #C58A55 0 50px, transparent 51px), radial-gradient(circle at 100% 100%, #C58A55 0 50px, transparent 51px), linear-gradient(90deg, rgba(190, 130, 70, .28), transparent 9%, transparent 91%, rgba(190, 130, 70, .28)), url(../img/fl/ui/fur.webp) 0 0 / 256px 256px; }
+.fluffy .page-social .bar { position: relative; top: auto; height: 122px; padding: 0; margin: 0; background: none; display: block; }
+.fluffy .page-social .bar::before { content: ''; position: absolute; inset: 0; top: 0; background: url(../img/fl/ui/head.webp) center top / 100% 100% no-repeat; -webkit-mask-image: linear-gradient(#000 72%, transparent); mask-image: linear-gradient(#000 72%, transparent); }
+.fluffy .page-social .bar h2 { display: none; }
+.fluffy .page-social .bar > * { position: absolute; top: 76px; z-index: 1; }
+.fluffy .page-social .bar .back { left: 10px; width: 38px; height: 38px; font-size: 22px; }
+.fluffy .page-social .bar .snd { left: 54px; }
+.fluffy .page-social .bar .call { min-width: 0; width: 38px; height: 38px; padding: 0; border-radius: 50%; font-size: 0; display: block; text-align: center; line-height: 34px; }
+.fluffy .page-social .bar .call::first-letter { font-size: 17px; }
+.fluffy .page-social .bar .call.snd { font-size: 17px; }
+.fluffy .page-social .bar .call:not(.snd) { right: 54px; }
+.fluffy .page-social .bar > :last-child { right: 10px; }
+.fluffy .page-social .page-body { display: grid; grid-template-columns: auto 1fr auto auto; column-gap: 5px; align-items: center; padding: 0 6px; }
+.fluffy .page-social .page-body > * { grid-column: 1 / -1; min-width: 0; }
+.fluffy .page-social .so-top { display: contents; }
+.fluffy .page-social .so-top .so-sp { display: none; }
+.fluffy .page-social .so-top > .coin-chip { grid-column: 1; grid-row: 1; margin: 0; padding: 5px 10px; font-size: 13px; background: #F8E6C6; border: 0; outline: 1.5px dashed var(--st); outline-offset: -4px; box-shadow: 0 2px 0 #DDBB8A; }
+.fluffy .page-social .page-body > .so-hp { grid-column: 2; grid-row: 1; margin: 0; padding: 4px 8px; border-radius: 999px; background: #F8E6C6; outline: 1.5px dashed var(--st); outline-offset: -4px; box-shadow: 0 2px 0 #DDBB8A; gap: 4px; font-size: 11px; }
+.fluffy .page-social .so-hp .so-pot { padding: 2px 7px; min-height: 0; font-size: 12px; }
+.fluffy .page-social .so-top > .btn { grid-row: 1; padding: 0; width: 36px; height: 36px; min-height: 0; border-radius: 50%; font-size: 0; display: block; text-align: center; line-height: 32px; }
+.fluffy .page-social .so-top > .btn::first-letter { font-size: 17px; }
+.fluffy .page-social .so-top > .so-qsbtn { grid-column: 3; } .fluffy .page-social .so-top > .btn:last-child { grid-column: 4; }
+.fluffy .page-social .so-stage { border-radius: 24px; box-shadow: 0 0 0 5px #C98B58, 0 0 0 9px var(--choc), 0 4px 0 9px var(--choc-d), inset 0 0 0 2px rgba(255, 255, 255, .5); margin: 15px 4px 16px; }
+.fluffy .page-social .so-pad { margin-top: 0; padding: 0 2px; align-items: center; gap: 0; }
+.fluffy .page-social .so-dpad { width: 132px; height: 132px; gap: 0; grid-template: "a U b" 1fr "L c R" 1fr "d D e" 1fr / 1fr 1fr 1fr; background: url(../img/fl/ui/dpad.webp) center / contain no-repeat; filter: drop-shadow(0 4px 3px rgba(110, 60, 20, .35)); opacity: 1; }
+.fluffy .page-social .so-dpad .so-dp { width: auto; height: auto; background: none; border: 0; box-shadow: none; border-radius: 12px; font-size: 0; }
+.fluffy .page-social .so-dpad .so-dp.held { background: rgba(70, 35, 10, .28); transform: none; }
+.fluffy .page-social .so-chatbtn { display: block; flex: none; width: 62px; height: 61px; border: 0; padding: 0; background: url(../img/fl/ui/chat.webp) center / contain no-repeat; filter: drop-shadow(0 3px 2px rgba(110, 60, 20, .3)); }
+.fluffy .page-social .so-chatbtn:active { transform: translateY(2px); }
+.fluffy .page-social .so-acts2 { flex-direction: row-reverse; gap: 2px; align-items: flex-end; }
+.fluffy .page-social .so-acts2 .so-dp { position: relative; width: 74px; height: 74px; border-radius: 50%; border: 0; box-shadow: none; font-size: 0; background: url(../img/fl/ui/btn-b.webp) center / contain no-repeat; filter: drop-shadow(0 4px 3px rgba(60, 60, 20, .35)); animation: none; }
+.fluffy .page-social .so-acts2 .so-ride { background-image: url(../img/fl/ui/btn-a.webp); margin-bottom: 46px; }
+.fluffy .page-social .so-acts2 .so-dp small { position: absolute; left: 50%; top: 100%; translate: -50% -2px; white-space: nowrap; font: 800 11px/1.3 var(--head); color: #6B3F1D; background: #FBEBD0; border-radius: 999px; padding: 1px 8px; box-shadow: 0 1px 0 #DDBB8A; }
+.fluffy .page-social .so-acts2 .so-dp:active, .fluffy .page-social .so-acts2 .so-dp.held { transform: translateY(3px); filter: brightness(.93); }
+.fluffy .page-social .so-acts2 .so-ride:disabled { opacity: .55; }
+.fluffy .page-social .so-acts2 .so-ride.ready { animation: flReady .8s ease-in-out infinite alternate; } @keyframes flReady { to { filter: drop-shadow(0 0 7px #FFD24A) brightness(1.08); } }
+.fluffy .page-social .so-chatbar { display: none; order: 0; }
+.fluffy .page-social .page-body > .so-pad { order: 2; }
+.fluffy .page-social .page-body.chat-open > .so-chatbar { display: flex; order: 1; margin: 0 2px 10px; }
+.fluffy .page-social .page-body.chat-open > .sb-panel:not([hidden]) ~ .so-chatbar { display: none; }
+.fluffy .page-social .so-chatbar .so-chatin { border-radius: 999px; }
+/* 배에 탄 동안에는 걸음 들썩임을 끈다(배와 몸 사이가 벌어져 보인다) */
+.fluffy .so-me.onboat.walk svg, .fluffy .so-me.onpal.walk svg { animation: none; }
