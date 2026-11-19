@@ -306,7 +306,7 @@ function sndBtn() { const b = h('button', { class: 'call snd', 'aria-label': 'íš
 function partnerBadge() {
   const p = ctx.partnerId;
   if (!p) return h('span', { class: 'who' });
-  return h('span', { class: 'who' + (ctx.partnerWhere && ctx.partnerWhere === fullRoute() ? ' here' : ''), title: ctx.nameOf(p) }, capyEl(ctx.capyOf(p, { head: true }), 'mini'), h('i', { class: 'online' + (ctx.presence[p] ? ' on' : ''), 'data-online': p }));
+  return h('span', { class: 'who' + (ctx.partnerWhere && ctx.partnerWhere === fullRoute() ? ' here' : ''), title: ctx.nameOf(p) }, capyEl(ctx.capyOf(p, { head: true, bare: true }), 'mini'), h('i', { class: 'online' + (ctx.presence[p] ? ' on' : ''), 'data-online': p }));
 }
 
 /* ---------- í™ˆ ---------- */

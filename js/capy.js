@@ -66,7 +66,7 @@ export function capy(o = {}) {
     : PIN_CHEST.has(o.pin) ? `<circle cx="44" cy="93" r="9.5" fill="#fff" stroke="#E9C46A" stroke-width="2.2"/><text x="44" y="97.6" font-size="12.5" text-anchor="middle">${o.pin}</text>`
     : `<text x="98" y="115" font-size="23" text-anchor="middle" transform="rotate(-12 98 108)">${o.pin}</text><ellipse cx="92" cy="109" rx="5.5" ry="4.5" fill="${c.body}"/>`;
   const fl = FLUFFY ? capyBody(o.color, o.face, back, o.own) : null, flW = fl ? capyWear(o, o.own, back) : { shoe: '', body: '', hat: '' }, flTop = fl ? (flW.hat || (o.hat ? '' : acc(o.acc))) + (o.face === 'sleepy' && !back ? '<text x="102" y="20" font-size="15" font-weight="700" fill="#8FB8DE" font-family="sans-serif">z</text><text x="111" y="9" font-size="10" font-weight="700" fill="#8FB8DE" font-family="sans-serif">z</text>' : '') : ''; // 보송 그림체(시험판): 몸·얼굴은 그림 한 장, 옷·모자는 그 위에 겹친다
-  if (o.head && fl) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 112">${fl.whole}${flTop}</svg>`;
+  if (o.head && fl) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 112">${fl.whole}${o.bare ? '' : flTop}</svg>`;
   if (o.head) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 112">${head}</svg>`;
   const cl = o.top || o.bottom ? wearSvg(o.top, o.bottom) : { under: '', top: '', over: '' };
   // 신발: 왼발 한 짝을 그리고 오른발엔 좌우로 뒤집어 신긴다. 발과 같은 무리(cf-l·cf-r)라 걸을 때 발과 함께 움직인다.
