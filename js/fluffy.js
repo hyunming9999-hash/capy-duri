@@ -65,7 +65,7 @@ const R_HEAD = new Set([1, 6, 10, 11, 15, 21, 23]), R_SHOE = new Set([12, 13]), 
 // 황금 장비도 새 체형에 맞춘다: 눈에 쓰는 것은 내려 쓰고, 옷·갑옷은 작은 몸에 맞게 줄이고, 손에 든 것·등에 단 것은 몸 쪽으로 붙인다
 const BODY_FIT = [60, 128.5, 0.8, 0.78, 0, 0], EYE_FIT = [60, 50, 1, 1, 0, 7.6], HANDL = [28, 105, 0.8, 0.8, -2, 6], HANDR = [92, 105, 0.86, 0.86, -8, 3], WING = [60, 100, 0.95, 0.9, 0, 8];
 const R_FIT = { 3: EYE_FIT, 7: EYE_FIT, 16: EYE_FIT, 29: EYE_FIT, 5: BODY_FIT, 8: BODY_FIT, 9: BODY_FIT, 20: BODY_FIT, 22: BODY_FIT, 24: BODY_FIT, 26: BODY_FIT, 18: [60, 128.5, 0.84, 0.84, 0, 0],
-  0: HANDL, 4: HANDL, 14: HANDL, 25: HANDL, 2: HANDR, 17: WING, 19: WING, 27: BODY_FIT, 28: [92, 120, 0.86, 0.86, -8, 2] };
+  0: HANDL, 4: HANDL, 14: HANDL, 25: HANDL, 2: HANDR, 17: [60, 100, 0.8, 1, 0, 15], 19: WING, 27: BODY_FIT, 28: [92, 120, 0.86, 0.86, -8, 2] };
 export function capyRare(list, own) {
   let over = '', shoe = '', back = ''; // back: 날개·망토·꼬리는 몸과 얼굴 뒤에 그린다(큰 머리를 가리지 않게)
   list.forEach(k => { const f = 'r/' + k + '.webp';
