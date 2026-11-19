@@ -5,7 +5,7 @@ import { capy } from './capy.js';
 import { sfx } from './sound.js';
 import { gullSvg } from './animals.js';
 
-export const PIRATE_EVERY = 10, PIRATE_LOOT = 600, FLEE_FEE = 250, BOAT_FIX = 700, CBOAT_FIX = 300, CBOAT_HIT = 20; // 흰 배 수리 700 · 카피보트 수리 300 · 풍랑 한 번에 카피보트 내구도 -20
+export const PIRATE_EVERY = 10, PIRATE_LOOT = 600, FLEE_FEE = 250, BOAT_FIX = 700, CBOAT_FIX = 300, CBOAT_HIT = 10, PIRATE_HIT = 10; // 흰 배 수리 700 · 카피보트 수리 300 · 풍랑 한 번에 타고 있는 배 내구도 -10 · 해적선 포탄에 맞을 때마다 -10
 export const ZONES = ['', '초급 낚시터', '중급 낚시터', '고급 낚시터'];
 export const RODS = [null, { t: 1, name: '초급 낚싯대', price: 500, dur: 50, fix: 150 }, { t: 2, name: '중급 낚싯대', price: 1500, dur: 100, fix: 450 }, { t: 3, name: '고급 낚싯대', price: 4000, dur: 200, fix: 1200 }];
 // 미끼: 바다마다 따로(초급 1개 10코인 · 중급 10개 300코인 · 고급 10개 600코인). 색으로 구분(분홍·파랑·금색)
@@ -361,13 +361,13 @@ export function seaBattle(e) {
     foeEl.querySelectorAll('.sb-crew').forEach(c => { c.classList.remove('sb-jump'); void c.offsetWidth; c.classList.add('sb-jump'); });
     const ship = foeEl.querySelector('.sb-ship'); setTimeout(() => { if (!alive) return; ship.append(h('i', { class: 'sb-hole', style: { left: rnd(28, 62).toFixed(0) + '%', bottom: rnd(14, 28).toFixed(0) + '%', rotate: rnd(-30, 30).toFixed(0) + 'deg' } }, h('i', { class: 'sm' }), h('i', { class: 'em' }))); }, 350); }
   function fx(cls, x, n, y = 0) { const f = h('div', { class: 'sb-fx ' + cls, style: { left: x + 'px', bottom: me.y + y + 'px' } }, ...Array.from({ length: n }, (_, k) => h('i', { style: { '--a': (k / n * 360 + rnd(-12, 12)).toFixed(0) + 'deg', '--d': rnd(26, 62).toFixed(0) + 'px', '--t': rnd(0, 0.12).toFixed(2) + 's' } }))); e.world.append(f); setTimeout(() => f.remove(), 1100); }
-  function land(s, touched) { const mine = s.by === 'me', tx = mine ? foeX : me.x, d = Math.abs(s.x - tx), hit = !!touched || d < HITR; ball.style.display = 'none'; const ix = s.x;
+  function land(s, touched) { let hurtD = null; const mine = s.by === 'me', tx = mine ? foeX : me.x, d = Math.abs(s.x - tx), hit = !!touched || d < HITR; ball.style.display = 'none'; const ix = s.x;
     if (hit) { sfx('boom'); fx('sb-bang', ix, 10, Math.max(0, s.y - 20)); e.stage.classList.add('sb-quake'); setTimeout(() => e.stage.classList.remove('sb-quake'), 420); const els = mine ? [foeEl] : [e.boatEl, e.meEl]; els.forEach(n => n.classList.add('sb-hit')); setTimeout(() => els.forEach(n => n.classList.remove('sb-hit')), 600);
       if (mine && e.gun2) starHit(ix, Math.max(0, s.y - 20));
-      if (mine) foeHp--; else myHp--; hp(); }
+      if (mine) foeHp--; else { myHp--; hurtD = e.onHurt ? e.onHurt() : null; } hp(); }
     else { sfx('splash'); fx('sb-water', ix, 9); }
     const off = Math.round(d / 4), short = (s.x - tx) * dir < 0;
-    msg.textContent = mine ? (hit ? `명중! 앞으로 ${foeHp}방!` : `${off}m ${short ? '짧았어요' : '넘어갔어요'}. (해적단 명중률 ${Math.round(acc() * 100)}%)`) : (hit ? `으악, 맞았어요! 내 배는 앞으로 ${myHp}방…` : '해적단의 포가 빗나갔어요.');
+    msg.textContent = mine ? (hit ? `명중! 앞으로 ${foeHp}방!` : `${off}m ${short ? '짧았어요' : '넘어갔어요'}. (해적단 명중률 ${Math.round(acc() * 100)}%)`) : (hit ? `으악, 맞았어요! 내 배는 앞으로 ${myHp}방…${hurtD != null ? ` (배 내구도 -${PIRATE_HIT}, 남은 ${hurtD})` : ''}` : '해적단의 포가 빗나갔어요.');
     shot = null; if (foeHp <= 0) return end(true, '갈매기 해적단을 물리쳤어요! 보물을 챙겼어요.'); if (myHp <= 0) return end(false, '배가 크게 부서졌어요…');
     timer = 1.4; next = () => foeDrift(mine ? foeShoot : myTurn); }
   function step(now) { const dt = Math.min(0.033, (now - last) / 1000); last = now;

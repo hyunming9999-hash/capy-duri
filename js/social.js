@@ -15,7 +15,7 @@ import { createQuest } from './quest.js';
 import { recOf } from './cook.js';
 import { TANKS as AQT, DECO as AQD } from './aquarium.js';
 const AQACT = { peck: '콕콕 쪼기', hide: '숨바꼭질', circle: '빙글빙글', bubble: '거품 타기', glow: '반짝반짝', heart: '하트 뿅', startle: '깜짝 놀라기', slide: '미끄럼 타기' };
-import { openFishing, seaBattle, PIRATE_LOOT, FLEE_FEE, CBOAT_FIX, FISH, TIERS, RODS, ZONES, BAIT, BAIT2, BAIT3, baitIc, BALL, CANNON, CANNON2, WBOAT, BOAT_FIX, fishSvg, SHINY_LIST } from './fishing.js';
+import { openFishing, seaBattle, PIRATE_LOOT, FLEE_FEE, CBOAT_FIX, FISH, TIERS, RODS, ZONES, BAIT, BAIT2, BAIT3, baitIc, BALL, CANNON, CANNON2, WBOAT, BOAT_FIX, PIRATE_HIT, fishSvg, SHINY_LIST } from './fishing.js';
 
 // 동물마다: 성격, 좋아하는 것, 싫어하는 것, 상징 액세서리, 제일 좋아하는 선물
 const P = (trait, likes, hates, pin, fav) => ({ trait, likes, hates, pin, fav });
@@ -470,7 +470,7 @@ export function mount(el, ctx) {
   function goFish() { const zone = zoneOf(me.x); if (!zone || fishOpen || battle || !(me.boat && (me.boat.own || me.boat.pass))) return; const guest = !!me.boat.pass; fishOpen = true; keys.clear();
     const done = () => { fishOpen = false; if (!voice.on) bgm.duck(false); lastT = performance.now(); };
     openFishing({ ctx, zone, trial: !!trial, boatHit: n => (trial ? null : hitBoat(n)), sunk: why => sinkBoat(why), boat: boatSvg(me.boat.skin), bag: () => bag, save: saveBag, coins: addCoins, keep: trial ? null : keepFish, seen: trial ? null : id => !!dex[id], dex: (id, cm, shiny) => trial ? null : ctx.store.tx(`fishdex/${ctx.uid}/${id}`, c => ({ ...(c || {}), n: ((c && c.n) || 0) + 1, best: Math.max((c && c.best) || 0, cm), ...(shiny ? { s: ((c && c.s) || 0) + 1 } : {}) })).catch(() => {}), onClose: done, onPirate: guest || !hasGun() ? null : () => pirates(zone) }); } // 대포가 없으면 해적단도 안 나온다(중급 바다)
-  // 갈매기 해적단: 낚시하던 그 바다에서, 멀찍이 떨어져 포를 주고받는다. 지면 배 내구도가 반으로 줄고 500코인을 뺏긴다
+  // 갈매기 해적단: 낚시하던 그 바다에서, 멀찍이 떨어져 포를 주고받는다. 포탄에 맞을 때마다 배 내구도 -10, 지면 500코인을 뺏긴다(이기면 내구도는 맞은 만큼만 준다)
   // 해적단 보물: 화면 가운데에서 보물 상자가 열리고 금화가 쏟아진다
   function lootFx(n) { const CHEST = '<svg viewBox="0 0 120 100"><path class="lid" d="M14 44 Q14 12 60 12 Q106 12 106 44z" fill="#B5741B" stroke="#5A3A12" stroke-width="4" stroke-linejoin="round"/><path class="lid" d="M36 14 V44M84 14 V44" stroke="#F2C230" stroke-width="7"/><ellipse cx="60" cy="46" rx="42" ry="9" fill="#FFE066"/><circle cx="44" cy="42" r="8" fill="#FFD43B" stroke="#C98A00" stroke-width="2"/><circle cx="62" cy="38" r="9" fill="#FFD43B" stroke="#C98A00" stroke-width="2"/><circle cx="79" cy="43" r="8" fill="#FFD43B" stroke="#C98A00" stroke-width="2"/><rect x="14" y="44" width="92" height="46" rx="6" fill="#9A5F16" stroke="#5A3A12" stroke-width="4"/><path d="M36 44 V90M84 44 V90" stroke="#F2C230" stroke-width="7"/><rect x="51" y="52" width="18" height="20" rx="4" fill="#F2C230" stroke="#8A5A00" stroke-width="3"/><circle cx="60" cy="61" r="3" fill="#5A3A12"/></svg>';
     const box = h('div', { class: 'sb-loot', onClick: () => box.remove() }, h('i', { class: 'sb-rays' }), ...Array.from({ length: 22 }, (_, k) => h('i', { class: 'sb-coin', style: { '--a': (k / 22 * 360 + Math.random() * 14).toFixed(0) + 'deg', '--d': (70 + Math.random() * 90).toFixed(0) + 'px', '--t': (0.35 + Math.random() * 0.35).toFixed(2) + 's' } }, '🪙')), h('div', { class: 'sb-chest', html: CHEST }), h('b', null, '해적단의 보물!'), h('strong', null, `+${n.toLocaleString('ko-KR')} 🪙`));
@@ -485,13 +485,14 @@ export function mount(el, ctx) {
     if (n !== 1) return; // 소문은 첫 황금템을 샀을 때 한 번만 퍼진다
     bag = { ...bag, rumorAt: ctx.store.now() }; ctx.store.update('bag/' + ctx.uid, { rumorAt: bag.rumorAt }).catch(() => {}); setRel(i, { rumor: 1 }); }
   function pirates(zone, qst) { if (battle || !alive) return; if (qst) toast('⚔️ 갈매기 해적단이 나타났다! 퀘스트 해적전이에요', 2600); keys.clear(); const D = Math.max(620, scroller.clientWidth * 1.9), foeX = me.x + D <= WIDTH - 90 ? me.x + D : me.x - D; me.f = foeX > me.x ? 1 : -1; sfx('bad');
-    battleDir = me.f; battle = seaBattle({ world: scroller.firstElementChild, stage: scroller.parentNode, panel: sbPanel, zone, meEl, boatEl, shout: t => pop(mePop, t, 'say long'), flee: async () => (trial || qst ? true : await ctx.spend(FLEE_FEE)), minX: FISH_X + 60, maxX: WIDTH - 70, move: x => { me.x = x; }, me: { x: me.x, y: me.dy * H, s: me.ds }, foeX, balls: () => bag.balls || 0, gun2: !!bag.cannon2 && !trial && !qst, useBall: () => saveBag({ balls: Math.max(0, (bag.balls || 0) - 1) }), cam: x => { camX = x; },
+    battleDir = me.f; battle = seaBattle({ world: scroller.firstElementChild, stage: scroller.parentNode, panel: sbPanel, zone, meEl, boatEl, shout: t => pop(mePop, t, 'say long'), flee: async () => (trial || qst ? true : await ctx.spend(FLEE_FEE)), minX: FISH_X + 60, maxX: WIDTH - 70, move: x => { me.x = x; }, me: { x: me.x, y: me.dy * H, s: me.ds }, foeX, balls: () => bag.balls || 0, gun2: !!bag.cannon2 && !trial && !qst, onHurt: trial || qst ? null : () => hitBoat(PIRATE_HIT).d, useBall: () => saveBag({ balls: Math.max(0, (bag.balls || 0) - 1) }), cam: x => { camX = x; },
       onEnd: win => { battle = null; camX = null; lastT = performance.now(); if (qst) { if (win && win !== 'flee') { addCoins(PIRATE_LOOT); lootFx(PIRATE_LOOT); } quest.pirateResult(!!win && win !== 'flee'); return; } if (win === 'flee') return void toast(trial ? '해적단에게서 도망쳤어요 (체험이라 돈은 안 나가요)' : `해적단에게 ${FLEE_FEE} 🪙 내고 도망쳤어요`, 3200); if (win) { const loot = PIRATE_LOOT; addCoins(loot); lootFx(loot); }
         if (trial) { if (!win) toast('해적단에게 졌어요 (체험이라 배·돈은 그대로예요)', 3200); return; }
-        const d = Math.max(0, boatD() - (win ? 33 : 67)); saveBag({ boatD: d }); // 이겨도 1/3, 지면 2/3 부서진다. 0이 되면 가라앉는다
+        const d = bag.wboat ? boatD() : cboatD(), bn = bag.wboat ? '흰 배' : '카피보트'; // 내구도는 싸우는 동안 포탄에 맞을 때마다 이미 깎였다. 0이 되면 가라앉는다
+        if (!win) addCoins(-500);
         if (d === 0) return void setTimeout(() => sinkBoat(win ? '해적단을 물리쳤지만' : '해적단의 포탄에'), win ? 1600 : 300);
-        if (win) toast(`해적단을 물리쳤지만 흰 배 내구도가 ${d}로 줄었어요${d < BOAT_MIN ? '. 수리해야 중급 바다에 나갈 수 있어요' : ''}`, 3600);
-        else { addCoins(-500); toast(`해적단에게 500 🪙 뺏기고 흰 배 내구도가 ${d}로 줄었어요${d < BOAT_MIN ? '. 수리해야 중급 바다에 나갈 수 있어요' : ''}`, 4200); } } }); }
+        if (!win) toast(`해적단에게 500 🪙 뺏겼어요. ${bn} 내구도 ${d}/100${d < BOAT_MIN ? ' · 수리해야 다시 나갈 수 있어요' : ''}`, 4200);
+        else if (d < BOAT_MIN) toast(`해적단을 물리쳤지만 ${bn} 내구도가 ${d}예요. 수리해야 다시 나갈 수 있어요`, 3600); } }); }
   function makeWave(now) { const B = me.boat, hard = B.wave >= 70, w = h('i', { class: 'so-wave' + (hard ? ' hard' : ''), style: { left: me.x + 'px', bottom: (me.dy * 100).toFixed(1) + '%' } }); meEl.parentNode.append(w); setTimeout(() => w.remove(), 1300); sfx(hard ? 'swing' : 'tock');
     actors.forEach((o, i) => { if (i === held || o.x <= WATER_X || Math.abs(o.x - me.x) > 230 || ['chase', 'boat', 'palboat', 'offer', 'stun'].includes(o.st)) return;
       if (hard) { o.st = 'stun'; o.until = now + 900; o.kb = (o.x >= me.x ? 1 : -1) * 130; o.e.classList.remove('walk'); pop(o.e, toned(i, pick(['으악, 밀려난다!', '너무 세!', '살살 해!'])), 'say'); if (now > (o.pushAt || 0)) { o.pushAt = now + 6000; setRel(i, { a: Math.max(-100, A(i) - 1) }); scores(); } }
