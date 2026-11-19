@@ -79,8 +79,11 @@ export function openAquarium(o) {
   const scOf = f => (f.z >= 0 ? 1 - 0.5 * f.z : 1 - f.z * (f.near - 1)), // z: -1(유리 바로 앞) ~ 0 ~ 1(맨 뒤). 작은 물고기일수록 앞으로 오면 많이 커진다
     hOf = f => f.len * 0.62 * scOf(f);
   // 렉 줄이기: 크기는 수족관 비율이 바뀔 때만 한 번 정하고, 앞뒤 크기 변화는 transform scale로만(다시 그리지 않음)
-  // 전체 보기에서는 24m 수족관이 화면에 다 들어와 20cm 물고기가 5px밖에 안 돼 '넣었는데 안 보인다' → 화면에서 최소 28~40px은 되게 키운다(확대하면 실제 크기 그대로)
-  function sizeFish(f) { const real = f.len * ppm / FISH_FILL, w = real >= 40 ? real : 28 + real * 0.3; if (Math.abs(w - (f.lw || 0)) < 0.6) return; f.lw = w; f.el.style.width = w + 'px'; f.el.style.height = w * 2 / 3 + 'px'; f.zz.style.fontSize = Math.max(12, Math.min(40, w * 0.18)) + 'px'; f.tag.style.fontSize = Math.max(10, Math.min(18, w * 0.12)) + 'px'; }
+  // 물고기 크기는 실제 길이(cm) 그대로다(가운데 깊이 기준). 대신 유리 앞까지 바짝 다가올 수 있어서, 작은 물고기도 다가오면 크게 보인다
+  // near: 유리 바로 앞에서 몇 배로 보이는지. 다가왔을 때 화면에서 적어도 46px, 많아도 화면 폭의 42%가 되게 물고기마다 정한다
+  function sizeFish(f) { const real = f.len * ppm / FISH_FILL, base = Math.max(1.5, Math.min(4, 1.1 / Math.sqrt(f.len))), cap = Math.max(46, view.clientWidth * 0.42);
+    f.near = Math.max(1.25, Math.min(14, Math.max(46, Math.min(cap, real * base)) / real)); const w = real * f.near; // 그림은 가장 가까울 때 크기로 그려 두고 멀어지면 줄인다(키우면 흐려져서)
+    if (Math.abs(w - (f.lw || 0)) < 0.6) return; f.lw = w; f.el.style.width = w + 'px'; f.el.style.height = w * 2 / 3 + 'px'; f.zz.style.fontSize = Math.max(12, Math.min(40, w * 0.18)) + 'px'; f.tag.style.fontSize = Math.max(10, Math.min(18, w * 0.12)) + 'px'; }
   function build(list, dlist) {
     layer.replaceChildren(); decos = []; editing = false; root.classList.remove('edit'); [...tabs.children].forEach(b => b.classList.toggle('on', +b.dataset.t === tank)); zoom = 1; fitAll = true;
     const T = TANKS[tank]; W = T.w; H = T.h;
@@ -142,7 +145,7 @@ export function openAquarium(o) {
       if (f.goal) visitDeco(f, dt);
       const sp = f.base * (f.st === 'dash' ? 3.4 : f.st === 'sleep' ? 0.08 : 1) * (f.slow || 1);
       f.x += f.dir * sp * dt;
-      f.zT -= dt; if (f.zT <= 0) { f.zT = rnd(6, 14); f.tz = Math.random() < 0.65 ? (f.z < 0.2 ? rnd(0.45, 1) : rnd(-1, -0.15)) : rnd(-1, 1); } // 앞뒤로 오가기: 뒤에 있던 물고기는 앞으로, 앞에 있던 물고기는 뒤로
+      f.zT -= dt; if (f.zT <= 0) { f.zT = rnd(6, 14); f.tz = Math.random() < 0.7 ? (f.z < -0.3 ? rnd(0.3, 1) : rnd(-1, -0.55)) : rnd(-1, 1); if (f.tz < -0.5) f.zT = rnd(9, 16); } // 앞뒤로 오가기: 뒤에 있던 물고기는 앞으로, 앞에 있던 물고기는 뒤로
       { const dz = f.tz - f.z, vz = 0.12 + 0.08 * Math.min(1, f.base); f.z += Math.sign(dz) * Math.min(Math.abs(dz), vz * dt * (0.4 + Math.min(1, Math.abs(dz) * 3))); } const hg = hOf(f), lo = hg / 2 + H * 0.03, hi = Math.max(lo, H * Math.min(0.94, 0.9 - 0.12 * f.z) - hg / 2), ty = f.st === 'sleep' ? hi - hg * 0.1 : f.ty;
       f.vy += ((Math.max(lo, Math.min(hi, ty)) - f.y) * 0.6 - f.vy) * Math.min(1, dt * 2); f.y += f.vy * dt;
       if (f.x < f.len / 2 && f.dir < 0 || f.x > W - f.len / 2 && f.dir > 0) turn(f, true);
@@ -162,7 +165,7 @@ export function openAquarium(o) {
   // 앞에 있는 물고기가 뒤 물고기를 가린다(반투명 없이 그대로 덮는다)
   // 화면 밖 물고기는 위치만 계산하고 그리지 않는다(꼬리 흔들기도 멈춤)
   function draw() { const L = view.scrollLeft - 60, Rr = view.scrollLeft + view.clientWidth + 60, T0 = view.scrollTop - 60, B0 = view.scrollTop + view.clientHeight + 60;
-    for (const f of fish) { sizeFish(f); const sc = scOf(f), w = f.lw * sc, px = f.x * ppm, py = f.y * ppm, on = px + w / 2 > L && px - w / 2 < Rr && py + w / 3 > T0 && py - w / 3 < B0;
+    for (const f of fish) { sizeFish(f); const sc = scOf(f) / f.near, w = f.lw * sc, px = f.x * ppm, py = f.y * ppm, on = px + w / 2 > L && px - w / 2 < Rr && py + w / 3 > T0 && py - w / 3 < B0;
       if (on !== f.on) { f.on = on; f.el.classList.toggle('off', !on); } if (!on) continue;
       const q = Math.round(f.z * 20); if (q !== f.dq) { f.dq = q; f.el.style.zIndex = 500 - q * 20; }
       f.el.style.transform = `translate(${(px - w / 2).toFixed(1)}px, ${(py - w / 3).toFixed(1)}px) scale(${sc.toFixed(3)})`; const fl = f.dir > 0 ? 'scaleX(-1)' : ''; if (fl !== f.fl) { f.fl = fl; f.body.style.transform = fl; } } }
