@@ -69,4 +69,4 @@ export function boatImg(kind, pin) { // kind: 'wood' | 'white' | 'gun' | 'gun2'
 }
 export const shipImg = () => `<svg viewBox="0 0 170 130"><image href="${O}ship.webp" x="24" y="0" width="123" height="118"/><g class="gun-b" style="transform-origin:42px 56px"><image href="${O}gun.webp" x="-54" y="44" width="52" height="22" transform="scale(-1 1)"/></g><image href="${O}wheel.webp" x="28" y="55" width="24" height="24"/>${WAVE(118)}</svg>`;
 // 발밑 그림자(물에 들어가거나 배를 타면 CSS로 숨긴다)
-export const SHADOW = '<ellipse class="fl-sh" cx="60" cy="133.5" rx="31" ry="5.5" fill="rgba(70,40,15,.22)"/>';
+export const SHADOW = '<ellipse class="fl-sh" cx="60" cy="133.5" rx="31" ry="5.5" fill="rgba(60,32,10,.4)"/>';
