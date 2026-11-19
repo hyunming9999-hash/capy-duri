@@ -342,8 +342,8 @@ export function mount(el, ctx) {
   // 낚싯배 체험: 10분 동안 장비를 빌린다. 빌린 장비와 체험 중 번 돈·잃은 돈·도감은 저장하지 않는다
   const TRIAL_MS = 600000, TRIAL_KEYS = ['boat', 'wboat', 'cannon', 'boatD', 'rod', 'rodD', 'bait', 'bait2', 'bait3', 'balls', 'casts', 'pearlAt', 'casts3', 'pearlAt3', 'pcasts', 'pirAt', 'pirNext']; let trial = null, rawBag = {};
   // 퀘스트 해적전: 흰 배·대포를 퀘스트 동안만 빌려준다(저장하지 않는 덮어쓰기)
-  const QLOAN = { boat: true, wboat: true, cannon: true, boatD: 100, balls: 20 }; let qloan = null; let ptest = 0, ctest = false; // 연습 링크(?piratetest · ?taltest)
-  const mergeBag = () => ({ ...rawBag, ...(qloan ? qloan.g : {}), ...(trial ? trial.g : {}) });
+  const QLOAN = { boat: true, wboat: true, cannon: true, boatD: 100, balls: 20 }; let qloan = null; let ptest = 0, ctest = false, stest = false; // 연습 링크(?piratetest · ?taltest)
+  const mergeBag = () => ({ ...rawBag, ...(qloan ? qloan.g : {}), ...(trial ? trial.g : {}), ...(stest ? { scooter: true } : {}) });
   function startTrial() { trial = { until: performance.now() + TRIAL_MS, g: { boat: true, wboat: true, cannon: true, boatD: 100, rod: 3, rodD: 200, bait: 40, bait2: 40, bait3: 40, balls: 20, casts: 0, pearlAt: 999, pcasts: 0, pirNext: 4 } }; bag = mergeBag(); toast('🧪 낚싯배 체험 시작! 10분 동안 흰 배·대포·고급 낚싯대를 빌려요. 바다에서 "내 보트"를 누르세요', 4200); }
   function endTrial(why) { if (!trial) return; trial = null; bag = mergeBag(); if (battle) { battle.stop(); battle = null; camX = null; } const f = document.querySelector('.fs .fs-quit'); if (f) f.click();
     if (me.boat && me.boat.own && !bag.boat) { leaveBoat(); if (me.x > FISH_X - 40) me.x = FISH_X - 60; } else if (me.boat && me.boat.own && me.x > FISH_X + TILE - 30 && !bag.wboat) me.x = FISH_X + TILE - 60; else if (me.boat && me.boat.own && me.x > FISH_X + 2 * TILE - 30 && !bag.cannon) me.x = FISH_X + 2 * TILE - 60; toast(why || '낚싯배 체험이 끝났어요', 3000); drawHp(); }
@@ -426,6 +426,7 @@ export function mount(el, ctx) {
   // 까마귀 퇴치 연습(?taltest)·해적전 연습(?piratetest, =2면 별빛포): 친밀도·돈·배·포탄에는 아무 영향 없음
   try { const tq = new URLSearchParams(location.search), shut = () => document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click());
     if (tq.has('taltest')) setTimeout(() => { shut(); if (crow || fishOpen || battle) return; const pool = actors.map((o, i) => i).filter(i => actors[i] && actors[i].x < WATER_X - 40).sort((a, b) => Math.abs(actors[a].x - me.x) - Math.abs(actors[b].x - me.x)).slice(0, 2); if (!pool.length) return; ctest = true; crowSpawn(performance.now(), pool); toast('🧪 까마귀 퇴치 연습 · 친밀도에는 영향 없어요', 2800); }, 1800);
+    if (tq.has('scoottest')) setTimeout(() => { shut(); if (fishOpen || battle || farmOpen || me.boat) return; stest = true; bag = mergeBag(); if (me.x > WATER_X - 60) me.x = WATER_X - 200; setScoot(true); toast('🧪 황금사자 스쿠터 연습 · 빌려 타는 거라 가방에는 안 남아요', 3200); }, 1800);
     if (tq.has('piratetest')) setTimeout(() => { shut(); if (fishOpen || battle || farmOpen) return; if (!trial) startTrial(); ptest = tq.get('piratetest') === '2' ? 2 : 1; if (ptest === 2) { trial.g.cannon2 = true; bag = mergeBag(); } me.x = FISH_X + TILE + 220; me.y = me.dy = 0.08; me.ds = 1 - me.y * 0.7; myBoat(); toast('🧪 해적전 연습 · 돈·배·포탄에는 영향 없어요', 2800); setTimeout(() => { if (alive && !battle) pirates(2); }, 1500); }, 1800);
   } catch {}
   // 메인 퀘스트: 동물 머리 위 ! ? 표시와 동물 창의 🔍 퀘스트 버튼
