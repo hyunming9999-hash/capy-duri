@@ -60,7 +60,8 @@ export function openAquarium(o) {
     fish.forEach(f => { f.lw = 0; }); view.scrollLeft = cx * W * ppm - view.clientWidth / 2; view.scrollTop = keep ? cy * H * ppm - view.clientHeight / 2 : H * ppm; }
   function setZoom(z) { zoom = Math.max(zMin, Math.min(6, z)); if (Math.abs(zoom - 1) < 0.08) zoom = 1; layout(true); }
   // 원근: 깊이 z(0 앞 ~ 1 뒤)만큼 작고 흐리게. 크기가 바뀔 때만 다시 잰다
-  const scOf = f => 1 - 0.5 * f.z, hOf = f => f.len * 0.62 * scOf(f);
+  const scOf = f => (f.z >= 0 ? 1 - 0.5 * f.z : 1 - f.z * (f.near - 1)), // z: -1(유리 바로 앞) ~ 0 ~ 1(맨 뒤). 작은 물고기일수록 앞으로 오면 많이 커진다
+    hOf = f => f.len * 0.62 * scOf(f);
   function sizeFish(f) { const w = f.len * ppm / FISH_FILL * scOf(f); if (Math.abs(w - (f.lw || 0)) < 0.6) return; f.lw = w; f.el.style.width = w + 'px'; f.el.style.height = w * 2 / 3 + 'px'; f.zz.style.fontSize = Math.max(12, Math.min(40, w * 0.18)) + 'px'; f.tag.style.fontSize = Math.max(10, Math.min(18, w * 0.12)) + 'px'; }
   function build(list) {
     layer.replaceChildren(); [...tabs.children].forEach(b => b.classList.toggle('on', +b.dataset.t === tank)); zoom = 1;
@@ -68,7 +69,7 @@ export function openAquarium(o) {
     fish = list.map(d => makeFish(d)).filter(Boolean);
         layout(false); drawRoom(); drawInfo(); if (o.test) bag = demoBag(tank); drawBag(); }
   function makeFish(d, drop) { const f0 = FISH.find(x => x.id === d.id); if (!f0) return null; const len = d.cm / 100, f = { d, f0, len, hgt: len * 0.45, tier: f0.tier || 1, g: d.g, shiny: d.shiny, x: rnd(len / 2, Math.max(len / 2 + 0.01, W - len / 2)), y: rnd(H * 0.15, H * 0.7), dir: Math.random() < 0.5 ? -1 : 1, vy: 0, ty: 0, st: 'swim', stT: rnd(2, 6), sp: 1, turnT: 0 };
-    f.base = 0.12 + 0.3 * Math.sqrt(len); f.ty = f.y; f.z = f.tz = drop ? 0.1 : Math.random(); f.dq = -1; f.zT = rnd(1, 8);
+    f.base = 0.12 + 0.3 * Math.sqrt(len); f.ty = f.y; f.near = Math.min(3, Math.max(1.25, 0.9 / Math.sqrt(len))); f.z = f.tz = drop ? 0.1 : rnd(-0.8, 1); f.dq = -1; f.zT = rnd(1, 8);
     f.body = h('div', { class: 'aq-fb', html: fishSvg(f0, false, d.shiny), style: { animationDuration: rnd(0.45, 0.7) + 's' } });
     f.zz = h('span', { class: 'aq-zz' }, 'Z z'); f.tag = h('span', { class: 'aq-name', hidden: !d.name }, d.name || ''); f.el = h('div', { class: 'aq-f ' + glowOf(f) }, f.body, f.zz, f.tag);
     f.el.onclick = e => { e.stopPropagation(); showTip(f); }; layer.append(f.el);
@@ -118,15 +119,15 @@ export function openAquarium(o) {
         else { f.ty = rnd(H * 0.05, H * 0.85); f.stT = rnd(2, 6); } }
       const sp = f.base * (f.st === 'dash' ? 3.4 : f.st === 'sleep' ? 0.08 : 1);
       f.x += f.dir * sp * dt;
-      f.zT -= dt; if (f.zT <= 0) { f.zT = rnd(6, 14); f.tz = Math.random() < 0.65 ? (f.z < 0.5 ? rnd(0.65, 1) : rnd(0, 0.35)) : rnd(0, 1); } // 앞뒤로 오가기: 뒤에 있던 물고기는 앞으로, 앞에 있던 물고기는 뒤로
-      { const dz = f.tz - f.z, vz = 0.07 + 0.05 * Math.min(1, f.base); f.z += Math.sign(dz) * Math.min(Math.abs(dz), vz * dt * (0.4 + Math.min(1, Math.abs(dz) * 3))); } const hg = hOf(f), lo = hg / 2 + H * 0.03, hi = H * (0.9 - 0.12 * f.z) - hg / 2, ty = f.st === 'sleep' ? hi - hg * 0.1 : f.ty;
+      f.zT -= dt; if (f.zT <= 0) { f.zT = rnd(6, 14); f.tz = Math.random() < 0.65 ? (f.z < 0.2 ? rnd(0.45, 1) : rnd(-1, -0.15)) : rnd(-1, 1); } // 앞뒤로 오가기: 뒤에 있던 물고기는 앞으로, 앞에 있던 물고기는 뒤로
+      { const dz = f.tz - f.z, vz = 0.12 + 0.08 * Math.min(1, f.base); f.z += Math.sign(dz) * Math.min(Math.abs(dz), vz * dt * (0.4 + Math.min(1, Math.abs(dz) * 3))); } const hg = hOf(f), lo = hg / 2 + H * 0.03, hi = Math.max(lo, H * Math.min(0.94, 0.9 - 0.12 * f.z) - hg / 2), ty = f.st === 'sleep' ? hi - hg * 0.1 : f.ty;
       f.vy += ((Math.max(lo, Math.min(hi, ty)) - f.y) * 0.6 - f.vy) * Math.min(1, dt * 2); f.y += f.vy * dt;
       if (f.x < f.len / 2 && f.dir < 0 || f.x > W - f.len / 2 && f.dir > 0) turn(f, true);
       f.x = Math.max(f.len / 2 - 0.01, Math.min(W - f.len / 2 + 0.01, f.x)); }
     // 부딪힘: 몸통 상자가 겹치면 작은 물고기가 위아래로 비키고, 마주 보고 오면 방향을 튼다
     for (let a = 0; a < fish.length; a++) for (let b = a + 1; b < fish.length; b++) { const A = fish[a], B = fish[b], dx = B.x - A.x, dy = B.y - A.y;
-      if (Math.abs(A.z - B.z) < 0.22 && Math.abs(dx) < (A.len * scOf(A) + B.len * scOf(B)) * 0.4 && Math.abs(dy) < (hOf(A) + hOf(B)) * 0.4) { const s = A.len < B.len ? A : B, big = s === A ? B : A, away = s.y < big.y ? -1 : 1;
-        s.ty = Math.max(H * 0.05, Math.min(H * 0.85, big.y + away * (hOf(big) * 0.6 + hOf(s)))); if (Math.random() < 0.01) s.tz = Math.max(0, Math.min(1, s.z + (s.z < big.z ? -0.3 : 0.3))); s.vy += away * 0.4 * s.base;
+      if (Math.abs(A.z - B.z) < 0.3 && Math.abs(dx) < (A.len * scOf(A) + B.len * scOf(B)) * 0.4 && Math.abs(dy) < (hOf(A) + hOf(B)) * 0.4) { const s = A.len < B.len ? A : B, big = s === A ? B : A, away = s.y < big.y ? -1 : 1;
+        s.ty = Math.max(H * 0.05, Math.min(H * 0.85, big.y + away * (hOf(big) * 0.6 + hOf(s)))); if (Math.random() < 0.01) s.tz = Math.max(-1, Math.min(1, s.z + (s.z < big.z ? -0.4 : 0.4))); s.vy += away * 0.4 * s.base;
         if (s.dir !== big.dir && Math.sign(big.x - s.x) === s.dir && !s.turnT && Math.random() < 0.02) turn(s);
         if (s.st === 'sleep') setSt(s, 'swim', rnd(2, 4)); } } }
   function setSt(f, st, t) { f.st = st; f.stT = t; f.el.classList.toggle('dash', st === 'dash'); f.el.classList.toggle('sleep', st === 'sleep'); if (st === 'dash') bubbles(f); }
@@ -135,7 +136,8 @@ export function openAquarium(o) {
     const g = f.body.cloneNode(true); g.classList.add('aq-ghost'); f.el.append(g); setTimeout(() => g.remove(), 650);
     f.dir *= -1; f.body.classList.remove('aq-in'); void f.body.offsetWidth; f.body.classList.add('aq-in'); f.el.classList.remove('turn'); void f.el.offsetWidth; f.el.classList.add('turn'); }
   function bubbles(f) { for (let k = 0; k < 4; k++) { const b = h('i', { class: 'aq-bub', style: { zIndex: f.el.style.zIndex, left: (f.x - f.dir * f.len * scOf(f) * 0.45) * ppm + 'px', top: (f.y + rnd(-0.1, 0.1) * hOf(f)) * ppm + 'px', animationDelay: k * 0.08 + 's' } }); layer.append(b); setTimeout(() => b.remove(), 1400); } }
-  function draw() { for (const f of fish) { sizeFish(f); const w = f.lw; const q = Math.round(f.z * 20); if (q !== f.dq) { f.dq = q; const z = q / 20; f.el.style.zIndex = 100 + Math.round((1 - z) * 800); f.el.style.opacity = (1 - 0.3 * z).toFixed(2); f.el.style.setProperty('--dz', `brightness(${(1 - 0.12 * z).toFixed(2)}) saturate(${(1 - 0.35 * z).toFixed(2)}) hue-rotate(${(z * 12).toFixed(0)}deg)`); } f.el.style.transform = `translate(${(f.x * ppm - w / 2).toFixed(1)}px, ${(f.y * ppm - w / 3).toFixed(1)}px)`; f.body.style.transform = f.dir > 0 ? 'scaleX(-1)' : ''; } }
+  // 앞에 있는 물고기가 뒤 물고기를 가린다(반투명 없이 그대로 덮는다)
+  function draw() { for (const f of fish) { sizeFish(f); const w = f.lw; const q = Math.round(f.z * 20); if (q !== f.dq) { f.dq = q; const z = q / 20; f.el.style.zIndex = 500 - q * 20; const zf = Math.max(0, z); f.el.style.setProperty('--dz', zf ? `brightness(${(1 - 0.14 * zf).toFixed(2)}) saturate(${(1 - 0.4 * zf).toFixed(2)}) hue-rotate(${(zf * 14).toFixed(0)}deg)` : 'none'); } f.el.style.transform = `translate(${(f.x * ppm - w / 2).toFixed(1)}px, ${(f.y * ppm - w / 3).toFixed(1)}px)`; f.body.style.transform = f.dir > 0 ? 'scaleX(-1)' : ''; } }
   function loop(t) { if (!alive) return; const dt = Math.min(0.05, (t - last) / 1000); last = t; step(dt); draw(); if (t > reactAt) { reactAt = t + rnd(2500, 5000); react(); } raf = requestAnimationFrame(loop); }
   // 두 손가락으로 확대·축소
   let pinch = null; view.addEventListener('touchstart', e => { if (e.touches.length === 2) pinch = { d: Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY), z: zoom }; }, { passive: true });
