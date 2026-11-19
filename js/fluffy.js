@@ -61,17 +61,18 @@ export const gullImg = boss => img(boss ? 'gull-boss.webp' : 'gull-crew.webp');
 // 황금 장비: 몸에 걸친 채로 그린 그림이라 그대로 겹치면 된다(몸 뒤로 가는 부분은 그림에서 이미 가려져 있다)
 // 날개·꼬리처럼 옆으로 넓은 것이 잘리지 않게 황금 장비 그림은 틀이 더 넓다(480×360, 가운데가 몸)
 const wide = (name, own) => `<image href="${src(name, own)}" x="${(60 - 240 * S).toFixed(2)}" y="${Y.toFixed(2)}" width="${(480 * S).toFixed(2)}" height="${H.toFixed(2)}"/>`;
-const R_HEAD = new Set([1, 6, 10, 11, 15, 21, 23]), R_SHOE = new Set([12, 13]);
+const R_HEAD = new Set([1, 6, 10, 11, 15, 21, 23]), R_SHOE = new Set([12, 13]), R_BACK = new Set([17, 19, 27, 28]);
 // 황금 장비도 새 체형에 맞춘다: 눈에 쓰는 것은 내려 쓰고, 옷·갑옷은 작은 몸에 맞게 줄이고, 손에 든 것·등에 단 것은 몸 쪽으로 붙인다
-const BODY_FIT = [60, 128.5, 0.8, 0.78, 0, 0], EYE_FIT = [60, 50, 1, 1, 0, 7.6], HANDL = [28, 105, 0.8, 0.8, 5, 6], HANDR = [92, 105, 0.86, 0.86, -8, 3], WING = [60, 100, 0.82, 0.82, 0, 6];
+const BODY_FIT = [60, 128.5, 0.8, 0.78, 0, 0], EYE_FIT = [60, 50, 1, 1, 0, 7.6], HANDL = [28, 105, 0.8, 0.8, -2, 6], HANDR = [92, 105, 0.86, 0.86, -8, 3], WING = [60, 100, 0.95, 0.9, 0, 8];
 const R_FIT = { 3: EYE_FIT, 7: EYE_FIT, 16: EYE_FIT, 29: EYE_FIT, 5: BODY_FIT, 8: BODY_FIT, 9: BODY_FIT, 20: BODY_FIT, 22: BODY_FIT, 24: BODY_FIT, 26: BODY_FIT, 18: [60, 128.5, 0.84, 0.84, 0, 0],
   0: HANDL, 4: HANDL, 14: HANDL, 25: HANDL, 2: HANDR, 17: WING, 19: WING, 27: BODY_FIT, 28: [92, 120, 0.86, 0.86, -8, 2] };
 export function capyRare(list, own) {
-  let over = '', shoe = '';
+  let over = '', shoe = '', back = ''; // back: 날개·망토·꼬리는 몸과 얼굴 뒤에 그린다(큰 머리를 가리지 않게)
   list.forEach(k => { const f = 'r/' + k + '.webp';
+    if (R_BACK.has(k)) { back += fitG(R_FIT[k], wide(f, own)); return; }
     if (R_SHOE.has(k)) shoe = `<g class="cf-l">${fitG(FIT.s, crop(f, own, -20, FOOT - 14, 80, 54))}</g><g class="cf-r">${fitG(FIT.s, crop(f, own, 60, FOOT - 14, 80, 54))}</g>`;
     else over += R_HEAD.has(k) ? `<g transform="translate(0 ${HAT_UP + (k === 21 ? 9 : 0)})">${wide(f, own)}</g>` : fitG(R_FIT[k], wide(f, own)); });
-  return { over, shoe };
+  return { over, shoe, back };
 }
 export const rareIcon = i => (on ? `img/fl/r/ic/${i}.webp` : `img/rare/ic/${i}.webp`);
 export const rarePic = i => (on ? `img/fl/r/ic/${i}.webp` : `img/rare/${i}.webp`);
