@@ -129,7 +129,12 @@ export function openAquarium(o) {
     if (mode === 'me' && (o.fee ? o.fee(i) : (feeN[i] || 0) < FEE_MAX)) { feeN[i] = (feeN[i] || 0) + 1; fee++; const c = h('div', { class: 'aq-coin' }, '+1🪙'); e.append(c); setTimeout(() => c.remove(), 1500); sfx('coin'); drawInfo(); }
     setTimeout(() => { say.remove(); e.classList.remove('wow'); }, 2200); }
   function inView(f) { const x = f.x * ppm, y = f.y * ppm; return x > view.scrollLeft - 20 && x < view.scrollLeft + view.clientWidth + 20 && y > view.scrollTop - 20 && y < view.scrollTop + view.clientHeight + 20; }
-  function drawInfo() { const rare = fish.filter(isRare).length, T = TANKS[tank]; info.innerHTML = `${T.n} ${T.w}m×${T.h}m · ${fish.length}/${T.max}마리${T.cap ? ` · ${T.cap}cm까지` : ''} · 귀한 물고기 ${rare} · 관람료 ${fee}🪙${mode === 'pal' ? ' · 구경만 할 수 있어요' : ''}${o.test ? ' (시험판)' : ''}`; }
+  // 제목 칸을 누르면 아래로 살짝 넓어지면서 관람료를 얼마 벌었는지 보여 준다. 다시 누르면 원래대로
+  let infoOpen = false; const feeBox = h('div', { class: 'aq-fee', hidden: true });
+  function drawInfo() { const rare = fish.filter(isRare).length, T = TANKS[tank]; info.innerHTML = `${T.n} ${T.w}m×${T.h}m · ${fish.length}/${T.max}마리${T.cap ? ` · ${T.cap}cm까지` : ''} · 귀한 물고기 ${rare} · 관람료 ${fee}🪙${mode === 'pal' ? ' · 구경만 할 수 있어요' : ''}${o.test ? ' (시험판)' : ''}`;
+    const tl = root.querySelector('.aq-title'); if (!tl) return; if (!feeBox.parentNode) { tl.append(feeBox); tl.onclick = () => { infoOpen = !infoOpen; sfx('pop'); drawInfo(); }; }
+    root.classList.toggle('tio', infoOpen); feeBox.hidden = !infoOpen; if (!infoOpen) return; const st = mode === 'me' && o.feeStat ? o.feeStat() : null;
+    feeBox.replaceChildren(...(mode === 'pal' ? [h('span', null, '🐾 놀러 온 수족관이라 관람료는 주인에게만 들어가요')] : [h('span', null, `🪙 이번 관람 ${fee}코인`), st && h('span', null, `오늘 ${st.today}코인`), st && h('span', null, `지금까지 ${st.total}코인`), h('small', null, '귀한 물고기를 본 동물이 1코인씩 · 동물마다 하루 3번')].filter(Boolean)), h('em', null, '▲ 누르면 접혀요')); }
 
   // ----- 물고기 움직임: 헤엄 → 가끔 방향 틀기·돌진·잠 · 벽에서 돌아서고 · 서로 겹치면 작은 쪽이 비켜 간다 -----
   function step(dt) {
