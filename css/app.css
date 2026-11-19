@@ -2180,6 +2180,24 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fluffy .so-an .so-body, .fluffy .so-me { filter: none; }
 .swim .fl-sh, .onboat .fl-sh, .onpal .fl-sh, .dunk .fl-sh, .sb-crew .fl-sh, .fs-me .fl-sh { display: none; }
 /* 보송 그림체: 배에 타면 돛대 뒤(고물 쪽)에 조금 높이 앉는다 */
-.fluffy .so-me.onboat { margin-left: -57px; margin-bottom: 13px; transform-origin: 50% calc(100% + 29px); }
-.fluffy .so-me.onboat svg { clip-path: inset(-80% -80% 24% -80%); }
+.fluffy .so-me.onboat { margin-left: -52px; margin-bottom: 15px; transform-origin: 50% calc(100% + 28px); }
+.fluffy .so-me.onboat svg { clip-path: inset(-80% -80% 24% -80%); scale: .84; transform-origin: 50% 100%; }
 .fl-item { width: 36px; height: 36px; display: block; object-fit: contain; }
+/* ===== 보송 그림체: 친목회 화면 둘레를 인형 게임기처럼(게임 화면 크기는 그대로) ===== */
+.fluffy .page-social { --plush: #F4DFBB; --plush-d: #DDBB8A; --choc: #A66A3C; --choc-d: #7C4A26; background: radial-gradient(ellipse at 50% 0, #FBECCF 0, transparent 60%), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .36 0 0 0 0 .16 0 0 0 .55 -.18'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"), var(--plush); box-shadow: inset 0 0 0 3px #FBEFD8, inset 0 0 26px 6px rgba(166, 106, 60, .28); border-radius: 34px 34px 28px 28px; position: relative; }
+.fluffy .page-social .so-stage { border-radius: 22px; box-shadow: 0 0 0 5px var(--choc), 0 0 0 8px #C98B58, 0 5px 0 8px var(--choc-d), inset 0 0 0 2px rgba(255, 255, 255, .5); margin: 10px 0 14px; }
+.fluffy .page-social .so-pad { margin-top: 12px; padding: 0 4px; align-items: center; }
+.fluffy .page-social .so-dpad { gap: 0; grid-template-areas: ". U ." "L D R"; filter: drop-shadow(0 4px 0 var(--choc-d)); }
+.fluffy .page-social .so-dpad .so-dp { background: var(--choc); border: 0; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .16); color: #FFF3DC; border-radius: 0; width: min(16vw, 60px); height: 50px; font-size: 19px; }
+.fluffy .page-social .so-dpad .dp-U { border-radius: 16px 16px 0 0; } .fluffy .page-social .so-dpad .dp-L { border-radius: 16px 0 0 16px; } .fluffy .page-social .so-dpad .dp-R { border-radius: 0 16px 16px 0; } .fluffy .page-social .so-dpad .dp-D { border-radius: 0 0 16px 16px; }
+.fluffy .page-social .so-dpad .so-dp.held { background: var(--choc-d); transform: none; }
+.fluffy .page-social .so-acts2 { flex-direction: row; gap: 8px; align-items: flex-end; }
+.fluffy .page-social .so-acts2 .so-dp { width: min(20vw, 76px); height: min(20vw, 76px); border-radius: 50%; flex-direction: column; gap: 1px; font-size: 22px; border: 0; color: #fff; }
+.fluffy .page-social .so-acts2 .so-dp small { color: #fff; font-size: 12px; text-shadow: 0 1px 0 rgba(0, 0, 0, .25); }
+.fluffy .page-social .so-acts2 .so-ride { background: radial-gradient(circle at 35% 28%, #FFD08A, #F59A23 62%); box-shadow: 0 5px 0 #C46F0E, inset 0 -4px 6px rgba(160, 80, 0, .25); margin-bottom: 26px; order: 2; }
+.fluffy .page-social .so-acts2 .so-hit { background: radial-gradient(circle at 35% 28%, #C9EDB8, #7CC46A 62%); box-shadow: 0 5px 0 #4E9440, inset 0 -4px 6px rgba(40, 100, 30, .25); order: 1; }
+.fluffy .page-social .so-acts2 .so-dp:active, .fluffy .page-social .so-acts2 .so-dp.held { transform: translateY(4px); box-shadow: none; }
+.fluffy .page-social .so-chatbar { margin-top: 12px; padding: 0 4px; }
+.fluffy .page-social .so-chatbar .so-chatin { border-radius: 999px; border-color: var(--plush-d); }
+@media (min-height: 720px) { .fluffy .page-social .so-dpad { grid-template-areas: ". U ." "L C R" ". D ."; } .fluffy .page-social .so-dpad::after { content: ''; grid-area: C; background: var(--choc); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .16); border-radius: 0; background-image: radial-gradient(circle, var(--choc-d) 0 7px, transparent 8px); } .fluffy .page-social .so-dpad .so-dp { height: 44px; } }
+.fluffy .page-social { padding-bottom: 34px; } .fluffy .page-social .page-body::after { content: ''; display: block; width: 58px; height: 22px; margin: 14px auto 0; background: radial-gradient(circle, var(--choc-d) 0 3px, transparent 3.6px) 0 0 / 14.5px 11px; opacity: .8; }
