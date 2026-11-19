@@ -40,6 +40,15 @@ export function openAquarium(o) {
     h('div', { class: 'aq-top' }, h('button', { class: 'aq-x', onClick: close, 'aria-label': '닫기' }, '✕'), h('div', { class: 'aq-title' }, h('b', null, '🐠 카피수족관'), o.test && h('small', null, '시험판 · 저장되지 않아요')),
       h('div', { class: 'aq-zoom' }, h('button', { onClick: () => setZoom(zoom / 1.5) }, '－'), zoomL, h('button', { onClick: () => setZoom(zoom * 1.5) }, '＋'))),
     h('div', { class: 'aq-frame' }, view, tip), room);
+  // 놀러가기: 내 수족관 ↔ 상대 수족관. 상대 수족관은 구경만(풀어넣기·이름 붙이기 없음)
+  let mode = 'me'; const meName = o.me || '나', palName = o.partner || '두두', titleB = root.querySelector('.aq-title b');
+  const visit = h('div', { class: 'aq-visit' }, ...[['me', `🏠 내 수족관`], ['pal', `🐾 ${palName}네 놀러가기`]].map(([k, l]) => h('button', { class: 'aq-vt' + (k === 'me' ? ' on' : ''), 'data-k': k, onClick: () => goMode(k) }, l)));
+  root.querySelector('.aq-top').insertBefore(visit, root.querySelector('.aq-zoom'));
+  async function goMode(k) { if (k === mode) return; mode = k; [...visit.children].forEach(b => b.classList.toggle('on', b.dataset.k === k)); panel.hidden = true; tip.hidden = true;
+    root.classList.toggle('pal', k === 'pal'); titleB.textContent = k === 'pal' ? `🐾 ${palName}의 수족관` : `🐠 ${meName}의 수족관`;
+    if (k === 'pal') { const pd = o.test ? { tank: 3, fish: demoFish(3).map(d => ({ ...d, name: Math.random() < 0.15 ? pick(['콩이', '뽀삐', '두부', '별님', '방울']) : '' })) } : await (o.loadPartner ? o.loadPartner() : null); if (!pd) { titleB.textContent = `${palName}는 아직 수족관이 없어요`; fish = []; layer.replaceChildren(); return; } myTank = tank; tank = pd.tank; build(pd.fish); }
+    else { tank = myTank; build(o.test ? demoFish(tank) : o.fish); } }
+  let myTank = tank; titleB.textContent = `🐠 ${meName}의 수족관`;
   root.querySelector('.aq-title').append(info); if (o.test) root.querySelector('.aq-top').insertBefore(tabs, root.querySelector('.aq-zoom'));
   document.body.append(root);
   let fish = [], W = 1, H = 1, ppm = 1; // ppm: 1m당 픽셀
@@ -62,7 +71,8 @@ export function openAquarium(o) {
   // 원근: 깊이 z(0 앞 ~ 1 뒤)만큼 작고 흐리게. 크기가 바뀔 때만 다시 잰다
   const scOf = f => (f.z >= 0 ? 1 - 0.5 * f.z : 1 - f.z * (f.near - 1)), // z: -1(유리 바로 앞) ~ 0 ~ 1(맨 뒤). 작은 물고기일수록 앞으로 오면 많이 커진다
     hOf = f => f.len * 0.62 * scOf(f);
-  function sizeFish(f) { const w = f.len * ppm / FISH_FILL * scOf(f); if (Math.abs(w - (f.lw || 0)) < 0.6) return; f.lw = w; f.el.style.width = w + 'px'; f.el.style.height = w * 2 / 3 + 'px'; f.zz.style.fontSize = Math.max(12, Math.min(40, w * 0.18)) + 'px'; f.tag.style.fontSize = Math.max(10, Math.min(18, w * 0.12)) + 'px'; }
+  // 렉 줄이기: 크기는 수족관 비율이 바뀔 때만 한 번 정하고, 앞뒤 크기 변화는 transform scale로만(다시 그리지 않음)
+  function sizeFish(f) { const w = f.len * ppm / FISH_FILL; if (Math.abs(w - (f.lw || 0)) < 0.6) return; f.lw = w; f.el.style.width = w + 'px'; f.el.style.height = w * 2 / 3 + 'px'; f.zz.style.fontSize = Math.max(12, Math.min(40, w * 0.18)) + 'px'; f.tag.style.fontSize = Math.max(10, Math.min(18, w * 0.12)) + 'px'; }
   function build(list) {
     layer.replaceChildren(); [...tabs.children].forEach(b => b.classList.toggle('on', +b.dataset.t === tank)); zoom = 1;
     const T = TANKS[tank]; W = T.w; H = T.h;
@@ -93,7 +103,7 @@ export function openAquarium(o) {
     const save = async () => { const nm = inp.value.trim().slice(0, 8); if (o.rename && !(await o.rename(f.d, nm))) return; f.d.name = nm; f.tag.textContent = nm; f.tag.hidden = !nm; tip.hidden = true; };
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') save(); }); tip.append(h('span', null, '✏️ '), inp, h('button', { class: 'aq-nbtn', onClick: e => { e.stopPropagation(); save(); } }, '저장')); clearTimeout(showTip.t); tip.hidden = false; inp.focus(); }
   tip.onclick = e => e.stopPropagation();
-  function showTip(f) { const T = ['', '흔함', '보기 힘듦', '희귀', '초희귀'][f.tier] || ''; tip.innerHTML = `${f.d.name ? `<b class="nm">「${f.d.name}」</b> ` : ''}${f.shiny ? '✨ 이로치 ' : ''}<b>${f.f0.name}</b> · ${f.g}급 · ${f.d.cm}cm <small>${T}${f.st === 'sleep' ? ' · 쿨쿨 자는 중' : ''}</small> `; tip.append(h('button', { class: 'aq-nbtn', onClick: e => { e.stopPropagation(); rename(f); } }, f.d.name ? '✏️ 이름 바꾸기' : '✏️ 이름 붙이기')); tip.hidden = false; clearTimeout(showTip.t); showTip.t = setTimeout(() => { tip.hidden = true; }, 4000); }
+  function showTip(f) { const T = ['', '흔함', '보기 힘듦', '희귀', '초희귀'][f.tier] || ''; tip.innerHTML = `${f.d.name ? `<b class="nm">「${f.d.name}」</b> ` : ''}${f.shiny ? '✨ 이로치 ' : ''}<b>${f.f0.name}</b> · ${f.g}급 · ${f.d.cm}cm <small>${T}${f.st === 'sleep' ? ' · 쿨쿨 자는 중' : ''}</small> `; if (mode === 'me') tip.append(h('button', { class: 'aq-nbtn', onClick: e => { e.stopPropagation(); rename(f); } }, f.d.name ? '✏️ 이름 바꾸기' : '✏️ 이름 붙이기')); tip.hidden = false; clearTimeout(showTip.t); showTip.t = setTimeout(() => { tip.hidden = true; }, 4000); }
   view.onclick = () => { tip.hidden = true; };
 
   // ----- 관람석: 벤치 두 개에 동물이 앉는다(왼쪽 벤치 10~29%, 오른쪽 71~90%) -----
@@ -105,7 +115,7 @@ export function openAquarium(o) {
     if ((feeN[i] || 0) < FEE_MAX) { feeN[i] = (feeN[i] || 0) + 1; fee++; const c = h('div', { class: 'aq-coin' }, '+1🪙'); e.append(c); setTimeout(() => c.remove(), 1500); sfx('coin'); drawInfo(); }
     setTimeout(() => { say.remove(); e.classList.remove('wow'); }, 2200); }
   function inView(f) { const x = f.x * ppm, y = f.y * ppm; return x > view.scrollLeft - 20 && x < view.scrollLeft + view.clientWidth + 20 && y > view.scrollTop - 20 && y < view.scrollTop + view.clientHeight + 20; }
-  function drawInfo() { const rare = fish.filter(isRare).length, T = TANKS[tank]; info.innerHTML = `${T.n} ${T.w}m×${T.h}m · ${fish.length}/${T.max}마리${T.cap ? ` · ${T.cap}cm까지` : ''} · 귀한 물고기 ${rare} · 관람료 ${fee}🪙${o.test ? ' (시험판)' : ''}`; }
+  function drawInfo() { const rare = fish.filter(isRare).length, T = TANKS[tank]; info.innerHTML = `${T.n} ${T.w}m×${T.h}m · ${fish.length}/${T.max}마리${T.cap ? ` · ${T.cap}cm까지` : ''} · 귀한 물고기 ${rare} · 관람료 ${fee}🪙${mode === 'pal' ? ' · 구경만 할 수 있어요' : ''}${o.test ? ' (시험판)' : ''}`; }
 
   // ----- 물고기 움직임: 헤엄 → 가끔 방향 틀기·돌진·잠 · 벽에서 돌아서고 · 서로 겹치면 작은 쪽이 비켜 간다 -----
   function step(dt) {
@@ -137,7 +147,12 @@ export function openAquarium(o) {
     f.dir *= -1; f.body.classList.remove('aq-in'); void f.body.offsetWidth; f.body.classList.add('aq-in'); f.el.classList.remove('turn'); void f.el.offsetWidth; f.el.classList.add('turn'); }
   function bubbles(f) { for (let k = 0; k < 4; k++) { const b = h('i', { class: 'aq-bub', style: { zIndex: f.el.style.zIndex, left: (f.x - f.dir * f.len * scOf(f) * 0.45) * ppm + 'px', top: (f.y + rnd(-0.1, 0.1) * hOf(f)) * ppm + 'px', animationDelay: k * 0.08 + 's' } }); layer.append(b); setTimeout(() => b.remove(), 1400); } }
   // 앞에 있는 물고기가 뒤 물고기를 가린다(반투명 없이 그대로 덮는다)
-  function draw() { for (const f of fish) { sizeFish(f); const w = f.lw; const q = Math.round(f.z * 20); if (q !== f.dq) { f.dq = q; const z = q / 20; f.el.style.zIndex = 500 - q * 20; const zf = Math.max(0, z); f.el.style.setProperty('--dz', zf ? `brightness(${(1 - 0.14 * zf).toFixed(2)}) saturate(${(1 - 0.4 * zf).toFixed(2)}) hue-rotate(${(zf * 14).toFixed(0)}deg)` : 'none'); } f.el.style.transform = `translate(${(f.x * ppm - w / 2).toFixed(1)}px, ${(f.y * ppm - w / 3).toFixed(1)}px)`; f.body.style.transform = f.dir > 0 ? 'scaleX(-1)' : ''; } }
+  // 화면 밖 물고기는 위치만 계산하고 그리지 않는다(꼬리 흔들기도 멈춤)
+  function draw() { const L = view.scrollLeft - 60, Rr = view.scrollLeft + view.clientWidth + 60, T0 = view.scrollTop - 60, B0 = view.scrollTop + view.clientHeight + 60;
+    for (const f of fish) { sizeFish(f); const sc = scOf(f), w = f.lw * sc, px = f.x * ppm, py = f.y * ppm, on = px + w / 2 > L && px - w / 2 < Rr && py + w / 3 > T0 && py - w / 3 < B0;
+      if (on !== f.on) { f.on = on; f.el.classList.toggle('off', !on); } if (!on) continue;
+      const q = Math.round(f.z * 20); if (q !== f.dq) { f.dq = q; f.el.style.zIndex = 500 - q * 20; }
+      f.el.style.transform = `translate(${(px - w / 2).toFixed(1)}px, ${(py - w / 3).toFixed(1)}px) scale(${sc.toFixed(3)})`; const fl = f.dir > 0 ? 'scaleX(-1)' : ''; if (fl !== f.fl) { f.fl = fl; f.body.style.transform = fl; } } }
   function loop(t) { if (!alive) return; const dt = Math.min(0.05, (t - last) / 1000); last = t; step(dt); draw(); if (t > reactAt) { reactAt = t + rnd(2500, 5000); react(); } raf = requestAnimationFrame(loop); }
   // 두 손가락으로 확대·축소
   let pinch = null; view.addEventListener('touchstart', e => { if (e.touches.length === 2) pinch = { d: Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY), z: zoom }; }, { passive: true });

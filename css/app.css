@@ -2099,19 +2099,18 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .aq-world { position: relative; }
 .aq-bg { position: absolute; inset: 0; display: flex; } .aq-tile { position: absolute; inset: 0; background: url(../img/aqua/tile.webp) 0 0 / auto 100% repeat-x; } .aq-bg img.endl, .aq-bg img.endr { position: absolute; top: 0; height: 100%; width: auto; } .aq-bg img.endl { left: 0; -webkit-mask: linear-gradient(90deg, #000 70%, transparent); mask: linear-gradient(90deg, #000 70%, transparent); } .aq-bg img.endr { right: 0; -webkit-mask: linear-gradient(270deg, #000 70%, transparent); mask: linear-gradient(270deg, #000 70%, transparent); } .aq-bg img { height: 100%; flex: 1 1 auto; min-width: 0; object-fit: fill; display: block; } .aq-bg img:first-child, .aq-bg img:last-child { flex: none; width: auto; } .aq-bg img.one { flex: 1; width: 100%; } .aq-bg img.mir { transform: scaleX(-1); }
 .aq-fishes { position: absolute; inset: 0; }
-.aq-f { position: absolute; left: 0; top: 0; will-change: transform; cursor: pointer; }
+.aq-f { position: absolute; left: 0; top: 0; will-change: transform; transform-origin: 0 0; cursor: pointer; contain: layout style; } .aq-f.off { visibility: hidden; } .aq-f.off .aq-fb svg { animation-play-state: paused; }
 .aq-fb { width: 100%; height: 100%; transform-origin: 50% 50%; } .aq-fb svg { width: 100%; height: 100%; display: block; overflow: visible; transform-origin: 30% 50%; animation: aqWag var(--wag, .6s) ease-in-out infinite; animation-duration: inherit; }
 @keyframes aqWag { 0%, 100% { transform: skewY(0) scaleX(1); } 50% { transform: skewY(2.5deg) scaleX(.96); } }
 .aq-f.dash .aq-fb svg { animation-duration: .18s; } .aq-f.sleep .aq-fb svg { animation-duration: 2.4s; } .aq-f.sleep .aq-fb { filter: saturate(.8) brightness(.92); }
-.aq-f { filter: var(--dz, none); }
 .aq-f.turn { animation: aqTilt .9s ease-in-out; } @keyframes aqTilt { 0%, 100% { rotate: 0deg; translate: 0 0; } 45% { rotate: -7deg; translate: 0 -4px; } }
 .aq-ghost { position: absolute; left: 0; top: 0; pointer-events: none; animation: aqOut .6s ease-in forwards; } @keyframes aqOut { to { opacity: 0; } }
 .aq-fb.aq-in { animation: aqIn .6s ease-out; } @keyframes aqIn { from { opacity: 0; } }
 .aq-zz { position: absolute; left: 20%; top: -18%; font-weight: 900; color: #fff; text-shadow: 0 1px 2px #1E5A8C; display: none; animation: aqZz 2s ease-in-out infinite; } .aq-f.sleep .aq-zz { display: block; }
 @keyframes aqZz { 0% { transform: translateY(4px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(-14px); opacity: 0; } }
-.aq-f.g .aq-fb svg { filter: drop-shadow(0 0 5px #FFD84D) drop-shadow(0 0 12px #FFB300); }
-.aq-f.s .aq-fb svg { filter: drop-shadow(0 0 5px #FF9BE0) drop-shadow(0 0 12px #8F7CFF); }
-.aq-f.ss .aq-fb svg { filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 14px #FF9BE0) drop-shadow(0 0 28px #8F7CFF); }
+.aq-f.g::before, .aq-f.s::before, .aq-f.ss::before { content: ''; position: absolute; left: -12%; top: -18%; right: -12%; bottom: -18%; border-radius: 50%; z-index: -1; background: radial-gradient(closest-side, rgba(255,226,110,.75), rgba(255,180,0,.35) 55%, transparent); } /* 빛: 무거운 그림자 필터 대신 뒤에 은은한 빛 원 */
+.aq-f.s::before { background: radial-gradient(closest-side, rgba(255,170,230,.75), rgba(143,124,255,.35) 55%, transparent); }
+.aq-f.ss::before { left: -25%; right: -25%; top: -35%; bottom: -35%; background: radial-gradient(closest-side, rgba(255,255,255,.85), rgba(255,155,224,.6) 35%, rgba(143,124,255,.35) 65%, transparent); animation: aqPulse 2s ease-in-out infinite; } @keyframes aqPulse { 50% { opacity: .65; } }
 .aq-f.ss::after, .aq-f.g::after, .aq-f.s::after { content: '✦'; position: absolute; right: 10%; top: 0; color: #FFF4B8; font-size: 14px; text-shadow: 0 0 6px #fff; animation: aqTw 1.6s ease-in-out infinite; } .aq-f.ss::after { font-size: 22px; color: #FFD6F5; }
 @keyframes aqTw { 0%, 100% { opacity: .2; transform: scale(.6); } 50% { opacity: 1; transform: scale(1.2); } }
 .aq-bub { position: absolute; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.9); animation: aqBub 1.3s ease-out forwards; } @keyframes aqBub { 0% { transform: translate(0,0) scale(.5); opacity: 1; } 100% { transform: translate(0,-30px) scale(1.2); opacity: 0; } }
@@ -2137,3 +2136,10 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .aq-tip { pointer-events: auto; } .aq-tip .nm { color: #B03A8A; } .aq-nbtn { margin-left: 6px; border: 2px solid #E9C46A; background: #FFF3D6; border-radius: 10px; padding: 2px 8px; font-weight: 800; font-size: 12px; color: #5A3A1E; }
 .aq-nin { width: 120px; border: 2px solid #E9C46A; border-radius: 8px; padding: 4px 6px; font-size: 14px; }
 .aq-splash { position: absolute; width: 60px; height: 24px; margin-left: -30px; border-radius: 50%; border: 3px solid rgba(255,255,255,.9); animation: aqSplash 1.1s ease-out forwards; z-index: 950; } @keyframes aqSplash { 0% { transform: scale(.2); opacity: 1; } 100% { transform: scale(2.2); opacity: 0; } }
+.aq-visit { flex: none; display: flex; gap: 3px; background: rgba(255,248,236,.92); border: 2px solid #E9C46A; border-radius: 18px; padding: 2px; }
+.aq-vt { border: none; border-radius: 15px; padding: 6px 10px; background: transparent; font-weight: 800; font-size: 12px; color: #8A5A2B; white-space: nowrap; } .aq-vt.on { background: #FFCF4D; color: #4A2810; }
+.aq.pal .aq-rel, .aq.pal .aq-tabs, .aq.pal .aq-panel { display: none !important; }
+.aq-top { flex-wrap: wrap; } .aq-top .aq-tabs { order: 9; width: 100%; justify-content: flex-end; } .aq-top .aq-tab { padding: 3px 10px; font-size: 12px; }
+.aq-title { min-width: 170px; } .aq-title b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.aq-top::after { content: ''; order: 8; width: 100%; } .aq-top .aq-tabs { order: 9; width: auto; margin-left: auto; } .aq-top .aq-zoom { order: 10; } .aq-title { flex: 1 1 auto; margin-right: 0; }
+.aq-top:not(:has(.aq-tabs))::after { display: none; }

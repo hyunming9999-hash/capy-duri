@@ -356,7 +356,7 @@ export function mount(el, ctx) {
     openFarm({ ctx, scoot: () => (scoot ? scootHtml() : null), onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); } }); }
   const fcrow = farmCrow(ctx, { goFarm: () => goFarm() });
   // 카피수족관 시험판 링크(?aqtest=1·2·3): 실제 물고기 자료로 채운 수족관을 바로 띄운다. 아무것도 저장하지 않음
-  try { const at = +new URLSearchParams(location.search).get('aqtest'); if (at >= 1 && at <= 3) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); import('./aquarium.js').then(m => m.openAquarium({ test: true, tank: at })); }, 1200); } catch {}
+  try { const at = +new URLSearchParams(location.search).get('aqtest'); if (at >= 1 && at <= 3) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); import('./aquarium.js').then(m => m.openAquarium({ test: true, tank: at, me: ctx.me.name, partner: ctx.nameOf(ctx.partnerId) || '두두' })); }, 1200); } catch {}
   // 낚시 연습 링크(?fishtest=1·2·3): 그 바다에 같은 등급 낚싯대를 빌려 바로 낚시. 가방·돈·도감·미끼에는 아무 영향 없음(해적단도 안 나옴)
   try { const ft = +new URLSearchParams(location.search).get('fishtest'); if (ft >= 1 && ft <= 3) setTimeout(() => { if (fishOpen || battle) return; document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); fishOpen = true; keys.clear();
       const rq = +new URLSearchParams(location.search).get('rod'), rt = rq >= 1 && rq <= 3 ? rq : ft; // &rod=1·2·3 으로 낚싯대 등급을 따로 고를 수 있다
