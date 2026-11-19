@@ -237,7 +237,7 @@ export function mount(el, ctx) {
   let scoot = false, scPas = -1, scAskAt = performance.now() + 120000, scFwAt = 0, scGainT = 0, scGain = 0;
   try { scoot = localStorage.getItem('capy-scoot') === '1'; scFwAt = +localStorage.getItem('capy-scfw') || 0; } catch {}
   const meCapy = () => capy(ctx.capyOf(ctx.uid, ctx.goldTest ? { face: 'happy' } : { face: 'happy', rare: rareOf(myRares()) })); // ?goldtest 링크면 빌려 입은 황금 장비 그대로
-  const scootHtml = () => `<div class="sc-rig b"><img class="sc-img" src="${FLUFFY ? 'img/fl/o/scooter-b.webp' : 'img/scooter-b.webp'}" alt="">${FLUFFY ? '<img class="sc-img sc-front" src="img/fl/o/scooter-b-front2.webp" alt="">' : ''}${scPas >= 0 ? `<div class="sc-pas">${animalSvg(scPas, true, 'happy')}</div>` : ''}<div class="sc-me">${meCapy()}</div></div>`;
+  const scootHtml = () => `<div class="sc-rig b"><img class="sc-img" src="${FLUFFY ? 'img/fl/o/scooter-b.webp' : 'img/scooter-b.webp'}" alt="">${FLUFFY ? '<img class="sc-img sc-front" src="img/fl/o/scooter-b-front3.webp" alt="">' : ''}${scPas >= 0 ? `<div class="sc-pas">${animalSvg(scPas, true, 'happy')}</div>` : ''}<div class="sc-me">${meCapy()}</div></div>`;
   const refreshMe = () => { if (meEl) meEl.innerHTML = scoot ? scootHtml() : meCapy(); };
   function startKing() { if (kingTrial) return; kingTrial = performance.now() + 60000; refreshMe(); toast('👑 대왕 체험 1분 시작! 동물들 곁을 지나가 보세요', 3200); }
   function endKing() { if (!kingTrial) return; kingTrial = 0; refreshMe(); toast('대왕 체험이 끝났어요', 2600); }
@@ -343,7 +343,7 @@ export function mount(el, ctx) {
   // 낚싯배 체험: 10분 동안 장비를 빌린다. 빌린 장비와 체험 중 번 돈·잃은 돈·도감은 저장하지 않는다
   const TRIAL_MS = 600000, TRIAL_KEYS = ['boat', 'wboat', 'cannon', 'boatD', 'rod', 'rodD', 'bait', 'bait2', 'bait3', 'balls', 'casts', 'pearlAt', 'casts3', 'pearlAt3', 'pcasts', 'pirAt', 'pirNext']; let trial = null, rawBag = {};
   // 퀘스트 해적전: 흰 배·대포를 퀘스트 동안만 빌려준다(저장하지 않는 덮어쓰기)
-  const QLOAN = { boat: true, wboat: true, cannon: true, boatD: 100, balls: 20 }; let qloan = null; let ptest = 0, ctest = false, stest = false; let hitDown = 0; // 연습 링크(?piratetest · ?taltest)
+  const QLOAN = { boat: true, wboat: true, cannon: true, boatD: 100, balls: 20 }; let qloan = null; let ptest = 0, ctest = false, stest = false; const fakeLie = new Set(); let hitDown = 0; // 연습 링크(?piratetest · ?taltest)
   const mergeBag = () => ({ ...rawBag, ...(qloan ? qloan.g : {}), ...(trial ? trial.g : {}), ...(stest ? { scooter: true } : {}) });
   function startTrial() { trial = { until: performance.now() + TRIAL_MS, g: { boat: true, wboat: true, cannon: true, boatD: 100, rod: 3, rodD: 200, bait: 40, bait2: 40, bait3: 40, balls: 20, casts: 0, pearlAt: 999, pcasts: 0, pirNext: 4 } }; bag = mergeBag(); toast('🧪 낚싯배 체험 시작! 10분 동안 흰 배·대포·고급 낚싯대를 빌려요. 바다에서 "내 보트"를 누르세요', 4200); }
   function endTrial(why) { if (!trial) return; trial = null; bag = mergeBag(); if (battle) { battle.stop(); battle = null; camX = null; } const f = document.querySelector('.fs .fs-quit'); if (f) f.click();
@@ -776,7 +776,7 @@ export function mount(el, ctx) {
   function crowSpawn(now, targets) {
     const first = !crowUsed(); if (!ctest) saveBag({ crowDay: ymd(), crowN: crowUsed() + 1, ...(first ? { crow2At: Math.round((120 + Math.random() * 1380) * 1000) } : {}) }); crowStay = 0; // 두 번째는 첫 번째 뒤로 2~25분 더 놀아야(정말 랜덤)
     const x = Math.max(60, Math.min(WATER_X - 60, me.x + (Math.random() < 0.5 ? -1 : 1) * (90 + Math.random() * 60)));
-    const e = h('div', { class: 'so-crow', style: { left: x + 'px', bottom: (me.dy * 100).toFixed(1) + '%' } }, h('img', { src: CROW_IMG, alt: '까마귀 악당' }));
+    const e = h('div', { class: 'so-crow', style: { left: x + 'px', bottom: (me.dy * 100).toFixed(1) + '%' }, onClick: () => crowCharm() }, h('img', { src: CROW_IMG, alt: '까마귀 악당' }), h('em', { class: 'so-crowtip' }, '👆 까마귀를 누르세요!'));
     worldEl.append(e);
     const names = targets.map(i => ANIMALS[i].name).join(', ');
     const warn = h('div', { class: 'so-crowwarn' }, h('b', null, '⚠️ 까마귀 악당 출현!'), h('small', null, `${names}에게 이간질을 하려 해요! 어서 퇴치하세요!`));
@@ -818,10 +818,10 @@ export function mount(el, ctx) {
       okText: '✨ 진짜 퇴치부적! 까마귀가 도망가요!', noText: '꽝… 가짜 부적이었어요. 이간질이 먹혀 버렸어요.', onPick: ok => crowEnd(ok), onCancel: () => crowEnd(false, '부적을 고르지 않아서 퇴치에 실패했어요') });
   }
   function crowEnd(ok, why) {
-    const c = crow; if (!c || c.done) return; c.done = true; c.btn.remove();
+    const c = crow; if (!c || c.done) return; c.done = true; c.btn.remove(); c.e.classList.add('done');
     if (ok) { pop(c.e, '까악?! 부, 부적이다!', 'say'); gameFx('win', '까마귀 퇴치!'); c.targets.forEach((i, n) => setTimeout(() => alive && actors[i] && pop(actors[i].e, toned(i, '역시 까마귀는 나쁜 놈이었어!'), 'say long'), 900 + n * 900)); }
     else { if (why) toast(why); pop(c.e, '까악까악! 속았지롱~', 'say'); sfx('lose');
-      if (ctest) toast('연습이라 친밀도는 그대로예요', 3000); else c.targets.forEach((i, n) => { const r = mine[i] || {}, lost = Math.min(A(i), 15 + Math.floor(Math.random() * 6)), top = A(i) >= 100 || r.hit100;
+      if (ctest) { c.targets.forEach(i => fakeLie.add(i)); toast('연습이라 친밀도는 그대로예요 · 삐진 동물을 눌러 해명해 보세요', 4200); } else c.targets.forEach((i, n) => { const r = mine[i] || {}, lost = Math.min(A(i), 15 + Math.floor(Math.random() * 6)), top = A(i) >= 100 || r.hit100;
         setRel(i, { a: A(i) - lost, crowHit: ctx.store.now(), crowLie: { n: Math.min(5, lost), t: ctx.store.now() }, ...(top ? { hit100: true, crowed: true } : {}) });
         // 이간질당한 동물은 나한테 걸어와서 따진다
         setTimeout(() => { if (!alive || !actors[i]) return; const o = actors[i]; if (o.st !== 'chase') { leave(o); o.st = 'walk'; o.spot = null; o.wait = 0; o.tx = Math.max(40, Math.min(WATER_X - 40, me.x + (n ? 56 : -56))); o.e.classList.add('walk'); o.e.classList.toggle('left', o.tx < o.x); const sp = o.sp; o.sp = 150; setTimeout(() => { o.sp = sp; }, 6000); }
@@ -864,12 +864,12 @@ export function mount(el, ctx) {
       fedNote.textContent = left > DAY_MS ? '💬 오늘은 말을 걸었어요. 사이가 식지 않아요'
         : v <= KEEP_AT ? '💬 사흘 동안 말을 안 걸면 친밀도가 -3 돼요. 말을 걸면 멈춰요'
         : left <= 0 ? '💬 하루를 건너뛰어서 서운해해요. 말을 걸면 바로 멈춰요 (하루 최대 -3)'
-        : `💬 하루에 한 번만 말을 걸면 사이가 유지돼요 (남은 시간 ${Math.floor(left / 3600000)}시간 ${Math.floor(left / 60000) % 60}분)`; } if (moodOf(v) !== faceMood) { faceMood = moodOf(v); faceEl.innerHTML = animalSvg(i, true, faceMood); } meter.replaceChildren(h('b', null, `${lv[2]} ${lv[1]}`), h('i', null, h('u', { style: { width: (v + 100) / 2 + '%', background: v < 0 ? '#E5484D' : v >= PIN_AT ? '#FF7FA8' : '#57C26B' } })), h('span', null, `${v}점${nx ? ` · ${nx[1]}까지 ${nx[0] - v}` : ''}`)); scores(); };
-    const lie = () => (mine[i] || {}).crowLie;
+        : `💬 하루에 한 번만 말을 걸면 사이가 유지돼요 (남은 시간 ${Math.floor(left / 3600000)}시간 ${Math.floor(left / 60000) % 60}분)`; } if (moodNow(v) !== faceMood) { faceMood = moodNow(v); faceEl.innerHTML = animalSvg(i, true, faceMood); } meter.replaceChildren(h('b', null, `${lv[2]} ${lv[1]}`), h('i', null, h('u', { style: { width: (v + 100) / 2 + '%', background: v < 0 ? '#E5484D' : v >= PIN_AT ? '#FF7FA8' : '#57C26B' } })), h('span', null, `${v}점${nx ? ` · ${nx[1]}까지 ${nx[0] - v}` : ''}`)); scores(); };
+    const lie = () => (fakeLie.has(i) ? { n: 5, fake: true } : (mine[i] || {}).crowLie), moodNow = v => (lie() ? 'angry' : moodOf(v)); // 이간질당해 삐진 동안은 화난 얼굴
     // 까마귀 이간질로 삐진 동물에게는 해명할 수 있다(한 번, 최대 +5)
-    async function explain() { const L = lie(); if (!L) return; const back = Math.max(1, Math.min(L.n || 5, 2 + Math.floor(Math.random() * 4)));
-      await setRel(i, { a: capA(i, A(i) + back), crowLie: null }); say(pick(['…정말? 까마귀가 꾸민 거였구나. 오해해서 미안해.', '그랬구나… 그 까마귀 말만 믿고 서운해했네.', '휴, 역시 그럴 리가 없지! 다시 믿을게.']), 'glad'); drawQuick(); after(back); }
-    const drawQuick = () => quick.replaceChildren(...(lie() ? [h('button', { class: 'so-q q0 crowq', onClick: explain }, '🙅 아니야! 까마귀가 꾸민 거짓말이야')] : []), ...[pick(QUICK.good), A(i) < 0 ? '미안해, 내가 잘못했어' : pick(QUICK.flat), pick(QUICK.bad)].map((t, k) => h('button', { class: 'so-q q' + k, onClick: () => talk(t) }, t)));
+    async function explain() { const L = lie(); if (!L) return; if (L.fake) { fakeLie.delete(i); say(pick(['…정말? 까마귀가 꾸민 거였구나. 오해해서 미안해.', '그랬구나… 그 까마귀 말만 믿고 서운해했네.']), 'glad'); drawQuick(); drawMeter(); return void toast('연습이라 친밀도는 그대로예요', 2400); } const back = Math.max(1, Math.min(L.n || 5, 2 + Math.floor(Math.random() * 4)));
+      await setRel(i, { a: capA(i, A(i) + back), crowLie: null }); say(pick(['…정말? 까마귀가 꾸민 거였구나. 오해해서 미안해.', '그랬구나… 그 까마귀 말만 믿고 서운해했네.', '휴, 역시 그럴 리가 없지! 다시 믿을게.']), 'glad'); drawQuick(); drawMeter(); after(back); }
+    const drawQuick = () => quick.replaceChildren(...(lie() ? [h('p', { class: 'so-liehint' }, '😤 까마귀 이간질에 속아 삐져 있어요 · 해명하면 조금 풀려요'), h('button', { class: 'so-q q0 crowq', onClick: explain }, '🙅 아니야! 까마귀가 꾸민 거짓말이야')] : []), ...[pick(QUICK.good), A(i) < 0 ? '미안해, 내가 잘못했어' : pick(QUICK.flat), pick(QUICK.bad)].map((t, k) => h('button', { class: 'so-q q' + k, onClick: () => talk(t) }, t)));
     // 친밀도가 바뀐 뒤: 선물로 받는 액세서리, 사이가 나쁠 때 삥 뜯기
     async function after(d, was) {
       const v = A(i), rel = mine[i] || {};
@@ -942,7 +942,7 @@ export function mount(el, ctx) {
       h('div', { class: 'so-face' }, faceEl, bubble), meter, fedNote, quick,
       h('div', { class: 'so-say' }, input, h('button', { class: 'btn primary', onClick: () => talk(input.value) }, '말하기')),
       h('div', { class: 'so-acts' }, scoot && scPas < 0 && (actors[i].wantRide || 0) > performance.now() && h('button', { class: 'btn so-ridebtn', onClick: () => { close(); takePas(i); } }, '🛴 태우기'), h('button', { class: 'btn so-qbtn', 'data-m': quest.markOf(i), onClick: () => quest.open(i) }, '🔍 퀘스트', quest.markOf(i) && h('i', null, quest.markOf(i))), h('button', { class: 'btn', onClick: give }, '🎁 선물'), h('button', { class: 'btn', onClick: trade }, '🤝 거래'), h('button', { class: 'btn', onClick: memBtn }, '📜 기억'))), actions: [{ label: '닫기' }], onClose: () => { if (demand && actors[i]) actors[i].rage = true; if (held === i) held = -1; const o = actors[i]; if (o && o.st === 'walk') o.e.classList.add('walk'); } });
-    const v = A(i); say(v <= ROB_AT ? pick(LINES.cold) : v >= PIN_AT ? `${ctx.me.name}! 왔구나, 보고 싶었어!` : v >= 10 ? `안녕, ${ctx.me.name}! 또 만났네.` : `안녕? 난 ${a.name}야. ${p.likes[0]} 좋아해.`); drawMeter(); drawQuick();
+    const v = A(i); if (lie()) say(pick([`흥… 까마귀한테 다 들었어. ${ctx.me.name}, 나한테 왜 그랬어?`, `${ctx.me.name}… 내 흉봤다며? 까마귀가 다 말해 줬어.`, '말 걸지 마. 나 지금 삐졌어.']), 'angry'); else say(v <= ROB_AT ? pick(LINES.cold) : v >= PIN_AT ? `${ctx.me.name}! 왔구나, 보고 싶었어!` : v >= 10 ? `안녕, ${ctx.me.name}! 또 만났네.` : `안녕? 난 ${a.name}야. ${p.likes[0]} 좋아해.`); drawMeter(); drawQuick();
   }
 
   // ----- 카피마켓: 잡은 물고기는 가방에 담았다가 할아버지 주인장에게 판다 -----
