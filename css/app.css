@@ -2323,3 +2323,8 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 @keyframes fcSwoop { 0% { transform: translate(-70vw, -60vh) scale(.3) rotate(-25deg); opacity: 0; } 60% { opacity: 1; } 100% { transform: none; } }
 @keyframes fcFlap { 0%, 100% { transform: scale(1, 1) translateY(0); } 50% { transform: scale(.9, 1.06) translateY(-8px); } }
 .sc-img.sc-front { z-index: 4; } /* 손잡이·앞 기둥은 탄 캐릭터 앞에 */
+/* 보송 그림체: 황금사자 스쿠터를 타면 은은한 금빛 */
+.fluffy .sc-rig.b::before { content: ''; position: absolute; left: -22px; right: -22px; bottom: -14px; height: 150px; z-index: 0; pointer-events: none; border-radius: 50%; background: radial-gradient(ellipse at 50% 62%, rgba(255, 236, 150, .6) 0, rgba(255, 214, 90, .32) 38%, rgba(255, 200, 60, 0) 70%); animation: scGlow 2.6s ease-in-out infinite; }
+@keyframes scGlow { 0%, 100% { opacity: .55; scale: .96; } 50% { opacity: 1; scale: 1.04; } }
+.fluffy .sc-rig.b .sc-img:not(.sc-front) { filter: drop-shadow(0 0 5px rgba(255, 220, 110, .75)); }
+@media (prefers-reduced-motion: reduce) { .fluffy .sc-rig.b::before { animation: none; } }
