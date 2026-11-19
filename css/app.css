@@ -2393,3 +2393,5 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .aq.tio .aq-title { background: rgba(20,70,110,.72); } .aq.tio .aq-info { white-space: normal; } .aq.tio .aq-frame > .aq-bookb { top: 122px; }
 /* 낚시 화면: 캐릭터를 놀이터에서 배 탈 때와 같은 자리(돛대 뒤, 배 안)에 앉힌다 — 턱 아래는 뱃전에 가려진다 */
 .fluffy .fs-me { left: 11.3%; bottom: 17%; width: 48%; z-index: 2; } .fluffy .fs-me svg { clip-path: inset(-80% -80% 28.5% -80%); }
+/* 낚시 화면: 머리가 뱃전 위에 얹힌 것처럼 보여서 더 깊이 앉힌다(조금 오른쪽·아래로, 턱 아래와 옆으로 삐져나온 장비는 배 안으로 가려짐) */
+.fluffy .fs-me { left: 14%; bottom: 14%; z-index: 3; } .fluffy .fs-me svg { clip-path: inset(-80% -10% 29.4% -10%); } /* 배 그림보다 앞에 그리고(안 그러면 배 안쪽 바닥에 얼굴이 가려진다) 앞 뱃전 높이에서 잘라 몸이 배 안에 든 것처럼 */
