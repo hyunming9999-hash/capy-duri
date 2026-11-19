@@ -121,7 +121,7 @@ export function openAquarium(o) {
   view.onclick = () => { tip.hidden = true; };
 
   // ----- 관람석: 벤치 두 개에 동물이 앉는다(왼쪽 벤치 10~29%, 오른쪽 71~90%) -----
-  const SEAT_X = [13, 20.5, 28, 0, 76.5, 84];
+  const SEAT_X = [13.4, 19.2, 25, 0, 77, 85]; // 벤치 그림 자리: 왼쪽 벤치 방석 9.9~28.4%, 오른쪽 71.7~90.3% 안에 들어오게
   function drawRoom() { room.replaceChildren(...seats.slice(0, 5).map((i, k) => { const e = h('div', { class: 'aq-an', style: { left: SEAT_X[k + (k >= 3 ? 1 : 0)] + '%' } }, h('span', { class: 'aq-anf', html: animalBackSvg(i) })); e.dataset.i = i; return e; })); }
   function react() { const rare = fish.filter(f => isRare(f) && inView(f)); if (!rare.length) return; const f = pick(rare), seatsEl = [...room.children]; if (!seatsEl.length) return;
     const e = pick(seatsEl), i = +e.dataset.i; e.classList.remove('wow'); void e.offsetWidth; e.classList.add('wow'); const em = h('i', { class: 'aq-em' }, pick(['💖', '✨', '❗', '😍', '⭐'])); e.append(em); setTimeout(() => em.remove(), 1600);

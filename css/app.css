@@ -2374,3 +2374,5 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .aq-room::before { content: ''; position: absolute; left: 0; right: 0; top: -2px; height: 11px; background: linear-gradient(#F6D08A 0 2px, #C98A4B 2px 5px, #9A5E2A 5px 9px, #5A3214 9px); box-shadow: 0 3px 4px rgba(40, 18, 4, .35); }
 /* 방명록 글쓰기(가로 화면 + 키보드): 창을 넓게, 글 목록은 줄이고 입력 칸을 크게 */
 .aq.kb .aq-bookp { position: fixed; right: 8px; width: min(520px, 72%); } .aq.kb .aq-bookp .aq-phead { padding: 3px 10px; } .aq.kb .aq-bwrite { padding: 5px 8px; } .aq-bwrite .aq-bin { font-size: 16px; }
+/* 관람석 동물: 벤치 앞 바닥에 서 있는 것처럼 보이던 것 → 방석 위에 앉도록 올리고 조금 작게 */
+.aq-an { bottom: 58%; width: 6.3%; } .aq-bot { bottom: 30px; }
