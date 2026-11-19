@@ -2,7 +2,7 @@
 // 관람석(A안): 동물 친구들이 벤치에 앉아 귀한 물고기(S급·초희귀·이로치)가 지나가면 감탄하고 관람료 1코인을 낸다(동물마다 하루 3번까지)
 import { h } from './ui.js';
 import { FISH, fishSvg, SHINY_IDS } from './fishing.js';
-import { ANIMALS, animalSvg } from './animals.js';
+import { ANIMALS, animalBackSvg } from './animals.js';
 import { sfx } from './sound.js';
 
 export const TANKS = [null, { n: '초급 수족관', w: 3, h: 1.5, v: 1.5, max: 20, cap: 40, price: 2000 }, { n: '중급 수족관', w: 12, h: 10, v: 6, max: 40, cap: 0, price: 6000 }, { n: '고급 수족관', w: 24, h: 10, v: 6, max: 60, cap: 0, price: 10000 }]; // cap: 넣을 수 있는 몸길이(cm), 0은 제한 없음
@@ -66,7 +66,7 @@ export function openAquarium(o) {
     layer.replaceChildren(); [...tabs.children].forEach(b => b.classList.toggle('on', +b.dataset.t === tank)); zoom = 1;
     const T = TANKS[tank]; W = T.w; H = T.h;
     fish = list.map(d => { const f0 = FISH.find(x => x.id === d.id); if (!f0) return null; const len = d.cm / 100, f = { d, f0, len, hgt: len * 0.45, tier: f0.tier || 1, g: d.g, shiny: d.shiny, x: rnd(len / 2, Math.max(len / 2 + 0.01, W - len / 2)), y: rnd(H * 0.15, H * 0.7), dir: Math.random() < 0.5 ? -1 : 1, vy: 0, ty: 0, st: 'swim', stT: rnd(2, 6), sp: 1, turnT: 0 };
-      f.base = 0.12 + 0.3 * Math.sqrt(len); f.ty = f.y; f.z = f.tz = Math.random(); f.dq = -1;
+      f.base = 0.12 + 0.3 * Math.sqrt(len); f.ty = f.y; f.z = f.tz = Math.random(); f.dq = -1; f.zT = rnd(1, 8);
       f.body = h('div', { class: 'aq-fb', html: fishSvg(f0, false, d.shiny), style: { animationDuration: rnd(0.45, 0.7) + 's' } });
       f.zz = h('span', { class: 'aq-zz' }, 'Z z'); f.el = h('div', { class: 'aq-f ' + glowOf(f) }, f.body, f.zz);
       f.el.onclick = e => { e.stopPropagation(); showTip(f); }; layer.append(f.el); return f; }).filter(Boolean);
@@ -76,12 +76,12 @@ export function openAquarium(o) {
 
   // ----- 관람석: 벤치 두 개에 동물이 앉는다(왼쪽 벤치 10~29%, 오른쪽 71~90%) -----
   const SEAT_X = [13, 20.5, 28, 0, 76.5, 84];
-  function drawRoom() { room.replaceChildren(...seats.slice(0, 5).map((i, k) => { const e = h('div', { class: 'aq-an', style: { left: SEAT_X[k + (k >= 3 ? 1 : 0)] + '%' } }, h('span', { class: 'aq-anf', html: animalSvg(i, false) })); e.dataset.i = i; return e; })); }
+  function drawRoom() { room.replaceChildren(...seats.slice(0, 5).map((i, k) => { const e = h('div', { class: 'aq-an', style: { left: SEAT_X[k + (k >= 3 ? 1 : 0)] + '%' } }, h('span', { class: 'aq-anf', html: animalBackSvg(i) })); e.dataset.i = i; return e; })); }
   function react() { const rare = fish.filter(f => isRare(f) && inView(f)); if (!rare.length) return; const f = pick(rare), seatsEl = [...room.children]; if (!seatsEl.length) return;
-    const e = pick(seatsEl), i = +e.dataset.i, face = e.querySelector('.aq-anf'); face.innerHTML = animalSvg(i, false, Math.random() < 0.5 ? 'wow' : 'love'); e.classList.remove('wow'); void e.offsetWidth; e.classList.add('wow');
+    const e = pick(seatsEl), i = +e.dataset.i; e.classList.remove('wow'); void e.offsetWidth; e.classList.add('wow'); const em = h('i', { class: 'aq-em' }, pick(['💖', '✨', '❗', '😍', '⭐'])); e.append(em); setTimeout(() => em.remove(), 1600);
     const say = h('div', { class: 'aq-say' }, Math.random() < 0.5 ? `${f.shiny ? '이로치 ' : ''}${f.f0.name}다!!` : pick(WOW)); e.append(say);
     if ((feeN[i] || 0) < FEE_MAX) { feeN[i] = (feeN[i] || 0) + 1; fee++; const c = h('div', { class: 'aq-coin' }, '+1🪙'); e.append(c); setTimeout(() => c.remove(), 1500); sfx('coin'); drawInfo(); }
-    setTimeout(() => { say.remove(); face.innerHTML = animalSvg(i, false); e.classList.remove('wow'); }, 2200); }
+    setTimeout(() => { say.remove(); e.classList.remove('wow'); }, 2200); }
   function inView(f) { const x = f.x * ppm, y = f.y * ppm; return x > view.scrollLeft - 20 && x < view.scrollLeft + view.clientWidth + 20 && y > view.scrollTop - 20 && y < view.scrollTop + view.clientHeight + 20; }
   function drawInfo() { const rare = fish.filter(isRare).length, T = TANKS[tank]; info.innerHTML = `${T.n} ${T.w}m×${T.h}m · ${fish.length}/${T.max}마리${T.cap ? ` · ${T.cap}cm까지` : ''} · 귀한 물고기 ${rare} · 관람료 ${fee}🪙${o.test ? ' (시험판)' : ''}`; }
 
@@ -94,11 +94,11 @@ export function openAquarium(o) {
         else if (r < 0.12) setSt(f, 'dash', rnd(0.5, 0.9));
         else if (r < 0.2) setSt(f, 'sleep', rnd(6, 12));
         else if (r < 0.42) { turn(f); f.stT = rnd(2, 6); }
-        else if (r < 0.7) { f.tz = rnd(0, 1); f.stT = rnd(3, 7); } // 앞뒤로 오가기
         else { f.ty = rnd(H * 0.05, H * 0.85); f.stT = rnd(2, 6); } }
       const sp = f.base * (f.st === 'dash' ? 3.4 : f.st === 'sleep' ? 0.08 : 1);
       f.x += f.dir * sp * dt;
-      f.z += (f.tz - f.z) * Math.min(1, dt * 0.35); const hg = hOf(f), lo = hg / 2 + H * 0.03, hi = H * (0.9 - 0.12 * f.z) - hg / 2, ty = f.st === 'sleep' ? hi - hg * 0.1 : f.ty;
+      f.zT -= dt; if (f.zT <= 0) { f.zT = rnd(6, 14); f.tz = Math.random() < 0.65 ? (f.z < 0.5 ? rnd(0.65, 1) : rnd(0, 0.35)) : rnd(0, 1); } // 앞뒤로 오가기: 뒤에 있던 물고기는 앞으로, 앞에 있던 물고기는 뒤로
+      { const dz = f.tz - f.z, vz = 0.07 + 0.05 * Math.min(1, f.base); f.z += Math.sign(dz) * Math.min(Math.abs(dz), vz * dt * (0.4 + Math.min(1, Math.abs(dz) * 3))); } const hg = hOf(f), lo = hg / 2 + H * 0.03, hi = H * (0.9 - 0.12 * f.z) - hg / 2, ty = f.st === 'sleep' ? hi - hg * 0.1 : f.ty;
       f.vy += ((Math.max(lo, Math.min(hi, ty)) - f.y) * 0.6 - f.vy) * Math.min(1, dt * 2); f.y += f.vy * dt;
       if (f.x < f.len / 2 && f.dir < 0 || f.x > W - f.len / 2 && f.dir > 0) turn(f, true);
       f.x = Math.max(f.len / 2 - 0.01, Math.min(W - f.len / 2 + 0.01, f.x)); }

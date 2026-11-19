@@ -88,6 +88,13 @@ export function animalSvg(i, full, mood) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 ${full ? 158 : 112}">${a.back ? a.back(a.body) : ''}${body}<g class="an-head">${ear}${head(a.body)}${a.over ? a.over(a.body) : ''}${a.pre ? a.pre(a.body) : ''}${mood === 'angry' || mood === 'mad' ? `<rect x="9" y="15" width="102" height="69" rx="25" fill="#E5383B" opacity="${mood === 'mad' ? 0.46 : 0.24}"/>` : ''}${MUZ[a.muz](a.light, d, a.nose)}<g transform="translate(0 ${ey})">${e}${mood === 'angry' || mood === 'mad' ? `<path d="M14 30 L34 37M106 30 L86 37" stroke="${INK}" stroke-width="3.6" stroke-linecap="round"/>` : ''}</g>${mood === 'mad' ? '<g stroke="#E5484D" stroke-width="3" stroke-linecap="round" fill="none"><path d="M92 -2 q5 3 4 9M104 -4 q-3 5 2 9M96 14 q5 -3 9 1M108 12 q-5 -1 -6 -6"/></g>' : ''}${!mood || ['happy', 'love', 'shy', 'smug'].includes(mood) ? blush : ''}</g></svg>`; // 머리(귀·얼굴)는 한 묶음: 절할 때 발과 몸은 그대로 두고 머리만 숙인다
 }
 
+// 뒷모습(앉아서 무언가를 바라보는 모습): 얼굴 없이 뒤통수·귀·등·꼬리만. 귀 안쪽은 안 보이니 겉색으로
+export function animalBackSvg(i) {
+  const a = typeof i === 'object' ? i : ANIMALS[i % ANIMALS.length], c = a.earC || a.body, bc = a.earC && a.name === '판다' ? '#3B3B44' : a.body, bd = shade(bc, -0.25), hd = shade(a.body, -0.08);
+  const ear = EAR[a.ear](c, shade(c, -0.12), a.es || 1);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158">${a.back ? a.back(a.body) : ''}<ellipse cx="60" cy="129" rx="40" ry="6" fill="rgba(60,30,10,.25)"/><path d="M24 128 Q20 84 60 80 Q100 84 96 128 Z" fill="${bc}"/><path d="M30 126 Q28 92 60 88" fill="none" stroke="${shade(bc, 0.25)}" stroke-width="4" stroke-linecap="round" opacity=".5"/><ellipse cx="24" cy="108" rx="8" ry="14" fill="${bd}" transform="rotate(10 24 108)"/><ellipse cx="96" cy="108" rx="8" ry="14" fill="${bd}" transform="rotate(-10 96 108)"/><ellipse cx="60" cy="122" rx="9" ry="7" fill="${shade(bc, 0.3)}"/><g class="an-head">${ear}${head(hd)}<ellipse cx="60" cy="30" rx="30" ry="10" fill="#fff" opacity=".18"/><path d="M57 22 q3 6 6 0" fill="none" stroke="${shade(a.body, -0.3)}" stroke-width="2" stroke-linecap="round" opacity=".5"/></g></svg>`;
+}
+
 // 갈매기 해적단: 친구들과 같은 그림체의 갈매기에 해적 모자(선장)나 두건(졸병), 안대, 찌푸린 눈썹을 얹는다
 const GULL = A('갈매기', '#FFFDF7', '#FFB52E', 'none', '', 'beak', { dark: '#C97F0E', over: () => mir('<path d="M9 52 q10 -6 16 4 q-2 14 -12 16 q-6 -6 -4 -20z" fill="#C9D3DE"/>') });
 export function gullSvg(boss) {
