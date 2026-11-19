@@ -357,29 +357,64 @@ export function mount(el, ctx) {
   let gt = {}, xWin = null, xBtn = null, xOpen = false, xBusy = false, xSeen = 0, xDoneSeen = 0; const XP = 'gtrade', X_TTL = 600000, xT0 = Date.now();
   const xFresh = v => (v && v.k && v.t && ctx.store.now() - v.t < X_TTL ? v : {}), xMine = () => xFresh(gt[ctx.uid]), xPal = () => (pid() ? xFresh(gt[pid()]) : {}), xPair = (a, b) => a + '>' + b;
   const xAgreed = () => { const m = xMine(), p = xPal(); return !!(m.k && p.k && m.ok === xPair(m.k, p.k) && p.ok === xPair(p.k, m.k)); };
-  function xPick(k) { if (trial) return toast('체험 중에는 교환할 수 없어요'); if (!((rawBag[k] || 0) > 0)) return toast(`${josa(GIFTS[k][1], '가', '이')} 없어요. 카피수퍼에서 살 수 있어요`); sfx('pop'); ctx.store.set(XP + '/' + ctx.uid, { k, t: ctx.store.now() }).catch(() => {}); } // 고른 걸 바꾸면 내 동의는 지워지고, 상대 동의도 예전 짝이라 저절로 무효가 된다
+  // 교환할 수 있는 것 = 가방 안의 모든 품목. 품목 번호는 '종류:키' — b 가방 개수(선물·포션·부적·미끼·포탄) · s 양념 · e 씨앗 · k 스프링클러 · n 헛간 작물 · d 수족관 용품 (여기까지 개수) / f 물고기 · r 황금 장비 · p 상징 액세서리 · c 옷 · g 스쿠터 (하나뿐인 것)
+  const X_BAG = { candy: GIFTS.candy, flower: GIFTS.flower, cake: GIFTS.cake, potion: ['🧪', '포션'], pcharm: ['🔮', '진주부적'], bait: ['🪱', '미끼'], bait2: ['🪱', '중급 미끼'], bait3: ['🪱', '고급 미끼'], balls: ['⚫', '포탄'] };
+  const xPath = (u, id) => { id = String(id); if (id[1] !== ':' || /[.#$\[\]\/]/.test(id)) return null; const t = id[0], k = id.slice(2); return t === 'b' ? [`bag/${u}/${k}`, 0] : t === 's' ? [`bag/${u}/sauce/${k}`, 0] : t === 'e' ? [`farm/${u}/seeds/${k}`, 0] : t === 'k' ? [`farm/${u}/sprkInv`, 0] : t === 'n' ? [`farm/${u}/barn/${k}`, 0] : t === 'd' ? [`aqua/${u}/inv/${k}`, 0]
+    : t === 'f' ? [`bag/${u}/fish/${k}`, 1] : t === 'r' ? [`bag/${u}/rares/${k}`, 1] : t === 'p' ? [`bag/${u}/pins/${k}`, 1] : t === 'c' ? [`owned/${u}/${k}`, 1] : t === 'g' ? [`bag/${u}/${k}`, 1] : null; };
+  // 입고 있거나 타고 있는 것은 못 준다(벗은 뒤에)
+  const xWorn = (u, id) => { const t = id[0], k = id.slice(2); return t === 'r' ? rareList((ctx.members[u] || {}).rare).includes(+k) : t === 'p' ? pinOf(u) === +k : t === 'c' ? Object.values(ctx.dress[u] || {}).includes(k) : t === 'g' ? u === ctx.uid && scoot : false; };
+  const xImg = (src, alt) => `<img class="fl-item" src="${src}" alt="${alt || ''}">`;
+  // 품목 그림은 번호만 보고 각자 화면에서 만든다(상대가 보낸 그림 글을 그대로 그리지 않는다). 물고기만 종류(fi)·이로치(sh)를 같이 받는다
+  const xIcon = (id, v = {}) => { const t = id[0], k = id.slice(2); try { if (t === 'b') return X_BAG[k] ? itemIcon(X_BAG[k][0]) || X_BAG[k][0] : '🎁'; if (t === 'f') { const f = fishOf(String(v.fi || '')); return !f ? '🐟' : f.pearl ? '🦪' : `<span class="so-xfish">${fishSvg(f, false, !!v.sh)}</span>`; }
+      if (t === 'e') return cropOf(k) ? xImg(cropImg(k)) : '🌱'; if (t === 'k') return xImg('img/farm/sprinkler.webp'); if (t === 'n') { const c = k.split('|')[0]; return cropOf(c) ? xImg(cropImg(c)) : '🌾'; }
+      if (t === 's') return SAUCES[k] ? (SAUCE_IMG[k] ? xImg(SAUCE_IMG[k]) : SAUCES[k][0]) : '🧂'; if (t === 'd') return AQD[k] ? xImg(`img/aqua/d/${+k}.webp`) : '🐚'; if (t === 'r') return ANIMALS[+k] ? xImg(rareIcon(+k)) : '✨'; if (t === 'p') return PERSONA[+k] ? PERSONA[+k].pin : '🏅';
+      if (t === 'c') return (clothName(k) && clothIcon(k)) || '👕'; if (t === 'g') return xImg(FLUFFY ? 'img/fl/o/scooter-b.webp' : 'img/scooter-b.webp'); } catch {} return '🎁'; };
+  // 내 가방에서 줄 수 있는 것 목록: { id, grp, ic(그림 글자나 그림), nm, n(개수, 하나뿐이면 0), off(못 주는 까닭) }
+  function xItems() { const out = [], add = (id, grp, nm, n, v) => out.push({ id, grp, v: v || {}, ic: xIcon(id, v), nm, n, off: xWorn(ctx.uid, id) ? '착용 중이에요. 벗은 뒤에' : '' }), B = rawBag;
+    Object.entries(X_BAG).forEach(([k, [, nm]]) => { if ((B[k] || 0) > 0) add('b:' + k, '선물·소모품', nm, B[k]); });
+    Object.entries(B.fish || {}).forEach(([k, v]) => { if (!v || !v.id) return; const f = fishOf(v.id); if (f) add('f:' + k, '물고기', `${v.shiny ? '✨ ' : ''}${f.name}${v.cm ? ' ' + v.cm + 'cm' : ''}${v.g ? ' ' + v.g + '급' : ''}`, 0, { fi: v.id, sh: v.shiny ? 1 : 0 }); });
+    Object.entries(farmSeeds || {}).forEach(([k, n]) => { const c = cropOf(k); if (c && n > 0) add('e:' + k, '씨앗·작물', c.name + ' 씨앗', n); });
+    if (farmSprk > 0) add('k:1', '씨앗·작물', '스프링클러', farmSprk);
+    Object.entries(farmBarn || {}).forEach(([k, n]) => { const [id, g] = k.split('|'), c = cropOf(id); if (c && n > 0) add('n:' + k, '씨앗·작물', `${c.name}${g ? ' ' + g + '급' : ''}`, n); });
+    Object.entries(B.sauce || {}).forEach(([k, n]) => { if (SAUCES[k] && n > 0) add('s:' + k, '양념·용품', SAUCES[k][1], n); });
+    Object.entries(aqua.inv || {}).forEach(([k, n]) => { if (AQD[k] && n > 0) add('d:' + k, '양념·용품', AQD[k][0], n); });
+    Object.keys(B.rares || {}).filter(k => B.rares[k] && ANIMALS[k]).forEach(k => add('r:' + k, '장비·옷', rareName(+k), 0));
+    Object.keys(B.pins || {}).filter(k => B.pins[k] && PERSONA[k]).forEach(k => add('p:' + k, '장비·옷', `${ANIMALS[k].name}의 상징`, 0));
+    Object.keys(ctx.owned[ctx.uid] || {}).filter(k => k !== '_init' && ctx.owned[ctx.uid][k] && priceOf(k) > 0 && clothName(k)).forEach(k => add('c:' + k, '장비·옷', clothName(k), 0));
+    if (B.scooter) add('g:scooter', '장비·옷', '황금사자 스쿠터', 0);
+    return out; }
+  const xIc = ic => (String(ic).startsWith('<') ? h('span', { class: 'so-xic', html: ic }) : h('span', { class: 'so-xic' }, ic));
+  function xPick(it) { if (trial || qloan) return toast('체험·퀘스트로 빌린 물건이 있을 때는 교환할 수 없어요'); if (it.off) return toast(it.off + ' 교환할 수 있어요'); sfx('pop'); ctx.store.set(XP + '/' + ctx.uid, { k: it.id, lb: String(it.nm).slice(0, 40), ...(it.v.fi ? { fi: it.v.fi, sh: it.v.sh || null } : {}), t: ctx.store.now() }).catch(() => {}); } // 고른 걸 바꾸면 내 동의는 지워지고, 상대 동의도 예전 짝이라 저절로 무효가 된다
+  // 고르기 창: 가방 안의 모든 품목을 종류별로
+  function xChoose() { const items = xItems(), grps = [...new Set(items.map(x => x.grp))]; let cl;
+    cl = modal({ title: '🎒 줄 것 고르기', body: items.length ? h('div', { class: 'so-xlist' }, ...grps.flatMap(g => [h('b', { class: 'so-xgrp' }, g), h('div', { class: 'so-xgrid' }, ...items.filter(x => x.grp === g).map(it => h('button', { class: 'so-xit' + (it.off ? ' off' : '') + (xMine().k === it.id ? ' on' : ''), onClick: () => { if (it.off) return toast(it.off + ' 교환할 수 있어요'); cl(); xPick(it); } }, xIc(it.ic), h('small', null, it.nm), it.off ? h('em', { class: 'w' }, '착용 중') : it.n > 0 ? h('em', null, '×' + it.n) : '')))])) : h('p', { class: 'center dim' }, '가방에 교환할 수 있는 것이 없어요.'), actions: [{ label: '닫기', primary: true }] }); }
   function xAgree() { const m = xMine(), p = xPal(); if (!m.k || !p.k) return; sfx('point'); ctx.store.update(XP + '/' + ctx.uid, { ok: m.ok === xPair(m.k, p.k) ? null : xPair(m.k, p.k), t: ctx.store.now() }).catch(() => {}); }
   function xClose() { xOpen = false; xSeen = (xPal().t || 0); if (xMine().k) ctx.store.remove(XP + '/' + ctx.uid).catch(() => {}); xDraw(); }
-  // 둘 다 동의하면: 먼저 본 쪽 한 사람만(잠금) 두 가방을 한 번에 바꾼다. 그사이 선물이 없어졌으면 취소
+  // 둘 다 동의하면: 먼저 본 쪽 한 사람만(잠금) 양쪽 물건을 한 번에 옮긴다. 그사이 물건이 없어졌거나, 입고 있거나, 상대가 이미 가진 하나뿐인 물건이면 취소
   async function xRun() { if (xBusy || !xAgreed() || !pid()) return; xBusy = true; const m = xMine(), p = xPal(), me2 = ctx.uid, pal2 = pid(); let got = false;
     try { await ctx.store.tx(XP + '/lock', c => { if (c && c.by && ctx.store.now() - c.t < 15000) return; got = true; return { by: me2, t: ctx.store.now() }; });
       if (got) { const cur = (await ctx.store.get(XP)) || {}, a = cur[me2] || {}, b = cur[pal2] || {};
-        if (a.k === m.k && b.k === p.k && a.ok === xPair(m.k, p.k) && b.ok === xPair(p.k, m.k)) { const ba = (await ctx.store.get('bag/' + me2)) || {}, bb = (await ctx.store.get('bag/' + pal2)) || {};
-          if ((ba[m.k] || 0) > 0 && (bb[p.k] || 0) > 0) { const na = { ...ba, [m.k]: ba[m.k] - 1 }, nb = { ...bb, [p.k]: bb[p.k] - 1 }; na[p.k] = (na[p.k] || 0) + 1; nb[m.k] = (nb[m.k] || 0) + 1;
-            await ctx.store.update('bag/' + me2, m.k === p.k ? { [m.k]: ba[m.k] } : { [m.k]: na[m.k], [p.k]: na[p.k] }); await ctx.store.update('bag/' + pal2, m.k === p.k ? { [p.k]: bb[p.k] } : { [p.k]: nb[p.k], [m.k]: nb[m.k] });
-            await ctx.store.set(XP, { done: { t: ctx.store.now(), [me2]: p.k, [pal2]: m.k } }); }
-          else await ctx.store.set(XP, { done: { t: ctx.store.now(), fail: 1 } }); }
+        if (a.k === m.k && b.k === p.k && a.ok === xPair(m.k, p.k) && b.ok === xPair(p.k, m.k)) {
+          // [주는 사람, 받는 사람, 품목] 두 방향을 먼저 모두 확인하고 나서 옮긴다
+          const legs = [[me2, pal2, m.k], [pal2, me2, p.k]], plan = []; let why = '';
+          for (const [from, to, id] of legs) { const pf = xPath(from, id), pt = xPath(to, id); if (!pf) { why = '교환할 수 없는 물건이에요'; break; } const src = await ctx.store.get(pf[0]), dst = await ctx.store.get(pt[0]);
+            if (pf[1] ? !src : !(src > 0)) { why = '물건이 모자라서'; break; } if (xWorn(from, id)) { why = '입고 있는 물건이라'; break; } if (pf[1] && dst) { why = '상대가 이미 가진 물건이라'; break; }
+            plan.push(pf[1] ? [[pf[0], null], [pt[0], id[0] === 'f' ? src : true]] : [[pf[0], src - 1], [pt[0], (dst || 0) + 1]]); }
+          if (!why && m.k === p.k && !xPath(me2, m.k)[1]) plan.length = 0; // 같은 물건끼리는 그대로
+          if (!why) { for (const leg of plan) for (const [path, v] of leg) { if (v == null) await ctx.store.remove(path); else await ctx.store.set(path, v); }
+            await ctx.store.set(XP, { done: { t: ctx.store.now(), [me2]: b.lb || '선물', [pal2]: a.lb || '선물' } }); }
+          else await ctx.store.set(XP, { done: { t: ctx.store.now(), fail: why } }); }
         else await ctx.store.remove(XP + '/lock'); } } catch (e) { ctx.store.remove(XP + '/lock').catch(() => {}); }
     xBusy = false; }
-  function xOn() { const d = gt.done; if (d && d.t && d.t !== xDoneSeen && d.t > xT0 - 3000 && ctx.store.now() - d.t < 20000) { xDoneSeen = d.t; if (d.fail) toast('선물이 모자라서 교환이 취소됐어요', 3000); else if (d[ctx.uid]) { const [ic, nm] = GIFTS[d[ctx.uid]] || ['🎁', '선물']; sfx('win'); toast(`🤝 교환 완료! ${ic} ${nm} 1개를 받았어요`, 3200); if (mePop) pop(mePop, `${ic} +1`, 'up'); } xOpen = false; }
-    const p = xPal(); if (p.k && p.t > xSeen && !xOpen && playing && !fishOpen && !battle) { xOpen = true; xSeen = p.t; sfx('pop'); toast(`🎁 ${josa(ctx.nameOf(pid()), '가', '이')} 선물 교환을 걸어왔어요`, 2600); }
+  function xOn() { const d = gt.done; if (d && d.t && d.t !== xDoneSeen && d.t > xT0 - 3000 && ctx.store.now() - d.t < 20000) { xDoneSeen = d.t; if (d.fail) toast(`${typeof d.fail === 'string' ? d.fail : '물건이 모자라서'} 교환이 취소됐어요`, 3200); else if (d[ctx.uid]) { sfx('win'); toast(`🤝 교환 완료! ${d[ctx.uid]}${josa(String(d[ctx.uid]), '를', '을').slice(String(d[ctx.uid]).length)} 받았어요`, 3200); if (mePop) pop(mePop, '🎁 +1', 'up'); } xOpen = false; }
+    const p = xPal(); if (p.k && p.t > xSeen && !xOpen && playing && !fishOpen && !battle) { xOpen = true; xSeen = p.t; sfx('pop'); toast(`🎁 ${josa(ctx.nameOf(pid()), '가', '이')} 교환을 걸어왔어요`, 2600); }
     xDraw(); xRun(); }
   function xDraw() { if (!xWin || !xBtn) return; const m = xMine(), p = xPal(), pn = pid() ? ctx.nameOf(pid()) : '상대'; xBtn.hidden = !pid(); xBtn.classList.toggle('on', !!p.k && !xOpen); xWin.hidden = !xOpen; if (!xOpen) return;
-    const mineOk = !!(m.k && p.k && m.ok === xPair(m.k, p.k)), palOk = !!(m.k && p.k && p.ok === xPair(p.k, m.k));
-    xWin.replaceChildren(h('div', { class: 'so-xh' }, h('b', null, '🎁 선물 1:1 교환'), h('small', null, '둘 다 동의해야 바뀌어요'), h('button', { class: 'so-xx', 'aria-label': '교환 닫기', onClick: xClose }, '✕')),
-      h('div', { class: 'so-xrow' }, h('span', { class: 'so-xl' }, '내가 줄 것'), h('div', { class: 'so-xpick' }, ...Object.entries(GIFTS).map(([k, [ic, nm]]) => h('button', { class: 'so-xg' + (m.k === k ? ' on' : ''), disabled: !((rawBag[k] || 0) > 0), onClick: () => xPick(k) }, itemIcon(ic) ? h('span', { html: itemIcon(ic) }) : h('span', null, ic), h('small', null, `${nm} ${rawBag[k] || 0}`)))), h('em', { class: 'so-xok' + (mineOk ? ' y' : '') }, mineOk ? '✔ 동의' : '대기')),
-      h('div', { class: 'so-xrow' }, h('span', { class: 'so-xl' }, `${josa(pn, '가', '이')} 줄 것`), h('div', { class: 'so-xpick' }, p.k ? h('span', { class: 'so-xg on fix' }, itemIcon(GIFTS[p.k][0]) ? h('span', { html: itemIcon(GIFTS[p.k][0]) }) : h('span', null, GIFTS[p.k][0]), h('small', null, GIFTS[p.k][1] + ' 1개')) : h('span', { class: 'so-xwait' }, pal.on ? '고르는 중…' : `${josa(pn, '가', '이')} 친목회에 들어오면 고를 수 있어요`)), h('em', { class: 'so-xok' + (palOk ? ' y' : '') }, palOk ? '✔ 동의' : '대기')),
-      h('button', { class: 'btn primary so-xgo' + (mineOk ? ' y' : ''), disabled: !(m.k && p.k), onClick: xAgree }, !m.k ? '줄 선물을 골라 주세요' : !p.k ? `${pn}의 선택을 기다리는 중…` : mineOk ? (palOk ? '교환하는 중…' : `동의했어요 · ${pn}의 동의를 기다리는 중 (누르면 취소)`) : `🤝 ${GIFTS[m.k][1]} ↔ ${GIFTS[p.k][1]} 교환에 동의`)); }
+    const mineOk = !!(m.k && p.k && m.ok === xPair(m.k, p.k)), palOk = !!(m.k && p.k && p.ok === xPair(p.k, m.k)), chip = v => h('span', { class: 'so-xg on fix' }, xIc(xIcon(String(v.k), v)), h('small', null, String(v.lb || '선물').slice(0, 40) + ' 1개'));
+    xWin.replaceChildren(h('div', { class: 'so-xh' }, h('b', null, '🎁 1:1 교환'), h('small', null, '가방 안의 무엇이든 · 둘 다 동의해야 바뀌어요'), h('button', { class: 'so-xx', 'aria-label': '교환 닫기', onClick: xClose }, '✕')),
+      h('div', { class: 'so-xrow' }, h('span', { class: 'so-xl' }, '내가 줄 것'), h('div', { class: 'so-xpick' }, m.k ? chip(m) : '', h('button', { class: 'so-xg so-xch', onClick: xChoose }, h('span', { class: 'so-xic' }, '🎒'), h('small', null, m.k ? '바꾸기' : '가방에서 고르기'))), h('em', { class: 'so-xok' + (mineOk ? ' y' : '') }, mineOk ? '✔ 동의' : '대기')),
+      h('div', { class: 'so-xrow' }, h('span', { class: 'so-xl' }, `${josa(pn, '가', '이')} 줄 것`), h('div', { class: 'so-xpick' }, p.k ? chip(p) : h('span', { class: 'so-xwait' }, pal.on ? '고르는 중…' : `${josa(pn, '가', '이')} 친목회에 들어오면 고를 수 있어요`)), h('em', { class: 'so-xok' + (palOk ? ' y' : '') }, palOk ? '✔ 동의' : '대기')),
+      h('button', { class: 'btn primary so-xgo' + (mineOk ? ' y' : ''), disabled: !(m.k && p.k), onClick: xAgree }, !m.k ? '줄 것을 골라 주세요' : !p.k ? `${pn}의 선택을 기다리는 중…` : mineOk ? (palOk ? '교환하는 중…' : `동의했어요 · ${pn}의 동의를 기다리는 중 (누르면 취소)`) : `🤝 ${m.lb || '선물'} ↔ ${p.lb || '선물'} 교환에 동의`)); }
   function xMount() { if (!stageEl) return; xBtn = h('button', { class: 'so-xbtn', hidden: !pid(), onClick: () => { xOpen = !xOpen; if (xOpen) { xSeen = xPal().t || 0; sfx('pop'); xDraw(); } else xClose(); } }, '🎁 교환'); xWin = h('div', { class: 'so-xwin', hidden: true }); stageEl.append(xBtn, xWin); xDraw(); }
   // ----- 카피수족관 -----
   // 방명록: aquabook/{수족관 주인}/{키} = { by: 쓴 사람, x: 글, at }. 수족관을 팔아도 방명록은 남는다. 내 글은 내가, 내 수족관의 글은 주인인 내가 지울 수 있다

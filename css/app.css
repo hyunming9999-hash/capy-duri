@@ -2379,3 +2379,11 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 /* 벤치를 아래로 12px 내린다(관람석 그림 전체를 내리고 위쪽 빈 띠는 나무 선반으로 채움): 동물 엉덩이가 방석 앞 모서리가 아니라 방석 가운데에 놓인다 */
 .aq-room { background: url(../img/aqua/room.webp) center 12px / 100% 100% no-repeat, #8A5226; }
 .aq-room::before { top: -2px; height: 15px; background: linear-gradient(#F6D08A 0 2px, #C98A4B 2px 6px, #A9682F 6px 11px, #7A4318 11px 13px, #4E2A10 13px); }
+/* 교환: 가방 안의 모든 품목 고르기 */
+.so-xic { display: grid; place-items: center; width: 30px; height: 30px; font-size: 22px; line-height: 1; } .so-xic img, .so-xic .fl-item { width: 30px; height: 30px; object-fit: contain; display: block; } .so-xic svg { width: 30px; height: 30px; display: block; } .so-xfish { display: block; width: 34px; } .so-xfish svg { width: 34px; height: 24px; }
+.so-xg.fix { flex: 1; min-width: 0; padding: 4px 8px; } .so-xg.fix small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; } .so-xg.so-xch { flex: none; width: 84px; border-style: dashed; }
+.so-xlist { display: grid; gap: 6px; } .so-xgrp { font: 800 13px/1.4 var(--head, sans-serif); color: #7A4E2D; margin-top: 4px; }
+.so-xgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; }
+.so-xit { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px 6px; border-radius: 12px; border: 2px solid #E6D3B8; background: #fff; cursor: pointer; min-width: 0; } .so-xit small { font-size: 11px; font-weight: 700; color: #5A3A1E; text-align: center; line-height: 1.25; word-break: keep-all; }
+.so-xit em { position: absolute; right: 4px; top: 3px; font: 800 10.5px/1.4 var(--head, sans-serif); font-style: normal; color: #8A5A00; background: #FFF3C4; border-radius: 7px; padding: 0 4px; } .so-xit em.w { background: #EEE; color: #888; }
+.so-xit.on { border-color: #FF7E9C; background: #FFEFF3; } .so-xit.off { opacity: .5; }
