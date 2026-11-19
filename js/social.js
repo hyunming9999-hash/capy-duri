@@ -291,8 +291,9 @@ export function mount(el, ctx) {
     scroller.append(world); worldEl = world;
     rideBtn = h('button', { class: 'dp so-dp so-ride', disabled: true, onClick: toggleRide }, '🎠', h('small', null, '타기'));
     const pad = h('div', { class: 'so-pad' }, h('div', { class: 'dpad so-dpad' }, [['U', '▲'], ['L', '◀'], ['D', '▼'], ['R', '▶']].map(([k, t]) => { const b = h('button', { class: 'dp so-dp dp-' + k, 'aria-label': k }, t); holdBtn(b, () => { keys.add(k); if (FLUFFY) sfx('key'); }, () => keys.delete(k)); return b; })),
-      h('span', { class: 'so-sp' }), h('button', { class: 'so-chatbtn', 'aria-label': '말하기', onClick: () => { sfx('keyC'); const on = el.classList.toggle('chat-open'); if (on) { const i = el.querySelector('.so-chatin'); if (i) i.focus(); } } }), h('span', { class: 'so-sp' }), h('div', { class: 'so-acts2' }, rideBtn, (fishMode = -1, fishBtn = h('button', { class: 'dp so-dp so-hit', onClick: () => (fishMode > 0 ? goFish() : punch()) }, '👊', h('small', null, '때리기')))));
+      h('span', { class: 'so-sp' }), h('button', { class: 'so-chatbtn', 'aria-label': '말하기', onClick: () => { sfx('keyC'); const on = el.classList.toggle('chat-open'); if (on) { const i = el.querySelector('.so-chatin'); if (i) i.focus(); } } }), h('span', { class: 'so-sp' }), h('div', { class: 'so-acts2' }, rideBtn, (fishMode = -1, fishBtn = h('button', { class: 'dp so-dp so-hit', onClick: () => { if (performance.now() - hitDown < 800) return; fishMode > 0 ? goFish() : punch(); } }, '👊', h('small', null, '때리기')))));
     if (FLUFFY) { rideBtn.addEventListener('pointerdown', () => sfx('keyA')); fishBtn.addEventListener('pointerdown', () => sfx('keyB')); }
+    fishBtn.addEventListener('pointerdown', () => { if (fishMode > 0) return; hitDown = performance.now(); punch(); }); // 방향키를 누른 채(두 손가락)로도 때릴 수 있게: 두 번째 손가락은 click이 안 생긴다
     const chatIn = h('input', { class: 'so-chatin', maxLength: 80, placeholder: ctx.partnerId ? `${ctx.nameOf(ctx.partnerId)}에게 말하기` : '상대가 들어오면 말할 수 있어요', enterKeyHint: 'send' });
     chatIn.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); sendChat(chatIn); } }); chatIn.addEventListener('focus', () => keys.clear());
     micBtn = h('button', { class: 'btn sm so-mic', onClick: toggleMic }, '🎤', h('small', null, '음성')); drawMic();
@@ -342,7 +343,7 @@ export function mount(el, ctx) {
   // 낚싯배 체험: 10분 동안 장비를 빌린다. 빌린 장비와 체험 중 번 돈·잃은 돈·도감은 저장하지 않는다
   const TRIAL_MS = 600000, TRIAL_KEYS = ['boat', 'wboat', 'cannon', 'boatD', 'rod', 'rodD', 'bait', 'bait2', 'bait3', 'balls', 'casts', 'pearlAt', 'casts3', 'pearlAt3', 'pcasts', 'pirAt', 'pirNext']; let trial = null, rawBag = {};
   // 퀘스트 해적전: 흰 배·대포를 퀘스트 동안만 빌려준다(저장하지 않는 덮어쓰기)
-  const QLOAN = { boat: true, wboat: true, cannon: true, boatD: 100, balls: 20 }; let qloan = null; let ptest = 0, ctest = false, stest = false; // 연습 링크(?piratetest · ?taltest)
+  const QLOAN = { boat: true, wboat: true, cannon: true, boatD: 100, balls: 20 }; let qloan = null; let ptest = 0, ctest = false, stest = false; let hitDown = 0; // 연습 링크(?piratetest · ?taltest)
   const mergeBag = () => ({ ...rawBag, ...(qloan ? qloan.g : {}), ...(trial ? trial.g : {}), ...(stest ? { scooter: true } : {}) });
   function startTrial() { trial = { until: performance.now() + TRIAL_MS, g: { boat: true, wboat: true, cannon: true, boatD: 100, rod: 3, rodD: 200, bait: 40, bait2: 40, bait3: 40, balls: 20, casts: 0, pearlAt: 999, pcasts: 0, pirNext: 4 } }; bag = mergeBag(); toast('🧪 낚싯배 체험 시작! 10분 동안 흰 배·대포·고급 낚싯대를 빌려요. 바다에서 "내 보트"를 누르세요', 4200); }
   function endTrial(why) { if (!trial) return; trial = null; bag = mergeBag(); if (battle) { battle.stop(); battle = null; camX = null; } const f = document.querySelector('.fs .fs-quit'); if (f) f.click();
