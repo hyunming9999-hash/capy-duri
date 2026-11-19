@@ -2398,3 +2398,17 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 
 /* 둘이 한 배에 탔을 때: 운전하는 쪽은 앞으로 당겨 앉는다(손님이 배 밖으로 밀려나지 않게) */
 .fluffy .so-me.onboat.carry:not(.onpal) { margin-left: -33px; }
+
+/* 표정 고르기 */
+.face-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.face-b { border: 2px solid #E3C9A0; border-radius: 14px; background: #FFF8EA; padding: 4px 2px 5px; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.face-b.on { border-color: #F2A03D; background: #FFE9B8; box-shadow: 0 2px 0 #D98A1F; }
+.face-b span { display: block; width: 100%; } .face-b svg { width: 100%; display: block; } .face-b small { font: 800 11px/1.2 var(--head); color: #5A3A12; }
+/* 패치 소식: 옆으로 넘기는 장 */
+.patch-rail { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; margin: 0 -6px; padding: 2px 6px 4px; overscroll-behavior-x: contain; }
+.patch-rail::-webkit-scrollbar { display: none; }
+.patch-page { flex: 0 0 100%; scroll-snap-align: center; scroll-snap-stop: always; min-width: 0; }
+.patch-hint { display: block; text-align: center; margin-top: 6px; color: #A07A4A; font-weight: 800; animation: phNudge 1.2s ease-in-out infinite; }
+@keyframes phNudge { 50% { transform: translateX(6px); } }
+.patch-faces { display: flex; justify-content: center; align-items: flex-end; gap: 2px; margin: 0 0 8px; padding: 10px 6px 0; border-radius: 20px; background: linear-gradient(#FFE9B8, #FFD9A0); box-shadow: 0 0 0 3px #C98B58, 0 3px 0 3px #8A5226; overflow: hidden; }
+.patch-faces span { width: 27%; } .patch-faces span.big { width: 38%; } .patch-faces svg { width: 100%; display: block; }

@@ -1,6 +1,6 @@
 import { $, h, toast, modal, ask, ymd, dayDiff, niceDate, banner, josa } from './ui.js';
 import { openStore, isMock, setErrorHandler } from './store.js';
-import { capyEl, COLORS, ACCS } from './capy.js';
+import { capy, capyEl, COLORS, ACCS } from './capy.js';
 import { enablePush, sendPush } from './push.js';
 import * as day from './day.js';
 import * as wear from './wear.js';
@@ -52,7 +52,13 @@ ctx.nameOf = uid => (ctx.members[uid] || {}).name || '카피';
 // 황금 장비 입어 보기 링크(?goldtest 또는 ?goldtest=10,3,17): 내 화면에서만 입혀 보고 저장하지 않는다
 const GOLD_TEST = (() => { try { const v = new URLSearchParams(location.search).get('goldtest'); if (v == null) return null; const l = v.split(',').filter(x => x.trim() !== '').map(Number).filter(n => Number.isInteger(n) && n >= 0); return l.length ? l : [10, 3, 17, 2, 0, 9, 18, 12]; } catch { return null; } })();
 ctx.goldTest = GOLD_TEST;
-ctx.capyOf = (uid, extra = {}) => { const m0 = ctx.members[uid] || {}, m = GOLD_TEST && uid === ctx.uid ? { ...m0, rare: GOLD_TEST } : m0, d = ctx.dress[uid] || {}, blk = social.goldBlocks(GOLD_TEST && uid === ctx.uid ? GOLD_TEST : social.rareList(m.rare)), dv = k => (blk.has(k) ? '' : d[k]); return { color: m.color, acc: m.acc, top: dv('top'), bottom: dv('bottom'), hat: dv('hat'), shoe: dv('shoe'), pin: m.pin != null && social.PERSONA[m.pin] ? social.PERSONA[m.pin].pin : '', rare: GOLD_TEST && uid === ctx.uid ? { ...(social.rareOf(GOLD_TEST.slice(0, 1)) || {}), list: GOLD_TEST } : social.rareOf(m.rare), ...extra }; };
+ctx.capyOf = (uid, extra = {}) => { const m0 = ctx.members[uid] || {}, m = GOLD_TEST && uid === ctx.uid ? { ...m0, rare: GOLD_TEST } : m0, d = ctx.dress[uid] || {}, blk = social.goldBlocks(GOLD_TEST && uid === ctx.uid ? GOLD_TEST : social.rareList(m.rare)), dv = k => (blk.has(k) ? '' : d[k]); return { color: m.color, acc: m.acc, top: dv('top'), bottom: dv('bottom'), hat: dv('hat'), shoe: dv('shoe'), pin: m.pin != null && social.PERSONA[m.pin] ? social.PERSONA[m.pin].pin : '', rare: GOLD_TEST && uid === ctx.uid ? { ...(social.rareOf(GOLD_TEST.slice(0, 1)) || {}), list: GOLD_TEST } : social.rareOf(m.rare), ...extra, ...(FACES[m.face] && (!extra.face || extra.face === 'happy') && extra.view !== 'back' ? { face: m.face } : {}) }; };
+// 표정 고르기: 평소 얼굴(예전에는 늘 웃는 얼굴)을 내가 고른 표정으로 보여 준다. 졸음·기절처럼 상황에 따라 바뀌는 표정은 그대로
+const FACES = { happy: '활짝', smile: '방긋', wink: '윙크', love: '하트', shy: '수줍', wow: '깜짝', sleepy: '졸려', sad: '시무룩', cry: '엉엉', angry: '뾰로통' };
+ctx.faceOf = uid => { const f = (ctx.members[uid] || {}).face; return FACES[f] ? f : 'happy'; };
+ctx.pickFace = done => { const cur = ctx.faceOf(ctx.uid), m = ctx.members[ctx.uid] || {}; let shut;
+  const pick = async f => { ctx.members[ctx.uid] = { ...m, face: f }; try { await ctx.store.update('members/' + ctx.uid, { face: f }); toast(`표정을 바꿨어요: ${FACES[f]}`); } catch { toast('저장하지 못했어요'); } shut && shut(); done && done(); };
+  shut = modal({ title: '😊 표정 고르기', body: h('div', { class: 'face-grid' }, Object.keys(FACES).map(f => h('button', { class: 'face-b' + (f === cur ? ' on' : ''), onClick: () => pick(f) }, h('span', { html: capy({ color: m.color, face: f, head: true }) }), h('small', null, FACES[f])))) }); };
 const fullRoute = () => location.hash.slice(1) || 'home';
 const titleOf = r => { const [n, sub] = (r || '').split('-'); const g = n === 'game' && GAMES.find(x => x.id === sub); return g ? g.title : (MENU.find(x => x.id === n) || {}).title || '홈'; };
 
@@ -168,7 +174,7 @@ function whoAreYou() {
 function profile(first) {
   const cur = { name: '', color: 'brown', acc: 'yuzu', ...ctx.me };
   const prev = h('div', { class: 'profile-prev' });
-  const draw = () => prev.replaceChildren(capyEl({ ...cur, face: 'happy' }, 'bob'));
+  const draw = () => prev.replaceChildren(capyEl({ ...cur, face: FACES[cur.face] ? cur.face : 'happy' }, 'bob'));
   const name = h('input', { class: 'inp', maxLength: 8, placeholder: '별명 (8자까지)', value: cur.name });
   const chips = (obj, key, label) => h('div', { class: 'chips' }, Object.entries(obj).map(([k, v]) => {
     const b = h('button', { class: 'chip' + (cur[key] === k ? ' on' : ''), onClick: () => { cur[key] = k; b.parentNode.querySelectorAll('.chip').forEach(x => x.classList.remove('on')); b.classList.add('on'); draw(); } }, label(k, v));
@@ -177,7 +183,7 @@ function profile(first) {
   const save = async () => {
     cur.name = name.value.trim() || '카피';
     try {
-      await ctx.store.update('members/' + ctx.uid, { name: cur.name, color: cur.color, acc: cur.acc, at: ctx.me.at || ctx.store.now() });
+      await ctx.store.update('members/' + ctx.uid, { name: cur.name, color: cur.color, acc: cur.acc, face: FACES[cur.face] ? cur.face : 'happy', at: ctx.me.at || ctx.store.now() });
       if (!first) { toast('바꿨어요'); ctx.go('home'); }
     } catch {}
   };
@@ -185,6 +191,7 @@ function profile(first) {
   root.replaceChildren(h('div', { class: 'welcome' }, h('h2', null, first ? '내 카피바라 만들기' : '내 카피바라 바꾸기'), prev, name,
     h('label', { class: 'lbl' }, '털 색'), chips(COLORS, 'color', (k, v) => [h('i', { class: 'dot', style: { background: v.body } }), v.name]),
     h('label', { class: 'lbl' }, '머리 장식'), chips(ACCS, 'acc', (k, v) => v),
+    h('label', { class: 'lbl' }, '표정'), (cur.face = FACES[cur.face] ? cur.face : 'happy', chips(FACES, 'face', (k, v) => v)),
     h('button', { class: 'btn primary big', onClick: save }, first ? '시작하기' : '저장'),
     !first && h('button', { class: 'btn ghost', onClick: () => ctx.go('home') }, '취소')));
 }
@@ -201,35 +208,33 @@ function showRulesHelp() {
 function leave() { LS.del('room'); location.hash = ''; location.reload(); }
 
 // 패치 소식
-const PATCH_UNTIL = Date.parse('2026-11-30T23:59:00+09:00'); // 이 시각까지만, 들어올 때마다 보여 준다
-function patchNote() { if (Date.now() >= PATCH_UNTIL) return;
-  const li = (ic, t, d) => h('li', null, h('span', null, ic), h('div', null, h('b', null, t), h('small', null, d)));
-  // 썸네일이 맨 위, 글은 한 줄씩 짧게
-  const body = h('div', { class: 'patch' },
-    h('div', { class: 'patch-farm' }, h('img', { src: 'img/patch-1120.webp', alt: '11월 20일 업데이트' })),
-    h('div', { class: 'patch-econ' }, h('b', null, '🎉 11/20 업데이트'), h('small', null, '교환 · 방명록 · 스프링클러 완전 자동')),
-    h('ul', null,
-      li('🧸', '새 카피바라', '머리는 크게 · 몸은 작게 · 옷과 황금 장비도 새 몸에 맞춤'),
-      li('🎁', '1:1 교환', '친목회 🎁 교환 · 가방 안 무엇이든 1개씩 · 둘 다 동의'),
-      li('📖', '수족관', '방명록 · 수족관 없어도 구경 · 제목 누르면 관람료'),
-      li('💦', '스프링클러', '시간당 요금 없앰 · 하루 100코인에 24시간 자동'),
-      li('📜', '퀘스트 버튼', '친목회 위쪽에서 진행 현황'),
-      li('🛠️', '고친 것', '배구·목욕탕 캐릭터 · 배 겹침 · 낚시할 때 배 안에 앉기'),
-      li('⚖️', '밸런스', '풍랑 15번에 1번 · 해적 10번에 0~1번 · 테트리스 최대 300·450·600')),
-    h('div', { class: 'patch-farm' }, h('img', { src: 'img/aqua-patch.webp', alt: '카피수족관' })),
-    h('div', { class: 'patch-econ' }, h('b', null, '🐠 카피수족관'), h('small', null, '잡은 물고기를 실제 크기로 넣고 구경해요')),
-    h('ul', null,
-      li('🐠', '수족관', '카피수퍼 2,000 · 6,000 · 10,000 · 풀어넣기·이름·꾸미기 · 귀한 물고기는 관람료 1코인'),
-      li('✨', '이로치 · 별빛포', '이로치 22종(값 2.2배) · 카피 별빛포 3,500')),
-    h('div', { class: 'patch-farm' }, h('img', { src: 'img/econ-patch.webp', alt: '경제 밸런스 조정' })),
-    h('div', { class: 'patch-econ' }, h('b', null, '🤖 물가 조정'), h('small', null, '값이 오른 만큼 버는 돈도 늘었어요')),
-    h('ul', null,
-      li('🌾', '농사', '이랑당 9개 · 매입가 1.5배 · 스프링클러 2,500'),
-      li('🎣', '바다', '중급 미끼 10개 300 · 고급 600 · 진주 20,000 · 배 수리 300/700'),
-      li('🍲', '요리', '한 그릇 2,930~14,700 · 임대료 300'),
-      li('🎮', '게임 · 선물', '보상 4배 · 참가비 50 · 사탕 150 · 꽃다발 600 · 케이크 2,000'),
-      li('🛍️', '가격', '옷 600~1,300 · 액세서리 2,500~3,000 · 황금 장비 5,000~8,000 · 흰 배 3,000')));
-  return modal({ title: '✨ 패치 소식', body, actions: [{ label: '확인', primary: true }] }); }
+// 패치 소식: 한 장씩 옆으로 넘겨 본다. 장마다 나온 시각에서 하루가 지나면 저절로 사라진다(남은 장이 없으면 창도 안 뜬다)
+const DAY = 86400000, PATCH = [
+  { at: '2026-11-20T09:00:00+09:00', head: '😊 표정 고르기 · 새 카피바라', sub: '11/20 업데이트 ①', faces: ['wink', 'happy', 'love'], li: [
+    ['😊', '표정 고르기', '옷놀이의 😊 표정 버튼 · 내 카피바라 바꾸기에서 10가지 중 선택'],
+    ['🧸', '새 카피바라', '머리는 크게 · 몸은 작게 · 옷과 황금 장비도 새 몸에 맞춤'],
+    ['⛵', '둘이 배 타기', '둘 다 배 안쪽에 나란히 앉아요']] },
+  { at: '2026-11-20T09:00:00+09:00', head: '🎁 교환 · 방명록 · 스프링클러', sub: '11/20 업데이트 ②', img: 'img/patch-1120.webp', li: [
+    ['🎁', '1:1 교환', '친목회 🎁 교환 · 가방 안 무엇이든 1개씩 · 둘 다 동의'],
+    ['📖', '수족관', '방명록 · 수족관 없어도 구경 · 제목 누르면 관람료'],
+    ['💦', '스프링클러', '시간당 요금 없앰 · 하루 100코인에 24시간 자동'],
+    ['📜', '퀘스트 버튼', '친목회 위쪽에서 진행 현황']] },
+  { at: '2026-11-20T09:00:00+09:00', head: '🛠️ 고친 것 · 밸런스', sub: '11/20 업데이트 ③', li: [
+    ['🛠️', '고친 것', '배구·목욕탕 캐릭터 · 배 겹침 · 낚시할 때 배 안에 앉기'],
+    ['⚖️', '밸런스', '풍랑 15번에 1번 · 해적 10번에 0~1번 · 테트리스 최대 300·450·600']] }];
+function patchNote() {
+  const live = PATCH.filter(p => Date.now() < Date.parse(p.at) + DAY); if (!live.length) return;
+  const m = ctx.members[ctx.uid] || {};
+  const pages = live.map(p => h('div', { class: 'patch patch-page' },
+    p.img ? h('div', { class: 'patch-farm' }, h('img', { src: p.img, alt: p.head })) : p.faces ? h('div', { class: 'patch-faces' }, p.faces.map((f, i) => h('span', { class: i === 1 ? 'big' : '', html: capy({ color: m.color, face: f, head: true }) }))) : '',
+    h('div', { class: 'patch-econ' }, h('b', null, p.head), h('small', null, p.sub)),
+    h('ul', null, p.li.map(([ic, t, d]) => h('li', null, h('span', null, ic), h('div', null, h('b', null, t), h('small', null, d)))))));
+  const dots = h('div', { class: 'patch-dots' }, live.map((_, i) => h('i', { class: i ? '' : 'on' }))), hint = h('small', { class: 'patch-hint' }, live.length > 1 ? '옆으로 넘겨 보세요 👉' : '');
+  const rail = h('div', { class: 'patch-rail' }, pages); let at = 0, btn = null;
+  const sync = () => { at = Math.max(0, Math.min(live.length - 1, Math.round(rail.scrollLeft / Math.max(1, rail.clientWidth)))); [...dots.children].forEach((d, i) => d.classList.toggle('on', i === at)); hint.style.visibility = at < live.length - 1 ? '' : 'hidden'; if (btn) btn.textContent = at < live.length - 1 ? '다음 👉' : '확인'; };
+  rail.addEventListener('scroll', sync, { passive: true });
+  const close = modal({ title: '✨ 패치 소식', body: h('div', null, rail, dots, hint), actions: [{ label: live.length > 1 ? '다음 👉' : '확인', primary: true, onClick: c => { if (at < live.length - 1) rail.scrollTo({ left: (at + 1) * rail.clientWidth, behavior: 'smooth' }); else c(); } }] });
+  btn = document.querySelector('.modal-wrap:last-of-type .modal-actions .btn'); return close; }
 function enter() {
   entered = true; setTimeout(patchNote, 900);
   ctx.store.presence(ctx.uid); shareBattery();
