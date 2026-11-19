@@ -4,7 +4,7 @@
 import { PAY } from './money.js';
 import { h, holdBtn, loadImg, josa, gameFx } from './ui.js';
 import { sfx } from './sound.js';
-import { capyUrl, yuzuUrl } from './capy.js';
+import { capyUrlReady, yuzuUrl } from './capy.js';
 
 const W = 800, H = 450, GROUND = 400, NETX = 400, NETW = 12, NETTOP = 268, PR = 40, FOOT = 71, BR = 28, WIN = 7;
 // HIT: 공이 맞는 범위(그림보다 넉넉하게), GB: 공 중력(작을수록 천천히 떨어짐), FALL: 공이 떨어지는 최고 속도
@@ -62,7 +62,7 @@ export function mount(el, ctx) {
   const modeBtn = h('button', { class: 'vb-tb' }), newBtn = h('button', { class: 'vb-start' }, h('b', null, '▶ 시작'), h('small', null, '7점 먼저 내면 승리'), h('em', null, '🏃 신속한 움직임을 위해 장신구를 모두 벗었어요!'));
   const inp = { l: false, r: false, j: false, s: false };
   // 스파이크 충전: [나, 상대] 기본 공격 횟수(0~3). 3이면 스파이크 준비 완료
-  const chg = [0, 0], dsh = [0, 0], armAt = [0, 0]; let dHeld = false; let flash = 0, shake = 0, spikeTxt = 0, outTxt = 0, lastTouch = 0, prevSide = 0, lastHit = -1, camZ = 1, camTop = 0, ghost = null;
+  const chg = [0, 0], dsh = [0, 0], armAt = [0, 0]; let dHeld = false, dArm = 0, faceDir = 0, jHeld = false, jBuf = 0; let flash = 0, shake = 0, spikeTxt = 0, outTxt = 0, lastTouch = 0, prevSide = 0, lastHit = -1, camZ = 1, camTop = 0, ghost = null;
   const btn = (k, cls, label, sub) => { const b = h('button', { class: 'vb-btn ' + cls }, h('b', null, label), sub && h('small', null, sub)); holdBtn(b, () => { inp[k] = true; if (k === 's') armAt[my()] = performance.now(); }, () => { inp[k] = false; }); return b; };
   const spkBtn = btn('s', 'spk', '스파이크', '0/3'); spkBtn.append(h('em', { class: 'vb-now' }, '눌러!')); const pips = h('div', { class: 'vb-pips' });
   // 조작 배치 3안: A 아래 조작대 / B 투명 슬라이드 패드 / C 왼쪽 아무 데나 밀기(가상 조이스틱)
@@ -97,7 +97,7 @@ export function mount(el, ctx) {
   // 들어올 때 큰 안내 화면: 박진감 넘치는 썸네일 + 스파이크 쓰는 법. 누르면 닫힌다
   const ipg = [
     ['img/volley/intro.webp', '🔥 스파이크 꿀팁', ['', h('em', null, '점프한 채로'), ' 공이 머리 근처(같은 높이~조금 위)에 있을 때 스파이크를 누르면 써요!'], '공을 상대 진영으로 3번 넘기면 스파이크 1번이 충전돼요'],
-    ['img/volley/intro2.webp', '💨 대쉬 꿀팁', ['대쉬는 ', h('em', null, '방향키와 같이'), ' 눌러야 해요! 땅에 있을 때만 써요'], '공을 넘길 때마다 대쉬 1번씩, 최대 2번까지 모여요']];
+    ['img/volley/intro2.webp', '💨 대쉬 꿀팁', ['대쉬는 ', h('em', null, '방향키와 같이'), ' 누르면 그쪽으로 쭉! 그냥 누르면 가던 쪽으로 나가요(땅에서만)'], '공을 넘길 때마다 대쉬 1번씩, 최대 2번까지 모여요']];
   const intro = h('div', { class: 'vb-intro' }), showIntro = n => { const [src, t, body, sub] = ipg[n], last = n === ipg.length - 1;
     intro.replaceChildren(h('div', { class: 'vb-intro-c' }, h('img', { src, alt: '' }), h('b', null, t), h('p', null, ...body), h('small', null, sub),
       h('div', { class: 'vb-intro-dots' }, ...ipg.map((_, k) => h('i', { class: k === n ? 'on' : '' }))),
@@ -117,26 +117,31 @@ export function mount(el, ctx) {
   addEventListener('resize', fit); setTimeout(fit, 0); try { screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {}); } catch {}
 
   const KEY = { ArrowLeft: 'l', ArrowRight: 'r', ArrowUp: 'j', a: 'l', d: 'r', w: 'j', ' ': 'j', s: 's', ArrowDown: 's', Shift: 's', x: 'd', e: 'd', Control: 'd' };
-  const kd = e => { const k = KEY[e.key]; if (k) { e.preventDefault(); if (k === 's' && !inp.s) armAt[my()] = performance.now(); inp[k] = true; } };
-  const ku = e => { const k = KEY[e.key]; if (k) inp[k] = false; };
-  addEventListener('keydown', kd); addEventListener('keyup', ku);
+  // Shift(스파이크)를 누른 채로는 글쇠가 대문자(A·D)로 와서, 뗄 때 못 알아보고 방향이 눌린 채 굳던 문제 → 소문자로 바꿔서 본다
+  const keyOf = e => KEY[e.key] || KEY[String(e.key || '').toLowerCase()];
+  const kd = e => { const k = keyOf(e); if (k) { e.preventDefault(); if (k === 's' && !inp.s) armAt[my()] = performance.now(); inp[k] = true; } };
+  const ku = e => { const k = keyOf(e); if (k) inp[k] = false; };
+  // 화면이 가려지거나 다른 앱으로 넘어가면 눌린 채 굳지 않게 조작을 모두 푼다
+  const letGo = () => { inp.l = inp.r = inp.j = inp.s = inp.d = false; slide.dataset.d = ''; rot.querySelectorAll('.vb-btn.held').forEach(b => b.classList.remove('held')); }, onVis = () => { if (document.hidden) letGo(); };
+  addEventListener('keydown', kd); addEventListener('keyup', ku); addEventListener('blur', letGo); document.addEventListener('visibilitychange', onVis);
 
   let mode = ctx.order.length > 1 ? 'online' : 'cpu';
   const my = () => mode === 'online' ? ctx.idx : 0;
   const ps = [{ x: 200, y: standY, vx: 0, vy: 0 }, { x: 600, y: standY, vx: 0, vy: 0 }];
   const ball = { x: 200, y: 150, vx: 0, vy: 0, rot: 0, cd: [0, 0], spike: 0 }, trail = [];
+  try { if (new URLSearchParams(location.search).has('mock')) window.__vb = { ps, inp, ball, chg, dsh }; } catch {} // 연습 모드 점검용
   let game = { sc0: 0, sc1: 0, serve: 0, phase: 'idle', at: 0, n: 0 }, dead = false, deadMine = false, oppSeen = 0, sendT = 0, lastP = '', lastPT = 0, aiErr = 0, aiT = 0;
   const now = () => mode === 'online' ? ctx.store.now() : Date.now();
   const live = () => game.phase === 'serve' && now() >= game.at + 1000 && !dead;
   // 서브 공은 서브하는 카피바라 머리 위에서 나온다(지금 서 있는 자리 그대로)
   const serveX = () => { const p = ps[game.serve ? 1 : 0], lo = game.serve ? NETX + 60 : -EXT + 40, hi = game.serve ? W + EXT - 40 : NETX - 60; return Math.max(lo, Math.min(hi, p && isFinite(p.x) ? p.x : (game.serve ? 600 : 200))); };
   const placeBall = () => { lastHit = -1; prevSide = game.serve ? 1 : 0; lastTouch = game.serve; Object.assign(ball, { x: serveX(), y: 150, vx: 0, vy: 0, rot: 0, spike: 0 }); trail.length = 0; dead = false; deadMine = false; };
-  const sprites = [null, null], yz = new Image(), bg = new Image(), wallL = new Image(), wallR = new Image(), palmA = new Image(), palmB = new Image(); palmA.src = 'img/volley/palmA.webp'; palmB.src = 'img/volley/palmB.webp'; wallL.src = 'img/volley/wallL.webp'; wallR.src = 'img/volley/wallR.webp'; yz.src = 'img/volley/ball.webp'; bg.src = 'img/volley/bg.webp';
+  const sprites = [null, null], spriteKey = ['', ''], yz = new Image(), bg = new Image(), wallL = new Image(), wallR = new Image(), palmA = new Image(), palmB = new Image(); palmA.src = 'img/volley/palmA.webp'; palmB.src = 'img/volley/palmB.webp'; wallL.src = 'img/volley/wallL.webp'; wallR.src = 'img/volley/wallR.webp'; yz.src = 'img/volley/ball.webp'; bg.src = 'img/volley/bg.webp';
   const yz0 = new Image(); yz0.src = yuzuUrl;
   // 양쪽 테라스 응원단: 생김새가 다른 카피바라 넷(왼쪽 둘, 오른쪽 둘)
   const FANS = [{ color: 'cream', acc: 'flower', face: 'happy' }, { color: 'choco', acc: 'ribbon', face: 'wow' }, { color: 'brown', acc: 'towel', face: 'smile' }, { color: 'peach', acc: 'yuzu', face: 'love' }, { color: 'brown', acc: 'leaf', face: 'wink' }, { color: 'cream', acc: 'none', face: 'wow' }], fanIm = [];
-  FANS.forEach((o, k) => loadImg(capyUrl(o)).then(im => { fanIm[k] = im; }));
-  const loadSprites = () => [0, 1].forEach(i => { const uid = mode === 'online' ? ctx.order[i] : (i ? null : ctx.uid); loadImg(capyUrl(uid ? ctx.capyOf(uid, { face: 'happy', rare: null, pin: '', hat: '', acc: 'none' }) : { color: 'choco', acc: 'towel', face: 'wink' })).then(im => { sprites[i] = im; }); });
+  FANS.forEach((o, k) => capyUrlReady({ ...o, noShadow: true }).then(loadImg).then(im => { fanIm[k] = im; }).catch(() => {}));
+  const loadSprites = () => [0, 1].forEach(i => { const uid = mode === 'online' ? ctx.order[i] : (i ? null : ctx.uid); const want = spriteKey[i] = (uid || 'cpu') + '|' + JSON.stringify(uid ? ctx.dress[uid] || {} : 0); capyUrlReady(uid ? ctx.capyOf(uid, { face: 'happy', rare: null, pin: '', hat: '', acc: 'none', noShadow: true }) : { color: 'choco', acc: 'towel', face: 'wink', noShadow: true }).then(loadImg).then(im => { if (spriteKey[i] === want) sprites[i] = im; }).catch(() => {}); });
   const drawPips = () => { const dn = dsh[my()]; dshBtn.classList.toggle('ready', dn > 0); dshBtn.querySelector('small').textContent = `${dn}/${DSH_MAX}`; const n = chg[my()], ready = n >= SPK_N; pips.replaceChildren(h('small', null, ready ? '스파이크 준비 완료!' : `상대 진영으로 ${SPK_N - n}번 더 넘기면`), ...Array.from({ length: SPK_N }, (_, k) => h('i', { class: k < n ? 'on' : '' }))); spkBtn.classList.toggle('ready', ready); spkBtn.querySelector('small').textContent = ready ? '점프!' : `${n}/${SPK_N}`; };
 
   // 공을 쳤을 때: 스파이크 준비 + 버튼을 막 눌렀고 + 공중이면 스파이크, 아니면 기본 공격 1번 충전
@@ -159,7 +164,7 @@ export function mount(el, ctx) {
     game = v || { sc0: 0, sc1: 0, serve: 0, phase: 'idle', at: 0, n: 0 }; if (fresh) placeBall(); }
   // 새 판이 시작되면 지난 판 정산창·승패 연출은 바로 치운다
   const clearCards = () => document.querySelectorAll('.earn-card, .gfx').forEach(e => e.remove());
-  function newGame() { clearCards(); const v = { sc0: 0, sc1: 0, serve: 0, phase: 'serve', at: now(), n: (game.n || 0) + 1 }; chg[0] = chg[1] = dsh[0] = dsh[1] = 0; drawPips(); ps[0].x = 200; ps[1].x = 600; mode === 'online' ? ctx.store.set('games/volley', v) : setGame(v); }
+  function newGame() { clearCards(); ps.forEach(p => { p.dT = 0; p.vx = 0; }); dArm = jBuf = 0; const v = { sc0: 0, sc1: 0, serve: 0, phase: 'serve', at: now(), n: (game.n || 0) + 1 }; chg[0] = chg[1] = dsh[0] = dsh[1] = 0; drawPips(); ps[0].x = 200; ps[1].x = 600; mode === 'online' ? ctx.store.set('games/volley', v) : setGame(v); }
   function point(loser) {
     sfx('point');
     dead = true; deadMine = true;
@@ -252,12 +257,17 @@ export function mount(el, ctx) {
   }
   function tick() {
     const me = my();
-    { const p = ps[me], dir = (inp.r ? 1 : 0) - (inp.l ? 1 : 0); if (inp.d && !dHeld && dir && p.y >= standY && dsh[me] > 0 && !(p.dT > 0)) { p.dT = 12; p.dDir = dir; dsh[me]--; drawPips(); sfx('swing'); } dHeld = inp.d; } // 대쉬: 땅에 있을 때 방향키와 함께
-    stepPlayer(ps[me], me, inp);
+    // 대쉬: 누른 순간부터 잠깐(약 0.3초) 기다려 준다 → 방향키보다 대쉬를 먼저 눌러도, 공중에서 눌러 곧 착지해도 나간다. 방향 없이 누르면 마지막으로 가던 쪽(처음엔 네트 쪽)으로
+    { const p = ps[me], dir = (inp.r ? 1 : 0) - (inp.l ? 1 : 0); if (dir) faceDir = dir;
+      if (inp.d && !dHeld) dArm = 18; dHeld = inp.d;
+      if (dArm > 0) { dArm--; const go = dir || (dArm <= 11 ? faceDir || (me ? -1 : 1) : 0); if (!(dsh[me] > 0)) dArm = 0; else if (go && p.y >= standY && !(p.dT > 0)) { p.dT = 12; p.dDir = go; dsh[me]--; dArm = 0; drawPips(); sfx('swing'); } } }
+    // 점프: 대쉬 중이거나 착지 직전에 톡 누른 것도 잠깐 기억했다가 뛸 수 있을 때 바로 뛴다(누른 게 씹히지 않게)
+    { const p = ps[me]; if (inp.j && !jHeld) jBuf = 9; jHeld = inp.j; const wantJ = inp.j || jBuf > 0, vy0 = p.vy;
+      stepPlayer(p, me, { l: inp.l, r: inp.r, j: wantJ }); if (p.vy < 0 && vy0 >= 0) jBuf = 0; else if (jBuf > 0 && !(p.dT > 0)) jBuf--; }
     if (mode === 'online') { // 상대: 마지막으로 받은 상태를 물리로 계속 진행시킨 '유령'을 부드럽게 따라간다(받을 때마다 순간이동하면 뚝뚝 끊겨 보인다)
       const o = ps[1 - me]; if (ghost) { if (Date.now() - oppSeen > 300) ghost.vx = 0; stepPlayer(ghost, 1 - me, null); o.x += (ghost.x - o.x) * 0.3; o.y += (ghost.y - o.y) * 0.35; o.vx = ghost.vx; o.vy = ghost.vy; } }
     else stepPlayer(ps[1], 1, ai(ps[1]), (LV[lvKey] || LV.m)[0] * (1 + ctx.streakLv('volley') * 0.05));
-    if (inp.j && ps[me].y >= standY - 1 && ps[me].vy < 0 && !ps[me].jf) sfx('jump'); ps[me].jf = ps[me].vy < 0;
+    if (ps[me].vy < 0 && !ps[me].jf) sfx('jump'); ps[me].jf = ps[me].vy < 0;
     if (armAt[me] && performance.now() - armAt[me] < ARM_MS) trySpike(me); // 버튼을 누른 순간 공이 머리 근처면 바로 스파이크
     if (mode === 'cpu' && armAt[1] && performance.now() - armAt[1] < ARM_MS) trySpike(1);
     if (flash) flash--; if (shake) shake--; if (spikeTxt) spikeTxt--;
@@ -384,5 +394,5 @@ export function mount(el, ctx) {
   modeBtn.onclick = () => setMode(mode === 'online' ? 'cpu' : 'online');
   newBtn.onclick = newGame;
   setMode(mode); raf = requestAnimationFrame(loop);
-  return () => { alive = false; cancelAnimationFrame(raf); offs.forEach(f => f()); removeEventListener('keydown', kd); removeEventListener('keyup', ku); removeEventListener('resize', fit); document.body.classList.remove('vb-on'); wrap.remove(); if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {}); try { screen.orientation && screen.orientation.unlock && screen.orientation.unlock(); } catch {} if (mode === 'online') ctx.store.remove('rt/volley/p' + ctx.idx).catch(() => {}); };
+  return () => { alive = false; cancelAnimationFrame(raf); offs.forEach(f => f()); removeEventListener('keydown', kd); removeEventListener('keyup', ku); removeEventListener('blur', letGo); document.removeEventListener('visibilitychange', onVis); removeEventListener('resize', fit); document.body.classList.remove('vb-on'); wrap.remove(); if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {}); try { screen.orientation && screen.orientation.unlock && screen.orientation.unlock(); } catch {} if (mode === 'online') ctx.store.remove('rt/volley/p' + ctx.idx).catch(() => {}); };
 }

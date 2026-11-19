@@ -205,6 +205,9 @@ const PATCH_UNTIL = Date.parse('2026-11-30T23:59:00+09:00'); // 이 시각까지
 function patchNote() { if (Date.now() >= PATCH_UNTIL) return;
   const li = (ic, t, d) => h('li', null, h('span', null, ic), h('div', null, h('b', null, t), h('small', null, d)));
   const body = h('div', { class: 'patch' },
+    h('ul', null,
+      li('🛠️', '11/20 손본 것', '배구·목욕탕에서 카피바라가 안 보이던 것, 둘이 배 탈 때 겹쳐 보이던 것, 수족관에 넣은 물고기가 너무 작아 안 보이던 것을 고쳤어요. 배구는 대쉬를 방향키보다 먼저 눌러도 나가요. 위쪽에 📜 퀘스트 진행 버튼이 생겼어요.'),
+      li('⚖️', '밸런스', '풍랑은 낚시 15번에 1번, 해적단은 10번에 0~1번. 테트리스 보상은 하 20점·중 14점·상 10점당 1코인(최대 300·450·600)으로 낮췄어요.')),
     h('div', { class: 'patch-farm' }, h('img', { src: 'img/aqua-patch.webp', alt: '카피수족관' })),
     h('div', { class: 'patch-econ' }, h('b', null, '🐠 카피수족관 오픈!'), h('small', null, '잡은 물고기를 실제 크기 그대로 넣고 구경해요. 귀한 물고기가 있으면 동물 친구들이 구경 와서 관람료도 내요 🪙')),
     h('ul', null,

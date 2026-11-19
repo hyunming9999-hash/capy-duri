@@ -17,6 +17,10 @@ function inline(name) {
   fetch(DIR + name).then(r => r.blob()).then(b => new Promise(ok => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.readAsDataURL(b); })).then(u => inl.set(name, u)).catch(() => inl.delete(name));
   return null;
 }
+// 그림 안의 바깥 파일(img/…)을 전부 내용으로 바꿔 넣는다: 캔버스에 그릴 캐릭터는 이걸 거쳐야 몸·옷이 빠지지 않는다
+const dataOf = new Map();
+const toData = path => { if (!dataOf.has(path)) dataOf.set(path, fetch(path).then(r => { if (!r.ok) throw new Error('no'); return r.blob(); }).then(b => new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = no; fr.readAsDataURL(b); })).catch(() => { dataOf.delete(path); return ''; })); return dataOf.get(path); };
+export async function inlineSvg(svg) { const paths = [...new Set([...svg.matchAll(/href="(img\/[^"]+)"/g)].map(m => m[1]))], urls = await Promise.all(paths.map(toData)); paths.forEach((q, i) => { if (urls[i]) svg = svg.split(`href="${q}"`).join(`href="${urls[i]}"`); }); return svg; }
 const src = (name, own) => (own && inline(name)) || DIR + name;
 const img = (name, own) => `<image href="${src(name, own)}" x="${X.toFixed(2)}" y="${Y.toFixed(2)}" width="${W.toFixed(2)}" height="${H.toFixed(2)}"/>`;
 const CAPY_FACE = new Set(['smile', 'happy', 'sleepy', 'wow', 'sad', 'love', 'wink', 'cry', 'angry', 'shy']);

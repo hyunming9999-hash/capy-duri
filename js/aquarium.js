@@ -79,7 +79,8 @@ export function openAquarium(o) {
   const scOf = f => (f.z >= 0 ? 1 - 0.5 * f.z : 1 - f.z * (f.near - 1)), // z: -1(유리 바로 앞) ~ 0 ~ 1(맨 뒤). 작은 물고기일수록 앞으로 오면 많이 커진다
     hOf = f => f.len * 0.62 * scOf(f);
   // 렉 줄이기: 크기는 수족관 비율이 바뀔 때만 한 번 정하고, 앞뒤 크기 변화는 transform scale로만(다시 그리지 않음)
-  function sizeFish(f) { const w = f.len * ppm / FISH_FILL; if (Math.abs(w - (f.lw || 0)) < 0.6) return; f.lw = w; f.el.style.width = w + 'px'; f.el.style.height = w * 2 / 3 + 'px'; f.zz.style.fontSize = Math.max(12, Math.min(40, w * 0.18)) + 'px'; f.tag.style.fontSize = Math.max(10, Math.min(18, w * 0.12)) + 'px'; }
+  // 전체 보기에서는 24m 수족관이 화면에 다 들어와 20cm 물고기가 5px밖에 안 돼 '넣었는데 안 보인다' → 화면에서 최소 28~40px은 되게 키운다(확대하면 실제 크기 그대로)
+  function sizeFish(f) { const real = f.len * ppm / FISH_FILL, w = real >= 40 ? real : 28 + real * 0.3; if (Math.abs(w - (f.lw || 0)) < 0.6) return; f.lw = w; f.el.style.width = w + 'px'; f.el.style.height = w * 2 / 3 + 'px'; f.zz.style.fontSize = Math.max(12, Math.min(40, w * 0.18)) + 'px'; f.tag.style.fontSize = Math.max(10, Math.min(18, w * 0.12)) + 'px'; }
   function build(list, dlist) {
     layer.replaceChildren(); decos = []; editing = false; root.classList.remove('edit'); [...tabs.children].forEach(b => b.classList.toggle('on', +b.dataset.t === tank)); zoom = 1; fitAll = true;
     const T = TANKS[tank]; W = T.w; H = T.h;
@@ -92,7 +93,8 @@ export function openAquarium(o) {
     f.zz = h('span', { class: 'aq-zz' }, 'Z z'); f.tag = h('span', { class: 'aq-name', hidden: !d.name }, d.name || ''); f.el = h('div', { class: 'aq-f ' + glowOf(f) }, f.body, f.zz, f.tag);
     f.el.onclick = e => { e.stopPropagation(); showTip(f); }; layer.append(f.el);
     if (drop) { const vx = (view.scrollLeft + view.clientWidth / 2) / ppm, vy = view.scrollTop / ppm; f.x = Math.max(len / 2, Math.min(W - len / 2, vx + rnd(-1, 1))); f.y = Math.max(0, vy) + 0.1; f.ty = f.y + rnd(1, 2.5); f.vy = 1.5;
-      const sp = h('div', { class: 'aq-splash', style: { left: f.x * ppm + 'px', top: Math.max(0, vy) * ppm + 'px' } }); layer.append(sp); setTimeout(() => sp.remove(), 1200); sfx('splash'); }
+      const sp = h('div', { class: 'aq-splash', style: { left: f.x * ppm + 'px', top: Math.max(0, vy) * ppm + 'px' } }); layer.append(sp); setTimeout(() => sp.remove(), 1200); sfx('splash');
+      const here = h('span', { style: { position: 'absolute', left: '50%', bottom: '100%', transform: 'translateX(-50%)', font: '800 13px/1.2 var(--head, sans-serif)', color: '#fff', background: 'rgba(255,120,60,.92)', borderRadius: '10px', padding: '2px 8px', whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 5 } }, '👇 여기!'); f.el.append(here); setTimeout(() => here.remove(), 3500); }
     return f; }
   // ----- 가방 물고기 풀어넣기 · 이름 붙이기 -----
   let bag = [];

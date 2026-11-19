@@ -4,7 +4,7 @@ import { h, toast, modal, gameFx } from './ui.js';
 import { sfx } from './sound.js';
 import { PAY } from './money.js';
 import { animalSvg } from './animals.js';
-import { capyUrl } from './capy.js';
+import { capyUrlReady, svgUrl } from './capy.js';
 
 const COLS = 8, R = 20, ROWH = R * Math.sqrt(3), LIMIT = 12, W = COLS * R * 2, LINE_Y = R + (LIMIT - 1) * ROWH + R, H = Math.round(LINE_Y + 96), GUN = { x: W / 2, y: LINE_Y + 40 };
 const PATH = 'games/bubble', STAGES = 30;
@@ -102,11 +102,11 @@ export function mount(el, ctx) {
     const gr = g2.createRadialGradient(R * 0.7, R * 0.6, R * 0.2, R, R, R); gr.addColorStop(0, '#fff'); gr.addColorStop(0.25, col); gr.addColorStop(1, col);
     g2.fillStyle = gr; g2.beginPath(); g2.arc(R, R, R - 1, 0, 7); g2.fill(); g2.lineWidth = 1.6; g2.strokeStyle = 'rgba(60,40,30,.55)'; g2.stroke();
     const im = new Image(); im.onload = () => { g2.save(); g2.beginPath(); g2.arc(R, R, R - 2.5, 0, 7); g2.clip(); g2.drawImage(im, R * 0.2, R * 0.28, R * 1.6, R * 1.49); g2.restore(); g2.fillStyle = 'rgba(255,255,255,.55)'; g2.beginPath(); g2.ellipse(R * 0.62, R * 0.45, R * 0.28, R * 0.16, -0.6, 0, 7); g2.fill(); };
-    im.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(animalSvg(ai)); return c; });
+    svgUrl(animalSvg(ai)).then(u => { im.src = u; }); return c; });
   // 힉스필드로 그린 수정 구슬·놀이공원 배경·발사대(그림이 오기 전에는 위에서 그린 구슬을 쓴다)
   const ART = { balls: COLORS.map((_, i) => { const im = new Image(); im.src = `img/bubble/b${i}.webp`; return im; }), bg: Object.assign(new Image(), { src: 'img/bubble/bg.webp' }), gun: Object.assign(new Image(), { src: 'img/bubble/gun.webp' }) };
   const ok = im => im.complete && im.naturalWidth > 0;
-  let capyIm = null; { const im = new Image(); im.onload = () => { capyIm = im; }; im.src = capyUrl(ctx.capyOf(ctx.uid, { face: 'happy' })); }
+  let capyIm = null; { const im = new Image(); im.onload = () => { capyIm = im; }; capyUrlReady(ctx.capyOf(ctx.uid, { face: 'happy' })).then(u => { im.src = u; }); }
 
   function lobby() {
     const chip = (on, label, fn, sub) => h('button', { class: 'bg-chip' + (on ? ' on' : ''), onClick: fn }, h('b', null, label), sub && h('small', null, sub));

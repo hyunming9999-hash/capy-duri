@@ -115,8 +115,8 @@ export function gradeInfo(f, cm, g) {
 // 쓰레기: 던지는 힘 85 이상(10칸 중 8.5칸)이면 안 걸리고, 못 미치면 15~20%(가까이 던질수록 20%에 가깝다)
 const STORM_LOSS = [0, 120, 180, 250]; // 풍랑을 만나면 거센 파도에 돈을 빠뜨린다(초급·중급·고급 바다)
 const TRASH_FAR = 0.85, trashP = power => 0.2 - 0.05 * Math.min(1, power / TRASH_FAR);
-// 풍랑: 바다마다 10번 던질 때 1~2번. 10번 묶음마다 몇 번째에 불지 미리 정하고, 그 판에 못 불었으면(진주였거나 일찍 끝나서) 다음 판으로 미룬다
-const stormPlan = () => { const k = Math.random() < 0.5 ? 1 : 2, at = []; while (at.length < k) { const x = 1 + Math.floor(Math.random() * 10); if (!at.includes(x)) at.push(x); } return at; };
+// 풍랑: 바다마다 15번 던질 때 1번. 15번 묶음마다 몇 번째에 불지 미리 정하고, 그 판에 못 불었으면(진주였거나 일찍 끝나서) 다음 판으로 미룬다
+const STORM_EVERY = 15, stormPlan = () => [1 + Math.floor(Math.random() * STORM_EVERY)];
 // 등급표: 확률(기본) · 크기 구간(물고기 크기 범위 안에서) · 값 배수
 export const GRADE = { S: { p: 3, band: [0.9, 1], x: 2 }, A: { p: 9, band: [0.75, 0.9], x: 1.5 }, B: { p: 18, band: [0.55, 0.75], x: 1.25 }, C: { p: 30, band: [0.3, 0.55], x: 1.1 }, D: { p: 40, band: [0, 0.3], x: 1 } };
 function rollGrade(power) { const w = Object.entries(GRADE).map(([k, v]) => [k, v.p * (k === 'S' || k === 'A' ? 1 + power * 0.6 : 1)]), tot = w.reduce((a, [, x]) => a + x, 0); let r = Math.random() * tot; for (const [k, x] of w) { r -= x; if (r <= 0) return k; } return 'D'; }
@@ -168,12 +168,12 @@ export function openFishing(o) {
   }
   function cast() {
     const b = o.bag(), deep = zone === 3, n = (b.casts3 || 0) + (deep ? 1 : 0), boost = deep && b.pboost && b.pboost.at ? b.pboost : null, bk = boost ? (boost.k || 0) + 1 : 0;
-    // 중급·고급에서는 한 번 나타난 뒤 15~20번 던지면 다시 갈매기 해적단이 나타난다
-    if (zone >= 2 && o.onPirate) { const gap = () => 15 + Math.floor(Math.random() * 6), pn = (b.pcasts || 0) + 1, at = b.pirNext > 0 ? b.pirNext : pn - 1 + gap(), hit = pn >= at; o.save({ pcasts: pn, pirNext: hit ? pn + gap() : at }); if (hit) { close(); return o.onPirate(); } }
+    // 갈매기 해적단(중급·고급): 낚시 10번 묶음마다 0~1번. 묶음이 바뀔 때 나올지(절반 확률)·몇 번째에 나올지 미리 정해 둔다
+    if (zone >= 2 && o.onPirate) { const pn = (b.pcasts || 0) + 1, blk = Math.floor((pn - 1) / PIRATE_EVERY), fresh = b.pirBlk !== blk, at = fresh ? (Math.random() < 0.5 ? blk * PIRATE_EVERY + 1 + Math.floor(Math.random() * PIRATE_EVERY) : -1) : b.pirNext, hit = pn === at; o.save({ pcasts: pn, pirBlk: blk, pirNext: hit ? -1 : at }); if (hit) { close(); return o.onPirate(); } }
     // 진주는 고급 바다에서만: 평소엔 던질 때마다 0.2%, 진주부적을 썼으면 10번 안의 정해진 한 번에 문다
     const isPearl = deep && (boost ? bk >= boost.at : Math.random() < PEARL_P); o.save({ [BAIT_KEY[zone]]: b[BAIT_KEY[zone]] - 1, rodD: b.rodD - 1, casts: (b.casts || 0) + 1, ...(deep ? { casts3: n, ...(boost ? { pboost: isPearl ? null : { k: bk, at: boost.at } } : {}) } : {}) }); pboosted = !!(boost && isPearl);
     cur = rollCatch(zone, rodT(), isPearl, power / 100, o.shinyTest);
-    { const key = 'sp' + zone, sp = (o.bag()[key]) || {}, n = (sp.n || 0) % 10 + 1, at = n === 1 || !Array.isArray(sp.at) ? stormPlan() : sp.at, due = !!sp.due || at.includes(n); stormIn = due && !cur.f.pearl; o.save({ [key]: { n, at, due } }); }
+    { const key = 'sp' + zone, sp = (o.bag()[key]) || {}, n = (sp.n || 0) % STORM_EVERY + 1, at = n === 1 || !Array.isArray(sp.at) || sp.at.length !== 1 ? stormPlan() : sp.at, due = !!sp.due || at.includes(n); stormIn = due && !cur.f.pearl; o.save({ [key]: { n, at, due } }); }
     stormAt = 0; phase = 'cast'; c0 = performance.now(); castTo = 48 + power * 0.44; flew = false; shown = false; setBar(power, 'pow'); drawInfo();
     rodEl.className = 'fs-rod back'; float.className = 'fs-float fly'; hook.classList.add('up'); say(power >= 85 ? '아주 멀리! 큰 물고기가 잘 물고 줄도 덜 끊어져요.' : power >= 55 ? '꽤 멀리 던졌어요.' : '가까이 떨어졌어요. 멀리 던질수록 유리해요.'); btn.textContent = '…'; btn.onclick = null;
   }

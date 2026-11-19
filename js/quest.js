@@ -245,5 +245,7 @@ export function createQuest(d) {
     modal({ title: '🔍 퀘스트 현황', body: [h('div', { class: 'qs' }, h('p', { class: 'qs-name' }, '메인 이야기 「누가 왕관을 훔쳤나」'),
       h('div', { class: 'qs-bar' }, h('i', null, h('u', { style: { width: pct + '%' } })), h('small', null, `${n} / ${total}단계 · ${pct}%`)), h('small', { class: 'dim center' }, `오늘 ${doneToday()} / ${DAY_MAX}단계 진행`),
       h('b', { class: 'qs-h' }, '📌 지금 할 일'), todo, clueBox(), h('b', { class: 'qs-h' }, '📁 사건 파일'), h('div', { class: 'qs-chs' }, ...chap))], actions: [{ label: '닫기', primary: true }] }); }
-  return { open, status, markOf, cooks, cooked, chatter, gossip, fresh, pirateOn, pirateResult, dispose: () => off && off() };
+  // 위쪽 '퀘스트' 버튼에 보여 줄 진행도. mark: ! 새 이야기를 들을 차례 · ? 가져갈 준비 완료 · … 진행 중 · ✔ 모두 끝
+  const progress = () => { const n = q.s || 0, total = FLAT.length, s = cur(); return { n, total, pct: Math.round(n / total * 100), mark: !ready ? '' : !s ? '✔' : markOf(q.on ? s.to : s.who) }; };
+  return { open, status, progress, markOf, cooks, cooked, chatter, gossip, fresh, pirateOn, pirateResult, dispose: () => off && off() };
 }

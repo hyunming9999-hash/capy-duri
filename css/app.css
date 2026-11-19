@@ -2180,9 +2180,10 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fluffy .so-an .so-body, .fluffy .so-me { filter: none; }
 .swim .fl-sh, .onboat .fl-sh, .onpal .fl-sh, .dunk .fl-sh, .sb-crew .fl-sh, .fs-me .fl-sh { display: none; }
 /* 보송 그림체: 배에 타면 돛대 뒤(고물 쪽)에 조금 높이 앉는다 */
-.fluffy .so-me.onboat { margin-left: -49px; margin-bottom: 2px; transform-origin: calc(50% + var(--bx, 9px) + 13px) calc(100% + 18px); z-index: 13 !important; }
+.fluffy .so-me.onboat { margin-left: -49px; margin-bottom: 2px; transform-origin: calc(50% + var(--bx, 9px) + 13px) calc(100% + 18px); z-index: 14 !important; }
 .fluffy .so-me.onboat svg { clip-path: inset(-80% -80% 28.5% -80%); scale: var(--f, 1) 1; transform-origin: 50% 100%; }
-.fluffy .so-me.onboat.onpal { margin-left: -36px; transform-origin: calc(50% + var(--bx, 9px)) calc(100% + 16px); } .fluffy .so-me.onboat.onpal svg { scale: 1; }
+/* 같이 탄 손님은 주인 바로 뒤(고물 끝)에, 주인보다 뒤에 겹쳐 보이게 */
+.fluffy .so-me.onboat.onpal { margin-left: -36px; transform-origin: calc(50% + var(--bx, 9px)) calc(100% + 18px); z-index: 13 !important; }
 .fluffy .so-sign { z-index: 3; }
 .fl-item { width: 36px; height: 36px; display: block; object-fit: contain; }
 /* ===== 보송 그림체: 친목회 화면을 카피바라 인형 게임기처럼 ===== */
@@ -2209,7 +2210,10 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fluffy .page-social .so-hp .so-pot { padding: 2px 7px; min-height: 0; font-size: 12px; }
 .fluffy .page-social .so-top > .btn { grid-row: 1; padding: 0; width: 36px; height: 36px; min-height: 0; border-radius: 50%; font-size: 0; display: block; text-align: center; line-height: 32px; }
 .fluffy .page-social .so-top > .btn::first-letter { font-size: 17px; }
-.fluffy .page-social .so-top > .so-qsbtn { grid-column: 3; } .fluffy .page-social .so-top > .btn:last-child { grid-column: 4; }
+.fluffy .page-social .so-top > .so-qsbtn { grid-column: 3; } /* 퀘스트 진행 현황 버튼: 돋보기만 있던 동그라미 → 글자와 진행률이 보이는 알약 버튼 */
+.so-qsbtn { position: relative; display: inline-flex; align-items: center; gap: 4px; } .so-qsbtn em { font-style: normal; font-size: 11px; font-weight: 800; background: #FFF3C4; color: #8A5A00; border-radius: 8px; padding: 0 5px; }
+.so-qsbtn i { position: absolute; right: -5px; top: -7px; width: 18px; height: 18px; border-radius: 50%; background: #FFD23F; border: 2px solid #C98A00; color: #7A4A00; font: 900 11px/14px var(--head, sans-serif); font-style: normal; text-align: center; animation: qsDot .5s ease-in-out infinite alternate; } @keyframes qsDot { to { transform: translateY(-3px); } } .so-qsbtn i[data-m="?"] { background: #7BC74D; border-color: #3E7D2A; color: #fff; } .so-qsbtn i[hidden] { display: none; }
+.fluffy .page-social .so-top > .btn.so-qsbtn { width: auto; height: 32px; padding: 0 9px; border-radius: 999px; font-size: 12.5px; font-weight: 800; display: inline-flex; line-height: 1; white-space: nowrap; } .fluffy .page-social .so-top > .btn.so-qsbtn::first-letter { font-size: inherit; } .fluffy .page-social .so-top > .btn:last-child { grid-column: 4; }
 .fluffy .page-social .so-stage { border-radius: 24px; box-shadow: 0 0 0 5px #C98B58, 0 0 0 9px var(--choc), 0 4px 0 9px var(--choc-d), inset 0 0 0 2px rgba(255, 255, 255, .5); margin: 15px 4px 16px; }
 .fluffy .page-social .so-pad { margin-top: 0; padding: 0 2px; align-items: center; gap: 0; }
 .fluffy .page-social .so-dpad { width: 132px; height: 132px; gap: 0; grid-template: "a U b" 1fr "L c R" 1fr "d D e" 1fr / 1fr 1fr 1fr; background: url(../img/fl/ui/dpad.webp) center / contain no-repeat; filter: drop-shadow(0 4px 3px rgba(110, 60, 20, .35)); opacity: 1; }
@@ -2339,3 +2343,6 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fm-me.scoot.left .sc-rig { transform: scale(-.79, .79); margin-left: 0; margin-right: -20px; }
 .fm-me.scoot.left svg { transform: none; } .fm-me.scoot.walk svg { animation: none; }
 .fs-tail { animation: fsTail .5s ease-in-out infinite alternate; } @keyframes fsTail { from { rotate: -14deg; } to { rotate: 14deg; } }
+/* 위 줄이 좁아서(퀘스트 버튼이 넓어짐) 체력 숫자 칸은 글자 폭만큼만, 체력 막대는 최소 폭을 지킨다 */
+.fluffy .page-social .so-hpn { min-width: 0; } .fluffy .page-social .so-hp > i { min-width: 20px; } .fluffy .page-social .page-body > .so-hp { padding: 4px 6px; gap: 3px; } .fluffy .page-social .so-hp .so-pot { padding: 2px 5px; flex: none; }
+.fluffy .page-social .so-top > .coin-chip { padding: 5px 8px; }

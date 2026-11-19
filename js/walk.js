@@ -2,7 +2,7 @@
 // 배경·소품은 도트 그림 그대로 크게 늘리고, 카피바라는 메인 화면처럼 또렷한 그림으로 그 위에 그린다. 탕 안에 들어가면 몸이 물에 잠긴다.
 import { h, toast, holdBtn, loadImg, josa } from './ui.js';
 import { sfx, bgm } from './sound.js';
-import { capy } from './capy.js';
+import { capy, svgUrl } from './capy.js';
 
 /* ---------- 히노끼탕 그림 (192×144 저해상도로 그려 크게 늘려 보여 준다) ---------- */
 const W = 192, H = 204, SW = 28, SH = 36.9; // 세로로 긴 탕(화면을 크게 쓰도록)
@@ -121,7 +121,7 @@ export function mount(el, ctx) {
   function sprite(uid, view) {
     const k = uid + view; if (sprites[k]) return sprites[k].im;
     const o = sprites[k] = { im: null };
-    loadImg('data:image/svg+xml;utf8,' + encodeURIComponent(capy(ctx.capyOf(uid, { view, face: 'happy' })).replace('<svg ', '<svg width="480" height="632" '))).then(im => { o.im = im; }).catch(() => {});
+    svgUrl(capy(ctx.capyOf(uid, { view, face: 'happy', noShadow: true })).replace('<svg ', '<svg width="480" height="632" ')).then(loadImg).then(im => { o.im = im; }).catch(() => {});
     return null;
   }
   const tag = uid => { if (!tagEls[uid]) { tagEls[uid] = h('span', { class: 'park-tag' + (uid === ctx.uid ? ' me' : '') }, h('i', { class: 'mic' }), ctx.nameOf(uid)); tags.append(tagEls[uid]); } return tagEls[uid]; };

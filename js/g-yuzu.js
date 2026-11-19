@@ -2,7 +2,7 @@
 import { PAY } from './money.js';
 import { h, loadImg, ymd, gameFx } from './ui.js';
 import { sfx } from './sound.js';
-import { capyUrl, yuzuUrl } from './capy.js';
+import { capyUrlReady, yuzuUrl } from './capy.js';
 
 const W = 360, H = 460, TIME = 30;
 
@@ -13,8 +13,8 @@ export function mount(el, ctx) {
   const btn = h('button', { class: 'btn primary big', onClick: start }, '시작');
   el.append(board, canvas, h('div', { class: 'center' }, btn), h('p', { class: 'dim center' }, '화면을 끌거나 ← → 로 움직여요. 유자 +1, 큰 유자 +3, 돌멩이 −2'));
   let me = null, sad = null; const yz = new Image(); yz.src = yuzuUrl;
-  loadImg(capyUrl(ctx.capyOf(ctx.uid, { face: 'happy' }))).then(i => { me = i; });
-  loadImg(capyUrl(ctx.capyOf(ctx.uid, { face: 'sad' }))).then(i => { sad = i; });
+  capyUrlReady(ctx.capyOf(ctx.uid, { face: 'happy', noShadow: true })).then(loadImg).then(i => { me = i; }).catch(() => {});
+  capyUrlReady(ctx.capyOf(ctx.uid, { face: 'sad', noShadow: true })).then(loadImg).then(i => { sad = i; }).catch(() => {});
 
   const keys = { l: false, r: false };
   const kd = e => { if (e.key === 'ArrowLeft') { keys.l = true; e.preventDefault(); } if (e.key === 'ArrowRight') { keys.r = true; e.preventDefault(); } };

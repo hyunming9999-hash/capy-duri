@@ -1,6 +1,6 @@
 // 2등신 카피바라 캐릭터 (직접 그린 SVG)
 import { wearSvg, hatSvg, shoeSvg } from './clothes.js';
-import { FLUFFY, capyBody, capyWear, capyRare, SHADOW } from './fluffy.js';
+import { FLUFFY, capyBody, capyWear, capyRare, SHADOW, inlineSvg } from './fluffy.js';
 export const COLORS = {
   brown: { name: '밤색', body: '#BC8C60', dark: '#85593A', light: '#E6C7A1' },
   cream: { name: '크림', body: '#E3C79C', dark: '#AC8656', light: '#F7EBD3' },
@@ -88,7 +88,7 @@ export function capy(o = {}) {
       if (RARE_SHOE.has(k)) return; if (RARE_BACK.has(k)) wearB += img; else if (RARE_BODY.has(k)) wearM += img; else if (k === 2 && list.some(x => RARE_HOLD.has(x))) gem += `<g transform="matrix(-1 0 0 1 120 0)">${img}</g>`; else gem += img + (RARE_HOLD.has(k) ? `<ellipse cx="${96 + dx * 0.6}" cy="104" rx="7.5" ry="6.5" fill="${c.body}"/><path d="M${91 + dx * 0.6} 101 q5 -3 10 0" fill="none" stroke="${c.dark}" stroke-width="1.4" stroke-linecap="round" opacity=".6"/>` : ''); });
     gem += [[4, 62, 0], [116, 50, .6], [10, 126, 1.1], [112, 120, 1.6], [60, -34, .3], [-10, 22, .9], [130, 92, 1.3], [30, -24, .5]].map(([x, y, d]) => `<path d="M${x} ${y - 10} l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="#FFFDF0" stroke="#F0C24A" stroke-width="1"><animate attributeName="opacity" values="0.15;1;0.15" dur="1.6s" begin="${d}s" repeatCount="indefinite"/></path>`).join(''); }
   const flR = fl && o.rare && o.rare.i != null && !back ? capyRare((o.rare.list || [o.rare.i]).slice(0, 6), o.own) : { over: '', shoe: '' };
-  if (fl) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158"${glow ? ' style="overflow:visible"' : ''}>${glow}${SHADOW}${fl.feet}${fl.body}${flR.shoe || flW.shoe}${flW.body}${flTop}${flR.over}${pin}${gem}</svg>`;
+  if (fl) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158"${glow ? ' style="overflow:visible"' : ''}>${glow}${o.noShadow ? '' : SHADOW}${fl.feet}${fl.body}${flR.shoe || flW.shoe}${flW.body}${flTop}${flR.over}${pin}${gem}</svg>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158"${glow ? ' style="overflow:visible"' : ''}>${glow}${wearB}${body}${wearM}${shoeToe}${head}${pin}${gem}</svg>`;
 }
 
@@ -97,5 +97,8 @@ export function capyEl(o = {}, cls = '') {
   d.className = 'capy ' + cls; d.innerHTML = capy(o); return d;
 }
 export const capyUrl = o => 'data:image/svg+xml;utf8,' + encodeURIComponent(capy(FLUFFY ? { ...o, own: true } : o));
+// 캔버스에 그릴 캐릭터 그림 주소: 몸·옷 그림 파일을 모두 안에 넣은 뒤에 돌려준다(바로 만들면 그림이 비어 캐릭터가 안 보인다)
+export const svgUrl = async svg => 'data:image/svg+xml;utf8,' + encodeURIComponent(await inlineSvg(svg));
+export const capyUrlReady = o => svgUrl(capy(o));
 export const yuzuSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60"><circle cx="30" cy="33" r="23" fill="#FFC93C" stroke="#E0A21C" stroke-width="3"/><path d="M30 11 q-13 -12 -23 -3 q11 9 23 3z" fill="#6FB24F" stroke="#4E8E36" stroke-width="2"/><circle cx="22" cy="27" r="2" fill="#E0A21C"/><circle cx="38" cy="39" r="2" fill="#E0A21C"/><circle cx="26" cy="43" r="1.6" fill="#E0A21C"/><ellipse cx="22" cy="22" rx="5" ry="3" fill="#fff" opacity=".45" transform="rotate(-30 22 22)"/></svg>`;
 export const yuzuUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(yuzuSvg);
