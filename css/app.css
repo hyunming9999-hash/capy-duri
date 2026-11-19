@@ -2180,8 +2180,8 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fluffy .so-an .so-body, .fluffy .so-me { filter: none; }
 .swim .fl-sh, .onboat .fl-sh, .onpal .fl-sh, .dunk .fl-sh, .sb-crew .fl-sh, .fs-me .fl-sh { display: none; }
 /* 보송 그림체: 배에 타면 돛대 뒤(고물 쪽)에 조금 높이 앉는다 */
-.fluffy .so-me.onboat { margin-left: -52px; margin-bottom: 15px; transform-origin: 50% calc(100% + 28px); }
-.fluffy .so-me.onboat svg { clip-path: inset(-80% -80% 24% -80%); scale: .84; transform-origin: 50% 100%; }
+.fluffy .so-me.onboat { margin-left: -52px; margin-bottom: 2px; transform-origin: 50% calc(100% + 18px); z-index: 13 !important; }
+.fluffy .so-me.onboat svg { clip-path: inset(-80% -80% 34% -80%); scale: .84; transform-origin: 50% 100%; }
 .fl-item { width: 36px; height: 36px; display: block; object-fit: contain; }
 /* ===== 보송 그림체: 친목회 화면 둘레를 인형 게임기처럼(게임 화면 크기는 그대로) ===== */
 .fluffy .page-social { --plush: #F4DFBB; --plush-d: #DDBB8A; --choc: #A66A3C; --choc-d: #7C4A26; background: radial-gradient(ellipse at 50% 0, #FBECCF 0, transparent 60%), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .36 0 0 0 0 .16 0 0 0 .55 -.18'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"), var(--plush); box-shadow: inset 0 0 0 3px #FBEFD8, inset 0 0 26px 6px rgba(166, 106, 60, .28); border-radius: 34px 34px 28px 28px; position: relative; }
