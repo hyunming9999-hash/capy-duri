@@ -2368,3 +2368,5 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .aq-bwrite { display: flex; gap: 6px; padding: 8px; border-top: 2px dashed #EBDDC4; } .aq-bwrite .aq-bin { flex: 1; width: auto; min-width: 0; } .aq-bwrite .aq-nbtn { margin: 0; flex: none; }
 .aq-frame > .aq-bookb { position: absolute; left: 18px; top: 62px; z-index: 20; height: 32px; box-shadow: 0 2px 6px rgba(0,0,0,.25); } /* 아래쪽은 관람석 동물이 덮어서 못 누른다 → 왼쪽 위(제목 아래) */
 #toast { z-index: 9600; } /* 수족관(9000) 같은 전체 화면 위에서도 알림 글이 보이게 */
+.aq-view { z-index: 0; } /* 물고기(앞으로 오면 순서 값이 900까지)는 유리 안에서만 겹치게: 방명록·확대 버튼이 물고기에 가려지지 않는다 */
+.aq-room { pointer-events: none; } /* 관람석 동물 그림이 유리 아래쪽 버튼(확대·축소)을 덮어도 눌리게 */
