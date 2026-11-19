@@ -2139,7 +2139,7 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .aq-visit { flex: none; display: flex; gap: 3px; background: rgba(255,248,236,.92); border: 2px solid #E9C46A; border-radius: 18px; padding: 2px; }
 .aq-vt { border: none; border-radius: 15px; padding: 6px 10px; background: transparent; font-weight: 800; font-size: 12px; color: #8A5A2B; white-space: nowrap; } .aq-vt.on { background: #FFCF4D; color: #4A2810; }
 .aq.pal .aq-rel, .aq.pal .aq-tabs, .aq.pal .aq-panel { display: none !important; }
-.aq-top { flex-wrap: wrap; } .aq-top .aq-tabs { order: 9; width: 100%; justify-content: flex-end; } .aq-top .aq-tab { padding: 3px 10px; font-size: 12px; }
 .aq-title { min-width: 170px; } .aq-title b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.aq-top::after { content: ''; order: 8; width: 100%; } .aq-top .aq-tabs { order: 9; width: auto; margin-left: auto; } .aq-top .aq-zoom { order: 10; } .aq-title { flex: 1 1 auto; margin-right: 0; }
-.aq-top:not(:has(.aq-tabs))::after { display: none; }
+.aq-title { flex: 1 1 auto; margin-right: 0; }
+
+.aq-bot { position: absolute; right: 18px; bottom: 18px; z-index: 20; display: flex; align-items: center; gap: 6px; } .aq-bot .aq-tab { padding: 4px 10px; font-size: 12px; } .aq.pal .aq-bot .aq-tabs { display: none; }

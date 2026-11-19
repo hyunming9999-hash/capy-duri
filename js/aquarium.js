@@ -43,13 +43,14 @@ export function openAquarium(o) {
   // 놀러가기: 내 수족관 ↔ 상대 수족관. 상대 수족관은 구경만(풀어넣기·이름 붙이기 없음)
   let mode = 'me'; const meName = o.me || '나', palName = o.partner || '두두', titleB = root.querySelector('.aq-title b');
   const visit = h('div', { class: 'aq-visit' }, ...[['me', `🏠 내 수족관`], ['pal', `🐾 ${palName}네 놀러가기`]].map(([k, l]) => h('button', { class: 'aq-vt' + (k === 'me' ? ' on' : ''), 'data-k': k, onClick: () => goMode(k) }, l)));
-  root.querySelector('.aq-top').insertBefore(visit, root.querySelector('.aq-zoom'));
+  root.querySelector('.aq-top').append(visit);
   async function goMode(k) { if (k === mode) return; mode = k; [...visit.children].forEach(b => b.classList.toggle('on', b.dataset.k === k)); panel.hidden = true; tip.hidden = true;
     root.classList.toggle('pal', k === 'pal'); titleB.textContent = k === 'pal' ? `🐾 ${palName}의 수족관` : `🐠 ${meName}의 수족관`;
     if (k === 'pal') { const pd = o.test ? { tank: 3, fish: demoFish(3).map(d => ({ ...d, name: Math.random() < 0.15 ? pick(['콩이', '뽀삐', '두부', '별님', '방울']) : '' })) } : await (o.loadPartner ? o.loadPartner() : null); if (!pd) { titleB.textContent = `${palName}는 아직 수족관이 없어요`; fish = []; layer.replaceChildren(); return; } myTank = tank; tank = pd.tank; build(pd.fish); }
     else { tank = myTank; build(o.test ? demoFish(tank) : o.fish); } }
   let myTank = tank; titleB.textContent = `🐠 ${meName}의 수족관`;
-  root.querySelector('.aq-title').append(info); if (o.test) root.querySelector('.aq-top').insertBefore(tabs, root.querySelector('.aq-zoom'));
+  // 수족관 크기 버튼(시험판)과 확대·축소는 유리 오른쪽 아래 구석에
+  root.querySelector('.aq-title').append(info); const bot = h('div', { class: 'aq-bot' }); if (o.test) bot.append(tabs); bot.append(root.querySelector('.aq-zoom')); root.querySelector('.aq-frame').append(bot);
   document.body.append(root);
   let fish = [], W = 1, H = 1, ppm = 1; // ppm: 1m당 픽셀
 
@@ -93,7 +94,7 @@ export function openAquarium(o) {
   panel.append(h('div', { class: 'aq-phead' }, h('b', null, '🎒 내 물고기'), h('button', { class: 'aq-px', onClick: () => { panel.hidden = true; } }, '✕')), listEl);
   root.append(panel);
   const relBtn = h('button', { class: 'aq-rel', onClick: () => { panel.hidden = !panel.hidden; drawBag(); } }, '🐟 풀어넣기');
-  root.querySelector('.aq-top').insertBefore(relBtn, root.querySelector('.aq-zoom'));
+  root.querySelector('.aq-top').append(relBtn);
   function drawBag() { const T = TANKS[tank], full = fish.length >= T.max; relBtn.textContent = `🐟 풀어넣기 ${bag.length}`;
     listEl.replaceChildren(...(bag.length ? bag.map(d => { const f0 = FISH.find(x => x.id === d.id); if (!f0) return ''; const big = T.cap && d.cm > T.cap, no = full ? '수족관이 꽉 찼어요' : big ? `너무 커요 (${T.cap}cm까지)` : '';
       return h('div', { class: 'aq-prow' + (no ? ' off' : '') }, h('span', { class: 'aq-pic', html: fishSvg(f0, false, d.shiny) }), h('div', { class: 'aq-pn' }, h('b', null, `${d.shiny ? '✨ ' : ''}${d.name ? d.name + ' · ' : ''}${f0.name}`), h('small', null, `${d.g}급 · ${d.cm}cm${f0.tier >= 4 ? ' · 초희귀' : ''}`)),
