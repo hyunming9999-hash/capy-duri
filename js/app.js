@@ -49,7 +49,9 @@ Object.defineProperties(ctx, {
 });
 ctx.go = r => { location.hash = r; };
 ctx.nameOf = uid => (ctx.members[uid] || {}).name || '카피';
-ctx.capyOf = (uid, extra = {}) => { const m = ctx.members[uid] || {}, d = ctx.dress[uid] || {}, blk = social.goldBlocks(social.rareList(m.rare)), dv = k => (blk.has(k) ? '' : d[k]); return { color: m.color, acc: m.acc, top: dv('top'), bottom: dv('bottom'), hat: dv('hat'), shoe: dv('shoe'), pin: m.pin != null && social.PERSONA[m.pin] ? social.PERSONA[m.pin].pin : '', rare: social.rareOf(m.rare), ...extra }; };
+// 황금 장비 입어 보기 링크(?goldtest 또는 ?goldtest=10,3,17): 내 화면에서만 입혀 보고 저장하지 않는다
+const GOLD_TEST = (() => { try { const v = new URLSearchParams(location.search).get('goldtest'); if (v == null) return null; const l = v.split(',').filter(x => x.trim() !== '').map(Number).filter(n => Number.isInteger(n) && n >= 0); return l.length ? l : [10, 3, 17, 9, 18, 12]; } catch { return null; } })();
+ctx.capyOf = (uid, extra = {}) => { const m0 = ctx.members[uid] || {}, m = GOLD_TEST && uid === ctx.uid ? { ...m0, rare: GOLD_TEST } : m0, d = ctx.dress[uid] || {}, blk = social.goldBlocks(social.rareList(m.rare)), dv = k => (blk.has(k) ? '' : d[k]); return { color: m.color, acc: m.acc, top: dv('top'), bottom: dv('bottom'), hat: dv('hat'), shoe: dv('shoe'), pin: m.pin != null && social.PERSONA[m.pin] ? social.PERSONA[m.pin].pin : '', rare: social.rareOf(m.rare), ...extra }; };
 const fullRoute = () => location.hash.slice(1) || 'home';
 const titleOf = r => { const [n, sub] = (r || '').split('-'); const g = n === 'game' && GAMES.find(x => x.id === sub); return g ? g.title : (MENU.find(x => x.id === n) || {}).title || '홈'; };
 

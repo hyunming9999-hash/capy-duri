@@ -793,6 +793,7 @@ export function mount(el, ctx) {
       if (Math.abs(d) > 34) c.x += Math.sign(d) * Math.min(Math.abs(d) - 30, 240 * dt);
       else { pop(c.e, `속닥속닥… "${iga(ctx.me.name)} 너 바보래~"`, 'say long'); sfx('tock'); setTimeout(() => alive && pop(tg.e, toned(i, '뭐? 정말?!'), 'say'), 1100); c.k++; c.at = now + 2800; } }
     c.e.style.left = c.x + 'px'; c.e.style.bottom = (c.y * 100).toFixed(1) + '%';
+    { const band = c.y < 0.07 ? 11 : c.y < 0.13 ? 10 : c.y < 0.19 ? 9 : c.y < 0.25 ? 8 : 7, mz = +meEl.style.zIndex || 7; c.e.style.zIndex = c.y > me.dy + 0.004 ? Math.min(band, mz - 1) : Math.max(band, mz + 1); } // 뒤(위쪽)에 있으면 앞에 선 캐릭터에 가려진다
     const left = Math.max(0, c.end - now); c.btn.lastChild.style.width = left / CROW_MS * 100 + '%';
     if (!left) crowEnd(false, '시간 안에 퇴치하지 못했어요');
   }
