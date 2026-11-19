@@ -2376,3 +2376,6 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .aq.kb .aq-bookp { position: fixed; right: 8px; width: min(520px, 72%); } .aq.kb .aq-bookp .aq-phead { padding: 3px 10px; } .aq.kb .aq-bwrite { padding: 5px 8px; } .aq-bwrite .aq-bin { font-size: 16px; }
 /* 관람석 동물: 벤치 앞 바닥에 서 있는 것처럼 보이던 것 → 방석 위에 앉도록 올리고 조금 작게 */
 .aq-an { bottom: 58%; width: 6.3%; } .aq-bot { bottom: 30px; }
+/* 벤치를 아래로 12px 내린다(관람석 그림 전체를 내리고 위쪽 빈 띠는 나무 선반으로 채움): 동물 엉덩이가 방석 앞 모서리가 아니라 방석 가운데에 놓인다 */
+.aq-room { background: url(../img/aqua/room.webp) center 12px / 100% 100% no-repeat, #8A5226; }
+.aq-room::before { top: -2px; height: 15px; background: linear-gradient(#F6D08A 0 2px, #C98A4B 2px 6px, #A9682F 6px 11px, #7A4318 11px 13px, #4E2A10 13px); }
