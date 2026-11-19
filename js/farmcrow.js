@@ -117,7 +117,7 @@ export function farmCrow(ctx, { goFarm }) {
   // 연습 시작(링크로 들어왔을 때 친목회가 부른다): 떠 있는 창을 닫고 바로 새총 놀이
   // 밭에 까마귀가 나타나면 먼저 경고(화면 테두리가 빨갛게 깜빡이고 까마귀가 나타난다)를 2초쯤 보여 준 뒤 새총 놀이를 시작한다
   let warnEl = null;
-  function crowAlert(go) { if (warnEl || game || dead) return; warnEl = h('div', { class: 'fc-warn' }, h('img', { src: CROW_IMG, alt: '' }), h('b', null, '⚠️ 까마귀 등장!'), h('small', null, '밭의 작물을 노리고 있어요. 새총으로 쫓아내요!')); document.body.append(warnEl); sfx('bad'); setTimeout(() => sfx('bad'), 350); setTimeout(() => sfx('bad'), 700);
+  function crowAlert(go) { if (warnEl || game || dead) return; warnEl = h('div', { class: 'fc-warn' + (FLUFFY ? ' fly' : '') }, h('img', { src: FLUFFY ? 'img/fl/o/crow-fly.webp' : CROW_IMG, alt: '' }), h('b', null, '⚠️ 까마귀 등장!'), h('small', null, '밭의 작물을 노리고 있어요. 새총으로 쫓아내요!')); document.body.append(warnEl); sfx('bad'); setTimeout(() => sfx('bad'), 350); setTimeout(() => sfx('bad'), 700);
     setTimeout(() => { if (warnEl) { warnEl.remove(); warnEl = null; } if (!dead && !game) go(); }, 2300); }
   function practice() { if (!TEST || game || dead) return; document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); hideBanner(); crowAlert(() => startGame(TEST, true)); }
   return { tick, practice, dispose: () => { dead = true; off && off(); hideBanner(); if (warnEl) { warnEl.remove(); warnEl = null; } if (game) { game.el.remove(); game = null; } },

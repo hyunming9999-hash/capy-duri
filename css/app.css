@@ -2319,3 +2319,6 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 /* 보송 그림체: 황금사자 스쿠터에 탄 몸을 더 크게(손잡이 높이까지) */
 .fluffy .sc-rig.b .sc-me { width: 94px; left: 80px; bottom: 27px; } .fluffy .sc-rig.b .sc-pas { width: 80px; left: 24px; bottom: 27px; }
 .fluffy .sc-me .fl-sh, .fluffy .sc-pas .fl-sh { display: none; }
+.fc-warn.fly img { width: min(78vw, 300px); animation: fcSwoop .7s cubic-bezier(.2, 1.3, .4, 1) both, fcFlap .5s ease-in-out .7s 3; }
+@keyframes fcSwoop { 0% { transform: translate(-70vw, -60vh) scale(.3) rotate(-25deg); opacity: 0; } 60% { opacity: 1; } 100% { transform: none; } }
+@keyframes fcFlap { 0%, 100% { transform: scale(1, 1) translateY(0); } 50% { transform: scale(.9, 1.06) translateY(-8px); } }
