@@ -2231,3 +2231,4 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fluffy .page-social .so-chatbar .so-chatin { border-radius: 999px; }
 /* 배에 탄 동안에는 걸음 들썩임을 끈다(배와 몸 사이가 벌어져 보인다) */
 .fluffy .so-me.onboat.walk svg, .fluffy .so-me.onpal.walk svg { animation: none; }
+.fl-item.fl-rod { width: 9px; height: 46px; object-fit: fill; rotate: 40deg; margin: -5px 14px; }

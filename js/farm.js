@@ -3,6 +3,7 @@
 // 앱을 오래 꺼 둬도 괜찮게: 물은 자라는 시간의 70%(최소 30분) 동안 버티고, 잡초는 한 번만 나고, 다 자란 뒤로는 컨디션이 줄지 않는다(3일 넘게 안 거두면 시든다)
 import { h, toast, modal, holdBtn } from './ui.js';
 import { capy } from './capy.js';
+import { FLUFFY } from './fluffy.js';
 import { sfx } from './sound.js';
 
 // 작물 30종: [id, 이름, 등급(농기구 단계), 자라는 분, 씨앗 값, 한 개 기본값]
@@ -16,7 +17,7 @@ const C = [
 ];
 export const CROPS = C.map(([id, name, t, min, seed, base]) => ({ id, name, t, ms: min * 60000, seed: Math.max(15, Math.round(seed / 2 / 5) * 5), base })); // 씨앗값: 물가에 맞춰 예전의 1.5배 // 씨앗 하나 = 이랑 한 줄(밭 한 칸은 3줄)
 export const cropOf = id => CROPS.find(c => c.id === id);
-export const cropImg = id => `img/farm/crop/${id}.webp`;
+export const cropImg = id => `img/${FLUFFY ? 'fl' : 'farm'}/crop/${id}.webp`;
 export const TOOLS = [null, { t: 1, name: '초급 농기구', price: 0, note: '구리 호미·구리 물뿌리개 · 물은 한 번에 1이랑 · 처음부터 있어요' }, { t: 2, name: '중급 농기구', price: 2500, note: '은 호미·은 물뿌리개 · 물은 한 번에 2이랑 · 중급 작물을 심어요' }, { t: 3, name: '고급 농기구', price: 6000, note: '황금 낫·황금 물뿌리개 · 물은 한 번에 밭 전체(3이랑) · 고급 작물을 심어요' }];
 export const TIER_NAME = ['', '초급', '중급', '고급'];
 // 농기구 그림: 상점은 세트(tool), 들고 다니는 것·잡초 베기는 hoe(고급은 낫), 물 주기는 can(고급은 스프링클러). 물 주기 한 번에 적시는 이랑 수 = 농기구 등급
@@ -45,6 +46,7 @@ const SELL_UP = 1.5; // 동물 물건 값이 오른 만큼 작물 매입가도 1
 export const cropPrice = (id, g) => (GRADE_X[g] && SELL_A[id] ? Math.max(1, Math.round(SELL_A[id] * SELL_UP * GRADE_X[g] / GRADE_X.A)) : 0);
 
 // 밭 한 칸의 컨디션 계산(순수 함수): 물이 마른 시간과 잡초가 자란 채로 둔 시간만큼 깎인다. 다 자란 뒤로는 셈하지 않는다
+export const SPRK_OFF = 'img/farm/sprinkler-off.webp'; // 물방울 없는 그림: 작물이 없거나 쉬는 중
 export const SPRK_IMG = 'img/farm/sprinkler.webp', SPRK_PRICE = 2500, SPRK_HOUR = 200, SPRK_FROM = 0, SPRK_TO = 10; // 스프링클러: 밭 1칸에 1개, 밤 12시~아침 10시 자동, 그 밖은 1시간 150코인
 const HR = 3600000, WIN = new WeakMap(); // 이랑 → 그 밭 스프링클러가 도는 시간들
 // 밭 하나의 스프링클러 작동 구간([시작, 끝] 목록): 매일 밤 12시~아침 10시 + 돈 내고 늘린 시간
@@ -87,7 +89,7 @@ export function openFarm(o) {
   const world = h('div', { class: 'fm-world', style: { width: WIDTH + 'px', height: H + 'px' } });
   for (let x = 0, k = 0; x < WIDTH; x += TW, k++) world.append(h('i', { class: 'fm-bg' + (k % 2 ? ' flip' : ''), style: { left: x + 'px', width: TW + 1 + 'px' } }));
   const plotEls = Array.from({ length: PLOTS }, (_, k) => { const e = h('button', { class: 'fm-plot', style: { left: plotX(k) + 'px', width: PW + 'px', height: PH + 'px' }, onClick: () => goPlot(k) }); world.append(e); return e; });
-  const shop = h('button', { class: 'fm-shop', style: { left: HX + 'px', width: HW * 1.46 + 'px' }, onClick: () => { walkTo(HX + HW * 0.7, openShop); } }, h('img', { src: 'img/farm/hardware.webp', alt: '카피철물' }), h('b', { class: 'fm-shop-t' }, '카피철물'));
+  const shop = h('button', { class: 'fm-shop', style: { left: HX + 'px', width: HW * 1.46 + 'px' }, onClick: () => { walkTo(HX + HW * 0.7, openShop); } }, h('img', { src: FLUFFY ? 'img/fl/bg/hardware.webp' : 'img/farm/hardware.webp', alt: '카피철물' }), h('b', { class: 'fm-shop-t' }, '카피철물'));
   const exitSign = h('button', { class: 'fm-exit', style: { left: WIDTH - Math.round(TW * 0.11) + 'px' }, onClick: () => close() }, '놀이터로 →');
   const sc = o.scoot ? o.scoot() : null, meSvg = (back = false) => capy(ctx.capyOf(ctx.uid, back ? { view: 'back' } : { face: 'happy' })), meEl = h('div', { class: 'fm-me' + (sc ? ' scoot' : ''), html: sc || meSvg() }); // 스쿠터를 타고 왔으면 농장에서도 탄 채로, 1.8배 빠르게
   // 손에 든 농기구: 캐릭터 그림(svg) 안에 직접 그려 넣고 오른손(앞발)으로 감싸 쥔다 → 걷고 뒤집혀도 손에서 안 떨어진다
@@ -151,7 +153,7 @@ export function openFarm(o) {
       const lab = !open ? `🔒 땅 문서 ${DEEDS[k - 1].toLocaleString('ko-KR')}코인` : !any ? (who === ctx.uid ? '빈 밭 · 눌러서 씨앗 심기' : '빈 밭') : ripeN ? `수확! ${ripeN}이랑` : emptyN && who === ctx.uid ? `빈 이랑 ${emptyN}` : ''; // 남은 시간은 아래 밭 현황에서 본다
       kids.push(h('span', { class: 'fm-lab' + (ripeN ? ' ripe' : '') + (open ? '' : ' lock') }, `${k + 1}밭${open ? '' : ' 🔒'}`)); // 알약은 밭 번호만(남은 시간·상태는 아래 밭 현황에서)
       if (open) ROWBOX.forEach((b, i) => kids.push(h('small', { class: 'fm-rlab', style: { top: b.t + b.h / 2 + '%', right: Math.max(1, b.r - 7) + '%' } }, `${i + 1}번 이랑`)));
-      const sp = (data.sprk || {})[k]; if (open && sp && sp.on) { const on = sprkOn(sp, t); kids.push(h('div', { class: 'fm-sprk' + (on ? ' on' : '') }, h('img', { class: 'fm-spimg', src: SPRK_IMG, alt: '' }), ...(on ? Array.from({ length: 10 }, (_, j) => h('em', { style: { '--a': (j * 36) + 'deg', animationDelay: (j % 5) * 0.16 + 's' } })) : []))); }
+      const sp = (data.sprk || {})[k]; if (open && sp && sp.on) { const on = sprkOn(sp, t) && any; kids.push(h('div', { class: 'fm-sprk' + (on ? ' on' : '') }, h('img', { class: 'fm-spimg', src: on ? SPRK_IMG : SPRK_OFF, alt: '' }), ...(on ? Array.from({ length: 10 }, (_, j) => h('em', { style: { '--a': (j * 36) + 'deg', animationDelay: (j % 5) * 0.16 + 's' } })) : []))); }
       if (open && growing.length) kids.push(h('span', { class: 'fm-bub' }, [growing.some(r => dryNow(r, t)) && '💧', growing.some(r => weedNow(r, t)) && '🌿'].filter(Boolean).join('')));
       rc(e, kids); });
     coinsEl.textContent = '🪙 ' + ctx.coins().toLocaleString('ko-KR');

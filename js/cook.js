@@ -1,6 +1,7 @@
 // 카피백반 — 카피수퍼 옆 백반집. 하루 세 번 장사, 한 번에 손님 한 명(원테이블 식당). 퀘스트 요리도 여기서 만든다
 // 재료(생선 살·작물·밥·양념)를 도마에 올리고 → 도마(날것)·냄비·프라이팬·튀김기 중 하나로 조리 → 원하는 익힘에서 꺼내 → 손님에게 바로 판다
 import { h, toast, modal, ymd } from './ui.js';
+import { FLUFFY } from './fluffy.js';
 import { sfx, sizzle } from './sound.js';
 import { FISH, TIERS } from './fishing.js';
 import { cropOf } from './farm.js';
@@ -22,7 +23,7 @@ const FIL_ANY = ['lemon', 'mint', 'seaweed', 'shell'];
 const RED = ['참치', '연어', '방어', '삼치', '고등어', '청새치', '황새치', '돛새치'];
 export const isRed = f => RED.some(k => f.name.includes(k)) && !f.name.includes('참돔');
 export function garnishOf(f) { const hit = FIL_KEY.find(([k]) => f.name.includes(k)); const g = hit ? hit[1] : FIL_ANY[[...f.name].reduce((a, c) => a + c.charCodeAt(0), 0) % FIL_ANY.length];
-  return g.startsWith('c:') ? `img/farm/crop/${g.slice(2)}.webp` : `img/cook/g/${g}.webp`; }
+  return g.startsWith('c:') ? `img/${FLUFFY ? 'fl' : 'farm'}/crop/${g.slice(2)}.webp` : `img/cook/g/${g}.webp`; }
 export const filName = f => `${f.name}의 ${isRed(f) ? '붉은살' : '흰살'}생선`;
 export const filGlow = (f, v) => !!(f.rare || f.king || (f.tier || 1) >= 3 || (v && (v.g === 'A' || v.g === 'S')));
 export function filletEl(f, v, big) { return h('div', { class: 'ck-fil' + (big ? ' big' : '') + (filGlow(f, v) ? ' glow' : '') }, h('img', { class: 'ck-plate', src: `img/cook/fillet-${isRed(f) ? 'red' : 'white'}.webp`, alt: '' }), h('img', { class: 'ck-gar', src: garnishOf(f), alt: '' })); }
