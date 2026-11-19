@@ -353,7 +353,7 @@ export function mount(el, ctx) {
   const bagFish = () => Object.entries(bag.fish || {}).filter(([, v]) => v && v.id && !v.pearl).map(([key, v]) => ({ key, ...v }));
   const aqRareName = () => { const r = aqFish().map(d => ({ d, f: fishOf(d.id) })).filter(x => x.f && (x.d.g === 'S' || x.f.tier >= 4 || x.d.shiny)).sort((a, b) => (b.f.tier || 0) - (a.f.tier || 0) || (b.d.shiny ? 1 : 0) - (a.d.shiny ? 1 : 0))[0]; return r ? (r.d.shiny ? '이로치 ' : '') + r.f.name : ''; };
   async function goAqua() { if (fishOpen || battle || aquaOpen) return; if (me.boat) return toast('배에서 내린 뒤에 들어갈 수 있어요'); if (trial) return toast('체험 중에는 수족관에 못 들어가요');
-    if (!aqua.t) return modal({ title: '🐠 카피수족관', body: h('p', { class: 'center' }, '아직 수족관이 없어요. 카피수퍼에서 수족관을 사 오면 잡은 물고기를 넣고 구경할 수 있어요.'), actions: [{ label: '닫기' }, { label: '카피수퍼 가기', primary: true, onClick: () => openShop('buy') }] });
+    if (!aqua.t) return modal({ title: '🐠 카피수족관', body: h('p', { class: 'center' }, '아직 수족관이 없어요. 바닷가 카피수퍼에 가서 수족관을 사 와야 해요. 사 오면 잡은 물고기를 넣고 구경할 수 있어요.'), actions: [{ label: '확인', primary: true }] });
     const m = await import('./aquarium.js'); aquaOpen = true; keys.clear(); const AQ = 'aqua/' + ctx.uid, cleanFish = d => { const v = { ...d }; delete v.key; return v; };
     m.openAquarium({ tank: aqua.t, fish: aqFish(), deco: Object.values(aqua.deco || {}).filter(Boolean), decoInv: aqua.inv || {}, me: ctx.me.name, partner: pid() ? ctx.nameOf(pid()) : '', bag: bagFish,
       release: async d => { const v = cleanFish(d); const left = { ...(bag.fish || {}) }; delete left[d.key]; bag = { ...bag, fish: left }; await ctx.store.update('bag/' + ctx.uid + '/fish', { [d.key]: null }).catch(() => {}); await ctx.store.update(AQ + '/fish', { [d.key]: v }).catch(() => {}); return true; },
