@@ -2395,3 +2395,6 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fluffy .fs-me { left: 11.3%; bottom: 17%; width: 48%; z-index: 2; } .fluffy .fs-me svg { clip-path: inset(-80% -80% 28.5% -80%); }
 /* 낚시 화면: 머리가 뱃전 위에 얹힌 것처럼 보여서 더 깊이 앉힌다(조금 오른쪽·아래로, 턱 아래와 옆으로 삐져나온 장비는 배 안으로 가려짐) */
 .fluffy .fs-me { left: 16%; bottom: 14%; z-index: 3; } .fluffy .fs-me svg { clip-path: inset(-80% -10% 29.4% -10%); } /* 배 그림보다 앞에 그리고(안 그러면 배 안쪽 바닥에 얼굴이 가려진다) 앞 뱃전 높이에서 잘라 몸이 배 안에 든 것처럼 */
+
+/* 둘이 한 배에 탔을 때: 운전하는 쪽은 앞으로 당겨 앉는다(손님이 배 밖으로 밀려나지 않게) */
+.fluffy .so-me.onboat.carry:not(.onpal) { margin-left: -33px; }

@@ -695,7 +695,7 @@ export function mount(el, ctx) {
     if (kingTrial && now > kingTrial) endKing();
     if (me.boat && me.boat.pass) { if (palShip()) { me.x = Math.max(40, pal.dx - SEAT); me.y = Math.max(0, Math.min(Y_MAX, pal.y)); me.f = pal.f; me.boat.skin = pal.boat; }
       else { leaveBoat(); if (me.x > FISH_X - 40) { me.x = FISH_X - 60; toast('배가 떠나서 바닷가 쪽으로 돌아왔어요', 2600); } } }
-    meEl.classList.toggle('onpal', !!(me.boat && me.boat.pass));
+    meEl.classList.toggle('onpal', !!(me.boat && me.boat.pass)); { const two = !!(palEl && pal.on && ((me.boat && me.boat.pass) || (me.boat && me.boat.own && pal.boat === PASS))); meEl.classList.toggle('carry', two && !!me.boat.own); if (palEl) palEl.classList.toggle('carry', two && !!me.boat.pass); } // 둘이 탔을 때: 운전하는 쪽이 앞으로 당겨 앉아 둘 다 배 안에 들어온다
     { const hv = me.boat ? zoneOf(me.x) : 0; if (hv !== heave) { if (!hv !== !heave) bgm.start(hv ? 'sea' : 'social'); heave = hv; }
       // 배와 캐릭터는 한 몸처럼: 같은 축(배 바닥 가운데)을 중심으로, 같은 박자로 흔들린다
       const guest = !!(me.boat && me.boat.pass), key = me.boat ? `${hv}|${guest ? 'p' : me.boat.own ? 'o' : 'a'}` : '';
@@ -720,7 +720,7 @@ export function mount(el, ctx) {
       me.rideT = pals.length ? me.rideT + dt : 0;
       if (me.rideT >= 4) { me.rideT = 0; pals.forEach(i => { if (A(i) >= 99 || (me.gain[i] || 0) >= 8) return; me.gain[i] = (me.gain[i] || 0) + 1; setRel(i, { a: A(i) + 1 }); pop(actors[i].e, '+1 💗', 'up'); }); sfx('point'); scores(); } }
     const mk = Math.min(1, dt * (R ? 5 : 14)); me.dy += (mty - me.dy) * mk; me.ds += (mts - me.ds) * mk;
-    meEl.classList.toggle('walk', !!(mx || my) && !R); meEl.classList.toggle('swim', wet && !me.boat); meEl.classList.toggle('dunk', now < me.dunkUntil); meEl.style.left = (me.x - (me.boat ? (me.boat.own ? 6 : 22) * me.ds : 0)) + 'px'; mePop.style.left = me.x + 'px'; meEl.style.bottom = (me.dy * 100).toFixed(2) + '%'; mePop.style.bottom = Math.round(me.dy * H + 96 * me.ds) + 'px';
+    meEl.classList.toggle('walk', !!(mx || my) && !R); meEl.classList.toggle('swim', wet && !me.boat); meEl.classList.toggle('dunk', now < me.dunkUntil); meEl.style.left = (me.x - (me.boat ? (me.boat.own ? 6 : FLUFFY ? 2 : 22) * me.ds : 0)) + 'px'; mePop.style.left = me.x + 'px'; meEl.style.bottom = (me.dy * 100).toFixed(2) + '%'; mePop.style.bottom = Math.round(me.dy * H + 96 * me.ds) + 'px';
     const flB = FLUFFY && me.boat && (me.boat.own || me.boat.pass) ? (battle && battleDir < 0 ? -1 : 1) : 0; meEl.style.transform = `scale(${((flB || me.f) * me.ds).toFixed(3)}, ${me.ds.toFixed(3)})`; if (FLUFFY) meEl.style.setProperty('--f', flB ? me.f * flB : 1); meEl.style.zIndex = R ? 6 : me.dy < 0.07 ? 11 : me.dy < 0.13 ? 10 : me.dy < 0.19 ? 9 : me.dy < 0.25 ? 8 : 7;
     // 내 위치 알리기: 바뀌면 0.25초마다, 가만히 있어도 3초마다
     { const key = `${Math.round(me.x)}|${me.y.toFixed(2)}|${me.f}|${R ? spots.indexOf(R) : -1}|${me.boat ? (me.boat.own ? me.boat.skin : me.boat.pass ? PASS : me.boat.i) : -1}`; if ((key !== sentKey && now - sentAt > 250) || now - sentAt > 3000) { sentKey = key; sentAt = now; ctx.store.set('socialpos/' + ctx.uid, { x: +(me.x / WIDTH).toFixed(4), y: +me.y.toFixed(3), f: me.f, r: R ? spots.indexOf(R) : -1, b: me.boat ? (me.boat.own ? me.boat.skin : me.boat.pass ? PASS : me.boat.i) : -1, t: wall }).catch(() => {}); } }
