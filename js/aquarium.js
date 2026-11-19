@@ -5,7 +5,7 @@ import { FISH, fishSvg, SHINY_IDS } from './fishing.js';
 import { ANIMALS, animalSvg } from './animals.js';
 import { sfx } from './sound.js';
 
-export const TANKS = [null, { n: '초급 수족관', w: 3, h: 1.5, v: 1.5, max: 20, cap: 40, price: 2000 }, { n: '중급 수족관', w: 12, h: 6, v: 3, max: 40, cap: 0, price: 6000 }, { n: '고급 수족관', w: 24, h: 10, v: 6, max: 60, cap: 0, price: 10000 }]; // cap: 넣을 수 있는 몸길이(cm), 0은 제한 없음
+export const TANKS = [null, { n: '초급 수족관', w: 3, h: 1.5, v: 1.5, max: 20, cap: 40, price: 2000 }, { n: '중급 수족관', w: 12, h: 10, v: 6, max: 40, cap: 0, price: 6000 }, { n: '고급 수족관', w: 24, h: 10, v: 6, max: 60, cap: 0, price: 10000 }]; // cap: 넣을 수 있는 몸길이(cm), 0은 제한 없음
 export const FEE_MAX = 3; // 관람료: 동물 한 마리당 하루 최대 3번, 한 번에 1코인
 const FISH_FILL = 0.86; // 물고기 그림에서 몸이 차지하는 가로 비율
 const rnd = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.floor(Math.random() * a.length)];
@@ -49,13 +49,13 @@ export function openAquarium(o) {
   let base = 60, zMin = 1;
   function layout(keep) { const T = TANKS[tank], vw = Math.max(200, root.clientWidth - 16 - 18), cx = keep ? (view.scrollLeft + view.clientWidth / 2) / (W * ppm) : 0.5, cy = keep ? (view.scrollTop + view.clientHeight / 2) / (H * ppm) : 0.5;
     // 가로 화면 전용: 수족관 높이를 화면 높이에 맞춘다(작은 수족관은 작게 보여서 크기 차이가 그대로 느껴진다)
-    const avail = Math.max(140, root.clientHeight - 54 - 18 - room.clientHeight + 10); view.style.height = avail + 'px';
-    W = T.w; H = T.h; base = Math.min(avail / T.v, vw / Math.min(W, 2.2)); // 화면에는 v미터 높이가 보이고, 그 위는 위로 밀어서 본다 zMin = Math.min(1, vw / (W * base));
+    const avail = Math.max(140, root.clientHeight - 24 - room.clientHeight + 10); view.style.height = avail + 'px'; // 위 버튼줄 자리까지 전부 수족관
+    W = T.w; H = T.h; base = Math.min(avail / T.v, vw / Math.min(W, 2.2)); zMin = Math.min(1, avail / (H * base)); // 화면에는 v미터 높이가 보이고 그 위는 위로 밀어서 본다. 가장 작게 줄이면 높이 전체가 한눈에
     ppm = base * zoom; world.style.width = W * ppm + 'px'; world.style.height = H * ppm + 'px'; world.style.marginTop = Math.max(0, view.clientHeight - H * ppm) + 'px'; view.parentNode.style.width = Math.min(vw, W * ppm) + 18 + 'px'; // 작은 수족관은 유리도 작게
-    // 물 배경: 왼쪽 산호 · 가운데 물(앞뒤로 뒤집어 이어 붙임) · 오른쪽 산호. 가운데는 꼭 원래 방향으로 끝나야 오른쪽과 이어진다
     const seg = H * ppm * (456 / 362), side = H * ppm * (360 / 362), n = Math.max(1, Math.round((W * ppm - 2 * side) / seg)), mids = n % 2 ? n : n + 1;
-    if (W * ppm < 2 * side + seg) bg.replaceChildren(h('img', { src: 'img/aqua/full.webp', alt: '', class: 'one' })); // 작은 수족관은 그림 한 장을 그대로
-    else bg.replaceChildren(h('img', { src: 'img/aqua/l.webp', alt: '' }), ...Array.from({ length: mids }, (_, k) => h('img', { src: 'img/aqua/mid.webp', alt: '', class: k % 2 ? 'mir' : '' })), h('img', { src: 'img/aqua/r.webp', alt: '' }));
+    // 물 배경: 가운데는 이음매 없이 이어지는 물 그림을 옆으로 반복, 양 끝에 산호 그림을 겹쳐 스르르 이어 붙인다
+    if (W * ppm < 2 * side + seg) bg.replaceChildren(h('img', { src: 'img/aqua/full.webp', alt: '', class: 'one' }));
+    else bg.replaceChildren(h('div', { class: 'aq-tile' }), h('img', { src: 'img/aqua/l.webp', alt: '', class: 'endl' }), h('img', { src: 'img/aqua/r.webp', alt: '', class: 'endr' }));
     zoomL.textContent = zoom <= zMin + 0.01 && zMin < 1 ? '전체' : `×${zoom.toFixed(zoom < 2 ? 1 : 0)}`;
     fish.forEach(f => { f.lw = 0; }); view.scrollLeft = cx * W * ppm - view.clientWidth / 2; view.scrollTop = keep ? cy * H * ppm - view.clientHeight / 2 : H * ppm; }
   function setZoom(z) { zoom = Math.max(zMin, Math.min(6, z)); if (Math.abs(zoom - 1) < 0.08) zoom = 1; layout(true); }
