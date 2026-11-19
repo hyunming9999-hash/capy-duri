@@ -2115,7 +2115,7 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 @keyframes aqTw { 0%, 100% { opacity: .2; transform: scale(.6); } 50% { opacity: 1; transform: scale(1.2); } }
 .aq-bub { position: absolute; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.9); animation: aqBub 1.3s ease-out forwards; } @keyframes aqBub { 0% { transform: translate(0,0) scale(.5); opacity: 1; } 100% { transform: translate(0,-30px) scale(1.2); opacity: 0; } }
 .aq-tip { position: absolute; left: 50%; bottom: 66px; transform: translateX(-50%); z-index: 2000 !important; background: rgba(255,248,236,.96); border: 2px solid #E9C46A; border-radius: 14px; padding: 6px 12px; font-size: 14px; color: #5A3A1E; white-space: nowrap; z-index: 5; } .aq-tip small { color: #8a6a4a; }
-.aq-room { position: relative; z-index: 2; flex: none; margin-top: -10px; height: 84px; background: url(../img/aqua/room.webp) center / 100% 100%; }
+.aq-room { position: relative; z-index: 2; flex: none; margin-top: 8px; height: 84px; background: url(../img/aqua/room.webp) center / 100% 100%; }
 .aq-an { position: absolute; bottom: 30%; width: 7.4%; transform: translateX(-50%); z-index: 3; } .aq-anf svg { width: 100%; display: block; }
 .aq-an.wow .aq-anf { animation: aqHop .6s ease-out; } @keyframes aqHop { 30% { transform: translateY(-10px) rotate(-6deg); } 60% { transform: translateY(-3px) rotate(4deg); } }
 .aq-say { position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%); background: #fff; border: 2px solid #5A3A1E; border-radius: 12px; padding: 3px 8px; font-size: 12px; font-weight: 800; white-space: nowrap; color: #5A3A1E; z-index: 4; animation: aqSay 2.2s ease-out forwards; }
@@ -2370,3 +2370,7 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 #toast { z-index: 9600; } /* 수족관(9000) 같은 전체 화면 위에서도 알림 글이 보이게 */
 .aq-view { z-index: 0; } /* 물고기(앞으로 오면 순서 값이 900까지)는 유리 안에서만 겹치게: 방명록·확대 버튼이 물고기에 가려지지 않는다 */
 .aq-room { pointer-events: none; } /* 관람석 동물 그림이 유리 아래쪽 버튼(확대·축소)을 덮어도 눌리게 */
+/* 유리 틀 아래쪽 마감: 틀 테두리가 끝까지 보이고, 관람석 위에는 금테 두른 나무 선반이 지나간다(잘려 보이던 밧줄 윗부분을 덮는다) */
+.aq-room::before { content: ''; position: absolute; left: 0; right: 0; top: -2px; height: 11px; background: linear-gradient(#F6D08A 0 2px, #C98A4B 2px 5px, #9A5E2A 5px 9px, #5A3214 9px); box-shadow: 0 3px 4px rgba(40, 18, 4, .35); }
+/* 방명록 글쓰기(가로 화면 + 키보드): 창을 넓게, 글 목록은 줄이고 입력 칸을 크게 */
+.aq.kb .aq-bookp { position: fixed; right: 8px; width: min(520px, 72%); } .aq.kb .aq-bookp .aq-phead { padding: 3px 10px; } .aq.kb .aq-bwrite { padding: 5px 8px; } .aq-bwrite .aq-bin { font-size: 16px; }

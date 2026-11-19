@@ -65,7 +65,7 @@ export function openAquarium(o) {
   let base = 60, zMin = 1, fitAll = true; // 들어오면 수족관 전체가 한눈에 보이게 시작(초급·중급·고급 모두)
   function layout(keep) { const T = TANKS[tank], vw = Math.max(200, root.clientWidth - 16 - 18), cx = keep ? (view.scrollLeft + view.clientWidth / 2) / (W * ppm) : 0.5, cy = keep ? (view.scrollTop + view.clientHeight / 2) / (H * ppm) : 0.5;
     // 가로 화면 전용: 수족관 높이를 화면 높이에 맞춘다(작은 수족관은 작게 보여서 크기 차이가 그대로 느껴진다)
-    const avail = Math.max(140, root.clientHeight - 24 - room.clientHeight + 10); view.style.height = avail + 'px'; // 위 버튼줄 자리까지 전부 수족관
+    const avail = Math.max(140, root.clientHeight - 24 - room.clientHeight - 8); view.style.height = avail + 'px'; // 위 버튼줄 자리까지 전부 수족관
     W = T.w; H = T.h; base = Math.min(avail / T.v, vw / Math.min(W, 2.2)); zMin = Math.min(1, avail / (H * base)); if (fitAll) { fitAll = false; zoom = zMin; } // 화면에는 v미터 높이가 보이고 그 위는 위로 밀어서 본다. 가장 작게 줄이면 높이 전체가 한눈에
     ppm = base * zoom; world.style.width = W * ppm + 'px'; world.style.height = H * ppm + 'px'; world.style.marginTop = Math.max(0, view.clientHeight - H * ppm) + 'px'; view.parentNode.style.width = Math.min(vw, W * ppm) + 18 + 'px'; // 작은 수족관은 유리도 작게
     const seg = H * ppm * (456 / 362), side = H * ppm * (360 / 362), n = Math.max(1, Math.round((W * ppm - 2 * side) / seg)), mids = n % 2 ? n : n + 1;
@@ -191,7 +191,16 @@ export function openAquarium(o) {
   // ----- 방명록: 수족관마다 한 권. 주인도 놀러 온 사람도 한 줄씩 남긴다(내 수족관·상대 수족관 모두) -----
   let bookRows = []; const bookT = h('b', null, '📖 방명록'), bookList = h('div', { class: 'aq-plist' }), bookIn = h('input', { class: 'aq-nin aq-bin', maxlength: 60, placeholder: '한 줄 남기기 (60자까지)' });
   const bookP = h('div', { class: 'aq-bookp', hidden: true }, h('div', { class: 'aq-phead' }, bookT, h('button', { class: 'aq-px', onClick: () => { bookP.hidden = true; } }, '✕')), bookList, h('div', { class: 'aq-bwrite' }, bookIn, h('button', { class: 'aq-nbtn', onClick: () => writeBook() }, '남기기')));
-  const bookBtn = h('button', { class: 'aq-bookb', onClick: () => { bookP.hidden = !bookP.hidden; if (!bookP.hidden) { panel.hidden = true; tip.hidden = true; loadBook(); } } }, '📖 방명록');
+  // 글을 쓸 때는 화면을 진짜 가로로 돌린다(전체 화면 + 가로 고정): 그림만 눕혀 놓으면 키보드는 세로로 떠서 옆으로 누운 글을 쳐야 했다
+  const goLand = () => { try { const d = document.documentElement; if (window.innerHeight <= window.innerWidth) return; const lock = () => { try { screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {}); } catch {} };
+    if (!document.fullscreenElement && d.requestFullscreen) d.requestFullscreen({ navigationUI: 'hide' }).then(() => { wentFull = true; lock(); setTimeout(onResize, 250); }).catch(() => {}); else lock(); } catch {} };
+  let wentFull = false;
+  const bookBtn = h('button', { class: 'aq-bookb', onClick: () => { bookP.hidden = !bookP.hidden; if (!bookP.hidden) { panel.hidden = true; tip.hidden = true; goLand(); loadBook(); } fitBook(); } }, '📖 방명록');
+  bookIn.addEventListener('pointerdown', goLand);
+  // 키보드가 올라오면 방명록 창을 키보드 위 남은 자리에 맞춘다(입력 칸이 키보드에 가려지지 않게). 진짜 가로일 때만
+  const vv = window.visualViewport, fitBook = () => { const kb = !!vv && !bookP.hidden && !root.classList.contains('rot') && window.innerHeight - vv.height > 70; root.classList.toggle('kb', kb);
+    if (kb) { bookP.style.top = Math.round(vv.offsetTop + 4) + 'px'; bookP.style.bottom = 'auto'; bookP.style.height = Math.max(96, Math.round(vv.height - 8)) + 'px'; } else { bookP.style.top = bookP.style.bottom = bookP.style.height = ''; } };
+  if (vv) { vv.addEventListener('resize', fitBook); vv.addEventListener('scroll', fitBook); }
   bookIn.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') writeBook(); }); bookP.onclick = e => e.stopPropagation();
   if (o.book) { root.querySelector('.aq-frame').append(bookBtn); root.append(bookP); } // 위 버튼줄이 꽉 차서 유리 왼쪽 위(제목 아래)에 둔다
   async function loadBook() { if (!o.book) return; const who = mode, rows = (await o.book.list(who)) || []; if (who !== mode || !alive) return; bookRows = rows; drawBook(); }
@@ -222,7 +231,7 @@ export function openAquarium(o) {
     if (f.gt > 7) { f.goal = null; f.gt = 0; f.slow = 1; f.scared = 0; f.el.classList.remove('aq-glint'); f.zT = 0; } }
   function bubbleAt(x, y) { const b = h('i', { class: 'aq-bub', style: { zIndex: 600, left: x * ppm + rnd(-8, 8) + 'px', top: y * ppm + 'px' } }); layer.append(b); setTimeout(() => b.remove(), 1400); }
   function popAt(f, t) { const p2 = h('i', { class: 'aq-pop', style: { zIndex: 950, left: (f.x + f.dir * f.len * 0.4) * ppm + 'px', top: (f.y - f.len * 0.2) * ppm + 'px' } }, t); layer.append(p2); setTimeout(() => p2.remove(), 1200); }
-  function close() { if (editing) saveDeco(); try { screen.orientation && screen.orientation.unlock && screen.orientation.unlock(); } catch {} alive = false; cancelAnimationFrame(raf); window.removeEventListener('resize', onResize); root.remove(); o.onClose && o.onClose(); }
+  function close() { if (editing) saveDeco(); try { screen.orientation && screen.orientation.unlock && screen.orientation.unlock(); } catch {} alive = false; cancelAnimationFrame(raf); window.removeEventListener('resize', onResize); if (vv) { vv.removeEventListener('resize', fitBook); vv.removeEventListener('scroll', fitBook); } if (wentFull && document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {}); root.remove(); o.onClose && o.onClose(); }
   orient(); try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); } catch {} // 폰이 세로여도 화면을 눕혀서 가로로 보여 준다
   requestAnimationFrame(() => { build(o.test ? demoFish(tank) : o.fish || [], o.test ? demoDeco() : o.deco || []); raf = requestAnimationFrame(loop); if (o.guest) { visit.hidden = true; goMode('pal'); } }); // guest: 내 수족관 없이 상대 수족관만 구경
   return { close };
