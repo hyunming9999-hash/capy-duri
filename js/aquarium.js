@@ -5,7 +5,7 @@ import { FISH, fishSvg, SHINY_IDS } from './fishing.js';
 import { ANIMALS, animalBackSvg } from './animals.js';
 import { sfx } from './sound.js';
 
-export const TANKS = [null, { n: '초급 수족관', w: 3, h: 1.5, v: 1.5, max: 20, cap: 40, price: 2000 }, { n: '중급 수족관', w: 12, h: 10, v: 6, max: 40, cap: 0, price: 6000 }, { n: '고급 수족관', w: 24, h: 10, v: 6, max: 60, cap: 0, price: 10000 }]; // cap: 넣을 수 있는 몸길이(cm), 0은 제한 없음
+export const TANKS = [null, { n: '초급 수족관', w: 3, h: 1.5, v: 1.5, max: 20, cap: 40, price: 2000 }, { n: '중급 수족관', w: 24, h: 10, v: 6, max: 40, cap: 0, price: 6000 }, { n: '고급 수족관', w: 24, h: 10, v: 6, max: 60, cap: 0, price: 10000 }]; // cap: 넣을 수 있는 몸길이(cm), 0은 제한 없음
 export const FEE_MAX = 3; // 관람료: 동물 한 마리당 하루 최대 3번, 한 번에 1코인
 const FISH_FILL = 0.86; // 물고기 그림에서 몸이 차지하는 가로 비율
 const rnd = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.floor(Math.random() * a.length)];
@@ -23,8 +23,8 @@ export function demoFish(t) {
   for (let k = 0; k < (t === 1 ? 1 : 3); k++) add(pick(ultra.length ? ultra : pool));
   add(pick(pool), { g: 'S' });
   const small = pool.filter(f => !f.king && (t === 3 ? true : f.z <= t));
-  while (out.length < T.max) add(pick(small));
-  return out.slice(0, T.max);
+  while (out.length < T.max - 8) add(pick(small)); // 시험판: 풀어넣기를 해 볼 수 있게 8자리 비워 둔다
+  return out.slice(0, T.max - 8);
 }
 
 // o = { tank: 1~3, fish: [{id, cm, g, shiny}], animals: [동물 번호], test, onClose }
@@ -61,17 +61,38 @@ export function openAquarium(o) {
   function setZoom(z) { zoom = Math.max(zMin, Math.min(6, z)); if (Math.abs(zoom - 1) < 0.08) zoom = 1; layout(true); }
   // 원근: 깊이 z(0 앞 ~ 1 뒤)만큼 작고 흐리게. 크기가 바뀔 때만 다시 잰다
   const scOf = f => 1 - 0.5 * f.z, hOf = f => f.len * 0.62 * scOf(f);
-  function sizeFish(f) { const w = f.len * ppm / FISH_FILL * scOf(f); if (Math.abs(w - (f.lw || 0)) < 0.6) return; f.lw = w; f.el.style.width = w + 'px'; f.el.style.height = w * 2 / 3 + 'px'; f.zz.style.fontSize = Math.max(12, Math.min(40, w * 0.18)) + 'px'; }
+  function sizeFish(f) { const w = f.len * ppm / FISH_FILL * scOf(f); if (Math.abs(w - (f.lw || 0)) < 0.6) return; f.lw = w; f.el.style.width = w + 'px'; f.el.style.height = w * 2 / 3 + 'px'; f.zz.style.fontSize = Math.max(12, Math.min(40, w * 0.18)) + 'px'; f.tag.style.fontSize = Math.max(10, Math.min(18, w * 0.12)) + 'px'; }
   function build(list) {
     layer.replaceChildren(); [...tabs.children].forEach(b => b.classList.toggle('on', +b.dataset.t === tank)); zoom = 1;
     const T = TANKS[tank]; W = T.w; H = T.h;
-    fish = list.map(d => { const f0 = FISH.find(x => x.id === d.id); if (!f0) return null; const len = d.cm / 100, f = { d, f0, len, hgt: len * 0.45, tier: f0.tier || 1, g: d.g, shiny: d.shiny, x: rnd(len / 2, Math.max(len / 2 + 0.01, W - len / 2)), y: rnd(H * 0.15, H * 0.7), dir: Math.random() < 0.5 ? -1 : 1, vy: 0, ty: 0, st: 'swim', stT: rnd(2, 6), sp: 1, turnT: 0 };
-      f.base = 0.12 + 0.3 * Math.sqrt(len); f.ty = f.y; f.z = f.tz = Math.random(); f.dq = -1; f.zT = rnd(1, 8);
-      f.body = h('div', { class: 'aq-fb', html: fishSvg(f0, false, d.shiny), style: { animationDuration: rnd(0.45, 0.7) + 's' } });
-      f.zz = h('span', { class: 'aq-zz' }, 'Z z'); f.el = h('div', { class: 'aq-f ' + glowOf(f) }, f.body, f.zz);
-      f.el.onclick = e => { e.stopPropagation(); showTip(f); }; layer.append(f.el); return f; }).filter(Boolean);
-        layout(false); drawRoom(); drawInfo(); }
-  function showTip(f) { const T = ['', '흔함', '보기 힘듦', '희귀', '초희귀'][f.tier] || ''; tip.innerHTML = `${f.shiny ? '✨ 이로치 ' : ''}<b>${f.f0.name}</b> · ${f.g}급 · ${f.d.cm}cm <small>${T}${f.st === 'sleep' ? ' · 쿨쿨 자는 중' : ''}</small>`; tip.hidden = false; clearTimeout(showTip.t); showTip.t = setTimeout(() => { tip.hidden = true; }, 2600); }
+    fish = list.map(d => makeFish(d)).filter(Boolean);
+        layout(false); drawRoom(); drawInfo(); if (o.test) bag = demoBag(tank); drawBag(); }
+  function makeFish(d, drop) { const f0 = FISH.find(x => x.id === d.id); if (!f0) return null; const len = d.cm / 100, f = { d, f0, len, hgt: len * 0.45, tier: f0.tier || 1, g: d.g, shiny: d.shiny, x: rnd(len / 2, Math.max(len / 2 + 0.01, W - len / 2)), y: rnd(H * 0.15, H * 0.7), dir: Math.random() < 0.5 ? -1 : 1, vy: 0, ty: 0, st: 'swim', stT: rnd(2, 6), sp: 1, turnT: 0 };
+    f.base = 0.12 + 0.3 * Math.sqrt(len); f.ty = f.y; f.z = f.tz = drop ? 0.1 : Math.random(); f.dq = -1; f.zT = rnd(1, 8);
+    f.body = h('div', { class: 'aq-fb', html: fishSvg(f0, false, d.shiny), style: { animationDuration: rnd(0.45, 0.7) + 's' } });
+    f.zz = h('span', { class: 'aq-zz' }, 'Z z'); f.tag = h('span', { class: 'aq-name', hidden: !d.name }, d.name || ''); f.el = h('div', { class: 'aq-f ' + glowOf(f) }, f.body, f.zz, f.tag);
+    f.el.onclick = e => { e.stopPropagation(); showTip(f); }; layer.append(f.el);
+    if (drop) { const vx = (view.scrollLeft + view.clientWidth / 2) / ppm, vy = view.scrollTop / ppm; f.x = Math.max(len / 2, Math.min(W - len / 2, vx + rnd(-1, 1))); f.y = Math.max(0, vy) + 0.1; f.ty = f.y + rnd(1, 2.5); f.vy = 1.5;
+      const sp = h('div', { class: 'aq-splash', style: { left: f.x * ppm + 'px', top: Math.max(0, vy) * ppm + 'px' } }); layer.append(sp); setTimeout(() => sp.remove(), 1200); sfx('splash'); }
+    return f; }
+  // ----- 가방 물고기 풀어넣기 · 이름 붙이기 -----
+  let bag = [];
+  function demoBag(t) { return demoFish(3).filter(d => !(TANKS[t].cap && d.cm > TANKS[t].cap) || Math.random() < 0.3).slice(0, 9).map((d, k) => ({ ...d, key: 'b' + k })); }
+  const panel = h('div', { class: 'aq-panel', hidden: true }), listEl = h('div', { class: 'aq-plist' });
+  panel.append(h('div', { class: 'aq-phead' }, h('b', null, '🎒 내 물고기'), h('button', { class: 'aq-px', onClick: () => { panel.hidden = true; } }, '✕')), listEl);
+  root.append(panel);
+  const relBtn = h('button', { class: 'aq-rel', onClick: () => { panel.hidden = !panel.hidden; drawBag(); } }, '🐟 풀어넣기');
+  root.querySelector('.aq-top').insertBefore(relBtn, root.querySelector('.aq-zoom'));
+  function drawBag() { const T = TANKS[tank], full = fish.length >= T.max; relBtn.textContent = `🐟 풀어넣기 ${bag.length}`;
+    listEl.replaceChildren(...(bag.length ? bag.map(d => { const f0 = FISH.find(x => x.id === d.id); if (!f0) return ''; const big = T.cap && d.cm > T.cap, no = full ? '수족관이 꽉 찼어요' : big ? `너무 커요 (${T.cap}cm까지)` : '';
+      return h('div', { class: 'aq-prow' + (no ? ' off' : '') }, h('span', { class: 'aq-pic', html: fishSvg(f0, false, d.shiny) }), h('div', { class: 'aq-pn' }, h('b', null, `${d.shiny ? '✨ ' : ''}${d.name ? d.name + ' · ' : ''}${f0.name}`), h('small', null, `${d.g}급 · ${d.cm}cm${f0.tier >= 4 ? ' · 초희귀' : ''}`)),
+        h('button', { class: 'aq-pbtn', disabled: !!no, onClick: () => release(d) }, no || '풀어넣기')); }) : [h('p', { class: 'aq-pnone' }, '가방에 물고기가 없어요. 낚시터에서 잡아 오세요.')])); }
+  async function release(d) { if (o.release && !(await o.release(d))) return; bag = bag.filter(x => x !== d); const f = makeFish(d, true); if (f) { fish.push(f); sizeFish(f); } drawBag(); drawInfo(); }
+  async function rename(f) { tip.replaceChildren(); const inp = h('input', { class: 'aq-nin', maxlength: 8, value: f.d.name || '', placeholder: `${f.f0.name} 이름` });
+    const save = async () => { const nm = inp.value.trim().slice(0, 8); if (o.rename && !(await o.rename(f.d, nm))) return; f.d.name = nm; f.tag.textContent = nm; f.tag.hidden = !nm; tip.hidden = true; };
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') save(); }); tip.append(h('span', null, '✏️ '), inp, h('button', { class: 'aq-nbtn', onClick: e => { e.stopPropagation(); save(); } }, '저장')); clearTimeout(showTip.t); tip.hidden = false; inp.focus(); }
+  tip.onclick = e => e.stopPropagation();
+  function showTip(f) { const T = ['', '흔함', '보기 힘듦', '희귀', '초희귀'][f.tier] || ''; tip.innerHTML = `${f.d.name ? `<b class="nm">「${f.d.name}」</b> ` : ''}${f.shiny ? '✨ 이로치 ' : ''}<b>${f.f0.name}</b> · ${f.g}급 · ${f.d.cm}cm <small>${T}${f.st === 'sleep' ? ' · 쿨쿨 자는 중' : ''}</small> `; tip.append(h('button', { class: 'aq-nbtn', onClick: e => { e.stopPropagation(); rename(f); } }, f.d.name ? '✏️ 이름 바꾸기' : '✏️ 이름 붙이기')); tip.hidden = false; clearTimeout(showTip.t); showTip.t = setTimeout(() => { tip.hidden = true; }, 4000); }
   view.onclick = () => { tip.hidden = true; };
 
   // ----- 관람석: 벤치 두 개에 동물이 앉는다(왼쪽 벤치 10~29%, 오른쪽 71~90%) -----
