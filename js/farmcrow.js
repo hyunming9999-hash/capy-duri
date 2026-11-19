@@ -1,8 +1,10 @@
 // 농장 까마귀: 하루 한 번, 친목회 육지나 농장에 있을 때 아무 때나 나타난다.
 // 나타나면 1분 안에 농장에 가서 새총으로 쫓아내야 한다. 못 쫓아내면 자라는 이랑 하나를 통째로 가져간다.
 import { h, toast, modal, ymd } from './ui.js';
+import { FLUFFY } from './fluffy.js';
 import { sfx } from './sound.js';
 import { cropOf, cropImg } from './farm.js';
+const CROW_IMG = FLUFFY ? 'img/fl/o/crow.webp' : 'img/crow/crow.webp';
 
 const LIMIT = 60000;
 const LV = [null, { n: '초급', need: 2, sp: 110, turn: 1.9, dash: 0, r: 60 }, { n: '중급', need: 2, sp: 170, turn: 1.3, dash: 0.1, r: 52 }, { n: '고급', need: 2, sp: 240, turn: 0.8, dash: 0.25, r: 46 }]; // 맞히기 쉽게: 까마귀는 느리게, 맞는 범위는 넓게
@@ -23,12 +25,12 @@ export function farmCrow(ctx, { goFarm }) {
     // 밭 하나를 골라 이랑 1~3줄을 털어 간다(1줄 50% · 2줄 35% · 3줄 15%, 그 밭에 남은 만큼만)
     const ks = [...new Set(L.map(x => x.k))], pk = ks[Math.floor(Math.random() * ks.length)], inK = L.filter(x => x.k === pk).sort(() => Math.random() - 0.5), q = Math.random(), want = q < 0.5 ? 1 : q < 0.85 ? 2 : 3, took = inK.slice(0, want), v = took[0];
     await ctx.store.update(ref, Object.fromEntries(took.map(x => [x.i == null ? `plots/${x.k}/lost` : `plots/${x.k}/rows/${x.i}/lost`, true]))).catch(() => {}); sfx('bad'); const cr = cropOf(v.r.c) || { name: '작물' }, names = [...new Set(took.map(x => (cropOf(x.r.c) || cr).name))].join('·');
-    modal({ title: '🐦‍⬛ 까마귀가 가져갔어요…', body: [h('div', { class: 'fc-lost' }, h('img', { src: 'img/crow/crow.webp', alt: '' }), ...took.map(x => h('img', { class: 'fc-loot', src: cropImg(x.r.c), alt: '' }))),
+    modal({ title: '🐦‍⬛ 까마귀가 가져갔어요…', body: [h('div', { class: 'fc-lost' }, h('img', { src: CROW_IMG, alt: '' }), ...took.map(x => h('img', { class: 'fc-loot', src: cropImg(x.r.c), alt: '' }))),
       h('p', { class: 'center' }, `${why} ${Number(v.k) + 1}번 밭의 ${names} 이랑 ${took.length}줄을 통째로 물고 날아갔어요.`), h('p', { class: 'center dim' }, '까마귀는 하루에 한 번 와요. 나타나면 1분 안에 농장으로!')], actions: [{ label: '확인', primary: true }] });
     busy = false; }
 
   function showBanner() { if (banner) return; const tm = h('b', { class: 'fc-t' }), go = h('button', { class: 'fc-go', onClick: () => goFarm() }, '🌾 농장으로 가기');
-    banner = h('div', { class: 'fc-banner' }, h('img', { src: 'img/crow/crow.webp', alt: '' }), h('div', null, h('strong', null, '까마귀가 내 밭에 나타났어요!'), h('small', null, '1분 안에 농장에 가서 새총으로 쫓아내요'), tm), go); banner.tm = tm; document.body.append(banner); sfx('bad'); }
+    banner = h('div', { class: 'fc-banner' }, h('img', { src: CROW_IMG, alt: '' }), h('div', null, h('strong', null, '까마귀가 내 밭에 나타났어요!'), h('small', null, '1분 안에 농장에 가서 새총으로 쫓아내요'), tm), go); banner.tm = tm; document.body.append(banner); sfx('bad'); }
   function hideBanner() { if (banner) { banner.remove(); banner = null; } }
 
   // 연습 모드: 주소 끝에 ?crowtest (또는 ?crowtest=2·3 단계) 를 붙이고 농장에 들어가면 바로 새총 놀이를 한다. 기록·작물에는 아무 영향 없음
@@ -50,7 +52,7 @@ export function farmCrow(ctx, { goFarm }) {
 
   // 새총 놀이: 화면을 누르면 그쪽으로 돌을 쏜다. 제한 시간 안에 정해진 만큼 맞히면 까마귀가 도망간다
   function startGame(lvN, test) { const lv = LV[lvN] || LV[1]; let hits = 0, shots = [], reload = 0, t0 = performance.now(), lastF = t0, raf = 0, over = false;
-    const crowEl = h('img', { class: 'fc-crow', src: 'img/crow/crow.webp', alt: '까마귀' }), arena = h('div', { class: 'fc-arena' }, crowEl);
+    const crowEl = h('img', { class: 'fc-crow', src: CROW_IMG, alt: '까마귀' }), arena = h('div', { class: 'fc-arena' }, crowEl);
     const dots = h('span', { class: 'fc-dots' }), bar = h('i', { class: 'fc-bar' }), msg = h('div', { class: 'fc-msg' }, '화면을 누른 채 아래로 당겨 겨누고, 손을 떼면 발사!');
     // 새총: 누르면 고무줄이 뒤로 쭉 늘어났다가(0.14초) 놓으면 탁 튕기며 돌이 주머니에서 날아간다
     const sling = h('div', { class: 'fc-sling', html: '<svg viewBox="0 -10 80 110" style="overflow:visible"><path d="M40 98 V56 M40 58 L16 14 M40 58 L64 14" stroke="#8B5A2B" stroke-width="10" stroke-linecap="round" fill="none"/><path class="fc-band" d="M16 16 Q40 46 64 16" stroke="#C2410C" stroke-width="4.5" fill="none" stroke-linecap="round"/><circle class="fc-pouch" cx="40" cy="31" r="8" fill="#9CA3AF" stroke="#4B5563" stroke-width="2"/></svg>' });

@@ -2215,7 +2215,8 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fluffy .page-social .so-dpad { width: 132px; height: 132px; gap: 0; grid-template: "a U b" 1fr "L c R" 1fr "d D e" 1fr / 1fr 1fr 1fr; background: url(../img/fl/ui/dpad.webp) center / contain no-repeat; filter: drop-shadow(0 4px 3px rgba(110, 60, 20, .35)); opacity: 1; }
 .fluffy .page-social .so-dpad .so-dp { width: auto; height: auto; background: none; border: 0; box-shadow: none; border-radius: 12px; font-size: 0; }
 .fluffy .page-social .so-dpad .so-dp.held { background: rgba(70, 35, 10, .28); transform: none; }
-.fluffy .page-social .so-chatbtn { display: block; flex: none; width: 62px; height: 61px; border: 0; padding: 0; background: url(../img/fl/ui/chat.webp) center / contain no-repeat; filter: drop-shadow(0 3px 2px rgba(110, 60, 20, .3)); }
+.fluffy .page-social .so-pad { position: relative; }
+.fluffy .page-social .so-chatbtn { display: block; position: absolute; right: 88px; top: -6px; width: 54px; height: 53px; border: 0; padding: 0; background: url(../img/fl/ui/chat.webp) center / contain no-repeat; filter: drop-shadow(0 3px 2px rgba(110, 60, 20, .3)); }
 .fluffy .page-social .so-chatbtn:active { transform: translateY(2px); }
 .fluffy .page-social .so-acts2 { flex-direction: row-reverse; gap: 2px; align-items: flex-end; }
 .fluffy .page-social .so-acts2 .so-dp { position: relative; width: 74px; height: 74px; border-radius: 50%; border: 0; box-shadow: none; font-size: 0; background: url(../img/fl/ui/btn-b.webp) center / contain no-repeat; filter: drop-shadow(0 4px 3px rgba(60, 60, 20, .35)); animation: none; }
@@ -2259,3 +2260,26 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fluffy .fm-dp.held { transform: translateY(4px); background: #9A5C30; box-shadow: 0 1px 0 var(--choc-d); }
 .fluffy .fm-enter { border: 0; border-radius: 999px; color: #fff; background: radial-gradient(circle at 35% 25%, #FFD08A, #F59A23 65%); box-shadow: 0 4px 0 #C46F0E; text-shadow: 0 1px 0 rgba(0, 0, 0, .2); }
 .fluffy .fm-sheet { margin: 4px 10px calc(env(safe-area-inset-bottom) + 10px); border: 0; border-radius: 22px; background: #FFFAEE; box-shadow: 0 0 0 3px #EBD7B2, 0 4px 0 3px #D9C29A; outline: 1.5px dashed #E3C9A0; outline-offset: -6px; }
+/* ===== 보송 그림체: 퀘스트 진행 창·퀘스트 대화 창 ===== */
+.fluffy .qw-pf { border: 0; border-radius: 18px; background: url(../img/fl/ui/fur.webp) 0 0 / 180px 180px; box-shadow: 0 3px 0 #DDBB8A; outline: 1.5px dashed #D6A873; outline-offset: -4px; }
+.fluffy .qw-tx > p { border: 0; border-radius: 16px; background: #FFF3DC; box-shadow: 0 2px 0 #E3C9A0; outline: 1.5px dashed #E0BF8C; outline-offset: -4px; padding: 9px 11px; }
+.fluffy .qw-tx p.dim { box-shadow: none; outline: 0; background: none; padding: 0; }
+.fluffy .qw-clue, .fluffy .qw-new { border-radius: 14px; outline: 1.5px dashed rgba(255, 255, 255, .9); outline-offset: -4px; }
+.fluffy .qw-opts .btn { border-radius: 999px; }
+.fluffy .qs-name { display: block; padding: 6px 12px; border-radius: 999px; background: url(../img/fl/ui/fur.webp) 0 0 / 200px 200px; box-shadow: 0 2px 0 #DDBB8A; outline: 1.5px dashed #D6A873; outline-offset: -4px; }
+.fluffy .qs-bar i { height: 16px; border-radius: 999px; background: #F1E0C2; box-shadow: inset 0 2px 3px rgba(120, 85, 45, .25); }
+.fluffy .qs-todo { border: 0; border-radius: 18px; background: #FFF1C9; box-shadow: 0 3px 0 #E6B94A; outline: 1.5px dashed #E9C566; outline-offset: -5px; }
+.fluffy .qs-ch { border: 0; border-radius: 14px; box-shadow: 0 2px 0 #E3C9A0; }
+.fluffy .qs-ch.now { box-shadow: 0 2px 0 #E6A817; outline: 1.5px dashed #E6A817; outline-offset: -4px; } .fluffy .qs-ch.done { box-shadow: 0 2px 0 #BFE3B4; }
+/* ===== 보송 그림체: 카피백반 창 분위기(음식 그림은 그대로) ===== */
+.fluffy .kb { background: url(../img/fl/ui/fur.webp) 0 0 / 256px 256px; }
+.fluffy .kb-top { background: none; border: 0; padding-bottom: 6px; }
+.fluffy .kb-top b { flex: 0 1 auto; padding: 4px 12px; border-radius: 999px; background: #F8E6C6; outline: 1.5px dashed #D6A873; outline-offset: -4px; box-shadow: 0 2px 0 #DDBB8A; font-size: 18px; margin-right: auto; }
+.fluffy .kb-cust { background-image: url(../img/fl/bg/cookshop.webp); border: 0; border-radius: 22px; margin: 8px 6px 6px; box-shadow: 0 0 0 4px #C98B58, 0 0 0 8px #B5713C, 0 4px 0 8px #8A5226; }
+.fluffy .kb-status, .fluffy .kb-tray { border: 0; border-radius: 18px; background: #FFFAEE; box-shadow: 0 3px 0 #D9C29A; outline: 1.5px dashed #E3C9A0; outline-offset: -4px; }
+.fluffy .ck-rent { border-radius: 20px; background: linear-gradient(#8A5A32, #6E4424); box-shadow: 0 4px 0 #4E2F17; outline: 1.5px dashed rgba(255, 233, 196, .6); outline-offset: -5px; padding: 10px 12px; }
+.fluffy .ck-rent.paid { background: #E6F4DA; box-shadow: 0 4px 0 #A9D08F; outline-color: #A9D08F; }
+.fluffy .kb-start { border-radius: 999px; box-shadow: 0 5px 0 #D99A12, inset 0 2px 0 rgba(255, 255, 255, .5); }
+.fluffy .kb-qrow, .fluffy .kb .ck-order { border: 0; border-radius: 20px; box-shadow: 0 4px 0 #E6B94A; outline: 1.5px dashed #E9C566; outline-offset: -5px; }
+.fluffy .kb-skip, .fluffy .kb-row2 .btn { border-radius: 999px; background: #FFFAEE; box-shadow: 0 3px 0 #D9C29A; }
+.fluffy .kb-bnote { border-radius: 16px; outline: 1.5px dashed #E0BF8C; outline-offset: -4px; }

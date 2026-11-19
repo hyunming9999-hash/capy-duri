@@ -73,5 +73,5 @@ export const shipImg = () => `<svg viewBox="0 0 170 130"><image href="${O}ship.w
 export const SHADOW = '<ellipse class="fl-sh" cx="60" cy="133.5" rx="31" ry="5.5" fill="rgba(60,32,10,.4)"/>';
 
 // 상점 선물·포션 그림(예전에는 이모지)
-const ITEM = { '🍬': 'candy', '💐': 'flower', '🎂': 'cake', '🧪': 'potion', '🔧': 'fix' };
+const ITEM = { '🍬': 'candy', '💐': 'flower', '🎂': 'cake', '🧪': 'potion', '🔧': 'fix', '⚫': 'ball' };
 export const itemIcon = e => (on && ITEM[e] ? `<img class="fl-item" src="img/fl/o/${ITEM[e]}.webp" alt="${e}">` : '');
