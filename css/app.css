@@ -2358,3 +2358,13 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .so-xg.on { border-color: #FF7E9C; background: #FFEFF3; box-shadow: 0 0 0 2px rgba(255, 126, 156, .3); } .so-xg:disabled { opacity: .4; } .so-xg.fix { flex: none; padding: 4px 14px; cursor: default; }
 .so-xwait { align-self: center; font-size: 11.5px; color: #A07A5A; } .so-xok { flex: none; width: 46px; text-align: center; font: 800 11px/1.6 var(--head, sans-serif); font-style: normal; border-radius: 9px; background: #EEE6D8; color: #8A7A66; } .so-xok.y { background: #7BC74D; color: #fff; }
 .so-xgo { min-height: 34px; font-size: 13px; padding: 6px 8px; } .so-xgo.y { filter: saturate(.7); }
+/* ===== 수족관 방명록 ===== */
+.aq-bookb { flex: none; height: 36px; padding: 0 12px; border-radius: 18px; border: 2px solid #9CCBEA; background: #E8F5FF; color: #1E4E78; font-weight: 900; font-size: 13px; white-space: nowrap; }
+.aq-bookp { position: absolute; right: 10px; top: 58px; bottom: 10px; width: min(330px, 46%); z-index: 31; background: #FFF8EC; border: 3px solid #9CCBEA; border-radius: 18px; display: flex; flex-direction: column; box-shadow: 0 6px 18px rgba(0,0,0,.3); } .aq-bookp[hidden] { display: none; }
+.aq-bk { padding: 6px 9px; border: 2px solid #EBDDC4; border-radius: 12px; margin-bottom: 6px; background: #fff; } .aq-bk.mine { background: #FFF6DC; border-color: #F0D68A; }
+.aq-bkh { display: flex; align-items: baseline; gap: 6px; } .aq-bkh b { font-size: 13px; color: #5A3A1E; } .aq-bkh small { flex: 1; font-size: 11px; color: #A08A70; }
+.aq-bk p { margin: 2px 0 0; font-size: 13.5px; line-height: 1.4; color: #3B2618; word-break: break-all; }
+.aq-bdel { border: 0; background: none; color: #B0766A; font-size: 11px; font-weight: 800; text-decoration: underline; }
+.aq-bwrite { display: flex; gap: 6px; padding: 8px; border-top: 2px dashed #EBDDC4; } .aq-bwrite .aq-bin { flex: 1; width: auto; min-width: 0; } .aq-bwrite .aq-nbtn { margin: 0; flex: none; }
+.aq-frame > .aq-bookb { position: absolute; left: 18px; top: 62px; z-index: 20; height: 32px; box-shadow: 0 2px 6px rgba(0,0,0,.25); } /* 아래쪽은 관람석 동물이 덮어서 못 누른다 → 왼쪽 위(제목 아래) */
+#toast { z-index: 9600; } /* 수족관(9000) 같은 전체 화면 위에서도 알림 글이 보이게 */

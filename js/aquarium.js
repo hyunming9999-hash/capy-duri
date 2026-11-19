@@ -89,7 +89,7 @@ export function openAquarium(o) {
     const T = TANKS[tank]; W = T.w; H = T.h;
     fish = list.map(d => makeFish(d)).filter(Boolean);
     W = T.w; H = T.h; (dlist || []).forEach(d => makeDeco(d));
-        layout(false); drawRoom(); drawInfo(); bag = o.test ? demoBag(tank) : o.bag ? o.bag() : []; drawBag(); }
+        layout(false); drawRoom(); drawInfo(); bag = o.test ? demoBag(tank) : o.bag ? o.bag() : []; drawBag(); bookRows = []; drawBook(); loadBook(); }
   function makeFish(d, drop) { const f0 = FISH.find(x => x.id === d.id); if (!f0) return null; const len = d.cm / 100, f = { d, f0, len, hgt: len * 0.45, tier: f0.tier || 1, g: d.g, shiny: d.shiny, x: rnd(len / 2, Math.max(len / 2 + 0.01, W - len / 2)), y: rnd(H * 0.15, H * 0.7), dir: Math.random() < 0.5 ? -1 : 1, vy: 0, ty: 0, st: 'swim', stT: rnd(2, 6), sp: 1, turnT: 0 };
     f.base = 0.12 + 0.3 * Math.sqrt(len); f.ty = f.y; f.near = Math.min(3, Math.max(1.25, 0.9 / Math.sqrt(len))); f.z = f.tz = drop ? 0.1 : rnd(-0.8, 1); f.dq = -1; f.zT = rnd(1, 8);
     f.body = h('div', { class: 'aq-fb', html: fishSvg(f0, false, d.shiny), style: { animationDuration: rnd(0.45, 0.7) + 's' } });
@@ -188,6 +188,16 @@ export function openAquarium(o) {
   // d.y: 바닥(모래)에서 얼마나 위로 떠 있나(m). 바닥 쪽에 놓을수록 앞(아래)에 보인다
   function placeDeco(o2) { const d = o2.d, w = dW(d) * ppm, bottom = H * 0.95 - d.y; o2.el.style.width = w + 'px'; o2.el.style.transform = `translate(${(d.x * ppm - w / 2).toFixed(1)}px, ${(bottom * ppm - w).toFixed(1)}px)`; o2.el.style.zIndex = 470 - Math.round(d.y * 10); o2.el.firstChild.style.transform = d.fl ? 'scaleX(-1)' : ''; }
   const decoBtn = h('button', { class: 'aq-rel aq-decob', onClick: () => setEdit(!editing) }, '✏️ 꾸미기'); root.querySelector('.aq-top').append(decoBtn);
+  // ----- 방명록: 수족관마다 한 권. 주인도 놀러 온 사람도 한 줄씩 남긴다(내 수족관·상대 수족관 모두) -----
+  let bookRows = []; const bookT = h('b', null, '📖 방명록'), bookList = h('div', { class: 'aq-plist' }), bookIn = h('input', { class: 'aq-nin aq-bin', maxlength: 60, placeholder: '한 줄 남기기 (60자까지)' });
+  const bookP = h('div', { class: 'aq-bookp', hidden: true }, h('div', { class: 'aq-phead' }, bookT, h('button', { class: 'aq-px', onClick: () => { bookP.hidden = true; } }, '✕')), bookList, h('div', { class: 'aq-bwrite' }, bookIn, h('button', { class: 'aq-nbtn', onClick: () => writeBook() }, '남기기')));
+  const bookBtn = h('button', { class: 'aq-bookb', onClick: () => { bookP.hidden = !bookP.hidden; if (!bookP.hidden) { panel.hidden = true; tip.hidden = true; loadBook(); } } }, '📖 방명록');
+  bookIn.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') writeBook(); }); bookP.onclick = e => e.stopPropagation();
+  if (o.book) { root.querySelector('.aq-frame').append(bookBtn); root.append(bookP); } // 위 버튼줄이 꽉 차서 유리 왼쪽 위(제목 아래)에 둔다
+  async function loadBook() { if (!o.book) return; const who = mode, rows = (await o.book.list(who)) || []; if (who !== mode || !alive) return; bookRows = rows; drawBook(); }
+  function drawBook() { const owner = mode === 'pal' ? palName : meName; bookT.textContent = `📖 ${owner}의 방명록 · ${bookRows.length}줄`; bookBtn.textContent = `📖 방명록${bookRows.length ? ' ' + bookRows.length : ''}`;
+    bookList.replaceChildren(...(bookRows.length ? bookRows.map(r => h('div', { class: 'aq-bk' + (r.mine ? ' mine' : '') }, h('div', { class: 'aq-bkh' }, h('b', null, r.name), h('small', null, r.when), r.canDel && h('button', { class: 'aq-bdel', onClick: async () => { await o.book.del(mode, r.key); loadBook(); } }, '지우기')), h('p', null, r.text))) : [h('p', { class: 'aq-pnone' }, `아직 비어 있어요. ${owner}의 수족관에 첫 줄을 남겨 보세요!`)])); }
+  async function writeBook() { const t = bookIn.value.trim().slice(0, 60); if (!t || !o.book) return; bookIn.value = ''; await o.book.add(mode, t); sfx('pop'); await loadBook(); bookList.scrollTop = 0; }
   const tray = h('div', { class: 'aq-tray', hidden: true }), dmenu = h('div', { class: 'aq-dmenu', hidden: true });
   root.querySelector('.aq-frame').append(tray, dmenu);
   function setEdit(on) { editing = on; root.classList.toggle('edit', on); tray.hidden = !on; dmenu.hidden = true; selD = null; decoBtn.textContent = on ? '✔ 꾸미기 끝' : '✏️ 꾸미기'; decos.forEach(x => x.el.classList.remove('sel')); panel.hidden = true; tip.hidden = true;

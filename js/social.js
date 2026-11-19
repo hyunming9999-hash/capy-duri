@@ -382,6 +382,14 @@ export function mount(el, ctx) {
       h('button', { class: 'btn primary so-xgo' + (mineOk ? ' y' : ''), disabled: !(m.k && p.k), onClick: xAgree }, !m.k ? '줄 선물을 골라 주세요' : !p.k ? `${pn}의 선택을 기다리는 중…` : mineOk ? (palOk ? '교환하는 중…' : `동의했어요 · ${pn}의 동의를 기다리는 중 (누르면 취소)`) : `🤝 ${GIFTS[m.k][1]} ↔ ${GIFTS[p.k][1]} 교환에 동의`)); }
   function xMount() { if (!stageEl) return; xBtn = h('button', { class: 'so-xbtn', hidden: !pid(), onClick: () => { xOpen = !xOpen; if (xOpen) { xSeen = xPal().t || 0; sfx('pop'); xDraw(); } else xClose(); } }, '🎁 교환'); xWin = h('div', { class: 'so-xwin', hidden: true }); stageEl.append(xBtn, xWin); xDraw(); }
   // ----- 카피수족관 -----
+  // 방명록: aquabook/{수족관 주인}/{키} = { by: 쓴 사람, x: 글, at }. 수족관을 팔아도 방명록은 남는다. 내 글은 내가, 내 수족관의 글은 주인인 내가 지울 수 있다
+  const bookOwner = who => (who === 'pal' ? pid() : ctx.uid), bookWhen = at => { const d = new Date(at || 0); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+  const aqBook = { list: async who => { const owner = bookOwner(who); if (!owner) return []; const v = (await ctx.store.get('aquabook/' + owner).catch(() => null)) || {};
+      return Object.entries(v).filter(([, e]) => e && e.x).sort((a, b) => (b[1].at || 0) - (a[1].at || 0)).slice(0, 60).map(([key, e]) => ({ key, name: ctx.nameOf(e.by), text: String(e.x).slice(0, 60), at: e.at || 0, when: bookWhen(e.at), mine: e.by === ctx.uid, canDel: e.by === ctx.uid || owner === ctx.uid })); },
+    add: async (who, x) => { const owner = bookOwner(who); if (!owner) return; await ctx.store.push('aquabook/' + owner, { by: ctx.uid, x: String(x).slice(0, 60), at: ctx.store.now() }).catch(() => {}); },
+    del: async (who, key) => { const owner = bookOwner(who); if (owner && key) await ctx.store.remove('aquabook/' + owner + '/' + key).catch(() => {}); } };
+  // 내 수족관에 들어갈 때: 지난번 뒤로 상대가 남긴 방명록이 있으면 알려 준다
+  const bookNews = async () => { try { const k = 'capy.aqbook.' + ctx.uid, seen = +localStorage.getItem(k) || 0, n = (await aqBook.list('me')).filter(r => !r.mine && r.at > seen).length; localStorage.setItem(k, String(ctx.store.now())); if (n) toast(`📖 ${josa(ctx.nameOf(pid()), '가', '이')} 방명록에 ${n}줄 남겼어요`, 3200); } catch {} };
   const aqFish = () => Object.entries(aqua.fish || {}).filter(([, v]) => v).map(([key, v]) => ({ key, ...v }));
   const bagFish = () => Object.entries(bag.fish || {}).filter(([, v]) => v && v.id && !v.pearl).map(([key, v]) => ({ key, ...v }));
   const aqRareName = () => { const r = aqFish().map(d => ({ d, f: fishOf(d.id) })).filter(x => x.f && (x.d.g === 'S' || x.f.tier >= 4 || x.d.shiny)).sort((a, b) => (b.f.tier || 0) - (a.f.tier || 0) || (b.d.shiny ? 1 : 0) - (a.d.shiny ? 1 : 0))[0]; return r ? (r.d.shiny ? '이로치 ' : '') + r.f.name : ''; };
@@ -390,9 +398,9 @@ export function mount(el, ctx) {
     // 내 수족관이 없어도 상대 수족관은 들어가서 구경할 수 있다(구경만: 풀어넣기·꾸미기·관람료 없음)
     if (!aqua.t) { const pd = await loadPal(); if (!pd) return modal({ title: '🐠 카피수족관', body: h('p', { class: 'center' }, `아직 수족관이 없어요. 바닷가 카피수퍼에서 수족관을 사 오면 잡은 물고기를 넣고 구경할 수 있어요.${pid() ? ` ${ctx.nameOf(pid())}에게 수족관이 생기면 내 수족관이 없어도 구경하러 들어갈 수 있어요.` : ''}`), actions: [{ label: '확인', primary: true }] });
       if (aquaOpen) return; const m0 = await import('./aquarium.js'); aquaOpen = true; keys.clear();
-      return void m0.openAquarium({ guest: true, tank: pd.tank, fish: [], deco: [], me: ctx.me.name, partner: ctx.nameOf(pid()), loadPartner: loadPal, onClose: () => { aquaOpen = false; lastT = performance.now(); scores(); } }); }
-    const m = await import('./aquarium.js'); aquaOpen = true; keys.clear(); const AQ = 'aqua/' + ctx.uid, cleanFish = d => { const v = { ...d }; delete v.key; return v; };
-    m.openAquarium({ tank: aqua.t, fish: aqFish(), deco: Object.values(aqua.deco || {}).filter(Boolean), decoInv: aqua.inv || {}, me: ctx.me.name, partner: pid() ? ctx.nameOf(pid()) : '', bag: bagFish,
+      return void m0.openAquarium({ guest: true, book: aqBook, tank: pd.tank, fish: [], deco: [], me: ctx.me.name, partner: ctx.nameOf(pid()), loadPartner: loadPal, onClose: () => { aquaOpen = false; lastT = performance.now(); scores(); } }); }
+    const m = await import('./aquarium.js'); aquaOpen = true; keys.clear(); bookNews(); const AQ = 'aqua/' + ctx.uid, cleanFish = d => { const v = { ...d }; delete v.key; return v; };
+    m.openAquarium({ tank: aqua.t, fish: aqFish(), deco: Object.values(aqua.deco || {}).filter(Boolean), decoInv: aqua.inv || {}, me: ctx.me.name, partner: pid() ? ctx.nameOf(pid()) : '', bag: bagFish, book: aqBook,
       release: async d => { const v = cleanFish(d); const left = { ...(bag.fish || {}) }; delete left[d.key]; bag = { ...bag, fish: left }; await ctx.store.update('bag/' + ctx.uid + '/fish', { [d.key]: null }).catch(() => {}); await ctx.store.update(AQ + '/fish', { [d.key]: v }).catch(() => {}); return true; },
       takeOut: async d => { const v = cleanFish(d); delete v.name; await ctx.store.update(AQ + '/fish', { [d.key]: null }).catch(() => {}); bag = { ...bag, fish: { ...(bag.fish || {}), [d.key]: v } }; await ctx.store.update('bag/' + ctx.uid + '/fish', { [d.key]: v }).catch(() => {}); return true; },
       rename: async (d, nm) => { await ctx.store.update(AQ + '/fish/' + d.key, { name: nm || null }).catch(() => {}); return true; },
