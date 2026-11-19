@@ -1,4 +1,4 @@
-// 카피수족관(시험판): 잡은 물고기를 실제 크기(cm) 그대로 넣어 구경한다. 물고기는 꼬리를 흔들고, 방향을 틀고, 돌진하고, 잠도 자고, 서로 부딪히면 비켜 간다.
+// 카피수족관: 잡은 물고기를 실제 크기(cm) 그대로 넣어 구경한다. 물고기는 꼬리를 흔들고, 방향을 틀고, 돌진하고, 잠도 자고, 서로 부딪히면 비켜 간다.
 // 관람석(A안): 동물 친구들이 벤치에 앉아 귀한 물고기(S급·초희귀·이로치)가 지나가면 감탄하고 관람료 1코인을 낸다(동물마다 하루 3번까지)
 import { h } from './ui.js';
 import { FISH, fishSvg, SHINY_IDS } from './fishing.js';
@@ -11,6 +11,12 @@ const FISH_FILL = 0.86; // 물고기 그림에서 몸이 차지하는 가로 비
 const rnd = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.floor(Math.random() * a.length)];
 export const isRare = f => f.g === 'S' || f.tier >= 4 || f.shiny; // 관람료를 받는 귀한 물고기
 const glowOf = f => (f.shiny && (f.tier >= 4 || f.g === 'S') ? 'ss' : f.shiny ? 's' : f.g === 'S' || f.tier >= 4 ? 'g' : '');
+// 수족관 용품 30종: [이름, 값, 가로 길이(m, 중급·고급 기준), 물고기 반응]. 그림은 img/aqua/d/번호.webp
+// 반응: peck 콕콕 쪼기 · hide 뒤로 숨기 · circle 빙글빙글 돌기 · bubble 거품 타고 오르기 · glow 몸이 반짝 · heart 하트 뿅 · startle 깜짝 흩어지기 · slide 미끄럼
+export const DECO = [['조약돌 더미', 300, 0.9, 'peck'], ['수초', 400, 0.9, 'hide'], ['분홍 산호', 600, 1.2, 'hide'], ['불가사리', 400, 0.6, 'peck'], ['조개', 700, 0.9, 'startle'], ['소라', 800, 1, 'hide'], ['기포석', 900, 0.8, 'bubble'], ['돌다리', 1000, 1.8, 'slide'], ['알록달록 모래밭', 500, 1.4, 'peck'], ['이끼 바위', 600, 1.2, 'hide'],
+  ['풍차', 1500, 1.8, 'circle'], ['난파선', 2000, 3, 'hide'], ['보물상자', 2200, 1.6, 'startle'], ['등대', 1800, 1.4, 'circle'], ['잠수부 카피', 2500, 1.6, 'circle'], ['카피 모래성', 1600, 1.8, 'hide'], ['바위 동굴', 1400, 2.4, 'hide'], ['해파리 램프', 2000, 1.3, 'glow'], ['진주 조개', 3000, 1.4, 'glow'], ['물고기 우체통', 1200, 1.1, 'heart'],
+  ['용궁', 4000, 3.6, 'hide'], ['거북선', 3500, 3.2, 'bubble'], ['물레방아', 3000, 2.4, 'circle'], ['미끄럼틀', 2800, 2, 'slide'], ['무지개 산호', 3200, 2, 'glow'], ['해저 회전목마', 3800, 2.4, 'circle'], ['하트 바위', 2500, 1.8, 'heart'], ['별빛 산호', 3000, 2, 'glow'], ['해저 온천', 3500, 2.4, 'bubble'], ['황금 카피 동상', 5000, 1.8, 'circle']];
+export const decoImg = k => `img/aqua/d/${k}.webp`;
 const WOW = ['우와… 눈부셔!!', '저거 봐 저거!', '반짝반짝해!', '진짜 크다…!', '나 여기서 살래', '심장이 두근두근해'];
 
 // 시험판 물고기: 수족관 등급에 맞춰 실제 물고기 자료로 채운다(귀한 물고기도 섞어서)
@@ -43,11 +49,11 @@ export function openAquarium(o) {
   // 놀러가기: 내 수족관 ↔ 상대 수족관. 상대 수족관은 구경만(풀어넣기·이름 붙이기 없음)
   let mode = 'me'; const meName = o.me || '나', palName = o.partner || '두두', titleB = root.querySelector('.aq-title b');
   const visit = h('div', { class: 'aq-visit' }, ...[['me', `🏠 내 수족관`], ['pal', `🐾 ${palName}네 놀러가기`]].map(([k, l]) => h('button', { class: 'aq-vt' + (k === 'me' ? ' on' : ''), 'data-k': k, onClick: () => goMode(k) }, l)));
-  root.querySelector('.aq-top').append(visit);
+  root.querySelector('.aq-top').append(visit); if (!o.partner && !o.test) visit.hidden = true;
   async function goMode(k) { if (k === mode) return; mode = k; [...visit.children].forEach(b => b.classList.toggle('on', b.dataset.k === k)); panel.hidden = true; tip.hidden = true;
     root.classList.toggle('pal', k === 'pal'); titleB.textContent = k === 'pal' ? `🐾 ${palName}의 수족관` : `🐠 ${meName}의 수족관`;
-    if (k === 'pal') { const pd = o.test ? { tank: 3, fish: demoFish(3).map(d => ({ ...d, name: Math.random() < 0.15 ? pick(['콩이', '뽀삐', '두부', '별님', '방울']) : '' })) } : await (o.loadPartner ? o.loadPartner() : null); if (!pd) { titleB.textContent = `${palName}는 아직 수족관이 없어요`; fish = []; layer.replaceChildren(); return; } myTank = tank; tank = pd.tank; build(pd.fish); }
-    else { tank = myTank; build(o.test ? demoFish(tank) : o.fish); } }
+    if (k === 'pal') { const pd = o.test ? { tank: 3, deco: demoDeco(), fish: demoFish(3).map(d => ({ ...d, name: Math.random() < 0.15 ? pick(['콩이', '뽀삐', '두부', '별님', '방울']) : '' })) } : await (o.loadPartner ? o.loadPartner() : null); if (!pd) { titleB.textContent = `${palName}는 아직 수족관이 없어요`; fish = []; layer.replaceChildren(); return; } myTank = tank; tank = pd.tank; build(pd.fish, pd.deco || []); }
+    else { tank = myTank; build(o.test ? demoFish(tank) : o.fish, o.test ? demoDeco() : o.deco); } }
   let myTank = tank; titleB.textContent = `🐠 ${meName}의 수족관`;
   // 수족관 크기 버튼(시험판)과 확대·축소는 유리 오른쪽 아래 구석에
   root.querySelector('.aq-title').append(info); const bot = h('div', { class: 'aq-bot' }); if (o.test) bot.append(tabs); bot.append(root.querySelector('.aq-zoom')); root.querySelector('.aq-frame').append(bot);
@@ -67,18 +73,19 @@ export function openAquarium(o) {
     if (W * ppm < 2 * side + seg) bg.replaceChildren(h('img', { src: 'img/aqua/full.webp', alt: '', class: 'one' }));
     else bg.replaceChildren(h('div', { class: 'aq-tile' }), h('img', { src: 'img/aqua/l.webp', alt: '', class: 'endl' }), h('img', { src: 'img/aqua/r.webp', alt: '', class: 'endr' }));
     zoomL.textContent = zoom <= zMin + 0.01 && zMin < 1 ? '전체' : `×${zoom.toFixed(zoom < 2 ? 1 : 0)}`;
-    fish.forEach(f => { f.lw = 0; }); view.scrollLeft = cx * W * ppm - view.clientWidth / 2; view.scrollTop = keep ? cy * H * ppm - view.clientHeight / 2 : H * ppm; }
+    fish.forEach(f => { f.lw = 0; }); decos.forEach(placeDeco); view.scrollLeft = cx * W * ppm - view.clientWidth / 2; view.scrollTop = keep ? cy * H * ppm - view.clientHeight / 2 : H * ppm; }
   function setZoom(z) { zoom = Math.max(zMin, Math.min(6, z)); if (Math.abs(zoom - 1) < 0.08) zoom = 1; layout(true); }
   // 원근: 깊이 z(0 앞 ~ 1 뒤)만큼 작고 흐리게. 크기가 바뀔 때만 다시 잰다
   const scOf = f => (f.z >= 0 ? 1 - 0.5 * f.z : 1 - f.z * (f.near - 1)), // z: -1(유리 바로 앞) ~ 0 ~ 1(맨 뒤). 작은 물고기일수록 앞으로 오면 많이 커진다
     hOf = f => f.len * 0.62 * scOf(f);
   // 렉 줄이기: 크기는 수족관 비율이 바뀔 때만 한 번 정하고, 앞뒤 크기 변화는 transform scale로만(다시 그리지 않음)
   function sizeFish(f) { const w = f.len * ppm / FISH_FILL; if (Math.abs(w - (f.lw || 0)) < 0.6) return; f.lw = w; f.el.style.width = w + 'px'; f.el.style.height = w * 2 / 3 + 'px'; f.zz.style.fontSize = Math.max(12, Math.min(40, w * 0.18)) + 'px'; f.tag.style.fontSize = Math.max(10, Math.min(18, w * 0.12)) + 'px'; }
-  function build(list) {
-    layer.replaceChildren(); [...tabs.children].forEach(b => b.classList.toggle('on', +b.dataset.t === tank)); zoom = 1;
+  function build(list, dlist) {
+    layer.replaceChildren(); decos = []; editing = false; root.classList.remove('edit'); [...tabs.children].forEach(b => b.classList.toggle('on', +b.dataset.t === tank)); zoom = 1;
     const T = TANKS[tank]; W = T.w; H = T.h;
     fish = list.map(d => makeFish(d)).filter(Boolean);
-        layout(false); drawRoom(); drawInfo(); if (o.test) bag = demoBag(tank); drawBag(); }
+    W = T.w; H = T.h; (dlist || []).forEach(d => makeDeco(d));
+        layout(false); drawRoom(); drawInfo(); bag = o.test ? demoBag(tank) : o.bag ? o.bag() : []; drawBag(); }
   function makeFish(d, drop) { const f0 = FISH.find(x => x.id === d.id); if (!f0) return null; const len = d.cm / 100, f = { d, f0, len, hgt: len * 0.45, tier: f0.tier || 1, g: d.g, shiny: d.shiny, x: rnd(len / 2, Math.max(len / 2 + 0.01, W - len / 2)), y: rnd(H * 0.15, H * 0.7), dir: Math.random() < 0.5 ? -1 : 1, vy: 0, ty: 0, st: 'swim', stT: rnd(2, 6), sp: 1, turnT: 0 };
     f.base = 0.12 + 0.3 * Math.sqrt(len); f.ty = f.y; f.near = Math.min(3, Math.max(1.25, 0.9 / Math.sqrt(len))); f.z = f.tz = drop ? 0.1 : rnd(-0.8, 1); f.dq = -1; f.zT = rnd(1, 8);
     f.body = h('div', { class: 'aq-fb', html: fishSvg(f0, false, d.shiny), style: { animationDuration: rnd(0.45, 0.7) + 's' } });
@@ -97,14 +104,15 @@ export function openAquarium(o) {
   root.querySelector('.aq-top').append(relBtn);
   function drawBag() { const T = TANKS[tank], full = fish.length >= T.max; relBtn.textContent = `🐟 풀어넣기 ${bag.length}`;
     listEl.replaceChildren(...(bag.length ? bag.map(d => { const f0 = FISH.find(x => x.id === d.id); if (!f0) return ''; const big = T.cap && d.cm > T.cap, no = full ? '수족관이 꽉 찼어요' : big ? `너무 커요 (${T.cap}cm까지)` : '';
-      return h('div', { class: 'aq-prow' + (no ? ' off' : '') }, h('span', { class: 'aq-pic', html: fishSvg(f0, false, d.shiny) }), h('div', { class: 'aq-pn' }, h('b', null, `${d.shiny ? '✨ ' : ''}${d.name ? d.name + ' · ' : ''}${f0.name}`), h('small', null, `${d.g}급 · ${d.cm}cm${f0.tier >= 4 ? ' · 초희귀' : ''}`)),
+      return h('div', { class: 'aq-prow' + (no ? ' off' : '') }, h('span', { class: 'aq-pic', html: fishSvg(f0, false, d.shiny) }), h('div', { class: 'aq-pn' }, h('b', null, `${d.shiny ? '✨ ' : ''}${d.name ? d.name + ' · ' : ''}${f0.name}`), h('small', null, `${d.g ? d.g + '급 · ' : ''}${d.cm}cm${f0.tier >= 4 ? ' · 초희귀' : ''}`)),
         h('button', { class: 'aq-pbtn', disabled: !!no, onClick: () => release(d) }, no || '풀어넣기')); }) : [h('p', { class: 'aq-pnone' }, '가방에 물고기가 없어요. 낚시터에서 잡아 오세요.')])); }
   async function release(d) { if (o.release && !(await o.release(d))) return; bag = bag.filter(x => x !== d); const f = makeFish(d, true); if (f) { fish.push(f); sizeFish(f); } drawBag(); drawInfo(); }
+  async function takeOut(f) { if (o.takeOut && !(await o.takeOut(f.d))) return; fish = fish.filter(x => x !== f); f.el.remove(); bag = [f.d, ...bag]; tip.hidden = true; drawBag(); drawInfo(); }
   async function rename(f) { tip.replaceChildren(); const inp = h('input', { class: 'aq-nin', maxlength: 8, value: f.d.name || '', placeholder: `${f.f0.name} 이름` });
     const save = async () => { const nm = inp.value.trim().slice(0, 8); if (o.rename && !(await o.rename(f.d, nm))) return; f.d.name = nm; f.tag.textContent = nm; f.tag.hidden = !nm; tip.hidden = true; };
     inp.addEventListener('keydown', e => { if (e.key === 'Enter') save(); }); tip.append(h('span', null, '✏️ '), inp, h('button', { class: 'aq-nbtn', onClick: e => { e.stopPropagation(); save(); } }, '저장')); clearTimeout(showTip.t); tip.hidden = false; inp.focus(); }
   tip.onclick = e => e.stopPropagation();
-  function showTip(f) { const T = ['', '흔함', '보기 힘듦', '희귀', '초희귀'][f.tier] || ''; tip.innerHTML = `${f.d.name ? `<b class="nm">「${f.d.name}」</b> ` : ''}${f.shiny ? '✨ 이로치 ' : ''}<b>${f.f0.name}</b> · ${f.g}급 · ${f.d.cm}cm <small>${T}${f.st === 'sleep' ? ' · 쿨쿨 자는 중' : ''}</small> `; if (mode === 'me') tip.append(h('button', { class: 'aq-nbtn', onClick: e => { e.stopPropagation(); rename(f); } }, f.d.name ? '✏️ 이름 바꾸기' : '✏️ 이름 붙이기')); tip.hidden = false; clearTimeout(showTip.t); showTip.t = setTimeout(() => { tip.hidden = true; }, 4000); }
+  function showTip(f) { const T = ['', '흔함', '보기 힘듦', '희귀', '초희귀'][f.tier] || ''; tip.innerHTML = `${f.d.name ? `<b class="nm">「${f.d.name}」</b> ` : ''}${f.shiny ? '✨ 이로치 ' : ''}<b>${f.f0.name}</b> · ${f.g ? f.g + '급 · ' : ''}${f.d.cm}cm <small>${T}${f.st === 'sleep' ? ' · 쿨쿨 자는 중' : ''}</small> `; if (mode === 'me') tip.append(h('button', { class: 'aq-nbtn', onClick: e => { e.stopPropagation(); rename(f); } }, f.d.name ? '✏️ 이름 바꾸기' : '✏️ 이름 붙이기'), h('button', { class: 'aq-nbtn', onClick: e => { e.stopPropagation(); takeOut(f); } }, '🎒 꺼내기')); tip.hidden = false; clearTimeout(showTip.t); showTip.t = setTimeout(() => { tip.hidden = true; }, 4000); }
   view.onclick = () => { tip.hidden = true; };
 
   // ----- 관람석: 벤치 두 개에 동물이 앉는다(왼쪽 벤치 10~29%, 오른쪽 71~90%) -----
@@ -113,7 +121,7 @@ export function openAquarium(o) {
   function react() { const rare = fish.filter(f => isRare(f) && inView(f)); if (!rare.length) return; const f = pick(rare), seatsEl = [...room.children]; if (!seatsEl.length) return;
     const e = pick(seatsEl), i = +e.dataset.i; e.classList.remove('wow'); void e.offsetWidth; e.classList.add('wow'); const em = h('i', { class: 'aq-em' }, pick(['💖', '✨', '❗', '😍', '⭐'])); e.append(em); setTimeout(() => em.remove(), 1600);
     const say = h('div', { class: 'aq-say' }, Math.random() < 0.5 ? `${f.shiny ? '이로치 ' : ''}${f.f0.name}다!!` : pick(WOW)); e.append(say);
-    if ((feeN[i] || 0) < FEE_MAX) { feeN[i] = (feeN[i] || 0) + 1; fee++; const c = h('div', { class: 'aq-coin' }, '+1🪙'); e.append(c); setTimeout(() => c.remove(), 1500); sfx('coin'); drawInfo(); }
+    if (mode === 'me' && (o.fee ? o.fee(i) : (feeN[i] || 0) < FEE_MAX)) { feeN[i] = (feeN[i] || 0) + 1; fee++; const c = h('div', { class: 'aq-coin' }, '+1🪙'); e.append(c); setTimeout(() => c.remove(), 1500); sfx('coin'); drawInfo(); }
     setTimeout(() => { say.remove(); e.classList.remove('wow'); }, 2200); }
   function inView(f) { const x = f.x * ppm, y = f.y * ppm; return x > view.scrollLeft - 20 && x < view.scrollLeft + view.clientWidth + 20 && y > view.scrollTop - 20 && y < view.scrollTop + view.clientHeight + 20; }
   function drawInfo() { const rare = fish.filter(isRare).length, T = TANKS[tank]; info.innerHTML = `${T.n} ${T.w}m×${T.h}m · ${fish.length}/${T.max}마리${T.cap ? ` · ${T.cap}cm까지` : ''} · 귀한 물고기 ${rare} · 관람료 ${fee}🪙${mode === 'pal' ? ' · 구경만 할 수 있어요' : ''}${o.test ? ' (시험판)' : ''}`; }
@@ -127,8 +135,10 @@ export function openAquarium(o) {
         else if (r < 0.12) setSt(f, 'dash', rnd(0.5, 0.9));
         else if (r < 0.2) setSt(f, 'sleep', rnd(6, 12));
         else if (r < 0.42) { turn(f); f.stT = rnd(2, 6); }
+        else if (r < 0.62 && decos.length && !editing) { f.goal = pick(decos); f.stT = rnd(6, 10); } // 용품 구경 가기
         else { f.ty = rnd(H * 0.05, H * 0.85); f.stT = rnd(2, 6); } }
-      const sp = f.base * (f.st === 'dash' ? 3.4 : f.st === 'sleep' ? 0.08 : 1);
+      if (f.goal) visitDeco(f, dt);
+      const sp = f.base * (f.st === 'dash' ? 3.4 : f.st === 'sleep' ? 0.08 : 1) * (f.slow || 1);
       f.x += f.dir * sp * dt;
       f.zT -= dt; if (f.zT <= 0) { f.zT = rnd(6, 14); f.tz = Math.random() < 0.65 ? (f.z < 0.2 ? rnd(0.45, 1) : rnd(-1, -0.15)) : rnd(-1, 1); } // 앞뒤로 오가기: 뒤에 있던 물고기는 앞으로, 앞에 있던 물고기는 뒤로
       { const dz = f.tz - f.z, vz = 0.12 + 0.08 * Math.min(1, f.base); f.z += Math.sign(dz) * Math.min(Math.abs(dz), vz * dt * (0.4 + Math.min(1, Math.abs(dz) * 3))); } const hg = hOf(f), lo = hg / 2 + H * 0.03, hi = Math.max(lo, H * Math.min(0.94, 0.9 - 0.12 * f.z) - hg / 2), ty = f.st === 'sleep' ? hi - hg * 0.1 : f.ty;
@@ -161,8 +171,44 @@ export function openAquarium(o) {
   view.addEventListener('touchend', () => { pinch = null; });
   const orient = () => { const port = window.innerHeight > window.innerWidth; root.classList.toggle('rot', port); root.style.width = (port ? window.innerHeight : window.innerWidth) + 'px'; root.style.height = (port ? window.innerWidth : window.innerHeight) + 'px'; };
   const onResize = () => { orient(); layout(true); }; window.addEventListener('resize', onResize);
-  function close() { try { screen.orientation && screen.orientation.unlock && screen.orientation.unlock(); } catch {} alive = false; cancelAnimationFrame(raf); window.removeEventListener('resize', onResize); root.remove(); o.onClose && o.onClose(); }
+  // ===== 수족관 용품: 놓기·옮기기·뒤집기·보관함 · 물고기 반응 =====
+  let decos = [], editing = false, inv = o.test ? Object.fromEntries(DECO.map((_, k) => [k, 1])) : { ...(o.decoInv || {}) }, selD = null;
+  function demoDeco() { return [[10, 4], [5, 7.5], [17, 12], [6, 15], [26, 18], [29, 21]].map(([k, x], n) => ({ key: 'd' + n, k, x: Math.min(x, TANKS[tank].w - 1), y: 0, fl: n % 2 })); }
+  const dW = d => DECO[d.k][2] * (tank === 1 ? 0.32 : 1);
+  function makeDeco(d) { const el = h('div', { class: 'aq-deco' }, h('img', { src: decoImg(d.k), alt: DECO[d.k][0], draggable: false })), o2 = { d, el }; decos.push(o2); layer.append(el); placeDeco(o2);
+    el.addEventListener('pointerdown', e => { if (!editing) return; e.stopPropagation(); e.preventDefault(); selectDeco(o2); const sx = e.clientX, sy = e.clientY, x0 = d.x, y0 = d.y; el.setPointerCapture(e.pointerId);
+      const mv = ev => { d.x = Math.max(dW(d) / 2, Math.min(W - dW(d) / 2, x0 + (ev.clientX - sx) / ppm)); d.y = Math.max(0, Math.min(H * 0.35, y0 - (ev.clientY - sy) / ppm)); placeDeco(o2); };
+      const up = () => { el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); }; el.addEventListener('pointermove', mv); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); });
+    return o2; }
+  // d.y: 바닥(모래)에서 얼마나 위로 떠 있나(m). 바닥 쪽에 놓을수록 앞(아래)에 보인다
+  function placeDeco(o2) { const d = o2.d, w = dW(d) * ppm, bottom = H * 0.95 - d.y; o2.el.style.width = w + 'px'; o2.el.style.transform = `translate(${(d.x * ppm - w / 2).toFixed(1)}px, ${(bottom * ppm - w).toFixed(1)}px)`; o2.el.style.zIndex = 470 - Math.round(d.y * 10); o2.el.firstChild.style.transform = d.fl ? 'scaleX(-1)' : ''; }
+  const decoBtn = h('button', { class: 'aq-rel aq-decob', onClick: () => setEdit(!editing) }, '✏️ 꾸미기'); root.querySelector('.aq-top').append(decoBtn);
+  const tray = h('div', { class: 'aq-tray', hidden: true }), dmenu = h('div', { class: 'aq-dmenu', hidden: true });
+  root.querySelector('.aq-frame').append(tray, dmenu);
+  function setEdit(on) { editing = on; root.classList.toggle('edit', on); tray.hidden = !on; dmenu.hidden = true; selD = null; decoBtn.textContent = on ? '✔ 꾸미기 끝' : '✏️ 꾸미기'; decos.forEach(x => x.el.classList.remove('sel')); panel.hidden = true; tip.hidden = true;
+    if (on) drawTray(); else saveDeco(); }
+  function drawTray() { const ks = Object.keys(inv).filter(k => inv[k] > 0).map(Number);
+    tray.replaceChildren(h('b', { class: 'aq-trayt' }, '📦 보관함'), ...(ks.length ? ks.map(k => h('button', { class: 'aq-ti', onClick: () => putDeco(k) }, h('img', { src: decoImg(k), alt: '' }), h('small', null, `${DECO[k][0]}${inv[k] > 1 ? ' ×' + inv[k] : ''}`))) : [h('small', { class: 'aq-tnone' }, '보관함이 비었어요. 카피수퍼에서 용품을 사 오세요.')])); }
+  function putDeco(k) { inv[k]--; const d = { key: 'd' + Date.now().toString(36) + Math.floor(Math.random() * 99), k, x: Math.max(dW({ k }) / 2, Math.min(W - dW({ k }) / 2, (view.scrollLeft + view.clientWidth / 2) / ppm)), y: 0, fl: 0 }; selectDeco(makeDeco(d)); drawTray(); sfx('pop'); }
+  function selectDeco(o2) { selD = o2; decos.forEach(x => x.el.classList.toggle('sel', x === o2)); dmenu.replaceChildren(h('b', null, DECO[o2.d.k][0]), h('button', { onClick: () => { o2.d.fl = o2.d.fl ? 0 : 1; placeDeco(o2); } }, '↔ 뒤집기'), h('button', { onClick: () => { inv[o2.d.k] = (inv[o2.d.k] || 0) + 1; o2.el.remove(); decos = decos.filter(x => x !== o2); dmenu.hidden = true; drawTray(); } }, '📦 보관함에 넣기')); dmenu.hidden = false; }
+  function saveDeco() { if (o.saveDeco) o.saveDeco(decos.map(x => x.d), inv); }
+  // 물고기가 용품을 찾아가서 반응한다
+  function visitDeco(f, dt) { const g = f.goal; if (!decos.includes(g)) { f.goal = null; f.slow = 1; return; } const gw = dW(g.d), gx = g.d.x, top = H * 0.95 - g.d.y - gw * 0.8, near = Math.abs(f.x - gx) < gw * 0.6 + f.len * 0.3, act = DECO[g.d.k][3];
+    if (!near) { const want = Math.sign(gx - f.x); if (want && want !== f.dir && !f.turnT) turn(f); f.ty = top + gw * 0.3; f.slow = 1; return; }
+    f.slow = 0.35; f.gt = (f.gt || 0) + dt;
+    if (act === 'circle') { f.ty = top + gw * 0.35 + Math.sin(f.gt * 2) * gw * 0.35; if (Math.abs(f.x - gx) > gw * 0.45 && Math.sign(gx - f.x) !== f.dir && !f.turnT) turn(f); }
+    else if (act === 'hide') { f.tz = 0.9; f.ty = top + gw * 0.5; }
+    else if (act === 'bubble') { f.ty = top - gw * 0.6 - f.gt * 0.4; if (Math.random() < dt * 3) bubbleAt(gx, top + gw * 0.5); }
+    else if (act === 'peck') { f.ty = H * 0.95 - g.d.y - gw * 0.35; if (Math.random() < dt * 1.2) popAt(f, '·'); }
+    else if (act === 'glow') { f.el.classList.add('aq-glint'); }
+    else if (act === 'heart') { if (Math.random() < dt * 0.6) popAt(f, '💗'); }
+    else if (act === 'startle') { if (f.gt > 1.2 && !f.scared) { f.scared = 1; popAt(f, '❗'); setSt(f, 'dash', 0.8); if (Math.sign(f.x - gx) !== f.dir) turn(f, true); f.goal = null; f.slow = 1; return; } }
+    else if (act === 'slide') { f.ty = top + gw * 0.2 + Math.min(1, f.gt / 3) * gw * 0.6; }
+    if (f.gt > 7) { f.goal = null; f.gt = 0; f.slow = 1; f.scared = 0; f.el.classList.remove('aq-glint'); f.zT = 0; } }
+  function bubbleAt(x, y) { const b = h('i', { class: 'aq-bub', style: { zIndex: 600, left: x * ppm + rnd(-8, 8) + 'px', top: y * ppm + 'px' } }); layer.append(b); setTimeout(() => b.remove(), 1400); }
+  function popAt(f, t) { const p2 = h('i', { class: 'aq-pop', style: { zIndex: 950, left: (f.x + f.dir * f.len * 0.4) * ppm + 'px', top: (f.y - f.len * 0.2) * ppm + 'px' } }, t); layer.append(p2); setTimeout(() => p2.remove(), 1200); }
+  function close() { if (editing) saveDeco(); try { screen.orientation && screen.orientation.unlock && screen.orientation.unlock(); } catch {} alive = false; cancelAnimationFrame(raf); window.removeEventListener('resize', onResize); root.remove(); o.onClose && o.onClose(); }
   orient(); try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); } catch {} // 폰이 세로여도 화면을 눕혀서 가로로 보여 준다
-  requestAnimationFrame(() => { build(o.test ? demoFish(tank) : o.fish || []); raf = requestAnimationFrame(loop); });
+  requestAnimationFrame(() => { build(o.test ? demoFish(tank) : o.fish || [], o.test ? demoDeco() : o.deco || []); raf = requestAnimationFrame(loop); });
   return { close };
 }

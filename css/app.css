@@ -2143,3 +2143,20 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .aq-title { flex: 1 1 auto; margin-right: 0; }
 
 .aq-bot { position: absolute; right: 18px; bottom: 18px; z-index: 20; display: flex; align-items: center; gap: 6px; } .aq-bot .aq-tab { padding: 4px 10px; font-size: 12px; } .aq.pal .aq-bot .aq-tabs { display: none; }
+/* 수족관 용품 */
+.aq-deco { position: absolute; left: 0; top: 0; pointer-events: none; transform-origin: 0 0; } .aq-deco img { width: 100%; display: block; -webkit-user-drag: none; user-select: none; }
+.aq.edit .aq-deco { pointer-events: auto; cursor: grab; touch-action: none; outline: 2px dashed rgba(255,255,255,.55); outline-offset: 2px; border-radius: 8px; } .aq.edit .aq-deco.sel { outline: 3px solid #FFCF4D; }
+.aq.edit .aq-f { opacity: .45; pointer-events: none; }
+.aq.pal .aq-decob { display: none !important; }
+.aq-tray { position: absolute; left: 18px; right: 230px; bottom: 16px; z-index: 30; display: flex; gap: 6px; align-items: center; overflow-x: auto; background: rgba(255,248,236,.95); border: 2px solid #E9C46A; border-radius: 16px; padding: 6px 8px; }
+.aq-trayt { flex: none; font-size: 12px; color: #5A3A1E; } .aq-tnone { font-size: 12px; color: #8a6a4a; }
+.aq-ti { flex: none; width: 64px; border: 2px solid #EBDDC4; background: #fff; border-radius: 12px; padding: 3px; display: flex; flex-direction: column; align-items: center; } .aq-ti img { height: 38px; max-width: 56px; object-fit: contain; } .aq-ti small { font-size: 9.5px; color: #5A3A1E; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 58px; }
+.aq-dmenu { position: absolute; left: 50%; top: 64px; transform: translateX(-50%); z-index: 31; display: flex; gap: 6px; align-items: center; background: rgba(255,248,236,.96); border: 2px solid #E9C46A; border-radius: 14px; padding: 5px 10px; color: #5A3A1E; font-size: 13px; }
+.aq-dmenu button { border: 2px solid #E9C46A; background: #FFF3D6; border-radius: 10px; padding: 3px 8px; font-weight: 800; font-size: 12px; color: #5A3A1E; }
+.aq-f.aq-glint .aq-fb { animation: aqGlint 1s ease-in-out infinite; } @keyframes aqGlint { 50% { filter: brightness(1.35); } }
+.aq-pop { position: absolute; font-style: normal; font-weight: 900; color: #fff; font-size: 16px; animation: aqCoin 1.2s ease-out forwards; }
+.aq-bot, .aq-tray, .aq-dmenu { z-index: 2000 !important; }
+.so-aqua { position: absolute; z-index: 1; padding: 0; border: 0; background: none; cursor: pointer; aspect-ratio: 600 / 584; container-type: inline-size; }
+.so-aqua img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 2px 2px rgba(0,0,0,.15)); }
+.so-aqua b { position: absolute; left: 14%; right: 14%; top: 13.5%; height: 17%; display: flex; align-items: center; justify-content: center; font: 900 11.5cqw/1 var(--head); color: #FFF7E6; white-space: nowrap; letter-spacing: .5px; text-shadow: 0 2px 0 #5A3214, 1.5px 0 #5A3214, -1.5px 0 #5A3214, 0 -1.5px #5A3214; }
+.so-aqua:active { transform: scale(.97); }

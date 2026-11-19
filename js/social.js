@@ -13,6 +13,8 @@ import { openCook, SAUCES, SAUCE_PACK, SAUCE_IMG } from './cook.js';
 import { farmCrow } from './farmcrow.js';
 import { createQuest } from './quest.js';
 import { recOf } from './cook.js';
+import { TANKS as AQT, DECO as AQD } from './aquarium.js';
+const AQACT = { peck: '콕콕 쪼기', hide: '숨바꼭질', circle: '빙글빙글', bubble: '거품 타기', glow: '반짝반짝', heart: '하트 뿅', startle: '깜짝 놀라기', slide: '미끄럼 타기' };
 import { openFishing, seaBattle, PIRATE_LOOT, FLEE_FEE, CBOAT_FIX, FISH, TIERS, RODS, ZONES, BAIT, BAIT2, BAIT3, baitIc, BALL, CANNON, CANNON2, WBOAT, BOAT_FIX, fishSvg, SHINY_LIST } from './fishing.js';
 
 // 동물마다: 성격, 좋아하는 것, 싫어하는 것, 상징 액세서리, 제일 좋아하는 선물
@@ -274,6 +276,9 @@ export function mount(el, ctx) {
     // 카피백반: 놀이터 맨 오른쪽(카피수퍼 바로 옆) 가게 자리에 카피백반 건물
     { const cx0 = (TILES - 1) * TILE + 985 / 1213 * TILE, cw = 205 / 1213 * TILE;
       world.append(h('button', { class: 'so-cook', 'aria-label': '카피백반 들어가기', style: { left: cx0 + 'px', width: cw + 'px', bottom: (1 - 324 / 520) * 100 + '%' }, onClick: () => goCook() }, h('img', { src: 'img/cook/house.webp', alt: '' }), h('b', null, '카피백반'))); }
+    // 카피수족관: 놀이터 두 번째 칸(뒤집힌 칸) 왼쪽 가게 자리. 누르면 바로 내 수족관
+    { const ax0 = TILE + 2 / 1213 * TILE, aw = 220 / 1213 * TILE;
+      world.append(h('button', { class: 'so-aqua', 'aria-label': '카피수족관 들어가기', style: { left: ax0 + 'px', width: aw + 'px', bottom: (1 - 326 / 520) * 100 + '%' }, onClick: () => goAqua() }, h('img', { src: 'img/aqua/house.webp', alt: '' }), h('b', null, '카피수족관'))); }
     // 카피수퍼: 바닷가 그림 속 매점 건물. 이 건물을 눌러야 들어간다(간판에 카피바라 얼굴, 아래에 '수퍼')
     const bx = (x, y) => [PW + x / 1213 * TILE, y / 520 * H], [mx0, my0] = bx(218, 176), [mx1, my1] = bx(392, 316);
     const [gx0, gy0] = bx(257, 241), [gx1, gy1] = bx(354, 272), gw = gx1 - gx0, gh = gy1 - gy0; // 유리창 칸: 글씨는 이 안에만
@@ -340,8 +345,24 @@ export function mount(el, ctx) {
     if (me.boat && me.boat.own && !bag.boat) { leaveBoat(); if (me.x > FISH_X - 40) me.x = FISH_X - 60; } else if (me.boat && me.boat.own && me.x > FISH_X + TILE - 30 && !bag.wboat) me.x = FISH_X + TILE - 60; else if (me.boat && me.boat.own && me.x > FISH_X + 2 * TILE - 30 && !bag.cannon) me.x = FISH_X + 2 * TILE - 60; toast(why || '낚싯배 체험이 끝났어요', 3000); drawHp(); }
   const saveBag = patch => { bag = { ...bag, ...patch }; drawHp(); if (!trial && qloan) { const rest = {}; Object.keys(patch).forEach(k => { if (k in QLOAN) qloan.g[k] = patch[k]; else rest[k] = patch[k]; }); if (!Object.keys(rest).length) return Promise.resolve(); patch = rest; } if (trial) { const rest = {}; Object.keys(patch).forEach(k => { if (TRIAL_KEYS.includes(k)) trial.g[k] = patch[k]; else rest[k] = patch[k]; }); if (!Object.keys(rest).length) return Promise.resolve(); patch = rest; } return ctx.store.update('bag/' + ctx.uid, patch).catch(() => {}); };
   const addCoins = n => trial ? Promise.resolve() : ctx.store.tx('money/' + ctx.uid, c => ({ ...(c || {}), c: Math.max(0, ((c && c.c) || 0) + n), total: ((c && c.total) || 0) + Math.max(0, n) })).catch(() => {});
+  let aqua = {}, aquaOpen = false; // 카피수족관: aqua/{uid} = { t: 수족관 등급, fish: {키: 물고기}, deco: {키: 놓인 용품}, inv: {용품 번호: 개수}, fee: {d: 날짜, n: {동물: 관람료 낸 횟수}} }
   let farmBarn = {}, farmSeeds = {}, farmSprk = 0, fishOpen = false, hintAt = 0, fishBtn = null, fishMode = -1, dex = {}, rockKey = '', battle = null, battleDir = 1, camX = null, sbPanel = null, heave = 0;
   const boatD = () => (bag.boatD == null ? 100 : bag.boatD), cboatD = () => (bag.cboatD == null ? 100 : bag.cboatD), BOAT_MIN = 20; // 흰 배 · 카피보트 내구도
+  // ----- 카피수족관 -----
+  const aqFish = () => Object.entries(aqua.fish || {}).filter(([, v]) => v).map(([key, v]) => ({ key, ...v }));
+  const bagFish = () => Object.entries(bag.fish || {}).filter(([, v]) => v && v.id && !v.pearl).map(([key, v]) => ({ key, ...v }));
+  const aqRareName = () => { const r = aqFish().map(d => ({ d, f: fishOf(d.id) })).filter(x => x.f && (x.d.g === 'S' || x.f.tier >= 4 || x.d.shiny)).sort((a, b) => (b.f.tier || 0) - (a.f.tier || 0) || (b.d.shiny ? 1 : 0) - (a.d.shiny ? 1 : 0))[0]; return r ? (r.d.shiny ? '이로치 ' : '') + r.f.name : ''; };
+  async function goAqua() { if (fishOpen || battle || aquaOpen) return; if (me.boat) return toast('배에서 내린 뒤에 들어갈 수 있어요'); if (trial) return toast('체험 중에는 수족관에 못 들어가요');
+    if (!aqua.t) return modal({ title: '🐠 카피수족관', body: h('p', { class: 'center' }, '아직 수족관이 없어요. 카피수퍼에서 수족관을 사 오면 잡은 물고기를 넣고 구경할 수 있어요.'), actions: [{ label: '닫기' }, { label: '카피수퍼 가기', primary: true, onClick: () => openShop('buy') }] });
+    const m = await import('./aquarium.js'); aquaOpen = true; keys.clear(); const AQ = 'aqua/' + ctx.uid, cleanFish = d => { const v = { ...d }; delete v.key; return v; };
+    m.openAquarium({ tank: aqua.t, fish: aqFish(), deco: Object.values(aqua.deco || {}).filter(Boolean), decoInv: aqua.inv || {}, me: ctx.me.name, partner: pid() ? ctx.nameOf(pid()) : '', bag: bagFish,
+      release: async d => { const v = cleanFish(d); const left = { ...(bag.fish || {}) }; delete left[d.key]; bag = { ...bag, fish: left }; await ctx.store.update('bag/' + ctx.uid + '/fish', { [d.key]: null }).catch(() => {}); await ctx.store.update(AQ + '/fish', { [d.key]: v }).catch(() => {}); return true; },
+      takeOut: async d => { const v = cleanFish(d); delete v.name; await ctx.store.update(AQ + '/fish', { [d.key]: null }).catch(() => {}); bag = { ...bag, fish: { ...(bag.fish || {}), [d.key]: v } }; await ctx.store.update('bag/' + ctx.uid + '/fish', { [d.key]: v }).catch(() => {}); return true; },
+      rename: async (d, nm) => { await ctx.store.update(AQ + '/fish/' + d.key, { name: nm || null }).catch(() => {}); return true; },
+      fee: i => { const today = ymd(), f = aqua.fee && aqua.fee.d === today ? aqua.fee : { d: today, n: {} }, n = (f.n || {})[i] || 0; if (n >= 3) return false; aqua = { ...aqua, fee: { d: today, n: { ...(f.n || {}), [i]: n + 1 } } }; ctx.store.update(AQ, { fee: aqua.fee }).catch(() => {}); addCoins(1); return true; },
+      saveDeco: (list, inv) => { const deco = Object.fromEntries(list.map(d => [d.key, { key: d.key, k: d.k, x: +d.x.toFixed(2), y: +d.y.toFixed(2), fl: d.fl ? 1 : 0 }])); aqua = { ...aqua, deco, inv }; ctx.store.update(AQ, { deco: Object.keys(deco).length ? deco : null, inv }).catch(() => {}); },
+      loadPartner: async () => { if (!pid()) return null; const v = await ctx.store.get('aqua/' + pid()).catch(() => null); if (!v || !v.t) return null; return { tank: v.t, fish: Object.values(v.fish || {}).filter(Boolean), deco: Object.values(v.deco || {}).filter(Boolean) }; },
+      onClose: () => { aquaOpen = false; lastT = performance.now(); scores(); } }); }
   function goCook() { if (fishOpen || battle) return; if (me.boat) return toast('배에서 내린 뒤에 들어갈 수 있어요'); if (trial) return toast('체험 중에는 카피백반에 못 들어가요'); fishOpen = true; keys.clear(); sfx('pop');
     openCook({ ctx, animals: ANIMALS.map((a, i) => ({ i, name: a.name, svg: animalSvg(i) })), svgFull: (i, m) => animalSvg(i, true, m), A, affinity: (i, d) => setRel(i, { a: A(i) + d }), toned,
       fish: () => Object.entries(bag.fish || {}).filter(([, v]) => v).map(([k, v]) => [k, v, fishOf(v.id)]),
@@ -569,6 +590,7 @@ export function mount(el, ctx) {
     o.st = 'walk'; o.wait = 0; o.e.classList.add('walk'); o.e.classList.toggle('left', o.tx < o.x);
   }
   function step(now) {
+    if (aquaOpen) { lastT = now; raf = requestAnimationFrame(step); return; } // 수족관을 보는 동안 놀이터는 멈춘다
     if (!alive || !playing) return; const wall = ctx.store.now(), dt = Math.min(0.1, (now - lastT) / 1000), t = now / 1000, paused = fishOpen || !!battle || vnOn || !!document.querySelector('.modal-wrap'); lastT = now;
     // 나: 화살표로 걷고, 화면이 따라온다
     const mx = paused ? 0 : (keys.has('R') ? 1 : 0) - (keys.has('L') ? 1 : 0), my = paused ? 0 : (keys.has('U') ? 1 : 0) - (keys.has('D') ? 1 : 0);
@@ -672,6 +694,7 @@ export function mount(el, ctx) {
         const goldPool = base => [base, ...RAREGREET.map(f => toned(i, f(ctx.me.name)))];
         if (missOf(i)) { setRel(i, { miss: vit.missAt }); pop(o.e, line(i, 'miss', toned(i, pick(MISS)(ctx.me.name))), 'say long'); animalVoice(i); }
         else if (bag.rumorAt && shiny && !(mine[i] || {}).rumor) { setRel(i, { rumor: 1 }); pop(o.e, line(i, 'rumor', toned(i, pick(RUMOR)(ctx.me.name))), 'say long'); } // 첫 황금템 소문을 듣고 달려온다(동물마다 한 번)
+        else if (!aquaOpen && aqua.t && (mine[i] || {}).aqInv !== ymd() && Math.random() < 0.3 && aqRareName()) { setRel(i, { aqInv: ymd() }); pop(o.e, toned(i, `${aqRareName()} 잡았다며! 나 수족관에 보러 가도 돼?`), 'say long'); } // 수족관에 귀한 물고기가 있으면 하루 한 번 보러 가도 되냐고 묻는다
         else if (near100 && now > (o.cakeAt || 0)) { o.cakeAt = now + 60000; pop(o.e, line(i, 'cake', toned(i, pick(CAKE_HINT))), 'say long'); } // 단짝 직전: 케이크가 필요하다고 알려 준다
         else if (shineN >= 6 && (goldOk || (!kingTrial && (taxDue(mine[i], wall) || wall - ((mine[i] || {}).bowAt || 0) >= BOW_MS)) || kingTrial)) { // 대왕 폐하: 10분에 한 번 절을 하고, 하루에 한 번 세금 20코인을 바친다
           const r = mine[i] || {}, due = !kingTrial && taxDue(r, wall), bow = kingTrial ? now > (o.tbow || 0) : wall - (r.bowAt || 0) >= BOW_MS; if (kingTrial) o.tbow = now + 12000; pop(o.e, due ? '대왕 폐하! 세금 20코인 바치옵니다 🪙' : gold('king', KING), 'say long');
@@ -968,6 +991,13 @@ export function mount(el, ctx) {
         { ic: '🧪', name: '회복 포션', sub: `${won(POTION[0])} · 체력 +${POTION[1]} · 가진 것 ${bag.potion || 0}개`, price: POTION[0], line: hpNow() < HP_MAX ? GP.potion : '지금은 쌩쌩하구먼. 그래도 하나쯤 챙겨 두면 든든하지.', act: () => buy(POTION[0], { potion: (bag.potion || 0) + 1 }) },
         ['sec', '🧂 카피백반 양념'],
         ...Object.entries(SAUCES).map(([k, [ic, nm, price]]) => ({ ic: SAUCE_IMG[k] ? `<img src="${SAUCE_IMG[k]}" alt="${nm}" style="width:100%;height:100%;object-fit:contain">` : ic, name: `${nm} (${SAUCE_PACK}번 쓰기)`, sub: `${won(price)} · 가진 것 ${((bag.sauce || {})[k]) || 0}번`, price, line: '카피백반 요리에 넣는 양념이여. 손님 입맛 따라 골라 쓰게.', act: () => buy(price, { sauce: { ...(bag.sauce || {}), [k]: (((bag.sauce || {})[k]) || 0) + SAUCE_PACK } }) })),
+        ['sec', '🐠 카피수족관'],
+        ...[1, 2, 3].map(t => { const T = AQT[t], own = aqua.t === t, other = aqua.t && !own; return { big: 1, ic: `<img src="img/aqua/tank${t}.webp" alt="" style="width:100%;height:100%;object-fit:contain">`, name: T.n, sub: own ? '가지고 있어요 · 놀이터의 카피수족관 건물을 눌러요' : other ? `${won(T.price)} · 수족관은 하나만! 지금 수족관을 판매 탭에서 팔면 살 수 있어요` : `${won(T.price)} · 물고기 ${T.max}마리 · ${T.cap ? `${T.cap}cm까지` : '큰 물고기도 OK'}`, price: T.price, off: !!aqua.t,
+          line: own ? '자네 수족관이구먼. 물고기들이 잘 크고 있나?' : other ? '수족관은 한 집에 하나뿐이여. 지금 걸 팔고 오게.' : t === 1 ? '작은 수족관이지만 아기자기하지. 초급 바다 물고기는 다 들어가네.' : t === 2 ? '이 정도면 고래킹도 헤엄친다네. 마릿수만 조금 적지.' : '최고급이여! 넓고, 물고기도 60마리나 들어가지.',
+          act: async () => { if (trial) { say('체험 중에는 거래 못 하네.'); return false; } if (aqua.t) return false; if (!(await ctx.spend(T.price))) { say(pick(GP.poor)); return false; } aqua = { ...aqua, t }; await ctx.store.update('aqua/' + ctx.uid, { t }).catch(() => {}); return true; } }; }),
+        ['sec', '🐚 수족관 용품'],
+        ...AQD.map(([nm, price, , act], k) => ({ ic: `<img src="img/aqua/d/${k}.webp" alt="" style="width:100%;height:100%;object-fit:contain">`, name: nm, sub: `${won(price)} · ${AQACT[act]} · 가진 것 ${((aqua.inv || {})[k] || 0) + Object.values(aqua.deco || {}).filter(d => d && d.k === k).length}개`, price,
+          line: aqua.t ? `${nm}이라… 물고기들이 ${AQACT[act]} 하며 좋아할 게야.` : '수족관부터 사야 꾸밀 수 있지만, 미리 사 둬도 되네.', act: async () => { if (trial) { say('체험 중에는 거래 못 하네.'); return false; } if (!(await ctx.spend(price))) { say(pick(GP.poor)); return false; } const n = ((aqua.inv || {})[k] || 0) + 1; aqua = { ...aqua, inv: { ...(aqua.inv || {}), [k]: n } }; await ctx.store.update('aqua/' + ctx.uid + '/inv', { [k]: n }).catch(() => {}); return true; } })),
         ['note', '동물마다 제일 좋아하는 선물이 있어요. 그걸 주면 친밀도가 1.5배 올라요. 포션은 화면 위 🧪 를 눌러 마셔요.'],
         ['sec', '🚤 배·낚시 용품'],
         { ic: '🚤', name: '카피보트', sub: bag.boat ? '가지고 있어요 · 바닷가 물에서 🚤 내 보트' : `${won(BOAT_PRICE)} · 바닷가에서 타면 파도가 일어요`, price: BOAT_PRICE, off: bag.boat, line: bag.boat ? '이미 한 척 있잖나. 잘 타고 다니게, 허허.' : '바닷가에서 타면 물살이 시원하게 갈라지지. 초급 낚시터까지는 이걸로 충분하네.', act: () => buy(BOAT_PRICE, { boat: true }) },
@@ -1019,6 +1049,11 @@ export function mount(el, ctx) {
       const goods = [...Object.entries(GIFTS).filter(([k]) => bag[k] > 0).map(([k, [ic, nm, price]]) => ({ ic, name: nm, sub: `${won(half(price))}에 팔아요 · 가진 것 ${bag[k]}개`, price: half(price), line: `${nm} 말인가? 선물로 주면 동물들이 좋아할 텐데… 반값 ${won(half(price))}이여.`, act: () => sell(half(price), () => saveBag({ [k]: bag[k] - 1 })) })),
         (bag.potion || 0) > 0 && { ic: '🧪', name: '회복 포션', sub: `${won(half(POTION[0]))}에 팔아요 · 가진 것 ${bag.potion}개`, price: half(POTION[0]), line: '포션은 아껴 두는 게 좋을 텐데? 그래도 판다면 사 주지.', act: () => sell(half(POTION[0]), () => saveBag({ potion: bag.potion - 1 })) }].filter(Boolean);
       if (goods.length) out.push(['sec', '🎁 선물·회복'], ...goods);
+      { const aq = []; if (aqua.t) { const T = AQT[aqua.t], p = half(T.price), nf = aqFish().length; aq.push({ big: 1, ic: `<img src="img/aqua/tank${aqua.t}.webp" alt="" style="width:100%;height:100%;object-fit:contain">`, name: T.n, sub: `${won(p)}에 팔아요 · 안의 물고기 ${nf}마리는 가방으로, 용품은 보관함으로`, price: p, line: `수족관을 판다고? 물고기들은 가방에 잘 담아 주겠네. ${won(p)}이여.`,
+          act: () => sell(p, async () => { const back = {}; aqFish().forEach(d => { const v = { ...d }; delete v.key; delete v.name; back[d.key] = v; }); if (Object.keys(back).length) { bag = { ...bag, fish: { ...(bag.fish || {}), ...back } }; await ctx.store.update('bag/' + ctx.uid + '/fish', back).catch(() => {}); }
+            const inv = { ...(aqua.inv || {}) }; Object.values(aqua.deco || {}).forEach(d => { if (d) inv[d.k] = (inv[d.k] || 0) + 1; }); aqua = { inv }; await ctx.store.set('aqua/' + ctx.uid, { inv }).catch(() => {}); }) }); }
+        Object.entries(aqua.inv || {}).filter(([, n]) => n > 0).forEach(([k, n]) => { const [nm, price] = AQD[k] || []; if (!nm) return; const p = half(price); aq.push({ ic: `<img src="img/aqua/d/${k}.webp" alt="" style="width:100%;height:100%;object-fit:contain">`, name: nm, sub: `${won(p)}에 팔아요 · 보관함에 ${n}개`, price: p, line: `${nm} 말인가? 반값은 쳐 주지.`, act: () => sell(p, async () => { const m2 = (aqua.inv[k] || 0) - 1; aqua = { ...aqua, inv: { ...aqua.inv, [k]: m2 } }; await ctx.store.update('aqua/' + ctx.uid + '/inv', { [k]: m2 > 0 ? m2 : null }).catch(() => {}); }) }); });
+        if (aq.length) out.push(['sec', '🐠 수족관'], ...aq); }
       if (out.length === 2 && !L.length) out.push(['note', '팔 물건이 없어요. 물고기를 잡거나 물건을 사 오면 여기서 팔 수 있어요.']);
       return out; }
     const ico = x => (typeof x !== 'string' ? x : x.startsWith('<') ? h('span', { class: 'so-rodic', html: x }) : h('span', null, x));
@@ -1063,6 +1098,7 @@ export function mount(el, ctx) {
     ctx.store.on('bag/' + ctx.uid, v => { rawBag = v || {}; bag = mergeBag(); drawHp(); }),
     ctx.store.on('socialchat', onChat, { limit: 20 }),
     ctx.store.on('fishdex/' + ctx.uid, v => { dex = v || {}; }),
+    ctx.store.on('aqua/' + ctx.uid, v => { aqua = v || {}; }),
     ctx.store.on('farm/' + ctx.uid + '/barn', v => { farmBarn = v || {}; }),
     ctx.store.on('farm/' + ctx.uid + '/seeds', v => { farmSeeds = v || {}; }),
     ctx.store.on('farm/' + ctx.uid + '/sprkInv', v => { farmSprk = v || 0; }),
