@@ -2180,8 +2180,10 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fluffy .so-an .so-body, .fluffy .so-me { filter: none; }
 .swim .fl-sh, .onboat .fl-sh, .onpal .fl-sh, .dunk .fl-sh, .sb-crew .fl-sh, .fs-me .fl-sh { display: none; }
 /* 보송 그림체: 배에 타면 돛대 뒤(고물 쪽)에 조금 높이 앉는다 */
-.fluffy .so-me.onboat { margin-left: -52px; margin-bottom: 2px; transform-origin: 50% calc(100% + 18px); z-index: 13 !important; }
-.fluffy .so-me.onboat svg { clip-path: inset(-80% -80% 34% -80%); scale: .84; transform-origin: 50% 100%; }
+.fluffy .so-me.onboat { margin-left: -49px; margin-bottom: 2px; transform-origin: calc(50% + var(--bx, 9px) + 13px) calc(100% + 18px); z-index: 13 !important; }
+.fluffy .so-me.onboat svg { clip-path: inset(-80% -80% 28.5% -80%); scale: var(--f, 1) 1; transform-origin: 50% 100%; }
+.fluffy .so-me.onboat.onpal { margin-left: -36px; transform-origin: calc(50% + var(--bx, 9px)) calc(100% + 16px); } .fluffy .so-me.onboat.onpal svg { scale: 1; }
+.fluffy .so-sign { z-index: 3; }
 .fl-item { width: 36px; height: 36px; display: block; object-fit: contain; }
 /* ===== 보송 그림체: 친목회 화면을 카피바라 인형 게임기처럼 ===== */
 .so-chatbtn { display: none; }

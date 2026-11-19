@@ -75,6 +75,11 @@ function noise(dest, at, dur, vol, freq = 1200, q = 0.8, type = 'bandpass') {
   g.gain.setValueAtTime(vol, at); g.gain.exponentialRampToValueAtTime(0.0001, at + dur); s.connect(f).connect(g).connect(dest); s.start(at); s.stop(at + dur + 0.02);
 }
 const SFX = {
+  // 게임기 버튼: 방향키(폭신한 딸깍), A(높게 통), B(낮게 통), 말하기(뾱)
+  key: (d, t) => { noise(d, t, 0.03, 0.1, 1800, 0.8); tone(d, 'sine', 300, 210, t, 0.06, 0.1); },
+  keyA: (d, t) => { noise(d, t, 0.02, 0.07, 3000, 0.8); tone(d, 'triangle', 880, 660, t, 0.09, 0.12); },
+  keyB: (d, t) => { noise(d, t, 0.02, 0.07, 2400, 0.8); tone(d, 'triangle', 620, 440, t, 0.09, 0.12); },
+  keyC: (d, t) => { tone(d, 'sine', 700, 1050, t, 0.07, 0.1); tone(d, 'sine', 1050, 1400, t + 0.06, 0.06, 0.07); },
   // 낚시: 휘두르기, 풍덩, 입질, 릴 감기, 줄 끊김, 큰 물고기, 대포
   cast: (d, t) => { noise(d, t, 0.22, 0.3, 1600, 0.6); tone(d, 'sine', 500, 1500, t, 0.2, 0.07); tone(d, 'triangle', 2400, 3200, t + 0.2, 0.5, 0.025); },
   splash: (d, t) => { noise(d, t, 0.09, 0.32, 900, 0.5); noise(d, t + 0.05, 0.32, 0.22, 2600, 0.5); tone(d, 'sine', 420, 130, t, 0.22, 0.2); tone(d, 'sine', 1300, 1900, t + 0.2, 0.07, 0.05); },
