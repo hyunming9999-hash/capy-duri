@@ -2165,3 +2165,17 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .so-row.aqt > span img { display: block; height: auto; filter: drop-shadow(0 3px 3px rgba(0,0,0,.18)); }
 .so-row.aqt1 > span img { width: 22%; } .so-row.aqt2 > span img { width: 62%; } .so-row.aqt3 > span img { width: 100%; }
 .so-row.aqt3 { border-color: #E9C46A; background: linear-gradient(160deg, #FFFBEA, #FFF1C8); box-shadow: 0 0 0 2px rgba(255,215,94,.35); } .so-row.aqt3 b { color: #B8860B; }
+
+/* 보송 그림체(시험판 ?fluffy=1): 배경만 새 그림으로 바꾼다 */
+.fluffy .so-bg { background-image: url(../img/fl/bg/playground.webp); }
+.fluffy .so-bg.so-beach { background-image: url(../img/fl/bg/beach.webp); }
+.fluffy .so-bg.so-sea, .fluffy .so-bg.so-sea2 { background-image: url(../img/fl/bg/sea.webp); }
+.fluffy .fs-surf { background-image: url(../img/fl/bg/sea.webp); }
+.fluffy .fs-under.z1 { background-image: url(../img/fl/bg/under1.webp); } .fluffy .fs-under.z2 { background-image: url(../img/fl/bg/under2.webp); } .fluffy .fs-under.z3 { background-image: url(../img/fl/bg/under3.webp); }
+.fluffy .fm-bg { background-image: url(../img/fl/bg/farm.webp); }
+.fluffy .sb-ball { background: url(../img/fl/o/ball.webp) center / contain no-repeat; border: 0; border-radius: 0; box-shadow: none; }
+.fluffy .fs-rod, .fluffy .fs-rod[data-t="2"], .fluffy .fs-rod[data-t="3"] { width: 13px; margin-left: -4px; background: url(../img/fl/o/rod1.webp) center bottom / 100% 100% no-repeat; border: 0; border-radius: 0; }
+.fluffy .fs-rod[data-t="2"] { background-image: url(../img/fl/o/rod2.webp); } .fluffy .fs-rod[data-t="3"] { background-image: url(../img/fl/o/rod3.webp); }
+.fluffy .fs-rod::after, .fluffy .fs-rod[data-t="2"]::after, .fluffy .fs-rod[data-t="3"]::after { display: none; }
+.fluffy .so-an .so-body, .fluffy .so-me { filter: none; }
+.swim .fl-sh, .onboat .fl-sh, .onpal .fl-sh, .dunk .fl-sh, .sb-crew .fl-sh, .fs-me .fl-sh { display: none; }

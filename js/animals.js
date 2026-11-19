@@ -1,3 +1,4 @@
+import { FLUFFY, animalImg, animalSitImg, gullImg, SHADOW } from './fluffy.js';
 // 동물 손님 30종 — 카피바라 캐릭터와 같은 틀(둥근 네모 얼굴, 멀리 떨어진 점 눈, 볼터치)로 직접 그린 SVG
 const INK = '#3B2618';
 const mir = s => s + `<g transform="matrix(-1 0 0 1 120 0)">${s}</g>`; // 왼쪽 것을 오른쪽에도
@@ -78,7 +79,8 @@ const MOOD_EYES = {
   think: c => mir(`<circle cx="25.5" cy="38.5" r="3.4" fill="${c}"/><path d="M16 31 L31 32" stroke="${c}" stroke-width="2.6" stroke-linecap="round"/>`),
   shy: c => mir(`<path d="M18.5 43 q5.5 -7 11 0" fill="none" stroke="${c}" stroke-width="3.2" stroke-linecap="round"/><ellipse cx="18.5" cy="54" rx="7" ry="4.6" fill="#FF6F8F" opacity=".7"/>`) };
 export const MOODS = Object.keys(MOOD_EYES).concat(['angry']);
-export function animalSvg(i, full, mood) {
+export function animalSvg(i, full, mood, own) {
+  if (FLUFFY && typeof i === 'number') return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 ${full ? 158 : 112}">${full ? SHADOW : ''}${animalImg(i % ANIMALS.length, mood, own)}</svg>`; // 보송 그림체(시험판)
   const a = typeof i === 'object' ? i : ANIMALS[i % ANIMALS.length], d = a.dark || shade(a.body, -0.38), ey = a.eyeY || 0;
   const ear = EAR[a.ear](a.earC || a.body, a.inner, a.es || 1);
   const eyeCol = a.eye && a.eye !== '#fff' ? a.eye : INK, e0 = a.eye === '#fff' ? mir(`<circle cx="24" cy="41" r="4" fill="#fff"/><circle cx="24.6" cy="41.4" r="2.2" fill="${INK}"/>`) : eyes(eyeCol);
@@ -90,6 +92,7 @@ export function animalSvg(i, full, mood) {
 
 // 뒷모습(앉아서 무언가를 바라보는 모습): 얼굴 없이 뒤통수·귀·등·꼬리만. 귀 안쪽은 안 보이니 겉색으로
 export function animalBackSvg(i) {
+  if (FLUFFY && typeof i === 'number') return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158">${animalSitImg(i % ANIMALS.length)}</svg>`;
   const a = typeof i === 'object' ? i : ANIMALS[i % ANIMALS.length], c = a.earC || a.body, bc = a.earC && a.name === '판다' ? '#3B3B44' : a.body, bd = shade(bc, -0.25), hd = shade(a.body, -0.08);
   const ear = EAR[a.ear](c, shade(c, -0.12), a.es || 1);
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158">${a.back ? a.back(a.body) : ''}<ellipse cx="60" cy="129" rx="40" ry="6" fill="rgba(60,30,10,.25)"/><path d="M24 128 Q20 84 60 80 Q100 84 96 128 Z" fill="${bc}"/><path d="M30 126 Q28 92 60 88" fill="none" stroke="${shade(bc, 0.25)}" stroke-width="4" stroke-linecap="round" opacity=".5"/><ellipse cx="24" cy="108" rx="8" ry="14" fill="${bd}" transform="rotate(10 24 108)"/><ellipse cx="96" cy="108" rx="8" ry="14" fill="${bd}" transform="rotate(-10 96 108)"/><ellipse cx="60" cy="122" rx="9" ry="7" fill="${shade(bc, 0.3)}"/><g class="an-head">${ear}${head(hd)}<ellipse cx="60" cy="30" rx="30" ry="10" fill="#fff" opacity=".18"/><path d="M57 22 q3 6 6 0" fill="none" stroke="${shade(a.body, -0.3)}" stroke-width="2" stroke-linecap="round" opacity=".5"/></g></svg>`;
@@ -98,6 +101,7 @@ export function animalBackSvg(i) {
 // 갈매기 해적단: 친구들과 같은 그림체의 갈매기에 해적 모자(선장)나 두건(졸병), 안대, 찌푸린 눈썹을 얹는다
 const GULL = A('갈매기', '#FFFDF7', '#FFB52E', 'none', '', 'beak', { dark: '#C97F0E', over: () => mir('<path d="M9 52 q10 -6 16 4 q-2 14 -12 16 q-6 -6 -4 -20z" fill="#C9D3DE"/>') });
 export function gullSvg(boss) {
+  if (FLUFFY) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158">${gullImg(boss)}</svg>`;
   const top = boss ? '<path d="M14 20 Q60 -34 106 20 Q60 6 14 20z" fill="#2B2B33" stroke="#15151A" stroke-width="2" stroke-linejoin="round"/><path d="M6 22 Q60 2 114 22 Q60 14 6 22z" fill="#15151A"/><path d="M14 18 Q60 0 106 18" fill="none" stroke="#E2B33C" stroke-width="2.4"/><circle cx="60" cy="0" r="7" fill="#fff"/><circle cx="57.4" cy="-1" r="1.6" fill="#15151A"/><circle cx="62.6" cy="-1" r="1.6" fill="#15151A"/><path d="M52 8 l16 6M68 8 l-16 6" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>'
     : '<path d="M11 30 Q14 8 60 8 Q106 8 109 30 Q60 16 11 30z" fill="#D0282F" stroke="#8A1218" stroke-width="2" stroke-linejoin="round"/><circle cx="34" cy="17" r="2.6" fill="#fff"/><circle cx="60" cy="13" r="2.6" fill="#fff"/><circle cx="86" cy="17" r="2.6" fill="#fff"/><path d="M107 26 q14 2 12 14 q-8 -2 -12 -6z" fill="#D0282F" stroke="#8A1218" stroke-width="1.6"/>';
   const patch = boss ? '<path d="M10 30 L110 36" stroke="#15151A" stroke-width="2.6"/><ellipse cx="96" cy="42" rx="10" ry="9" fill="#15151A"/>' : '';

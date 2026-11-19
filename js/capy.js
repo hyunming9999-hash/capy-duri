@@ -1,5 +1,6 @@
 // 2등신 카피바라 캐릭터 (직접 그린 SVG)
 import { wearSvg, hatSvg, shoeSvg } from './clothes.js';
+import { FLUFFY, capyBody, capyWear, capyRare, SHADOW } from './fluffy.js';
 export const COLORS = {
   brown: { name: '밤색', body: '#BC8C60', dark: '#85593A', light: '#E6C7A1' },
   cream: { name: '크림', body: '#E3C79C', dark: '#AC8656', light: '#F7EBD3' },
@@ -64,6 +65,8 @@ export function capy(o = {}) {
   const pin = !o.pin || back || o.head ? ''
     : PIN_CHEST.has(o.pin) ? `<circle cx="44" cy="93" r="9.5" fill="#fff" stroke="#E9C46A" stroke-width="2.2"/><text x="44" y="97.6" font-size="12.5" text-anchor="middle">${o.pin}</text>`
     : `<text x="98" y="115" font-size="23" text-anchor="middle" transform="rotate(-12 98 108)">${o.pin}</text><ellipse cx="92" cy="109" rx="5.5" ry="4.5" fill="${c.body}"/>`;
+  const fl = FLUFFY ? capyBody(o.color, o.face, back, o.own) : null, flW = fl ? capyWear(o, o.own, back) : { shoe: '', body: '', hat: '' }, flTop = fl ? (flW.hat || (o.hat ? '' : acc(o.acc))) + (o.face === 'sleepy' && !back ? '<text x="102" y="20" font-size="15" font-weight="700" fill="#8FB8DE" font-family="sans-serif">z</text><text x="111" y="9" font-size="10" font-weight="700" fill="#8FB8DE" font-family="sans-serif">z</text>' : '') : ''; // 보송 그림체(시험판): 몸·얼굴은 그림 한 장, 옷·모자는 그 위에 겹친다
+  if (o.head && fl) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 112">${fl.whole}${flTop}</svg>`;
   if (o.head) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 112">${head}</svg>`;
   const cl = o.top || o.bottom ? wearSvg(o.top, o.bottom) : { under: '', top: '', over: '' };
   // 신발: 왼발 한 짝을 그리고 오른발엔 좌우로 뒤집어 신긴다. 발과 같은 무리(cf-l·cf-r)라 걸을 때 발과 함께 움직인다.
@@ -81,9 +84,11 @@ export function capy(o = {}) {
   let glow = '', gem = '', wearB = '', wearM = '';
   if (o.rare && o.rare.i != null && !back) { const gid = 'rg' + (++rareN), list = (o.rare.list || [o.rare.i]).slice(0, 6), n = list.length; // 여섯 개까지 함께 걸친다. 많이 걸칠수록 빛이 커진다
     glow = `<defs><radialGradient id="${gid}"><stop offset="0" stop-color="#FFFBD6" stop-opacity=".95"/><stop offset=".5" stop-color="#FFE066" stop-opacity="${Math.min(0.95, 0.5 + n * 0.08)}"/><stop offset="1" stop-color="#FFC93C" stop-opacity="0"/></radialGradient></defs><circle cx="60" cy="74" r="${72 + n * 4}" fill="url(#${gid})"><animate attributeName="r" values="${64 + n * 4};${78 + n * 4};${64 + n * 4}" dur="2.2s" repeatCount="indefinite"/></circle>`;
-    list.forEach(k => { const [dx, dy, sc] = RARE_FIT[k] || [0, 0, 1], S = 224.7 * sc, img = `<image href="img/rare/${k}.webp" x="${(60 + dx - S / 2).toFixed(1)}" y="${(57 + dy - S / 2).toFixed(1)}" width="${S.toFixed(1)}" height="${S.toFixed(1)}"/>`;
+    if (!fl) list.forEach(k => { const [dx, dy, sc] = RARE_FIT[k] || [0, 0, 1], S = 224.7 * sc, img = `<image href="img/rare/${k}.webp" x="${(60 + dx - S / 2).toFixed(1)}" y="${(57 + dy - S / 2).toFixed(1)}" width="${S.toFixed(1)}" height="${S.toFixed(1)}"/>`;
       if (RARE_SHOE.has(k)) return; if (RARE_BACK.has(k)) wearB += img; else if (RARE_BODY.has(k)) wearM += img; else if (k === 2 && list.some(x => RARE_HOLD.has(x))) gem += `<g transform="matrix(-1 0 0 1 120 0)">${img}</g>`; else gem += img + (RARE_HOLD.has(k) ? `<ellipse cx="${96 + dx * 0.6}" cy="104" rx="7.5" ry="6.5" fill="${c.body}"/><path d="M${91 + dx * 0.6} 101 q5 -3 10 0" fill="none" stroke="${c.dark}" stroke-width="1.4" stroke-linecap="round" opacity=".6"/>` : ''); });
     gem += [[4, 62, 0], [116, 50, .6], [10, 126, 1.1], [112, 120, 1.6], [60, -34, .3], [-10, 22, .9], [130, 92, 1.3], [30, -24, .5]].map(([x, y, d]) => `<path d="M${x} ${y - 10} l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="#FFFDF0" stroke="#F0C24A" stroke-width="1"><animate attributeName="opacity" values="0.15;1;0.15" dur="1.6s" begin="${d}s" repeatCount="indefinite"/></path>`).join(''); }
+  const flR = fl && o.rare && o.rare.i != null && !back ? capyRare((o.rare.list || [o.rare.i]).slice(0, 6), o.own) : { over: '', shoe: '' };
+  if (fl) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158"${glow ? ' style="overflow:visible"' : ''}>${glow}${SHADOW}${fl.feet}${fl.body}${flR.shoe || flW.shoe}${flW.body}${flTop}${flR.over}${pin}${gem}</svg>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158"${glow ? ' style="overflow:visible"' : ''}>${glow}${wearB}${body}${wearM}${shoeToe}${head}${pin}${gem}</svg>`;
 }
 
@@ -91,6 +96,6 @@ export function capyEl(o = {}, cls = '') {
   const d = document.createElement('span');
   d.className = 'capy ' + cls; d.innerHTML = capy(o); return d;
 }
-export const capyUrl = o => 'data:image/svg+xml;utf8,' + encodeURIComponent(capy(o));
+export const capyUrl = o => 'data:image/svg+xml;utf8,' + encodeURIComponent(capy(FLUFFY ? { ...o, own: true } : o));
 export const yuzuSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60"><circle cx="30" cy="33" r="23" fill="#FFC93C" stroke="#E0A21C" stroke-width="3"/><path d="M30 11 q-13 -12 -23 -3 q11 9 23 3z" fill="#6FB24F" stroke="#4E8E36" stroke-width="2"/><circle cx="22" cy="27" r="2" fill="#E0A21C"/><circle cx="38" cy="39" r="2" fill="#E0A21C"/><circle cx="26" cy="43" r="1.6" fill="#E0A21C"/><ellipse cx="22" cy="22" rx="5" ry="3" fill="#fff" opacity=".45" transform="rotate(-30 22 22)"/></svg>`;
 export const yuzuUrl = 'data:image/svg+xml;utf8,' + encodeURIComponent(yuzuSvg);

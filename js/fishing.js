@@ -4,6 +4,7 @@ import { h, toast, holdBtn, ask, modal } from './ui.js';
 import { capy } from './capy.js';
 import { sfx } from './sound.js';
 import { gullSvg } from './animals.js';
+import { FLUFFY, shipImg } from './fluffy.js';
 
 export const PIRATE_EVERY = 10, PIRATE_LOOT = 600, FLEE_FEE = 250, BOAT_FIX = 700, CBOAT_FIX = 300, CBOAT_HIT = 10, PIRATE_HIT = 10; // 흰 배 수리 700 · 카피보트 수리 300 · 풍랑 한 번에 타고 있는 배 내구도 -10 · 해적선 포탄에 맞을 때마다 -10
 export const ZONES = ['', '초급 낚시터', '중급 낚시터', '고급 낚시터'];
@@ -309,7 +310,7 @@ export function seaBattle(e) {
   const muzzle = (el, x0, d, a) => { const w = sway(el), ph = -w.r * Math.PI / 180, rx = d * (PX + BL * Math.cos(a)), ry = PY + DROP + BL * Math.sin(a); return { x: x0 + rx * Math.cos(ph) - ry * Math.sin(ph), y: -DROP + rx * Math.sin(ph) + ry * Math.cos(ph) + w.up, a: a - w.r * d * Math.PI / 180 }; };
   let alive = true, raf = 0, last = 0, turn = 'intro', shot = null, wind = 0, myHp = HITS, foeHp = FOE_HITS, camX = me.x, camTo = me.x, timer = 0, next = null, round = 0, still = 0, sailing = 0;
   const pips = n => h('div', { class: 'sb-hp' }, ...Array.from({ length: n }, () => h('i')));
-  const foeEl = h('div', { class: 'so-boat sb-foe hv' + e.zone, style: { left: foeX + 'px', bottom: me.y + 'px', transform: `scale(${(dir * me.s).toFixed(3)}, ${me.s.toFixed(3)})`, zIndex: 12 } }, h('div', { class: 'sb-crew a', html: gullSvg(true) }), h('div', { class: 'sb-crew b', html: gullSvg(false) }), h('div', { class: 'sb-ship', html: SHIP_SVG }));
+  const foeEl = h('div', { class: 'so-boat sb-foe hv' + e.zone, style: { left: foeX + 'px', bottom: me.y + 'px', transform: `scale(${(dir * me.s).toFixed(3)}, ${me.s.toFixed(3)})`, zIndex: 12 } }, h('div', { class: 'sb-crew a', html: gullSvg(true) }), h('div', { class: 'sb-crew b', html: gullSvg(false) }), h('div', { class: 'sb-ship', html: FLUFFY ? shipImg() : SHIP_SVG }));
   const fHp = pips(FOE_HITS), mHp = pips(HITS), ball = h('i', { class: 'sb-ball', style: { display: 'none', width: BALL_PX + 'px', height: BALL_PX + 'px', margin: `0 0 ${-BALL_PX / 2}px ${-BALL_PX / 2}px` } }), dots = [0, 1, 2, 3, 4, 5].map(() => h('i', { class: 'sb-dot' }));
   fHp.style.bottom = me.y + 132 * me.s + 'px'; mHp.style.bottom = me.y + 122 * me.s + 'px'; e.world.append(foeEl, fHp, mHp, ball, ...dots);
   if (e.gun2 && /[?&]sbtest/.test(location.search)) window.__sbHit = () => { starHit(foeX, 20); foeHp--; hp(); }; // 별빛포 명중 이펙트 확인용

@@ -1,5 +1,6 @@
 // 옷입히기 놀이하실? — 카피바라에게 상의 50벌·하의 50벌·모자 50개를 입혀 보고, 서로의 카피바라에게도 입혀 준다
 import { h, toast, josa } from './ui.js';
+import { clothIcon } from './fluffy.js';
 import { capy } from './capy.js';
 import { TOPS, BOTTOMS, HATS, ZOO_HATS, SHOES, nameOf } from './clothes.js';
 import { priceOf, won } from './money.js';
@@ -46,7 +47,7 @@ export function mount(el, ctx) {
       const cloth = h('div', { class: 'eq eq-invw' }, h('div', { class: 'eq-inv-h' }, h('b', null, `👕 산 옷·모자·신발 ${mine.length}벌`), h('small', null, '누르면 입어 보기 · 다시 누르면 벗기 · 저장은 아래 입기 버튼')),
         mine.length ? h('div', { class: 'eq-inv' }, mine.map(x => { const k = slotIdOf(x.id), on = sel[k] === x.id;
           return h('button', { class: 'eq-item cloth' + (on ? ' on' : ''), title: x.name, onClick: () => pickCloth(k, on ? '' : x.id) },
-            h('span', { html: k === 'hat' ? capy({ color: m.color, hat: x.id, head: true }).replace('viewBox="0 -22 120 112"', 'viewBox="0 -24 120 76"') : k === 'shoe' ? capy({ color: m.color, shoe: x.id }).replace('viewBox="0 -22 120 158"', 'viewBox="24 108 72 30"') : capy({ color: m.color, [k]: x.id }).replace('viewBox="0 -22 120 158"', 'viewBox="16 80 88 56"') }),
+            h('span', { html: clothIcon(x.id) || (k === 'hat' ? capy({ color: m.color, hat: x.id, head: true }).replace('viewBox="0 -22 120 112"', 'viewBox="0 -24 120 76"') : k === 'shoe' ? capy({ color: m.color, shoe: x.id }).replace('viewBox="0 -22 120 158"', 'viewBox="24 108 72 30"') : capy({ color: m.color, [k]: x.id }).replace('viewBox="0 -22 120 158"', 'viewBox="16 80 88 56"')) }),
             h('em', null, SL[k] || ''), on && h('i', null, '입는 중'), h('small', null, x.name)); }))
           : h('p', { class: 'eq-empty' }, '아직 산 옷이 없어요. 아래 옷 목록에서 유료 옷을 눌러 구매하기를 누르면 여기에 담겨요.'));
       inv.replaceChildren(tabsEl, invTab === 'gold' ? eqInv({ owned: goldOwned, worn: rareList(m.rare), wear: wearG }) : cloth); }
@@ -59,7 +60,7 @@ export function mount(el, ctx) {
     const items = list();
     grid.replaceChildren(...items.map(it => h('button', { class: 'dress-item' + (sel[tab] === it.id ? ' on' : '') + (ctx.owns(it.id) ? '' : ' lock'), 'data-price': ctx.owns(it.id) ? '' : won(priceOf(it.id)), title: it.name, 'aria-label': it.name, onClick: () => { if (who !== ctx.uid) return toast('상대 카피바라의 옷은 바꿀 수 없어요'); pickCloth(tab, sel[tab] === it.id ? '' : it.id); } },
       sel[tab] === it.id && !ctx.owns(it.id) && who === ctx.uid && h('b', { class: 'dress-buy', onClick: e => { e.stopPropagation(); buyOne(it.id); } }, '구매하기'),
-      h('span', { html: tab === 'hat' ? capy({ color: m.color, hat: it.id, head: true }).replace('viewBox="0 -22 120 112"', 'viewBox="0 -24 120 76"') : tab === 'shoe' ? capy({ color: m.color, shoe: it.id }).replace('viewBox="0 -22 120 158"', 'viewBox="24 108 72 30"') : capy({ color: m.color, [tab]: it.id }).replace('viewBox="0 -22 120 158"', 'viewBox="16 80 88 56"') }), h('small', null, it.name))));
+      h('span', { html: clothIcon(it.id) || (tab === 'hat' ? capy({ color: m.color, hat: it.id, head: true }).replace('viewBox="0 -22 120 112"', 'viewBox="0 -24 120 76"') : tab === 'shoe' ? capy({ color: m.color, shoe: it.id }).replace('viewBox="0 -22 120 158"', 'viewBox="24 108 72 30"') : capy({ color: m.color, [tab]: it.id }).replace('viewBox="0 -22 120 158"', 'viewBox="16 80 88 56"')) }), h('small', null, it.name))));
     tabs.replaceChildren(
       h('div', { class: 'tabs' }, [['top', `상의 ${TOPS.length}`], ['bottom', `하의 ${BOTTOMS.length}`], ['hat', `모자 ${HATS.length}`], ['shoe', `신발 ${SHOES.length}`]].map(([k, t]) => h('button', { class: 'tab' + (tab === k ? ' on' : ''), onClick: () => { tab = k; draw(); } }, t))),
       h('div', { class: 'chips' }, [['all', '전체'], ['m', '남자 옷'], ['f', '여자 옷']].map(([k, t]) => h('button', { class: 'chip' + (sex === k ? ' on' : ''), onClick: () => { sex = k; draw(); } }, t)), h('small', { class: 'dim' }, ` ${items.length}${tab === 'hat' ? '개' : tab === 'shoe' ? '켤레' : '벌'}`)));
