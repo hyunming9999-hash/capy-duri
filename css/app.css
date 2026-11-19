@@ -2316,3 +2316,6 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .sb-starflash.f2 { background: conic-gradient(from 0deg at 60% 55%, rgba(255, 155, 224, .35), rgba(255, 224, 102, .35), rgba(155, 231, 255, .35), rgba(201, 160, 255, .35), rgba(255, 155, 224, .35)); -webkit-mask-image: radial-gradient(circle at 60% 55%, #000 0, transparent 70%); mask-image: radial-gradient(circle at 60% 55%, #000 0, transparent 70%); animation: sbStarFl2 1.3s ease-out forwards; }
 @keyframes sbStarFl2 { 0% { opacity: 0; rotate: 0deg; } 20% { opacity: 1; } 100% { opacity: 0; rotate: 40deg; } }
 @media (prefers-reduced-motion: reduce) { .sb-trail, .sb-rain i, .sb-rays::before, .sb-starflash.f2 { display: none; } }
+/* 보송 그림체: 황금사자 스쿠터에 탄 몸을 더 크게(손잡이 높이까지) */
+.fluffy .sc-rig.b .sc-me { width: 94px; left: 80px; bottom: 27px; } .fluffy .sc-rig.b .sc-pas { width: 80px; left: 24px; bottom: 27px; }
+.fluffy .sc-me .fl-sh, .fluffy .sc-pas .fl-sh { display: none; }
