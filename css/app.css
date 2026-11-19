@@ -2232,3 +2232,30 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 /* 배에 탄 동안에는 걸음 들썩임을 끈다(배와 몸 사이가 벌어져 보인다) */
 .fluffy .so-me.onboat.walk svg, .fluffy .so-me.onpal.walk svg { animation: none; }
 .fl-item.fl-rod { width: 9px; height: 46px; object-fit: fill; rotate: 40deg; margin: -5px 14px; }
+/* ===== 보송 그림체: 홈 화면 질감 ===== */
+.fluffy .home .hero { background: linear-gradient(rgba(255, 226, 160, .55), rgba(255, 214, 140, .55)), url(../img/fl/ui/fur.webp) 0 0 / 256px 256px; border: 0; border-radius: 30px; box-shadow: 0 0 0 3px #F0C777, 0 5px 0 3px #D9A94F, inset 0 0 24px rgba(200, 140, 60, .25); outline: 2px dashed rgba(255, 255, 255, .85); outline-offset: -8px; }
+.fluffy .home .today-card { border: 0; border-radius: 24px; background: #FFFAEE; box-shadow: 0 0 0 3px #EBD7B2, 0 4px 0 3px #D9C29A; outline: 1.5px dashed #E3C9A0; outline-offset: -7px; }
+.fluffy .home .menu .card .capy { border: 0 !important; border-radius: 22px; background: linear-gradient(rgba(255, 255, 255, .35), rgba(255, 255, 255, 0) 45%), url(../img/fl/ui/fur.webp) 0 0 / 160px 160px, var(--tint); background-blend-mode: normal, multiply, normal; box-shadow: 0 4px 0 rgba(120, 85, 45, .32), inset 0 -6px 8px rgba(120, 85, 45, .16), inset 0 3px 4px rgba(255, 255, 255, .7); outline: 1.5px dashed rgba(255, 255, 255, .9); outline-offset: -5px; }
+.fluffy .home .menu .card:active .capy { translate: 0 3px; box-shadow: 0 1px 0 rgba(120, 85, 45, .32), inset 0 -6px 8px rgba(120, 85, 45, .16); }
+/* ===== 보송 그림체: 알림창(패치 노트 포함) ===== */
+.fluffy .modal { background: #FFFAEE; border-radius: 28px; box-shadow: 0 0 0 5px #C98B58, 0 0 0 9px #B5713C, 0 6px 0 9px #8A5226; }
+.fluffy .modal > h3 { display: inline-block; margin: 0 0 12px; padding: 5px 14px; border-radius: 999px; background: url(../img/fl/ui/fur.webp) 0 0 / 200px 200px; box-shadow: 0 2px 0 #DDBB8A; outline: 1.5px dashed #D6A873; outline-offset: -4px; }
+.fluffy .modal-x { background: #FFF3DC; border-color: #D6A873; box-shadow: 0 2px 0 #C99A5E; }
+.fluffy .modal-actions .btn.primary { border-radius: 999px; box-shadow: 0 4px 0 #D99A12, inset 0 2px 0 rgba(255, 255, 255, .5); }
+.fluffy .patch li { border: 0; border-radius: 16px; background: #FFF3DC; box-shadow: 0 2px 0 #E3C9A0; outline: 1.5px dashed #E0BF8C; outline-offset: -4px; }
+.fluffy .patch-farm { border-radius: 20px; overflow: hidden; box-shadow: 0 0 0 3px #C98B58, 0 3px 0 3px #8A5226; }
+.fluffy .patch-econ { border-radius: 16px; outline: 1.5px dashed rgba(255, 255, 255, .8); outline-offset: -4px; }
+/* ===== 보송 그림체: 농장도 인형 게임기 틀로 ===== */
+.fluffy .fm { --choc: #B5713C; --choc-d: #8A5226; background: url(../img/fl/ui/fur.webp) 0 0 / 256px 256px; }
+.fluffy .fm-top { position: relative; padding: calc(env(safe-area-inset-top) + 98px) 10px 6px; background: none; border: 0; }
+.fluffy .fm-top::before { content: ''; position: absolute; left: 0; right: 0; top: env(safe-area-inset-top); height: 124px; background: url(../img/fl/ui/head.webp) center top / 100% 100% no-repeat; -webkit-mask-image: linear-gradient(#000 78%, transparent); mask-image: linear-gradient(#000 78%, transparent); pointer-events: none; }
+.fluffy .fm-top > * { position: relative; }
+.fluffy .fm-top > b { padding: 4px 10px; border-radius: 999px; background: #F8E6C6; outline: 1.5px dashed #D6A873; outline-offset: -4px; box-shadow: 0 2px 0 #DDBB8A; flex: 0 1 auto; font-size: 15px; }
+.fluffy .fm-top .fm-coins { flex: 1; }
+.fluffy .fm-scene { margin: 10px 12px 0; border-radius: 24px; box-shadow: 0 0 0 5px #C98B58, 0 0 0 9px var(--choc), 0 4px 0 9px var(--choc-d); }
+.fluffy .fm-scroll { border-radius: 24px; }
+.fluffy .fm-pad { position: relative; left: auto; right: auto; bottom: auto; margin: 18px 4px 8px; align-items: center; }
+.fluffy .fm-dp { width: 70px; height: 62px; border: 0; border-radius: 22px; color: #FFF1D8; font-size: 24px; background: radial-gradient(circle at 40% 30%, #C98B58, #A9683A 70%); box-shadow: 0 5px 0 var(--choc-d), inset 0 0 0 2px rgba(255, 255, 255, .12); outline: 2px dashed #F3D9B0; outline-offset: -7px; }
+.fluffy .fm-dp.held { transform: translateY(4px); background: #9A5C30; box-shadow: 0 1px 0 var(--choc-d); }
+.fluffy .fm-enter { border: 0; border-radius: 999px; color: #fff; background: radial-gradient(circle at 35% 25%, #FFD08A, #F59A23 65%); box-shadow: 0 4px 0 #C46F0E; text-shadow: 0 1px 0 rgba(0, 0, 0, .2); }
+.fluffy .fm-sheet { margin: 4px 10px calc(env(safe-area-inset-bottom) + 10px); border: 0; border-radius: 22px; background: #FFFAEE; box-shadow: 0 0 0 3px #EBD7B2, 0 4px 0 3px #D9C29A; outline: 1.5px dashed #E3C9A0; outline-offset: -6px; }
