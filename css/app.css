@@ -2283,3 +2283,10 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fluffy .kb-qrow, .fluffy .kb .ck-order { border: 0; border-radius: 20px; box-shadow: 0 4px 0 #E6B94A; outline: 1.5px dashed #E9C566; outline-offset: -5px; }
 .fluffy .kb-skip, .fluffy .kb-row2 .btn { border-radius: 999px; background: #FFFAEE; box-shadow: 0 3px 0 #D9C29A; }
 .fluffy .kb-bnote { border-radius: 16px; outline: 1.5px dashed #E0BF8C; outline-offset: -4px; }
+/* ===== 보송 그림체: 낚시 화면은 느낌만 아주 살짝(화면 비율·조작판은 그대로) ===== */
+.fluffy .fs { background: url(../img/fl/ui/fur.webp) 0 0 / 256px 256px; }
+.fluffy .fs-top b { padding: 3px 12px; border-radius: 999px; background: #F8E6C6; outline: 1.5px dashed #D6A873; outline-offset: -4px; box-shadow: 0 2px 0 #DDBB8A; }
+.fluffy .fs-info { color: #7A5236; font-weight: 700; }
+.fluffy .fs-view { border-color: #C98B58; box-shadow: 0 0 0 3px #B5713C, 0 3px 0 3px #8A5226; }
+.fluffy .fs-card:not(.rare):not(.king):not(.pearl):not(.trash):not(.shiny):not(.storm-card) { border-color: #D9B27C; background: #FFFAEE; }
+.fluffy .fs-card { outline: 1.5px dashed rgba(214, 168, 115, .7); outline-offset: -9px; }
