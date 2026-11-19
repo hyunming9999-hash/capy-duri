@@ -211,6 +211,6 @@ export function openAquarium(o) {
   function popAt(f, t) { const p2 = h('i', { class: 'aq-pop', style: { zIndex: 950, left: (f.x + f.dir * f.len * 0.4) * ppm + 'px', top: (f.y - f.len * 0.2) * ppm + 'px' } }, t); layer.append(p2); setTimeout(() => p2.remove(), 1200); }
   function close() { if (editing) saveDeco(); try { screen.orientation && screen.orientation.unlock && screen.orientation.unlock(); } catch {} alive = false; cancelAnimationFrame(raf); window.removeEventListener('resize', onResize); root.remove(); o.onClose && o.onClose(); }
   orient(); try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); } catch {} // 폰이 세로여도 화면을 눕혀서 가로로 보여 준다
-  requestAnimationFrame(() => { build(o.test ? demoFish(tank) : o.fish || [], o.test ? demoDeco() : o.deco || []); raf = requestAnimationFrame(loop); });
+  requestAnimationFrame(() => { build(o.test ? demoFish(tank) : o.fish || [], o.test ? demoDeco() : o.deco || []); raf = requestAnimationFrame(loop); if (o.guest) { visit.hidden = true; goMode('pal'); } }); // guest: 내 수족관 없이 상대 수족관만 구경
   return { close };
 }

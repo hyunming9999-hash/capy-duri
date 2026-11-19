@@ -298,7 +298,7 @@ export function mount(el, ctx) {
     chatIn.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); sendChat(chatIn); } }); chatIn.addEventListener('focus', () => keys.clear());
     micBtn = h('button', { class: 'btn sm so-mic', onClick: toggleMic }, '🎤', h('small', null, '음성')); drawMic();
     const chatBar = h('div', { class: 'so-chatbar' }, chatIn, h('button', { class: 'btn sm primary', onClick: () => sendChat(chatIn) }, '보내기'), micBtn, h('button', { class: 'btn sm so-help', 'aria-label': '도움말', onClick: () => modal({ title: '🐾 동물 친목회', body: h('p', null, '방향키로 걸어가요. 놀이기구 앞에서 🎠 로 타요. 동물과 같이 타면 친해져요. 동물을 누르면 말을 걸어요. 얼굴이 빨간 동물(-10점 이하)은 쫓아와요! 오른쪽 끝은 바닷가예요. 아래 칸에 글을 쓰면 상대 머리 위에 말풍선이 뜨고, 🎤를 둘 다 누르면 목소리로 얘기할 수 있어요.'), actions: [{ label: '닫기', primary: true }] }) }, '?'));
-    el.replaceChildren(top, hpRow, waveBar, (stageEl = h('div', { class: 'so-stage' }, scroller, chatLog)), (sbPanel = h('div', { class: 'sb-panel', hidden: true })), pad, chatBar);
+    el.replaceChildren(top, hpRow, waveBar, (stageEl = h('div', { class: 'so-stage' }, scroller, chatLog)), (sbPanel = h('div', { class: 'sb-panel', hidden: true })), pad, chatBar); xMount();
     scores(); drawHp(); lastT = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(step);
   }
   // 체력: 맞으면 줄고, 0이 되면 쓰러져서 10분 동안 친목회에 못 들어온다. 회복 포션은 카피수퍼에서 판다
@@ -353,12 +353,44 @@ export function mount(el, ctx) {
   let aqua = {}, aquaOpen = false; // 카피수족관: aqua/{uid} = { t: 수족관 등급, fish: {키: 물고기}, deco: {키: 놓인 용품}, inv: {용품 번호: 개수}, fee: {d: 날짜, n: {동물: 관람료 낸 횟수}} }
   let farmBarn = {}, farmSeeds = {}, farmSprk = 0, fishOpen = false, hintAt = 0, fishBtn = null, fishMode = -1, dex = {}, rockKey = '', battle = null, battleDir = 1, camX = null, sbPanel = null, heave = 0;
   const boatD = () => (bag.boatD == null ? 100 : bag.boatD), cboatD = () => (bag.cboatD == null ? 100 : bag.cboatD), BOAT_MIN = 20; // 흰 배 · 카피보트 내구도
+  // ----- 선물 1:1 교환(둘이서): gtrade/{uid} = { k: 줄 선물, ok: '내 것>상대 것'(그 짝에 동의), t } · 둘 다 고르고, 둘 다 '지금 그 짝'에 동의해야 1개씩 바뀐다 -----
+  let gt = {}, xWin = null, xBtn = null, xOpen = false, xBusy = false, xSeen = 0, xDoneSeen = 0; const XP = 'gtrade', X_TTL = 600000, xT0 = Date.now();
+  const xFresh = v => (v && v.k && v.t && ctx.store.now() - v.t < X_TTL ? v : {}), xMine = () => xFresh(gt[ctx.uid]), xPal = () => (pid() ? xFresh(gt[pid()]) : {}), xPair = (a, b) => a + '>' + b;
+  const xAgreed = () => { const m = xMine(), p = xPal(); return !!(m.k && p.k && m.ok === xPair(m.k, p.k) && p.ok === xPair(p.k, m.k)); };
+  function xPick(k) { if (trial) return toast('체험 중에는 교환할 수 없어요'); if (!((rawBag[k] || 0) > 0)) return toast(`${josa(GIFTS[k][1], '가', '이')} 없어요. 카피수퍼에서 살 수 있어요`); sfx('pop'); ctx.store.set(XP + '/' + ctx.uid, { k, t: ctx.store.now() }).catch(() => {}); } // 고른 걸 바꾸면 내 동의는 지워지고, 상대 동의도 예전 짝이라 저절로 무효가 된다
+  function xAgree() { const m = xMine(), p = xPal(); if (!m.k || !p.k) return; sfx('point'); ctx.store.update(XP + '/' + ctx.uid, { ok: m.ok === xPair(m.k, p.k) ? null : xPair(m.k, p.k), t: ctx.store.now() }).catch(() => {}); }
+  function xClose() { xOpen = false; xSeen = (xPal().t || 0); if (xMine().k) ctx.store.remove(XP + '/' + ctx.uid).catch(() => {}); xDraw(); }
+  // 둘 다 동의하면: 먼저 본 쪽 한 사람만(잠금) 두 가방을 한 번에 바꾼다. 그사이 선물이 없어졌으면 취소
+  async function xRun() { if (xBusy || !xAgreed() || !pid()) return; xBusy = true; const m = xMine(), p = xPal(), me2 = ctx.uid, pal2 = pid(); let got = false;
+    try { await ctx.store.tx(XP + '/lock', c => { if (c && c.by && ctx.store.now() - c.t < 15000) return; got = true; return { by: me2, t: ctx.store.now() }; });
+      if (got) { const cur = (await ctx.store.get(XP)) || {}, a = cur[me2] || {}, b = cur[pal2] || {};
+        if (a.k === m.k && b.k === p.k && a.ok === xPair(m.k, p.k) && b.ok === xPair(p.k, m.k)) { const ba = (await ctx.store.get('bag/' + me2)) || {}, bb = (await ctx.store.get('bag/' + pal2)) || {};
+          if ((ba[m.k] || 0) > 0 && (bb[p.k] || 0) > 0) { const na = { ...ba, [m.k]: ba[m.k] - 1 }, nb = { ...bb, [p.k]: bb[p.k] - 1 }; na[p.k] = (na[p.k] || 0) + 1; nb[m.k] = (nb[m.k] || 0) + 1;
+            await ctx.store.update('bag/' + me2, m.k === p.k ? { [m.k]: ba[m.k] } : { [m.k]: na[m.k], [p.k]: na[p.k] }); await ctx.store.update('bag/' + pal2, m.k === p.k ? { [p.k]: bb[p.k] } : { [p.k]: nb[p.k], [m.k]: nb[m.k] });
+            await ctx.store.set(XP, { done: { t: ctx.store.now(), [me2]: p.k, [pal2]: m.k } }); }
+          else await ctx.store.set(XP, { done: { t: ctx.store.now(), fail: 1 } }); }
+        else await ctx.store.remove(XP + '/lock'); } } catch (e) { ctx.store.remove(XP + '/lock').catch(() => {}); }
+    xBusy = false; }
+  function xOn() { const d = gt.done; if (d && d.t && d.t !== xDoneSeen && d.t > xT0 - 3000 && ctx.store.now() - d.t < 20000) { xDoneSeen = d.t; if (d.fail) toast('선물이 모자라서 교환이 취소됐어요', 3000); else if (d[ctx.uid]) { const [ic, nm] = GIFTS[d[ctx.uid]] || ['🎁', '선물']; sfx('win'); toast(`🤝 교환 완료! ${ic} ${nm} 1개를 받았어요`, 3200); if (mePop) pop(mePop, `${ic} +1`, 'up'); } xOpen = false; }
+    const p = xPal(); if (p.k && p.t > xSeen && !xOpen && playing && !fishOpen && !battle) { xOpen = true; xSeen = p.t; sfx('pop'); toast(`🎁 ${josa(ctx.nameOf(pid()), '가', '이')} 선물 교환을 걸어왔어요`, 2600); }
+    xDraw(); xRun(); }
+  function xDraw() { if (!xWin || !xBtn) return; const m = xMine(), p = xPal(), pn = pid() ? ctx.nameOf(pid()) : '상대'; xBtn.hidden = !pid(); xBtn.classList.toggle('on', !!p.k && !xOpen); xWin.hidden = !xOpen; if (!xOpen) return;
+    const mineOk = !!(m.k && p.k && m.ok === xPair(m.k, p.k)), palOk = !!(m.k && p.k && p.ok === xPair(p.k, m.k));
+    xWin.replaceChildren(h('div', { class: 'so-xh' }, h('b', null, '🎁 선물 1:1 교환'), h('small', null, '둘 다 동의해야 바뀌어요'), h('button', { class: 'so-xx', 'aria-label': '교환 닫기', onClick: xClose }, '✕')),
+      h('div', { class: 'so-xrow' }, h('span', { class: 'so-xl' }, '내가 줄 것'), h('div', { class: 'so-xpick' }, ...Object.entries(GIFTS).map(([k, [ic, nm]]) => h('button', { class: 'so-xg' + (m.k === k ? ' on' : ''), disabled: !((rawBag[k] || 0) > 0), onClick: () => xPick(k) }, itemIcon(ic) ? h('span', { html: itemIcon(ic) }) : h('span', null, ic), h('small', null, `${nm} ${rawBag[k] || 0}`)))), h('em', { class: 'so-xok' + (mineOk ? ' y' : '') }, mineOk ? '✔ 동의' : '대기')),
+      h('div', { class: 'so-xrow' }, h('span', { class: 'so-xl' }, `${josa(pn, '가', '이')} 줄 것`), h('div', { class: 'so-xpick' }, p.k ? h('span', { class: 'so-xg on fix' }, itemIcon(GIFTS[p.k][0]) ? h('span', { html: itemIcon(GIFTS[p.k][0]) }) : h('span', null, GIFTS[p.k][0]), h('small', null, GIFTS[p.k][1] + ' 1개')) : h('span', { class: 'so-xwait' }, pal.on ? '고르는 중…' : `${josa(pn, '가', '이')} 친목회에 들어오면 고를 수 있어요`)), h('em', { class: 'so-xok' + (palOk ? ' y' : '') }, palOk ? '✔ 동의' : '대기')),
+      h('button', { class: 'btn primary so-xgo' + (mineOk ? ' y' : ''), disabled: !(m.k && p.k), onClick: xAgree }, !m.k ? '줄 선물을 골라 주세요' : !p.k ? `${pn}의 선택을 기다리는 중…` : mineOk ? (palOk ? '교환하는 중…' : `동의했어요 · ${pn}의 동의를 기다리는 중 (누르면 취소)`) : `🤝 ${GIFTS[m.k][1]} ↔ ${GIFTS[p.k][1]} 교환에 동의`)); }
+  function xMount() { if (!stageEl) return; xBtn = h('button', { class: 'so-xbtn', hidden: !pid(), onClick: () => { xOpen = !xOpen; if (xOpen) { xSeen = xPal().t || 0; sfx('pop'); xDraw(); } else xClose(); } }, '🎁 교환'); xWin = h('div', { class: 'so-xwin', hidden: true }); stageEl.append(xBtn, xWin); xDraw(); }
   // ----- 카피수족관 -----
   const aqFish = () => Object.entries(aqua.fish || {}).filter(([, v]) => v).map(([key, v]) => ({ key, ...v }));
   const bagFish = () => Object.entries(bag.fish || {}).filter(([, v]) => v && v.id && !v.pearl).map(([key, v]) => ({ key, ...v }));
   const aqRareName = () => { const r = aqFish().map(d => ({ d, f: fishOf(d.id) })).filter(x => x.f && (x.d.g === 'S' || x.f.tier >= 4 || x.d.shiny)).sort((a, b) => (b.f.tier || 0) - (a.f.tier || 0) || (b.d.shiny ? 1 : 0) - (a.d.shiny ? 1 : 0))[0]; return r ? (r.d.shiny ? '이로치 ' : '') + r.f.name : ''; };
   async function goAqua() { if (fishOpen || battle || aquaOpen) return; if (me.boat) return toast('배에서 내린 뒤에 들어갈 수 있어요'); if (trial) return toast('체험 중에는 수족관에 못 들어가요');
-    if (!aqua.t) return modal({ title: '🐠 카피수족관', body: h('p', { class: 'center' }, '아직 수족관이 없어요. 바닷가 카피수퍼에 가서 수족관을 사 와야 해요. 사 오면 잡은 물고기를 넣고 구경할 수 있어요.'), actions: [{ label: '확인', primary: true }] });
+    const loadPal = async () => { if (!pid()) return null; const v = await ctx.store.get('aqua/' + pid()).catch(() => null); if (!v || !v.t) return null; return { tank: v.t, fish: Object.values(v.fish || {}).filter(Boolean), deco: Object.values(v.deco || {}).filter(Boolean) }; };
+    // 내 수족관이 없어도 상대 수족관은 들어가서 구경할 수 있다(구경만: 풀어넣기·꾸미기·관람료 없음)
+    if (!aqua.t) { const pd = await loadPal(); if (!pd) return modal({ title: '🐠 카피수족관', body: h('p', { class: 'center' }, `아직 수족관이 없어요. 바닷가 카피수퍼에서 수족관을 사 오면 잡은 물고기를 넣고 구경할 수 있어요.${pid() ? ` ${ctx.nameOf(pid())}에게 수족관이 생기면 내 수족관이 없어도 구경하러 들어갈 수 있어요.` : ''}`), actions: [{ label: '확인', primary: true }] });
+      if (aquaOpen) return; const m0 = await import('./aquarium.js'); aquaOpen = true; keys.clear();
+      return void m0.openAquarium({ guest: true, tank: pd.tank, fish: [], deco: [], me: ctx.me.name, partner: ctx.nameOf(pid()), loadPartner: loadPal, onClose: () => { aquaOpen = false; lastT = performance.now(); scores(); } }); }
     const m = await import('./aquarium.js'); aquaOpen = true; keys.clear(); const AQ = 'aqua/' + ctx.uid, cleanFish = d => { const v = { ...d }; delete v.key; return v; };
     m.openAquarium({ tank: aqua.t, fish: aqFish(), deco: Object.values(aqua.deco || {}).filter(Boolean), decoInv: aqua.inv || {}, me: ctx.me.name, partner: pid() ? ctx.nameOf(pid()) : '', bag: bagFish,
       release: async d => { const v = cleanFish(d); const left = { ...(bag.fish || {}) }; delete left[d.key]; bag = { ...bag, fish: left }; await ctx.store.update('bag/' + ctx.uid + '/fish', { [d.key]: null }).catch(() => {}); await ctx.store.update(AQ + '/fish', { [d.key]: v }).catch(() => {}); return true; },
@@ -1113,10 +1145,11 @@ export function mount(el, ctx) {
 
   const offs = [
     ctx.store.on('social', v => { v = v || {}; mine = v[ctx.uid] || {}; theirs = (pid() && v[pid()]) || {}; scores(); }),
-    ctx.store.on('bag/' + ctx.uid, v => { rawBag = v || {}; bag = mergeBag(); drawHp(); }),
+    ctx.store.on('bag/' + ctx.uid, v => { rawBag = v || {}; bag = mergeBag(); drawHp(); if (xOpen) xDraw(); }),
     ctx.store.on('socialchat', onChat, { limit: 20 }),
     ctx.store.on('fishdex/' + ctx.uid, v => { dex = v || {}; }),
     ctx.store.on('aqua/' + ctx.uid, v => { aqua = v || {}; }),
+    ctx.store.on('gtrade', v => { gt = v || {}; xOn(); }),
     ctx.store.on('farm/' + ctx.uid + '/barn', v => { farmBarn = v || {}; }),
     ctx.store.on('farm/' + ctx.uid + '/seeds', v => { farmSeeds = v || {}; }),
     ctx.store.on('farm/' + ctx.uid + '/sprkInv', v => { farmSprk = v || 0; }),
@@ -1125,5 +1158,5 @@ export function mount(el, ctx) {
       if (first) { const t = ctx.store.now(); if (vit.seen && t - vit.seen >= AWAY_MS) saveVit({ missAt: t }); saveVit({ seen: t }); }
       if (first) { if (vit.deadAt && ctx.store.now() - vit.deadAt < TEN_MIN) lock(); else { if (vit.deadAt) saveVit({ hp: HP_MAX, deadAt: 0 }); scene(); } } else drawHp(); }),
   ];
-  return () => { clearInterval(seenT); if (vit) saveVit({ seen: ctx.store.now() }); fcrow.dispose(); quest.dispose(); trial = null; kingTrial = 0; keepPos(); alive = false; if (battle) { battle.stop(); battle = null; } voice.destroy(); bgm.duck(false); window.removeEventListener('pointerdown', wakeVoice); leavePos(); me.boat = null; offer = null; endSorry(); clearInterval(lockT); cancelAnimationFrame(raf); offs.forEach(f => f()); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
+  return () => { clearInterval(seenT); if (vit) saveVit({ seen: ctx.store.now() }); fcrow.dispose(); quest.dispose(); trial = null; kingTrial = 0; keepPos(); alive = false; if (battle) { battle.stop(); battle = null; } voice.destroy(); bgm.duck(false); window.removeEventListener('pointerdown', wakeVoice); leavePos(); if (xMine().k) ctx.store.remove(XP + '/' + ctx.uid).catch(() => {}); me.boat = null; offer = null; endSorry(); clearInterval(lockT); cancelAnimationFrame(raf); offs.forEach(f => f()); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
 }
