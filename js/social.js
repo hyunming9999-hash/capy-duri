@@ -342,7 +342,7 @@ export function mount(el, ctx) {
   // 낚싯배 체험: 10분 동안 장비를 빌린다. 빌린 장비와 체험 중 번 돈·잃은 돈·도감은 저장하지 않는다
   const TRIAL_MS = 600000, TRIAL_KEYS = ['boat', 'wboat', 'cannon', 'boatD', 'rod', 'rodD', 'bait', 'bait2', 'bait3', 'balls', 'casts', 'pearlAt', 'casts3', 'pearlAt3', 'pcasts', 'pirAt', 'pirNext']; let trial = null, rawBag = {};
   // 퀘스트 해적전: 흰 배·대포를 퀘스트 동안만 빌려준다(저장하지 않는 덮어쓰기)
-  const QLOAN = { boat: true, wboat: true, cannon: true, boatD: 100, balls: 20 }; let qloan = null;
+  const QLOAN = { boat: true, wboat: true, cannon: true, boatD: 100, balls: 20 }; let qloan = null; let ptest = 0, ctest = false; // 연습 링크(?piratetest · ?taltest)
   const mergeBag = () => ({ ...rawBag, ...(qloan ? qloan.g : {}), ...(trial ? trial.g : {}) });
   function startTrial() { trial = { until: performance.now() + TRIAL_MS, g: { boat: true, wboat: true, cannon: true, boatD: 100, rod: 3, rodD: 200, bait: 40, bait2: 40, bait3: 40, balls: 20, casts: 0, pearlAt: 999, pcasts: 0, pirNext: 4 } }; bag = mergeBag(); toast('🧪 낚싯배 체험 시작! 10분 동안 흰 배·대포·고급 낚싯대를 빌려요. 바다에서 "내 보트"를 누르세요', 4200); }
   function endTrial(why) { if (!trial) return; trial = null; bag = mergeBag(); if (battle) { battle.stop(); battle = null; camX = null; } const f = document.querySelector('.fs .fs-quit'); if (f) f.click();
@@ -423,6 +423,11 @@ export function mount(el, ctx) {
   try { if (new URLSearchParams(location.search).has('farmtest')) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); farmTest(); }, 1200); } catch {}
   // 까마귀 연습 링크(?crowtest): 친목회에 들어오면 바로 농장으로 데려간다
   try { if (new URLSearchParams(location.search).has('crowtest')) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); if (!farmOpen && !me.boat && !fishOpen && !battle) goFarm(); setTimeout(() => fcrow.practice(), 900); }, 1200); } catch {}
+  // 까마귀 퇴치 연습(?taltest)·해적전 연습(?piratetest, =2면 별빛포): 친밀도·돈·배·포탄에는 아무 영향 없음
+  try { const tq = new URLSearchParams(location.search), shut = () => document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click());
+    if (tq.has('taltest')) setTimeout(() => { shut(); if (crow || fishOpen || battle) return; const pool = actors.map((o, i) => i).filter(i => actors[i] && actors[i].x < WATER_X - 40).sort((a, b) => Math.abs(actors[a].x - me.x) - Math.abs(actors[b].x - me.x)).slice(0, 2); if (!pool.length) return; ctest = true; crowSpawn(performance.now(), pool); toast('🧪 까마귀 퇴치 연습 · 친밀도에는 영향 없어요', 2800); }, 1800);
+    if (tq.has('piratetest')) setTimeout(() => { shut(); if (fishOpen || battle || farmOpen) return; if (!trial) startTrial(); ptest = tq.get('piratetest') === '2' ? 2 : 1; if (ptest === 2) { trial.g.cannon2 = true; bag = mergeBag(); } me.x = FISH_X + TILE + 220; me.y = me.dy = 0.08; me.ds = 1 - me.y * 0.7; myBoat(); toast('🧪 해적전 연습 · 돈·배·포탄에는 영향 없어요', 2800); setTimeout(() => { if (alive && !battle) pirates(2); }, 1500); }, 1800);
+  } catch {}
   // 메인 퀘스트: 동물 머리 위 ! ? 표시와 동물 창의 🔍 퀘스트 버튼
   let vnOn = false;
   const quest = createQuest({ ctx, names: ANIMALS.map(a => a.name), svg: i => animalSvg(i), svgFull: (i, mood) => animalSvg(i, true, mood || undefined), meSvg: face => capy(ctx.capyOf(ctx.uid, { face })), meName: ctx.me.name,
@@ -489,8 +494,8 @@ export function mount(el, ctx) {
     if (n !== 1) return; // 소문은 첫 황금템을 샀을 때 한 번만 퍼진다
     bag = { ...bag, rumorAt: ctx.store.now() }; ctx.store.update('bag/' + ctx.uid, { rumorAt: bag.rumorAt }).catch(() => {}); setRel(i, { rumor: 1 }); }
   function pirates(zone, qst) { if (battle || !alive) return; if (qst) toast('⚔️ 갈매기 해적단이 나타났다! 퀘스트 해적전이에요', 2600); keys.clear(); const D = Math.max(620, scroller.clientWidth * 1.9), foeX = me.x + D <= WIDTH - 90 ? me.x + D : me.x - D; me.f = foeX > me.x ? 1 : -1; sfx('bad');
-    battleDir = me.f; battle = seaBattle({ world: scroller.firstElementChild, stage: scroller.parentNode, panel: sbPanel, zone, meEl, boatEl, shout: t => pop(mePop, t, 'say long'), flee: async () => (trial || qst ? true : await ctx.spend(FLEE_FEE)), minX: FISH_X + 60, maxX: WIDTH - 70, move: x => { me.x = x; }, me: { x: me.x, y: me.dy * H, s: me.ds }, foeX, balls: () => bag.balls || 0, gun2: !!bag.cannon2 && !trial && !qst, onHurt: trial || qst ? null : () => hitBoat(PIRATE_HIT).d, useBall: () => saveBag({ balls: Math.max(0, (bag.balls || 0) - 1) }), cam: x => { camX = x; },
-      onEnd: win => { battle = null; camX = null; lastT = performance.now(); if (qst) { if (win && win !== 'flee') { addCoins(PIRATE_LOOT); lootFx(PIRATE_LOOT); } quest.pirateResult(!!win && win !== 'flee'); return; } if (win === 'flee') return void toast(trial ? '해적단에게서 도망쳤어요 (체험이라 돈은 안 나가요)' : `해적단에게 ${FLEE_FEE} 🪙 내고 도망쳤어요`, 3200); if (win) { const loot = PIRATE_LOOT; addCoins(loot); lootFx(loot); }
+    battleDir = me.f; battle = seaBattle({ world: scroller.firstElementChild, stage: scroller.parentNode, panel: sbPanel, zone, meEl, boatEl, shout: t => pop(mePop, t, 'say long'), flee: async () => (trial || qst ? true : await ctx.spend(FLEE_FEE)), minX: FISH_X + 60, maxX: WIDTH - 70, move: x => { me.x = x; }, me: { x: me.x, y: me.dy * H, s: me.ds }, foeX, balls: () => bag.balls || 0, gun2: ptest === 2 || (!!bag.cannon2 && !trial && !qst), onHurt: trial || qst ? null : () => hitBoat(PIRATE_HIT).d, useBall: () => saveBag({ balls: Math.max(0, (bag.balls || 0) - 1) }), cam: x => { camX = x; },
+      onEnd: win => { battle = null; camX = null; lastT = performance.now(); if (ptest) { ptest = 0; return void toast(win === 'flee' ? '해적전 연습에서 도망쳤어요' : win ? '해적전 연습 승리! (연습이라 돈·배는 그대로예요)' : '해적전 연습에서 졌어요 (연습이라 돈·배는 그대로예요)', 3800); } if (qst) { if (win && win !== 'flee') { addCoins(PIRATE_LOOT); lootFx(PIRATE_LOOT); } quest.pirateResult(!!win && win !== 'flee'); return; } if (win === 'flee') return void toast(trial ? '해적단에게서 도망쳤어요 (체험이라 돈은 안 나가요)' : `해적단에게 ${FLEE_FEE} 🪙 내고 도망쳤어요`, 3200); if (win) { const loot = PIRATE_LOOT; addCoins(loot); lootFx(loot); }
         if (trial) { if (!win) toast('해적단에게 졌어요 (체험이라 배·돈은 그대로예요)', 3200); return; }
         const d = bag.wboat ? boatD() : cboatD(), bn = bag.wboat ? '흰 배' : '카피보트'; // 내구도는 싸우는 동안 포탄에 맞을 때마다 이미 깎였다. 0이 되면 가라앉는다
         if (!win) addCoins(-500);
@@ -767,7 +772,7 @@ export function mount(el, ctx) {
     crowSpawn(now, pool.sort((a, b) => Math.abs(actors[a].x - me.x) - Math.abs(actors[b].x - me.x)).slice(0, 4).sort(() => Math.random() - 0.5).slice(0, crowWho()));
   }
   function crowSpawn(now, targets) {
-    const first = !crowUsed(); saveBag({ crowDay: ymd(), crowN: crowUsed() + 1, ...(first ? { crow2At: Math.round((120 + Math.random() * 1380) * 1000) } : {}) }); crowStay = 0; // 두 번째는 첫 번째 뒤로 2~25분 더 놀아야(정말 랜덤)
+    const first = !crowUsed(); if (!ctest) saveBag({ crowDay: ymd(), crowN: crowUsed() + 1, ...(first ? { crow2At: Math.round((120 + Math.random() * 1380) * 1000) } : {}) }); crowStay = 0; // 두 번째는 첫 번째 뒤로 2~25분 더 놀아야(정말 랜덤)
     const x = Math.max(60, Math.min(WATER_X - 60, me.x + (Math.random() < 0.5 ? -1 : 1) * (90 + Math.random() * 60)));
     const e = h('div', { class: 'so-crow', style: { left: x + 'px', bottom: (me.dy * 100).toFixed(1) + '%' } }, h('img', { src: CROW_IMG, alt: '까마귀 악당' }));
     worldEl.append(e);
@@ -813,12 +818,13 @@ export function mount(el, ctx) {
     const c = crow; if (!c || c.done) return; c.done = true; c.btn.remove();
     if (ok) { pop(c.e, '까악?! 부, 부적이다!', 'say'); gameFx('win', '까마귀 퇴치!'); c.targets.forEach((i, n) => setTimeout(() => alive && actors[i] && pop(actors[i].e, toned(i, '역시 까마귀는 나쁜 놈이었어!'), 'say long'), 900 + n * 900)); }
     else { if (why) toast(why); pop(c.e, '까악까악! 속았지롱~', 'say'); sfx('lose');
-      c.targets.forEach((i, n) => { const r = mine[i] || {}, lost = Math.min(A(i), 15 + Math.floor(Math.random() * 6)), top = A(i) >= 100 || r.hit100;
+      if (ctest) toast('연습이라 친밀도는 그대로예요', 3000); else c.targets.forEach((i, n) => { const r = mine[i] || {}, lost = Math.min(A(i), 15 + Math.floor(Math.random() * 6)), top = A(i) >= 100 || r.hit100;
         setRel(i, { a: A(i) - lost, crowHit: ctx.store.now(), crowLie: { n: Math.min(5, lost), t: ctx.store.now() }, ...(top ? { hit100: true, crowed: true } : {}) });
         // 이간질당한 동물은 나한테 걸어와서 따진다
         setTimeout(() => { if (!alive || !actors[i]) return; const o = actors[i]; if (o.st !== 'chase') { leave(o); o.st = 'walk'; o.spot = null; o.wait = 0; o.tx = Math.max(40, Math.min(WATER_X - 40, me.x + (n ? 56 : -56))); o.e.classList.add('walk'); o.e.classList.toggle('left', o.tx < o.x); const sp = o.sp; o.sp = 150; setTimeout(() => { o.sp = sp; }, 6000); }
           setTimeout(() => { if (!alive) return; pop(o.e, toned(i, `${ctx.me.name}, 어떻게 나한테 그럴 수 있어?`) + ` (친밀도 -${lost})`, 'say long'); animalVoice(i); o.e.classList.add('ouch'); setTimeout(() => o.e.classList.remove('ouch'), 600); }, Math.min(4500, 500 + Math.abs(o.x - me.x) / 150 * 1000)); }, 900 + n * 1100); });
-      setTimeout(() => alive && toast('삐진 동물에게 말을 걸어 해명하면 조금(최대 +5) 풀려요', 4000), 3200); scores(); }
+      if (!ctest) setTimeout(() => alive && toast('삐진 동물에게 말을 걸어 해명하면 조금(최대 +5) 풀려요', 4000), 3200); scores(); }
+    ctest = false;
     setTimeout(() => c.e.classList.add('flee'), 900);
     setTimeout(() => { c.e.remove(); if (crow === c) crow = null; }, 2400);
   }
