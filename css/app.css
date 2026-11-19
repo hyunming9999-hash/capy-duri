@@ -2103,7 +2103,10 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .aq-fb { width: 100%; height: 100%; transform-origin: 50% 50%; } .aq-fb svg { width: 100%; height: 100%; display: block; overflow: visible; transform-origin: 30% 50%; animation: aqWag var(--wag, .6s) ease-in-out infinite; animation-duration: inherit; }
 @keyframes aqWag { 0%, 100% { transform: skewY(0) scaleX(1); } 50% { transform: skewY(2.5deg) scaleX(.96); } }
 .aq-f.dash .aq-fb svg { animation-duration: .18s; } .aq-f.sleep .aq-fb svg { animation-duration: 2.4s; } .aq-f.sleep .aq-fb { filter: saturate(.8) brightness(.92); }
-.aq-f.turn .aq-fb svg { animation: aqTurn .55s ease-in-out; } @keyframes aqTurn { 0% { transform: scaleX(1); } 45% { transform: scaleX(.15) skewY(6deg); } 100% { transform: scaleX(1); } }
+.aq-f { filter: var(--dz, none); }
+.aq-f.turn { animation: aqTilt .9s ease-in-out; } @keyframes aqTilt { 0%, 100% { rotate: 0deg; translate: 0 0; } 45% { rotate: -7deg; translate: 0 -4px; } }
+.aq-ghost { position: absolute; left: 0; top: 0; pointer-events: none; animation: aqOut .6s ease-in forwards; } @keyframes aqOut { to { opacity: 0; } }
+.aq-fb.aq-in { animation: aqIn .6s ease-out; } @keyframes aqIn { from { opacity: 0; } }
 .aq-zz { position: absolute; left: 20%; top: -18%; font-weight: 900; color: #fff; text-shadow: 0 1px 2px #1E5A8C; display: none; animation: aqZz 2s ease-in-out infinite; } .aq-f.sleep .aq-zz { display: block; }
 @keyframes aqZz { 0% { transform: translateY(4px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(-14px); opacity: 0; } }
 .aq-f.g .aq-fb svg { filter: drop-shadow(0 0 5px #FFD84D) drop-shadow(0 0 12px #FFB300); }

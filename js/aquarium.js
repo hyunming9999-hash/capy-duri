@@ -5,7 +5,7 @@ import { FISH, fishSvg, SHINY_IDS } from './fishing.js';
 import { ANIMALS, animalSvg } from './animals.js';
 import { sfx } from './sound.js';
 
-export const TANKS = [null, { n: '초급 수족관', w: 3, h: 1.5, max: 20, cap: 40, price: 2000 }, { n: '중급 수족관', w: 12, h: 3, max: 40, cap: 0, price: 6000 }, { n: '고급 수족관', w: 24, h: 6, max: 60, cap: 0, price: 10000 }]; // cap: 넣을 수 있는 몸길이(cm), 0은 제한 없음
+export const TANKS = [null, { n: '초급 수족관', w: 3, h: 1.5, v: 1.5, max: 20, cap: 40, price: 2000 }, { n: '중급 수족관', w: 12, h: 6, v: 3, max: 40, cap: 0, price: 6000 }, { n: '고급 수족관', w: 24, h: 10, v: 6, max: 60, cap: 0, price: 10000 }]; // cap: 넣을 수 있는 몸길이(cm), 0은 제한 없음
 export const FEE_MAX = 3; // 관람료: 동물 한 마리당 하루 최대 3번, 한 번에 1코인
 const FISH_FILL = 0.86; // 물고기 그림에서 몸이 차지하는 가로 비율
 const rnd = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.floor(Math.random() * a.length)];
@@ -50,26 +50,27 @@ export function openAquarium(o) {
   function layout(keep) { const T = TANKS[tank], vw = Math.max(200, root.clientWidth - 16 - 18), cx = keep ? (view.scrollLeft + view.clientWidth / 2) / (W * ppm) : 0.5, cy = keep ? (view.scrollTop + view.clientHeight / 2) / (H * ppm) : 0.5;
     // 가로 화면 전용: 수족관 높이를 화면 높이에 맞춘다(작은 수족관은 작게 보여서 크기 차이가 그대로 느껴진다)
     const avail = Math.max(140, root.clientHeight - 54 - 18 - room.clientHeight + 10); view.style.height = avail + 'px';
-    W = T.w; H = T.h; base = Math.min(avail / H, vw / Math.min(W, 2.2)); zMin = Math.min(1, vw / (W * base));
+    W = T.w; H = T.h; base = Math.min(avail / T.v, vw / Math.min(W, 2.2)); // 화면에는 v미터 높이가 보이고, 그 위는 위로 밀어서 본다 zMin = Math.min(1, vw / (W * base));
     ppm = base * zoom; world.style.width = W * ppm + 'px'; world.style.height = H * ppm + 'px'; world.style.marginTop = Math.max(0, view.clientHeight - H * ppm) + 'px'; view.parentNode.style.width = Math.min(vw, W * ppm) + 18 + 'px'; // 작은 수족관은 유리도 작게
     // 물 배경: 왼쪽 산호 · 가운데 물(앞뒤로 뒤집어 이어 붙임) · 오른쪽 산호. 가운데는 꼭 원래 방향으로 끝나야 오른쪽과 이어진다
     const seg = H * ppm * (456 / 362), side = H * ppm * (360 / 362), n = Math.max(1, Math.round((W * ppm - 2 * side) / seg)), mids = n % 2 ? n : n + 1;
     if (W * ppm < 2 * side + seg) bg.replaceChildren(h('img', { src: 'img/aqua/full.webp', alt: '', class: 'one' })); // 작은 수족관은 그림 한 장을 그대로
     else bg.replaceChildren(h('img', { src: 'img/aqua/l.webp', alt: '' }), ...Array.from({ length: mids }, (_, k) => h('img', { src: 'img/aqua/mid.webp', alt: '', class: k % 2 ? 'mir' : '' })), h('img', { src: 'img/aqua/r.webp', alt: '' }));
     zoomL.textContent = zoom <= zMin + 0.01 && zMin < 1 ? '전체' : `×${zoom.toFixed(zoom < 2 ? 1 : 0)}`;
-    fish.forEach(f => sizeFish(f)); view.scrollLeft = cx * W * ppm - view.clientWidth / 2; view.scrollTop = cy * H * ppm - view.clientHeight / 2; }
+    fish.forEach(f => { f.lw = 0; }); view.scrollLeft = cx * W * ppm - view.clientWidth / 2; view.scrollTop = keep ? cy * H * ppm - view.clientHeight / 2 : H * ppm; }
   function setZoom(z) { zoom = Math.max(zMin, Math.min(6, z)); if (Math.abs(zoom - 1) < 0.08) zoom = 1; layout(true); }
-  function sizeFish(f) { const w = f.len * ppm / FISH_FILL; f.el.style.width = w + 'px'; f.el.style.height = w * 2 / 3 + 'px'; f.zz.style.fontSize = Math.max(12, Math.min(40, w * 0.18)) + 'px'; }
+  // 원근: 깊이 z(0 앞 ~ 1 뒤)만큼 작고 흐리게. 크기가 바뀔 때만 다시 잰다
+  const scOf = f => 1 - 0.5 * f.z, hOf = f => f.len * 0.62 * scOf(f);
+  function sizeFish(f) { const w = f.len * ppm / FISH_FILL * scOf(f); if (Math.abs(w - (f.lw || 0)) < 0.6) return; f.lw = w; f.el.style.width = w + 'px'; f.el.style.height = w * 2 / 3 + 'px'; f.zz.style.fontSize = Math.max(12, Math.min(40, w * 0.18)) + 'px'; }
   function build(list) {
     layer.replaceChildren(); [...tabs.children].forEach(b => b.classList.toggle('on', +b.dataset.t === tank)); zoom = 1;
     const T = TANKS[tank]; W = T.w; H = T.h;
     fish = list.map(d => { const f0 = FISH.find(x => x.id === d.id); if (!f0) return null; const len = d.cm / 100, f = { d, f0, len, hgt: len * 0.45, tier: f0.tier || 1, g: d.g, shiny: d.shiny, x: rnd(len / 2, Math.max(len / 2 + 0.01, W - len / 2)), y: rnd(H * 0.15, H * 0.7), dir: Math.random() < 0.5 ? -1 : 1, vy: 0, ty: 0, st: 'swim', stT: rnd(2, 6), sp: 1, turnT: 0 };
-      f.base = 0.12 + 0.3 * Math.sqrt(len); f.ty = f.y;
+      f.base = 0.12 + 0.3 * Math.sqrt(len); f.ty = f.y; f.z = f.tz = Math.random(); f.dq = -1;
       f.body = h('div', { class: 'aq-fb', html: fishSvg(f0, false, d.shiny), style: { animationDuration: rnd(0.45, 0.7) + 's' } });
       f.zz = h('span', { class: 'aq-zz' }, 'Z z'); f.el = h('div', { class: 'aq-f ' + glowOf(f) }, f.body, f.zz);
       f.el.onclick = e => { e.stopPropagation(); showTip(f); }; layer.append(f.el); return f; }).filter(Boolean);
-    fish.sort((a, b) => b.len - a.len).forEach((f, k) => { f.el.style.zIndex = 10 + k; }); // 작은 물고기가 큰 물고기 앞으로
-    layout(false); drawRoom(); drawInfo(); }
+        layout(false); drawRoom(); drawInfo(); }
   function showTip(f) { const T = ['', '흔함', '보기 힘듦', '희귀', '초희귀'][f.tier] || ''; tip.innerHTML = `${f.shiny ? '✨ 이로치 ' : ''}<b>${f.f0.name}</b> · ${f.g}급 · ${f.d.cm}cm <small>${T}${f.st === 'sleep' ? ' · 쿨쿨 자는 중' : ''}</small>`; tip.hidden = false; clearTimeout(showTip.t); showTip.t = setTimeout(() => { tip.hidden = true; }, 2600); }
   view.onclick = () => { tip.hidden = true; };
 
@@ -92,24 +93,28 @@ export function openAquarium(o) {
         if (f.st !== 'swim') setSt(f, 'swim', rnd(3, 8));
         else if (r < 0.12) setSt(f, 'dash', rnd(0.5, 0.9));
         else if (r < 0.2) setSt(f, 'sleep', rnd(6, 12));
-        else if (r < 0.5) { turn(f); f.stT = rnd(2, 6); }
-        else { f.ty = rnd(H * 0.12, H * 0.72); f.stT = rnd(2, 6); } }
+        else if (r < 0.42) { turn(f); f.stT = rnd(2, 6); }
+        else if (r < 0.7) { f.tz = rnd(0, 1); f.stT = rnd(3, 7); } // 앞뒤로 오가기
+        else { f.ty = rnd(H * 0.05, H * 0.85); f.stT = rnd(2, 6); } }
       const sp = f.base * (f.st === 'dash' ? 3.4 : f.st === 'sleep' ? 0.08 : 1);
       f.x += f.dir * sp * dt;
-      const lo = f.hgt / 2 + H * 0.06, hi = H * 0.8 - f.hgt / 2, ty = f.st === 'sleep' ? hi - f.hgt * 0.2 : f.ty;
+      f.z += (f.tz - f.z) * Math.min(1, dt * 0.35); const hg = hOf(f), lo = hg / 2 + H * 0.03, hi = H * (0.9 - 0.12 * f.z) - hg / 2, ty = f.st === 'sleep' ? hi - hg * 0.1 : f.ty;
       f.vy += ((Math.max(lo, Math.min(hi, ty)) - f.y) * 0.6 - f.vy) * Math.min(1, dt * 2); f.y += f.vy * dt;
       if (f.x < f.len / 2 && f.dir < 0 || f.x > W - f.len / 2 && f.dir > 0) turn(f, true);
       f.x = Math.max(f.len / 2 - 0.01, Math.min(W - f.len / 2 + 0.01, f.x)); }
     // 부딪힘: 몸통 상자가 겹치면 작은 물고기가 위아래로 비키고, 마주 보고 오면 방향을 튼다
     for (let a = 0; a < fish.length; a++) for (let b = a + 1; b < fish.length; b++) { const A = fish[a], B = fish[b], dx = B.x - A.x, dy = B.y - A.y;
-      if (Math.abs(dx) < (A.len + B.len) * 0.4 && Math.abs(dy) < (A.hgt + B.hgt) * 0.45) { const s = A.len < B.len ? A : B, big = s === A ? B : A, away = s.y < big.y ? -1 : 1;
-        s.ty = Math.max(H * 0.08, Math.min(H * 0.75, big.y + away * (big.hgt * 0.7 + s.hgt))); s.vy += away * 0.4 * s.base;
+      if (Math.abs(A.z - B.z) < 0.22 && Math.abs(dx) < (A.len * scOf(A) + B.len * scOf(B)) * 0.4 && Math.abs(dy) < (hOf(A) + hOf(B)) * 0.4) { const s = A.len < B.len ? A : B, big = s === A ? B : A, away = s.y < big.y ? -1 : 1;
+        s.ty = Math.max(H * 0.05, Math.min(H * 0.85, big.y + away * (hOf(big) * 0.6 + hOf(s)))); if (Math.random() < 0.01) s.tz = Math.max(0, Math.min(1, s.z + (s.z < big.z ? -0.3 : 0.3))); s.vy += away * 0.4 * s.base;
         if (s.dir !== big.dir && Math.sign(big.x - s.x) === s.dir && !s.turnT && Math.random() < 0.02) turn(s);
         if (s.st === 'sleep') setSt(s, 'swim', rnd(2, 4)); } } }
   function setSt(f, st, t) { f.st = st; f.stT = t; f.el.classList.toggle('dash', st === 'dash'); f.el.classList.toggle('sleep', st === 'sleep'); if (st === 'dash') bubbles(f); }
-  function turn(f, wall) { if (f.turnT && !wall) return; f.dir *= -1; f.turnT = 0.6; f.el.classList.remove('turn'); void f.el.offsetWidth; f.el.classList.add('turn'); }
-  function bubbles(f) { for (let k = 0; k < 4; k++) { const b = h('i', { class: 'aq-bub', style: { left: (f.x - f.dir * f.len * 0.45) * ppm + 'px', top: (f.y + rnd(-0.1, 0.1) * f.hgt) * ppm + 'px', animationDelay: k * 0.08 + 's' } }); layer.append(b); setTimeout(() => b.remove(), 1400); } }
-  function draw() { for (const f of fish) { const w = f.len * ppm / FISH_FILL; f.el.style.transform = `translate(${(f.x * ppm - w / 2).toFixed(1)}px, ${(f.y * ppm - w / 3).toFixed(1)}px)`; f.body.style.transform = f.dir > 0 ? 'scaleX(-1)' : ''; } }
+  // 방향 바꾸기: 종이처럼 뒤집지 않고, 예전 방향 모습이 스르르 사라지면서 새 방향 모습이 나타나고 몸이 살짝 기울며 돈다
+  function turn(f, wall) { if (f.turnT && !wall) return; f.turnT = 0.9;
+    const g = f.body.cloneNode(true); g.classList.add('aq-ghost'); f.el.append(g); setTimeout(() => g.remove(), 650);
+    f.dir *= -1; f.body.classList.remove('aq-in'); void f.body.offsetWidth; f.body.classList.add('aq-in'); f.el.classList.remove('turn'); void f.el.offsetWidth; f.el.classList.add('turn'); }
+  function bubbles(f) { for (let k = 0; k < 4; k++) { const b = h('i', { class: 'aq-bub', style: { zIndex: f.el.style.zIndex, left: (f.x - f.dir * f.len * scOf(f) * 0.45) * ppm + 'px', top: (f.y + rnd(-0.1, 0.1) * hOf(f)) * ppm + 'px', animationDelay: k * 0.08 + 's' } }); layer.append(b); setTimeout(() => b.remove(), 1400); } }
+  function draw() { for (const f of fish) { sizeFish(f); const w = f.lw; const q = Math.round(f.z * 20); if (q !== f.dq) { f.dq = q; const z = q / 20; f.el.style.zIndex = 100 + Math.round((1 - z) * 800); f.el.style.opacity = (1 - 0.3 * z).toFixed(2); f.el.style.setProperty('--dz', `brightness(${(1 - 0.12 * z).toFixed(2)}) saturate(${(1 - 0.35 * z).toFixed(2)}) hue-rotate(${(z * 12).toFixed(0)}deg)`); } f.el.style.transform = `translate(${(f.x * ppm - w / 2).toFixed(1)}px, ${(f.y * ppm - w / 3).toFixed(1)}px)`; f.body.style.transform = f.dir > 0 ? 'scaleX(-1)' : ''; } }
   function loop(t) { if (!alive) return; const dt = Math.min(0.05, (t - last) / 1000); last = t; step(dt); draw(); if (t > reactAt) { reactAt = t + rnd(2500, 5000); react(); } raf = requestAnimationFrame(loop); }
   // 두 손가락으로 확대·축소
   let pinch = null; view.addEventListener('touchstart', e => { if (e.touches.length === 2) pinch = { d: Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY), z: zoom }; }, { passive: true });
