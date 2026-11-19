@@ -23,9 +23,10 @@ export const TIER_NAME = ['', '초급', '중급', '고급'];
 export const toolImg = (t, k = 'tool') => `img/farm/${k}${Math.max(1, Math.min(3, t || 1))}.webp`;
 // 앞발이 잡는 자리(그림을 좌우로 뒤집은 뒤 기준, 가로·세로 0~1)와 크기, 물뿌리개 주둥이 끝. 호미·물뿌리개는 바깥(오른쪽)을 보게 뒤집는다
 const GRIP = { hoe1: [0.28, 0.68, 72], hoe2: [0.38, 0.72, 72], hoe3: [0.42, 0.7, 72], can1: [0.2, 0.45, 58, 0.97, 0.36], can2: [0.15, 0.45, 58, 0.98, 0.3], can3: [0.5, 0.78, 72, 0.5, 0.1] };
+const FL_PAW = { brown: '#8A4019', cream: '#A67D62', choco: '#5C2C1B', peach: '#A05A5A' }; // 보송 그림체의 앞발 색
 const PX = 94, PY = 107; // 캐릭터 그림(120×158)에서 오른쪽 앞발 끝
 export function holdSvg(svg, k, t) {
-  const id = k + Math.max(1, Math.min(3, t || 1)), [gx, gy, S, sx, sy] = GRIP[id], x = PX - gx * S, y = PY - gy * S, fur = (svg.match(/<ellipse cx="91" cy="99" rx="8" ry="12" fill="([^"]+)"/) || [])[1] || '#B07A4E';
+  const id = k + Math.max(1, Math.min(3, t || 1)), [gx, gy, S, sx, sy] = GRIP[id], x = PX - gx * S, y = PY - gy * S, flc = svg.match(/img\/fl\/c-(brown|cream|choco|peach)-/), fur = flc ? FL_PAW[flc[1]] : (svg.match(/<ellipse cx="91" cy="99" rx="8" ry="12" fill="([^"]+)"/) || [])[1] || '#B07A4E';
   const drops = k === 'can' ? `<g class="fm-drops">${[0, 1, 2, 3, 4].map(i => `<circle cx="${(x + sx * S + (id === 'can3' ? (i - 2) * 6 : 2 + i * 2)).toFixed(1)}" cy="${(y + sy * S + (id === 'can3' ? -4 : 2)).toFixed(1)}" r="3.2" fill="#6EC3F7" stroke="#fff" stroke-width=".8" style="animation-delay:${i * 0.12}s"/>`).join('')}</g>` : '';
   const g = `<g class="fm-tg ${k} ${id}" style="transform-origin:${PX}px ${PY}px"><g transform="translate(${(x + S).toFixed(1)} ${y.toFixed(1)}) scale(-1 1)"><image href="${toolImg(t, k)}" width="${S}" height="${S}"/></g>${drops}</g>`;
   const paw = `<ellipse cx="${PX}" cy="${PY}" rx="7.5" ry="6.5" fill="${fur}"/><path d="M${PX - 4} ${PY - 2} q4 -3 8 0" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="1.2" stroke-linecap="round"/>`;

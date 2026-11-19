@@ -22,7 +22,8 @@ const CAPY_FACE = new Set(['smile', 'happy', 'sleepy', 'wow', 'sad', 'love', 'wi
 const CAPY_COL = new Set(['brown', 'cream', 'choco', 'peach']);
 export const capyFile = (color, face, back) => `c-${CAPY_COL.has(color) ? color : 'brown'}-${back ? 'back' : CAPY_FACE.has(face) ? face : 'smile'}.webp`;
 // 몸통(발 위)과 두 발을 따로 잘라 그린다. 발은 예전처럼 cf-l·cf-r 무리라 걸을 때 번갈아 움직인다
-const crop = (name, own, x, y, w, h) => `<svg x="${x}" y="${y.toFixed(2)}" width="${w}" height="${h.toFixed(2)}" viewBox="${x} ${y.toFixed(2)} ${w} ${h.toFixed(2)}" overflow="hidden">${img(name, own)}</svg>`;
+let clipN = 0; // 안쪽에 <svg>를 또 넣으면 화면 쪽 CSS(.so-me svg 등)가 같이 걸려 어긋난다 → 잘라내기는 clipPath로 한다
+const crop = (name, own, x, y, w, h) => { const id = 'flc' + (++clipN); return `<defs><clipPath id="${id}" clipPathUnits="userSpaceOnUse"><rect x="${x}" y="${y.toFixed(2)}" width="${w}" height="${h.toFixed(2)}"/></clipPath></defs><g clip-path="url(#${id})">${img(name, own)}</g>`; };
 export function capyBody(color, face, back, own) {
   const f = capyFile(color, face, back);
   return { feet: `<g class="cf-l">${crop(f, own, -20, FOOT, 80, 40)}</g><g class="cf-r">${crop(f, own, 60, FOOT, 80, 40)}</g>`, body: crop(f, own, -20, -30, 160, FOOT + 30 + 0.4), whole: img(f, own) };
@@ -70,3 +71,7 @@ export function boatImg(kind, pin) { // kind: 'wood' | 'white' | 'gun' | 'gun2'
 export const shipImg = () => `<svg viewBox="0 0 170 130"><image href="${O}ship.webp" x="24" y="0" width="123" height="118"/><g class="gun-b" style="transform-origin:42px 56px"><image href="${O}gun.webp" x="-54" y="44" width="52" height="22" transform="scale(-1 1)"/></g><image href="${O}wheel.webp" x="28" y="55" width="24" height="24"/>${WAVE(118)}</svg>`;
 // 발밑 그림자(물에 들어가거나 배를 타면 CSS로 숨긴다)
 export const SHADOW = '<ellipse class="fl-sh" cx="60" cy="133.5" rx="31" ry="5.5" fill="rgba(60,32,10,.4)"/>';
+
+// 상점 선물·포션 그림(예전에는 이모지)
+const ITEM = { '🍬': 'candy', '💐': 'flower', '🎂': 'cake', '🧪': 'potion' };
+export const itemIcon = e => (on && ITEM[e] ? `<img class="fl-item" src="img/fl/o/${ITEM[e]}.webp" alt="${e}">` : '');

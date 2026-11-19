@@ -1,6 +1,6 @@
 // 동물 친목회 — 놀이터에서 동물 30마리와 말하고, 선물하고, 거래한다. 친밀도와 기억은 사람마다 따로다
 import { h, toast, modal, gameFx, holdBtn, ymd, josa } from './ui.js';
-import { FLUFFY, boatImg, clothIcon, rareIcon, rarePic } from './fluffy.js';
+import { FLUFFY, boatImg, clothIcon, rareIcon, rarePic, itemIcon } from './fluffy.js';
 import { capy, PIN_CHEST } from './capy.js';
 import { ANIMALS, animalSvg } from './animals.js';
 import { ZOO_HATS, nameOf as clothName } from './clothes.js';
@@ -912,7 +912,7 @@ export function mount(el, ctx) {
       const cl = modal({ title: `🎁 ${a.name}에게 선물하기`, body: h('div', { class: 'so-list' }, have.map(k => { const [ic, nm, , up] = GIFTS[k]; return h('button', { class: 'so-row', onClick: async () => { cl(); const bonus = p.fav === k ? Math.ceil(up * 0.5) : 0, was = A(i), v = capA(i, was + up + bonus, k === 'cake');
         await ctx.store.update('bag/' + ctx.uid, { [k]: (bag[k] || 0) - 1 }).catch(() => {}); bag = { ...bag, [k]: (bag[k] || 0) - 1 }; await setRel(i, { a: v, fedAt: ctx.store.now() }, k === 'cake');
         if (v === 99 && was + up + bonus >= 100 && k !== 'cake') { say(pick(CAKE_HINT), 'glad'); after(v - was); } else if (v >= 100 && was < 100) { say('케이크다…! 이제 우리는 진짜 단짝이야! 💗', 'glad'); after(v - was); } else
-        if (demand === 'gift') { demand = ''; drawQuick(); say(bonus ? `흥, ${nm}라… 내가 좋아하는 걸 아네. 이번엔 봐준다.` : `${nm}? 뭐, 받아는 줄게.`, 'glad'); } else say(bonus ? `우와, ${nm}! 내가 제일 좋아하는 거야! 고마워!` : `${nm} 주는 거야? 고마워, 잘 쓸게!`, 'glad'); after(up + bonus); } }, h('span', null, ic), h('b', null, nm), h('small', null, `${bag[k]}개 · 친밀도 +${up}`)); })), actions: [{ label: '닫기' }] });
+        if (demand === 'gift') { demand = ''; drawQuick(); say(bonus ? `흥, ${nm}라… 내가 좋아하는 걸 아네. 이번엔 봐준다.` : `${nm}? 뭐, 받아는 줄게.`, 'glad'); } else say(bonus ? `우와, ${nm}! 내가 제일 좋아하는 거야! 고마워!` : `${nm} 주는 거야? 고마워, 잘 쓸게!`, 'glad'); after(up + bonus); } }, itemIcon(ic) ? h('span', { class: 'so-rodic', html: itemIcon(ic) }) : h('span', null, ic), h('b', null, nm), h('small', null, `${bag[k]}개 · 친밀도 +${up}`)); })), actions: [{ label: '닫기' }] });
     }
     function trade() {
       const v = A(i), ware = wareOf(i), disc = (bag.resold || {})[i] ? 1 : v >= 50 ? 0.5 : v >= 20 ? 0.75 : 1, wp = Math.round(priceOf(ware.id) * disc), hasPin = (bag.pins || {})[i];
@@ -1058,7 +1058,7 @@ export function mount(el, ctx) {
         if (aq.length) out.push(['sec', '🐠 수족관'], ...aq); }
       if (out.length === 2 && !L.length) out.push(['note', '팔 물건이 없어요. 물고기를 잡거나 물건을 사 오면 여기서 팔 수 있어요.']);
       return out; }
-    const ico = x => (typeof x !== 'string' ? x : x.startsWith('<') ? h('span', { class: 'so-rodic', html: x }) : h('span', null, x));
+    const ico = x => (typeof x !== 'string' ? x : itemIcon(x) ? h('span', { class: 'so-rodic', html: itemIcon(x) }) : x.startsWith('<') ? h('span', { class: 'so-rodic', html: x }) : h('span', null, x));
     function draw() { list.replaceChildren(h('p', { class: 'center' }, '내 돈 ', h('b', { 'data-coins': 1 }, won(ctx.coins()))), ...(tab === 'buy' ? buyItems() : sellItems()).map(it => {
       if (it instanceof Node) return it; if (it[0] === 'sec') return h('b', { class: 'so-sellh' }, it[1]); if (it[0] === 'note') return h('p', { class: 'dim center' }, it[1]);
       const b = h('button', { class: 'so-row' + (it.big ? ' big' : '') + (it.gold ? ' gold' : '') + (it.off ? ' off' : '') + (it.cls ? ' ' + it.cls : '') }, ico(it.ic), h('b', null, it.name), h('small', null, it.sub));
