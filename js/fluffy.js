@@ -36,12 +36,18 @@ export function capyBody(color, face, back, own) {
 // 옷: 몸에 입힌 채로 그린 그림(같은 틀)을 그대로 겹친다. 신발은 발처럼 좌우로 잘라 걸을 때 함께 움직인다
 const HAT_UP = -10; // 모자는 마네킹보다 머리가 낮게 그려져 있어 조금 올려 씌운다(눈을 가리지 않게)
 const wimg = (id, own, back) => img((back ? 'wb/' : 'w/') + id + '.webp', own);
+// 새 체형(머리가 크고 몸이 작다)에 맞춰 예전 옷·장비 그림을 줄여 입힌다: [기준 x, 기준 y, 가로 배율, 세로 배율, 옆으로, 아래로] (기준점은 그대로 두고 줄인 뒤 옮긴다)
+const FIT = { t: [60, 128.5, 0.8, 0.78, 0, 0], b: [60, 128.5, 0.84, 0.8, 0, 0], h: [60, 20, 1, 1, 0, 0], s: [60, 135, 0.76, 0.86, 0, 0] };
+const fitG = (f, inner) => (f && inner ? `<g transform="translate(${f[0] + f[4]} ${f[1] + f[5]}) scale(${f[2]} ${f[3]}) translate(${-f[0]} ${-f[1]})">${inner}</g>` : inner);
+// 종류별 보정: 발까지 내려오는 긴 옷은 작은 다리에 맞게 더 줄인다(발이 보이게)
+const KFIT = { 'b-baji': [60, 128.5, 0.82, 0.66, 0, -2.5], 'b-track': [60, 128.5, 0.84, 0.74, 0, -1.5], 'b-jeans': [60, 128.5, 0.84, 0.76, 0, -1] };
+const worn = (id, own, back) => fitG(KFIT[id.slice(0, id.lastIndexOf('-'))] || FIT[id[0]], wimg(id, own, back));
 export function capyWear(o, own, back) {
   const ok = (id, ch) => (typeof id === 'string' && id[0] === ch ? id : '');
   const top = ok(o.top, 't'), bot = ok(o.bottom, 'b'), hat = ok(o.hat, 'h'), sh = ok(o.shoe, 's'), over = bot.startsWith('b-overalls');
   const f = sh ? (back ? 'wb/' : 'w/') + sh + '.webp' : '';
-  return { shoe: f ? `<g class="cf-l">${crop(f, own, -20, FOOT - 14, 80, 54)}</g><g class="cf-r">${crop(f, own, 60, FOOT - 14, 80, 54)}</g>` : '',
-    body: (bot && !over ? wimg(bot, own, back) : '') + (top ? wimg(top, own, back) : '') + (over ? wimg(bot, own, back) : ''), hat: hat ? `<g transform="translate(0 ${HAT_UP})">${wimg(hat, own, back)}</g>` : '' };
+  return { shoe: f ? `<g class="cf-l">${fitG(FIT.s, crop(f, own, -20, FOOT - 14, 80, 54))}</g><g class="cf-r">${fitG(FIT.s, crop(f, own, 60, FOOT - 14, 80, 54))}</g>` : '',
+    body: (bot && !over ? worn(bot, own, back) : '') + (top ? worn(top, own, back) : '') + (over ? worn(bot, own, back) : ''), hat: hat ? `<g transform="translate(0 ${HAT_UP})">${worn(hat, own, back)}</g>` : '' };
 }
 const MOOD = new Set(['happy', 'love', 'sad', 'cry', 'wow', 'smug', 'think', 'shy', 'angry']);
 export const animalImg = (i, mood, own) => img(`a${i}-${mood === 'mad' ? 'angry' : MOOD.has(mood) ? mood : 'base'}.webp`, own);
@@ -56,11 +62,15 @@ export const gullImg = boss => img(boss ? 'gull-boss.webp' : 'gull-crew.webp');
 // 날개·꼬리처럼 옆으로 넓은 것이 잘리지 않게 황금 장비 그림은 틀이 더 넓다(480×360, 가운데가 몸)
 const wide = (name, own) => `<image href="${src(name, own)}" x="${(60 - 240 * S).toFixed(2)}" y="${Y.toFixed(2)}" width="${(480 * S).toFixed(2)}" height="${H.toFixed(2)}"/>`;
 const R_HEAD = new Set([1, 6, 10, 11, 15, 21, 23]), R_SHOE = new Set([12, 13]);
+// 황금 장비도 새 체형에 맞춘다: 눈에 쓰는 것은 내려 쓰고, 옷·갑옷은 작은 몸에 맞게 줄이고, 손에 든 것·등에 단 것은 몸 쪽으로 붙인다
+const BODY_FIT = [60, 128.5, 0.8, 0.78, 0, 0], EYE_FIT = [60, 50, 1, 1, 0, 7.6], HANDL = [28, 105, 0.8, 0.8, 5, 6], HANDR = [92, 105, 0.86, 0.86, -8, 3], WING = [60, 100, 0.82, 0.82, 0, 6];
+const R_FIT = { 3: EYE_FIT, 7: EYE_FIT, 16: EYE_FIT, 29: EYE_FIT, 5: BODY_FIT, 8: BODY_FIT, 9: BODY_FIT, 20: BODY_FIT, 22: BODY_FIT, 24: BODY_FIT, 26: BODY_FIT, 18: [60, 128.5, 0.84, 0.84, 0, 0],
+  0: HANDL, 4: HANDL, 14: HANDL, 25: HANDL, 2: HANDR, 17: WING, 19: WING, 27: BODY_FIT, 28: [92, 120, 0.86, 0.86, -8, 2] };
 export function capyRare(list, own) {
   let over = '', shoe = '';
   list.forEach(k => { const f = 'r/' + k + '.webp';
-    if (R_SHOE.has(k)) shoe = `<g class="cf-l">${crop(f, own, -20, FOOT - 14, 80, 54)}</g><g class="cf-r">${crop(f, own, 60, FOOT - 14, 80, 54)}</g>`;
-    else over += R_HEAD.has(k) ? `<g transform="translate(0 ${HAT_UP})">${wide(f, own)}</g>` : wide(f, own); });
+    if (R_SHOE.has(k)) shoe = `<g class="cf-l">${fitG(FIT.s, crop(f, own, -20, FOOT - 14, 80, 54))}</g><g class="cf-r">${fitG(FIT.s, crop(f, own, 60, FOOT - 14, 80, 54))}</g>`;
+    else over += R_HEAD.has(k) ? `<g transform="translate(0 ${HAT_UP + (k === 21 ? 9 : 0)})">${wide(f, own)}</g>` : fitG(R_FIT[k], wide(f, own)); });
   return { over, shoe };
 }
 export const rareIcon = i => (on ? `img/fl/r/ic/${i}.webp` : `img/rare/ic/${i}.webp`);

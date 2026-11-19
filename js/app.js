@@ -209,6 +209,7 @@ function patchNote() { if (Date.now() >= PATCH_UNTIL) return;
     h('div', { class: 'patch-farm' }, h('img', { src: 'img/patch-1120.webp', alt: '11월 20일 업데이트' })),
     h('div', { class: 'patch-econ' }, h('b', null, '🎉 11/20 업데이트'), h('small', null, '교환 · 방명록 · 스프링클러 완전 자동')),
     h('ul', null,
+      li('🧸', '새 카피바라', '머리는 크게 · 몸은 작게 · 옷과 황금 장비도 새 몸에 맞춤'),
       li('🎁', '1:1 교환', '친목회 🎁 교환 · 가방 안 무엇이든 1개씩 · 둘 다 동의'),
       li('📖', '수족관', '방명록 · 수족관 없어도 구경 · 제목 누르면 관람료'),
       li('💦', '스프링클러', '시간당 요금 없앰 · 하루 100코인에 24시간 자동'),
