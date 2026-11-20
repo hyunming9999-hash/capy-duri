@@ -2572,3 +2572,8 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fm-sheet .fm-stp i { position: absolute; left: -6px; top: -8px; width: 26px; height: 26px; border-radius: 50%; background: #5A3FA0; color: #fff; font: 900 14px/26px var(--head); font-style: normal; text-align: center; box-shadow: 0 2px 0 #24163F; }
 .fm-sheet .fm-stp.off { border-color: #D8CBB0; background: #EFE7D6; box-shadow: none; opacity: .6; } .fm-sheet .fm-stp:active:not(.off) { transform: translateY(3px); box-shadow: 0 1px 0 #C99A2E; }
 .fm-stctl .fm-sttip { display: flex; align-items: center; justify-content: center; }
+
+/* 이랑 고르기: 가운데 조작부 안에서 바로(스크롤 없이) */
+.fm-stctl .fm-stpick { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.fm-stctl .fm-stp { padding: 4px 1px 5px; border-radius: 12px; min-width: 0; } .fm-stctl .fm-stp img { width: 24px; height: 24px; } .fm-stctl .fm-stp span { font-size: 16px; line-height: 24px; } .fm-stctl .fm-stp b { font-size: 11.5px; white-space: nowrap; } .fm-stctl .fm-stp small { font-size: 9.5px; white-space: nowrap; }
+.fm-stctl .fm-stback { min-width: 0; padding: 4px 6px; }

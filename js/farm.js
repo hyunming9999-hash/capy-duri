@@ -142,7 +142,9 @@ export function openFarm(o) {
     let chosen = null, pressing = false, mode = 'idle', sig = '', gaugeEl = null, holdEl = null, tipEl = null; const ctl = h('div', { class: 'fm-stctl', hidden: true });
     const heldKeyOf = () => (pressing ? chosen : null);
     function drawCtl(k, here) { const t = now(), rows = k >= 0 ? rowsOf(k) : []; gaugeEl = holdEl = tipEl = null;
-      if (mode === 'pick') { rc(ctl, h('div', { class: 'fm-sttip' }, '👇 아래에서 서리할 이랑을 골라요'), h('button', { class: 'fm-stback', onClick: () => { mode = 'idle'; drawSheet(); } }, '취소')); drawSheet(); return; } // 이랑은 아래 밭 카드 자리에서 고른다
+      if (mode === 'pick') return rc(ctl, h('div', { class: 'fm-stpick' }, ...[0, 1, 2].map(i => { const ok = here.includes(i), r = rows[i], c = r && r.c ? cropOf(r.c) : null; // 이랑은 가운데 자리에서 바로 고른다(스크롤 없이)
+        return h('button', { class: 'fm-stp' + (ok ? '' : ' off'), disabled: !ok, onClick: () => { chosen = k + '|' + i; mode = 'hold'; sfx('pop'); } }, c && live(r) ? h('img', { src: cropImg(c.id), alt: '' }) : h('span', null, '–'), h('b', null, `${i + 1}번 이랑`), h('small', null, ok ? c.name : live(r) ? '덜 익음' : '빈 이랑')); })),
+        h('button', { class: 'fm-stback', onClick: () => { mode = 'idle'; } }, '취소'));
       if (mode === 'hold' && chosen) { const i = +chosen.split('|')[1]; gaugeEl = h('i'); tipEl = h('small');
         holdEl = h('button', { class: 'fm-steal' }, h('b', null, `🤫 ${i + 1}번 이랑 서리`), tipEl, h('span', { class: 'fm-stg' }, gaugeEl)); holdBtn(holdEl, () => { pressing = true; }, () => { pressing = false; });
         drawSheet(); return rc(ctl, holdEl, h('button', { class: 'fm-stback', onClick: () => { pressing = false; mode = 'pick'; } }, '이랑', h('br'), '바꾸기')); }
@@ -251,7 +253,6 @@ export function openFarm(o) {
 
   // 밭 아래 창
   function drawSheet() { const ae = document.activeElement; if (ae && (ae.type === 'time' || ae.tagName === 'SELECT') && sheet.contains(ae)) return; // 시간 고르는 중엔 다시 그리지 않는다
-    if (KP && KP.pickView()) return;
     const k = sel, t = now(), visit = who !== ctx.uid;
     if (k < 0) { // 한눈에 보기: 밭마다 카드 한 장(이랑 3칸 미리보기 + 상태 + 바로 하기 버튼)
       const seeds = Object.values(mine.seeds || {}).reduce((a, n) => a + (n || 0), 0), barn = Object.values(mine.barn || {}).reduce((a, n) => a + (n || 0), 0);
