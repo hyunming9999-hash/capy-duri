@@ -44,7 +44,7 @@ export function mount(el, ctx) {
   if (TEST) plays = 99; drawShelf(); drawTries();
 
   // ---- 3D 장면
-  let THREE, CANNON, renderer, scene, camera, clawG, cable, gantry, cart, pusher, dollMat; const prongs = [], marks = [];
+  let THREE, CANNON, renderer, scene, camera, clawG, cable, gantry, cart, pusher, dollMat, UP, TMP; const prongs = [], marks = [];
   // 인형: 동물마다 색·귀·주둥이가 다른 3D 머리 봉제 인형(공 하나에 귀·눈·코·볼터치를 붙인다). 반지름 1짜리로 만들어 크기만 키운다
   let SPH, CONE; const matOf = {}, mt = col => matOf[col] || (matOf[col] = new THREE.MeshLambertMaterial({ color: col })), INK = '#3A2A22';
   function makeDoll(i) { const a = ANIMALS[i], g = new THREE.Group(), body = a.body, light = a.light, earC = a.earC || a.body, inner = a.inner || light, dark = a.dark || INK, es = a.es || 1, nm = a.name;
@@ -121,7 +121,7 @@ export function mount(el, ctx) {
       const a = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.05, 0.22), metal); a.position.set(0.28, -0.42, 0); a.rotation.z = 0.55; arm.add(a); const b = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.95, 0.22), metal); b.position.set(0.36, -1.25, 0); b.rotation.z = -0.42; arm.add(b); prongs.push(arm); }
     // 조준 표시: 레이저 포인터처럼 작은 점(가운데 심 + 번지는 빛 + 가는 빛줄기). 네온처럼 밝아졌다 어두워졌다 한다. 점이 찍힌 인형을 집는다
     { const mk = (geo, op) => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xfff23a, depthTest: false, transparent: true, opacity: op })); m.renderOrder = 9; scene.add(m); marks.push(m); return m; };
-      mk(new THREE.SphereGeometry(0.085, 12, 8), 1); mk(new THREE.SphereGeometry(0.2, 14, 10), 0.4); mk(new THREE.CylinderGeometry(0.018, 0.018, 1, 6), 0.4); }
+      mk(new THREE.SphereGeometry(0.085, 12, 8), 1); mk(new THREE.SphereGeometry(0.2, 14, 10), 0.4); mk(new THREE.CylinderGeometry(0.04, 0.04, 1, 6), 0.4); UP = new THREE.Vector3(0, 1, 0); TMP = new THREE.Vector3(); }
     // 물리
     world = new CANNON.World({ gravity: new CANNON.Vec3(0, -32, 0) }); world.allowSleep = false; world.solver.iterations = 12;
     dollMat = new CANNON.Material('doll'); const wallMat = new CANNON.Material('wall'); world.addContactMaterial(new CANNON.ContactMaterial(dollMat, dollMat, { friction: 0.5, restitution: 0.05 })); world.addContactMaterial(new CANNON.ContactMaterial(dollMat, wallMat, { friction: 0.35, restitution: 0.05 }));
@@ -146,8 +146,10 @@ export function mount(el, ctx) {
 
   // ---- 집게
   const tipY = () => claw.y - 1.75;
-  // 조준: 집게 한가운데에서 수직으로 내려 쏜 레이저가 처음 닿는 인형(가장 높은 면). aimY = 점이 찍히는 높이
-  let aimY = 0; const aimDoll = () => { let d = null; aimY = 0; for (const o of dolls) { const p = o.body.position, hh = (p.x - claw.x) ** 2 + (p.z - claw.z) ** 2; if (hh < o.r * o.r) { const y = p.y + Math.sqrt(o.r * o.r - hh); if (y > aimY) { aimY = y; d = o; } } } return d; };
+  // 조준: 집게 바로 아래에서 가장 위에 있는 인형. 인형 사이 틈에 서도 깊은 데 인형이 아니라 위쪽 인형을 고르고, 한번 고른 인형은 쉽게 안 바뀐다(깜빡임 방지)
+  let aimed = null; const aimPos = { x: 0, y: 0, z: 0, has: false };
+  const aimDoll = () => { let d = null, best = -1e9, cur = -1e9; for (const o of dolls) { const p = o.body.position, h = Math.hypot(p.x - claw.x, p.z - claw.z); if (h < o.r + 0.2) { const sc = p.y - 0.5 * h; if (o === aimed) cur = sc; if (sc > best) { best = sc; d = o; } } }
+    if (cur > -1e8 && best - cur < 0.3) d = aimed; aimed = d; return d; };
   const inOut = (x, z, m = 0) => x < HOLE_X + m && z > HOLE_Z - m;
   function drop() {
     if (!ready || busy || claw.st !== 'idle') return;
@@ -195,9 +197,12 @@ export function mount(el, ctx) {
     const c = claw; gantry.position.z = c.z; cart.position.set(c.x, 8.45, c.z); clawG.position.set(c.x, c.y, c.z); const len = Math.max(0.1, 8.2 - c.y); cable.scale.y = len; cable.position.set(c.x, c.y + len / 2, c.z);
     const ang = -0.5 + c.open * 0.62; prongs.forEach(a => { a.rotation.z = ang; });
     for (const d of dolls) { const p = d.body.position; d.face.position.set(p.x, p.y, p.z); }
-    { aimDoll(); const on = c.st === 'idle', y = aimY + 0.03, w = 0.5 + 0.5 * Math.sin(performance.now() / 170), [dot, halo, beam] = marks; marks.forEach(m => { m.visible = on; });
-      dot.position.set(c.x, y, c.z); halo.position.set(c.x, y, c.z); halo.scale.setScalar(0.75 + w * 0.7); halo.material.opacity = 0.18 + w * 0.42; dot.material.opacity = 0.75 + w * 0.25;
-      const len = Math.max(0.05, tipY() - y); beam.scale.y = len; beam.position.set(c.x, y + len / 2, c.z); beam.material.opacity = 0.12 + w * 0.3; }
+    { const a = c.st === 'idle' ? aimDoll() : null, on = c.st === 'idle', w = 0.5 + 0.5 * Math.sin(performance.now() / 170), [dot, halo, beam] = marks; marks.forEach(m => { m.visible = on; });
+      if (on) { let tx = c.x, ty = 0.03, tz = c.z; if (a) { const p = a.body.position; tx = p.x; ty = p.y + a.r * 0.8; tz = p.z + a.r * 0.6; } /* 점은 인형의 위·앞쪽(카메라에서 잘 보이는 곳)에 찍힌다 */
+        const k = aimPos.has ? 0.3 : 1; aimPos.x += (tx - aimPos.x) * k; aimPos.y += (ty - aimPos.y) * k; aimPos.z += (tz - aimPos.z) * k; aimPos.has = true; /* 점이 튀지 않고 미끄러지듯 옮겨 간다 */
+        dot.position.set(aimPos.x, aimPos.y, aimPos.z); halo.position.copy(dot.position); halo.scale.setScalar(0.75 + w * 0.7); halo.material.opacity = 0.18 + w * 0.42; dot.material.opacity = 0.75 + w * 0.25;
+        const fx = c.x, fy = tipY() + 0.5, fz = c.z, vx = aimPos.x - fx, vy = aimPos.y - fy, vz = aimPos.z - fz, len = Math.max(0.05, Math.hypot(vx, vy, vz)); /* 빛줄기: 집게 가운데 → 점 */
+        beam.scale.y = len; beam.position.set(fx + vx / 2, fy + vy / 2, fz + vz / 2); beam.quaternion.setFromUnitVectors(UP, TMP.set(vx / len, vy / len, vz / len)); beam.material.opacity = 0.3 + w * 0.45; } else aimPos.has = false; }
   }
   function frame(t) { if (!alive) return; raf = requestAnimationFrame(frame); if (!ready) return; const dt = Math.min(0.033, (t - (lastT || t)) / 1000); lastT = t;
     moveClaw(dt); world.step(1 / 60, dt, 3);

@@ -139,6 +139,7 @@ const S_RUMOR = [(n, f, l) => `${n}! ${l} ${f} 잡았다며? 소문 다 났어, 
 const RUMOR = [n => `소문 듣고 왔어~ 대박! ${n} 황금 보물 샀다며!`, n => `대박! ${n}, 진짜 황금이야? 소문이 사실이었네!`, n => `온 놀이터가 ${n} 얘기뿐이야~ 대박 멋져!`, n => `소문 듣고 달려왔어! ${n} 최고야, 눈부셔!`, n => `헉 대박… ${n} 황금 두른 거 실화야? 존경해!`];
 const SULK = ['요즘 나랑 안 놀아 줘서 서운해… 🥺', '나 잊은 거 아니지? 힝… 🥺', '같이 안 놀면 마음이 식어 버려… 🥺', '나 여기 있는데… 좀 봐 줘 🥺', '심심해서 삐질 거야… 🥺'];
 // 되팔 때 값: 게임 3~5판 번 것쯤(150~250코인). 물건마다 값이 정해져 있다
+const DOLL_SELL = 120; // 뽑은 인형을 상점에 파는 값(개당)
 const sellPin = i => 150 + (i * 37) % 101, sellHat = i => 150 + (i * 53 + 20) % 101;
 const MY_BOAT = 99, BOAT_PRICE = 1000; // 내 카피보트: 카피수퍼에서 1000코인
 const CARE = ['너무 깊은 곳은 조심해.', '넌 소중한 존재야. 다치면 안 돼.', '멀리 나가면 꼭 돌아와야 해.', '물 차갑지 않아? 감기 조심해.', '파도가 세면 무리하지 마.', '힘들면 언제든 쉬었다 가.', '해적 만나면 다치지 말고 도망쳐도 돼.', '밥은 챙겨 먹고 다니는 거지?', '네가 무사하면 그걸로 충분해.', '낚시 잘 안 돼도 괜찮아. 넌 잘하고 있어.'];
@@ -1141,6 +1142,11 @@ export function mount(el, ctx) {
         act: () => sell(p, async () => { if (myRares().includes(i)) await wearRare(i); bag = { ...bag, rares: { ...(bag.rares || {}), [i]: null } }; await ctx.store.update('bag/' + ctx.uid + '/rares', { [i]: null }).catch(() => {}); }) }); });
       pins.forEach(i => out.push({ ic: PERSONA[i].pin, name: `${ANIMALS[i].name}의 증표`, sub: `${won(sellPin(i))}에 팔아요 · 다시 받으려면 그 동물에게 ${won(PIN_PRICE(i))}`, price: sellPin(i), line: `${iga(ANIMALS[i].name)} 우정의 표시로 준 증표구먼. ${won(sellPin(i))} 쳐 주지. 판 증표는 선물로 다시 못 받네.`,
         act: () => sell(sellPin(i), async () => { bag = { ...bag, pins: { ...(bag.pins || {}), [i]: null } }; await ctx.store.update('bag/' + ctx.uid + '/pins', { [i]: null }).catch(() => {}); if (pinOf(ctx.uid) === i) await wearPin(null); }) }));
+      { const dl = Object.entries(bag.dolls || {}).filter(([k, n]) => n > 0 && ANIMALS[k]).map(([k, n]) => [+k, n]); /* 인형뽑기에서 뽑은 인형: 한 개씩 판다 */
+        if (dl.length) out.push(['sec', `🧸 뽑은 인형 ${dl.reduce((x, [, n]) => x + n, 0)}개`]);
+        dl.forEach(([k, n]) => out.push({ ic: h('span', { class: 'so-dollic', html: dollImg(k) }), name: `${ANIMALS[k].name} 인형${n > 1 ? ` ×${n}` : ''}`, sub: `${won(DOLL_SELL)}에 팔아요 · 한 개씩`, price: DOLL_SELL, line: `${ANIMALS[k].name} 인형이구먼. 카피오락에서 뽑았누? 개당 ${won(DOLL_SELL)} 쳐 주지.`,
+          act: () => sell(DOLL_SELL, async () => { const left = n - 1; bag = { ...bag, dolls: { ...(bag.dolls || {}), [k]: left } }; await ctx.store.update('bag/' + ctx.uid + '/dolls', { [k]: left > 0 ? left : null }).catch(() => {});
+            if (left <= 0 && (ctx.members[ctx.uid] || {}).doll === k) { ctx.members[ctx.uid] = { ...ctx.members[ctx.uid], doll: null }; await ctx.store.update('members/' + ctx.uid, { doll: null }).catch(() => {}); refreshMe(); } }) })); }
       if (hats.length || clothes.length) out.push(['sec', '👕 옷·모자']);
       hats.forEach(i => { const w = wareOf(i); out.push({ big: 1, ic: tryOn(w.id), name: w.name, sub: `${won(sellHat(i))}에 팔아요 · 다시 사면 할인 없이 ${won(priceOf(w.id))}`, price: sellHat(i), line: `${ANIMALS[i].name}네 전용 모자구먼. 귀한 거라 ${won(sellHat(i))} 쳐 주지.${wearing(w.id) ? ' 지금 쓰고 있는 걸 벗어 주겠나?' : ''}`,
         act: () => sell(sellHat(i), async () => { if (wearing(w.id)) await wearCloth(w.id, false); ctx.owned[ctx.uid] = { ...(ctx.owned[ctx.uid] || {}), [w.id]: null }; await ctx.store.set(`owned/${ctx.uid}/${w.id}`, null).catch(() => {}); bag = { ...bag, resold: { ...(bag.resold || {}), [i]: true } }; await ctx.store.update('bag/' + ctx.uid + '/resold', { [i]: true }).catch(() => {}); }) }); });
