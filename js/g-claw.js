@@ -171,8 +171,10 @@ export function mount(el, ctx) {
       if ((target && tipY() <= target.body.position.y - 0.05) || tipY() <= 0.55) { c.st = 'close'; c.t = 0; } }
     else if (c.st === 'close') { c.t += dt; c.open = Math.max(0, 1 - c.t / 0.4); c.open = Math.max(target ? 0.3 : 0, c.open); /* 인형을 잡을 때는 인형 둘레까지만 오므린다 */
       if (c.t >= 0.5) { if (target) { grab(target); sfx('pair'); slip = null;
-          if (!lucky) { let f = rnd(0.25, 0.75); for (let k = 0; k < 8 && inOut(c.x + (OUT.x - c.x) * f, c.z + (OUT.z - c.z) * f, 2.4); k++) f *= 0.7; // 옮기는 도중에 놓친다(나오는 곳 근처에서는 안 놓친다)
-            slip = inOut(c.x + (OUT.x - c.x) * f, c.z + (OUT.z - c.z) * f, 2.4) ? { y: TOP - 0.25 } : { f }; if (Math.random() < 0.35) slip = { y: rnd(Math.min(c.y + 1.3, TOP - 0.4), TOP - 0.3) }; /* 가끔은 들어 올리다가 바로 놓친다 */ } }
+          if (!lucky) { const at = f => inOut(c.x + (OUT.x - c.x) * f, c.z + (OUT.z - c.z) * f, 1.15); let edge = 1; while (edge > 0 && at(edge)) edge -= 0.02; /* 나오는 곳 칸막이 바로 앞 */
+            const r = (window.__claw && window.__claw.mode) || Math.random(), lift = { y: rnd(Math.min(c.y + 1.3, TOP - 0.4), TOP - 0.3) };
+            if (edge < 0.2) slip = lift; /* 출구 바로 옆에서 집었으면 들어 올리다 놓친다 */
+            else if (r < 0.25) slip = lift; else if (r < 0.7) slip = { f: edge }; /* 출구 직전에서 놓친다 */ else slip = { f: rnd(0.3, 0.75) * edge }; } }
         c.st = 'up'; } }
     else if (c.st === 'up') { c.y += 4.4 * dt; if (held && slip && slip.y != null && c.y >= slip.y) letGo(false); if (c.y >= TOP) { c.y = TOP; c.st = held ? 'carry' : 'back'; c.t = 0; c.from = { x: c.x, z: c.z }; } }
     else if (c.st === 'carry') { const L = Math.hypot(OUT.x - c.from.x, OUT.z - c.from.z) || 1; c.t = Math.min(1, c.t + 4 * dt / L); c.x = c.from.x + (OUT.x - c.from.x) * c.t; c.z = c.from.z + (OUT.z - c.from.z) * c.t;
