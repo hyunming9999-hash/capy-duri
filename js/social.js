@@ -812,11 +812,11 @@ export function mount(el, ctx) {
 
   // ----- 까마귀 악당: 친목회에 있을 때만, 하루 두 번(5분째 한 번, 그 뒤 랜덤 한 번), 나타날 때마다 육지에서 내 근처에 나타나 친한 동물(50~100점) 둘에게 이간질한다 -----
   // 퇴치 버튼 → 악귀퇴치부적 3장 중 진짜 1장(1/3)을 10초 안에 고르면 퇴치. 못 고르거나 시간이 다 되면 두 동물이 각각 -15~-20
-  const CROW_N = 2, CROW_MS = 25000, CROW_STAY = 300000, PICK_MS = 10000; // 하루 2번: 첫 번째는 친목회 5분째, 두 번째는 그 뒤 아무 때나(2~25분 더 놀다 보면)
+  const CROW_N = 2, CROW_MS = 25000, CROW_STAY = 300000, PICK_MS = 10000; // 하루 2번: 첫 번째는 친목회 10초/30초째, 두 번째는 실제 시간으로 1시간 뒤부터 무작위
   let crow = null, crowStay = 0, crowLast = 0, worldEl = null, stageEl = null, charmSnooze = 0;
   if (isMock) window.capyDebug = { me: () => me, pal: () => pal, ride: () => toggleRide(), geo: () => ({ WATER_X, FISH_X, TILE, WIDTH, H }), crow: () => { crowStay = 1e9; }, charm: () => { charmSnooze = 0; window.capyDebug.charmNow = true; }, fx: n => charmFx(n), love: () => { loveNext = 0; }, fcrow: () => fcrow.debug(), scAsk: () => { scAskAt = 0; }, scFw: () => { scFwAt = 0; }, bag: () => bag, qwin: () => quest.pirateResult(true), qlose: () => quest.pirateResult(false) }; // 연습 모드에서만: 시험용으로 바로 부르기
   // 까마귀는 화·금요일에만: 그날 친목회 육지에 2분 머물면 딱 1번 나와 한 마리만 이간질. 다른 요일은 안 나온다
-  const crowBig = () => [2, 5].includes(new Date().getDay()), crowMax = () => (crowBig() ? 1 : 0), crowWho = () => 1;
+  const crowBig = () => [2, 5].includes(new Date().getDay()), crowMax = () => 2, crowWho = () => 1, crowFirst = Math.random() < 0.5 ? 10000 : 30000; // 매일 2번. 첫 번째는 친목회에 10초 또는 30초(들어올 때마다 둘 중 하나) 머문 뒤
   const crowUsed = () => (bag.crowDay === ymd() ? bag.crowN || 0 : 0);
   // 2026-11-20 하루만: 두두가 친목회에 들어와 육지에 30초 있으면 까마귀가 한 번 꼭 나온다(오늘 이미 나왔어도, 한 번만)
   const crowSpecial = () => ymd() === '2026-11-20' && String(ctx.me.name || '').includes('두두') && !rawBag.crow1120 && !ctest;
@@ -848,7 +848,10 @@ export function mount(el, ctx) {
     const dt = crowLast ? Math.min(1000, now - crowLast) : 0; crowLast = now;
     const sp = crowSpecial(); if (trial || !worldEl || (!sp && crowUsed() >= crowMax())) return;
     if (!paused) crowStay += dt; // 친목회에 머문 시간(창이 떠 있는 동안은 빼고). 정해진 시간이 넘으면 땅 위로 나오는 순간 반드시 나타난다
-    const need = sp ? 30000 : crowUsed() ? (bag.crow2At || 600000) : 120000; // 첫 번째는 육지에 2분 머물면(11/20 두두는 30초)
+    // 첫 번째: 머문 시간 10초/30초(11/20 두두 특별 등장은 30초). 두 번째: 놀이 시간이 아니라 실제 시각으로, 첫 번째에서 1시간이 지난 뒤의 무작위 시각(crow2T)부터
+    if (!sp && crowUsed() && !bag.crow2T) { saveBag({ crow2T: ctx.store.now() + 3600000 + Math.round(Math.random() * 3600000) }); return; } // 예전 규칙으로 첫 번째를 본 날: 지금부터 1~2시간 뒤로 잡는다
+    if (!sp && crowUsed() && ctx.store.now() < (bag.crow2T || 0)) return;
+    const need = sp ? 30000 : crowUsed() ? 3000 : crowFirst;
     if (crowStay < need || paused || wet || me.boat) return; // 이 줄이 위 설명 글 뒤에 붙어 있어서 기다림·육지 조건이 통째로 무시되고 있었다
     let pool = actors.map((o, i) => i).filter(i => A(i) >= 50 && A(i) <= 100 && actors[i].st !== 'chase' && ctx.store.now() - Math.max((mine[i] || {}).crowHit || 0, ((mine[i] || {}).crowLie || {}).t || 0) > 3 * 86400000); // 한 번 당한 동물은 3일 동안 안 당한다
     if (sp && !pool.length) { const land = actors.map((o, i) => i).filter(i => actors[i] && actors[i].st !== 'chase' && actors[i].x < WATER_X - 40); pool = land.filter(i => A(i) >= 50); if (!pool.length) pool = land.filter(i => A(i) > 0); if (!pool.length) pool = land; } // 11/20 한정: 조건에 맞는 동물이 없어도 꼭 나오게
@@ -857,7 +860,7 @@ export function mount(el, ctx) {
     crowSpawn(now, pool.sort((a, b) => Math.abs(actors[a].x - me.x) - Math.abs(actors[b].x - me.x)).slice(0, 4).sort(() => Math.random() - 0.5).slice(0, crowWho()));
   }
   function crowSpawn(now, targets) {
-    const first = !crowUsed(); if (crowSpecial()) saveBag({ crow1120: 1 }); if (!ctest) saveBag({ crowDay: ymd(), crowN: crowUsed() + 1, ...(first ? { crow2At: Math.round((120 + Math.random() * 1380) * 1000) } : {}) }); crowStay = 0; // 두 번째는 첫 번째 뒤로 2~25분 더 놀아야(정말 랜덤)
+    const first = !crowUsed(); if (crowSpecial()) saveBag({ crow1120: 1 }); if (!ctest) saveBag({ crowDay: ymd(), crowN: crowUsed() + 1, ...(first ? { crow2T: ctx.store.now() + 3600000 + Math.round(Math.random() * 3600000) } : {}) }); crowStay = 0; // 두 번째는 첫 번째에서 실제 시간으로 1~2시간 뒤의 무작위 시각부터
     const x = Math.max(60, Math.min(WATER_X - 60, me.x + (Math.random() < 0.5 ? -1 : 1) * (90 + Math.random() * 60)));
     const e = h('div', { class: 'so-crow', style: { left: x + 'px', bottom: (me.dy * 100).toFixed(1) + '%' }, onClick: () => crowCharm() }, h('img', { src: CROW_IMG, alt: '까마귀 악당' }), h('em', { class: 'so-crowtip' }, '👆 까마귀를 누르세요!'));
     worldEl.append(e);
@@ -877,8 +880,7 @@ export function mount(el, ctx) {
       else { pop(c.e, `속닥속닥… "${iga(ctx.me.name)} 너 바보래~"`, 'say long'); sfx('tock'); setTimeout(() => alive && pop(tg.e, toned(i, '뭐? 정말?!'), 'say'), 1100); c.k++; c.at = now + 2800; } }
     c.e.style.left = c.x + 'px'; c.e.style.bottom = (c.y * 100).toFixed(1) + '%';
     { const band = c.y < 0.07 ? 11 : c.y < 0.13 ? 10 : c.y < 0.19 ? 9 : c.y < 0.25 ? 8 : 7, mz = +meEl.style.zIndex || 7; c.e.style.zIndex = c.y > me.dy + 0.004 ? Math.min(band, mz - 1) : Math.max(band, mz + 1); } // 뒤(위쪽)에 있으면 앞에 선 캐릭터에 가려진다
-    const left = Math.max(0, c.end - now); c.btn.lastChild.style.width = left / CROW_MS * 100 + '%';
-    if (!left) crowEnd(false, '시간 안에 퇴치하지 못했어요');
+    c.btn.lastChild.style.width = '100%'; // 까마귀는 누를 때까지 떠나지 않는다(예전에는 25초 뒤 실패로 끝났다)
   }
   // 뒷면이 같은 카드 n장 중 진짜 한 장 고르기(까마귀 퇴치부적·진주부적 공용)
   function pickCards({ title, tip, n, back, win, lose, okText, noText, onPick, onCancel, limit, lateText }) {
