@@ -2673,3 +2673,4 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .page-dress .chip.on { background: #6FCFAA; border-color: #4DB28C; color: #fff; }
 .page-dress .dress-item { border-color: #F7D3E3; background: #fff; border-radius: 16px; } .page-dress .dress-item.on { border-color: #F0619E; background: #FFE6F1; box-shadow: 0 3px 0 #F0619E; }
 .page-dress .dress-item.lock::after { background: #6FCFAA; color: #fff; }
+.fm-pmstep { margin: 0 0 8px; text-align: center; font-size: 13px; color: #7A5A3A; } .fm-pmstep b { color: #3F8A2E; } .fm-pmnone { margin: 10px 0 2px; padding: 9px 10px; border-radius: 12px; background: #FFF3C4; font-weight: 700; word-break: keep-all; font-size: 13.5px; }
