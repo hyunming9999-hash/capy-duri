@@ -1,6 +1,7 @@
 import { $, h, toast, modal, ask, ymd, dayDiff, niceDate, banner, josa } from './ui.js';
 import { openStore, isMock, setErrorHandler } from './store.js';
 import { capy, capyEl, COLORS, ACCS } from './capy.js';
+import { openArcade, fromArcade, leaveArcade } from './arcade.js';
 import { enablePush, sendPush } from './push.js';
 import * as day from './day.js';
 import * as wear from './wear.js';
@@ -48,6 +49,7 @@ Object.defineProperties(ctx, {
   partner: { get() { return ctx.members[ctx.partnerId] || null; } },
 });
 ctx.go = r => { location.hash = r; };
+ctx.openArcade = () => openArcade(ctx, GAMES); // 친목회 오락실 건물(시험판)
 ctx.nameOf = uid => (ctx.members[uid] || {}).name || '카피';
 // 황금 장비 입어 보기 링크(?goldtest 또는 ?goldtest=10,3,17): 내 화면에서만 입혀 보고 저장하지 않는다
 const GOLD_TEST = (() => { try { const v = new URLSearchParams(location.search).get('goldtest'); if (v == null) return null; const l = v.split(',').filter(x => x.trim() !== '').map(Number).filter(n => Number.isInteger(n) && n >= 0); return l.length ? l : [10, 3, 17, 2, 0, 9, 18, 12]; } catch { return null; } })();
@@ -301,7 +303,7 @@ function render() {
   const body = h('div', { class: 'page-body' });
   const title = h('h2', null, item.title);
   root.replaceChildren(h('div', { class: 'page page-' + name },
-    h('header', { class: 'bar' }, h('button', { class: 'back', 'aria-label': '뒤로', onClick: () => ctx.go(sub ? name : 'home') }, '‹'), title,
+    h('header', { class: 'bar' }, h('button', { class: 'back', 'aria-label': '뒤로', onClick: () => { if (name === 'game' && fromArcade()) { leaveArcade(); return ctx.go('social'); } ctx.go(sub ? name : 'home'); } }, '‹'), title,
       SCENE[name] && sndBtn(),
       name === 'chat' && h('button', { class: 'call tel srch-btn', 'aria-label': '대화 검색', title: '대화 검색', onClick: () => ctx.chatSearch && ctx.chatSearch() }, '🔍'),
       name === 'chat' && ctx.partnerId && h('button', { class: 'call tel', 'aria-label': '전화 걸기', title: '전화 걸기', onClick: () => ctx.phone() }, '📞'),

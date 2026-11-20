@@ -13,6 +13,7 @@ import { openFarm, cropOf, cropImg, cropPrice } from './farm.js';
 import { openCook, SAUCES, SAUCE_PACK, SAUCE_IMG } from './cook.js';
 import { farmCrow } from './farmcrow.js';
 import { createQuest } from './quest.js';
+import { ARCADE_TEST } from './arcade.js';
 import { recOf } from './cook.js';
 import { TANKS as AQT, DECO as AQD } from './aquarium.js';
 const AQACT = { peck: '콕콕 쪼기', hide: '숨바꼭질', circle: '빙글빙글', bubble: '거품 타기', glow: '반짝반짝', heart: '하트 뿅', startle: '깜짝 놀라기', slide: '미끄럼 타기' };
@@ -282,6 +283,9 @@ export function mount(el, ctx) {
     // 카피수족관: 놀이터 두 번째 칸(뒤집힌 칸) 왼쪽 가게 자리. 누르면 바로 내 수족관
     { const ax0 = TILE + 2 / 1213 * TILE, aw = 220 / 1213 * TILE;
       world.append(h('button', { class: 'so-aqua', 'aria-label': '카피수족관 들어가기', style: { left: ax0 + 'px', width: aw + 'px', bottom: (1 - 326 / 520) * 100 + '%' }, onClick: () => goAqua() }, h('img', { src: (FLUFFY ? 'img/fl/bg/house-aqua.webp' : 'img/aqua/house.webp'), alt: '' }), h('b', null, '카피수족관'))); }
+    // 카피 오락실(시험판 ?arcadetest): 수족관 바로 왼쪽 가게 자리. 누르면 게임을 골라 50코인을 넣고 바로 한다
+    if (ARCADE_TEST && FLUFFY) { const rx0 = 978 / 1213 * TILE, rw = 232 / 1213 * TILE;
+      world.append(h('button', { class: 'so-aqua so-arcade', 'aria-label': '카피 오락실 들어가기', style: { left: rx0 + 'px', width: rw + 'px', bottom: (1 - 326 / 520) * 100 + '%' }, onClick: () => ctx.openArcade() }, h('img', { src: 'img/fl/bg/house-arcade.webp', alt: '' }), h('b', null, '오락실'))); }
     // 카피수퍼: 바닷가 그림 속 매점 건물. 이 건물을 눌러야 들어간다(간판에 카피바라 얼굴, 아래에 '수퍼')
     const bx = (x, y) => [PW + x / 1213 * TILE, y / 520 * H], [mx0, my0] = bx(218, 176), [mx1, my1] = bx(392, 316);
     const [gx0, gy0] = bx(257, 241), [gx1, gy1] = bx(354, 272), gw = gx1 - gx0, gh = gy1 - gy0; // 유리창 칸: 글씨는 이 안에만
