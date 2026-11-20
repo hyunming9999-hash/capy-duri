@@ -2641,3 +2641,35 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fm-stctl .fm-stp { overflow: hidden; } .fm-stctl .fm-stp img { width: 30px; height: 30px; } .fm-stctl .fm-stp span { line-height: 30px; } .fm-stctl .fm-stp b { font-size: 13px; }
 .so-clo { aspect-ratio: 600 / 604; } .so-clo b { left: 27%; right: 18%; top: 24.5%; height: 12.5%; font: 900 10.5cqw/1 var(--head); color: #E0559A; letter-spacing: 0; text-shadow: 1.5px 0 #fff, -1.5px 0 #fff, 0 1.5px #fff, 0 -1.5px #fff; }
 .so-facebtn { display: block; width: 100%; margin: 0 0 8px; }
+
+/* ===== 카피클로(옷 가게) 분위기: 분홍·민트 파스텔 부티크 ===== */
+.page-dress { background: linear-gradient(#FFF1F7, #FFF9F3 40%, #F1FBF6); min-height: 100vh; }
+.page-dress .bar { position: relative; background: #fff; border-bottom: 0; padding-bottom: 16px; }
+.page-dress .bar::after { content: ''; position: absolute; left: 0; right: 0; bottom: -10px; height: 22px; z-index: 2; pointer-events: none;
+  background: radial-gradient(circle at 50% 0, #FF9CC6 0 70%, transparent 71%) 0 0 / 44px 22px repeat-x, radial-gradient(circle at 50% 0, #8FDDBE 0 70%, transparent 71%) 22px 0 / 44px 22px repeat-x; filter: drop-shadow(0 2px 0 rgba(200, 90, 140, .25)); }
+.page-dress .bar h2 { color: #D9478F; } .page-dress .page-body { padding-top: 18px; }
+.page-dress .dress-stage { background: linear-gradient(#FFE6F1, #FFF7FB); border: 2.5px solid #F7B6D2; border-radius: 28px; box-shadow: 0 5px 0 #F5C9DD; }
+.page-dress .dress-stage .chip { border-color: #F7B6D2; background: #fff; color: #B4477C; } .page-dress .dress-stage .chip.on { background: linear-gradient(#FF8FBE, #F0619E); border-color: #D9478F; color: #fff; }
+.page-dress .eq { background: linear-gradient(#FFFDF8, #FFF3E6); border: 2.5px solid #F2C9A8; border-radius: 22px; box-shadow: inset 0 0 0 3px #fff; }
+.page-dress .eq-head b { font-size: 0; letter-spacing: 0; } .page-dress .eq-head b::before { content: '🪞 피팅룸'; font: 900 16px/1 var(--head); color: #D9478F; }
+.page-dress .eq-head span { background: #FFE9A8; color: #8A5A00; }
+.page-dress .eq-board { background: #FBE3EE; border-radius: 16px; }
+.page-dress .eq-slot { border: 2px dashed #F0A9C8; background: #FFF7FB; border-radius: 12px; } .page-dress .eq-slot i { color: #D78CB0; }
+.page-dress .eq-slot.on { border-style: solid; border-color: #F2B33D; background: radial-gradient(circle at 50% 40%, #FFFFFF, #FFE9B0); box-shadow: 0 0 8px rgba(255, 200, 70, .5); }
+.page-dress .eq-slot.cloth { border-style: solid; border-color: #7FD3B4; background: radial-gradient(circle at 50% 40%, #FFFFFF, #DDF6EC); }
+.page-dress .eq-slot small { background: #F0619E; }
+.page-dress .eq-me { background: radial-gradient(circle at 50% 30%, #FFFFFF 0%, #FFF0F7 50%, #D8F3E8 100%); box-shadow: inset 0 0 0 3px #fff, inset 0 0 0 5px #F7B6D2; border-radius: 16px; }
+.page-dress .dress-name b { color: #B4477C; }
+.page-dress .dress-ctl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; } .page-dress .dress-ctl .btn { background: #fff; border-color: #F7B6D2; color: #B4477C; box-shadow: 0 3px 0 #F5C9DD; white-space: nowrap; }
+.page-dress .dress-ctl .btn.primary { grid-column: 1 / -1; background: linear-gradient(#FF8FBE, #F0619E); border-color: #D9478F; color: #fff; box-shadow: 0 4px 0 #C13C7E; font-size: 16px; padding: 11px 6px; }
+.page-dress .dress-ctl .btn.primary:disabled { background: #F7D3E3; border-color: #EDB7CF; color: #fff; box-shadow: none; } .page-dress .dress-wallet { grid-column: 1 / -1; }
+.page-dress .inv-tabs { background: #FBE3EE; border: 2.5px solid #F7B6D2; border-bottom: 0; border-radius: 18px 18px 0 0; }
+.page-dress .inv-tabs button { background: #fff; color: #C77BA0; } .page-dress .inv-tabs button.on { background: linear-gradient(#9BE5C8, #6FCFAA); color: #0F5A40; }
+.page-dress .inv-tabs + .eq { border-radius: 0 0 18px 18px; border-color: #F7B6D2; border-top: 0; background: #FFF7FB; box-shadow: none; }
+.page-dress .eq-inv-h b { color: #D9478F; } .page-dress .eq-inv-h small, .page-dress .eq-empty { color: #B78AA0; }
+.page-dress .eq-item { border-color: #F3C4DA; background: #fff; border-radius: 12px; } .page-dress .eq-item small { color: #7A4A60; } .page-dress .eq-item em { color: #D78CB0; }
+.page-dress .eq-item.on { border-color: #F2B33D; background: #FFF3CF; }
+.page-dress .tab { border-color: #F7B6D2; color: #B4477C; background: #fff; } .page-dress .tab.on { background: linear-gradient(#FF8FBE, #F0619E); border-color: #D9478F; color: #fff; }
+.page-dress .chip.on { background: #6FCFAA; border-color: #4DB28C; color: #fff; }
+.page-dress .dress-item { border-color: #F7D3E3; background: #fff; border-radius: 16px; } .page-dress .dress-item.on { border-color: #F0619E; background: #FFE6F1; box-shadow: 0 3px 0 #F0619E; }
+.page-dress .dress-item.lock::after { background: #6FCFAA; color: #fff; }

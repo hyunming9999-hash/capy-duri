@@ -29,7 +29,7 @@ const rnd = n => { const a = new Uint8Array(n); crypto.getRandomValues(a); retur
 
 const MENU = [
   { id: 'chat', mod: chat, title: '오늘 얘기나 하지?', short: '톡', sub: '톡 · 사진 · 스티커', face: 'love', acc: 'flower', tint: '#F6D3EE' },
-  { id: 'dress', mod: dress, title: '옷입히기 놀이하실?', short: '옷놀이', sub: '상의 50 · 하의 50', face: 'happy', acc: 'ribbon', tint: '#FFDDB8' },
+  { id: 'dress', mod: dress, title: '👗 카피클로', short: '옷놀이', sub: '상의 50 · 하의 50', face: 'happy', acc: 'ribbon', tint: '#FFDDB8' },
   { id: 'day', mod: day, title: '오늘 무슨 날이지?', short: '일정', sub: '일정 · 예약 · 일기', face: 'smile', acc: 'leaf', tint: '#FFE3A6' },
   { id: 'wear', mod: wear, title: '오늘 뭐 입지?', short: '코디', sub: '서로 옷 봐주기', face: 'wink', acc: 'ribbon', tint: '#FFD0D6' },
   { id: 'eat', mod: eat, title: '오늘 뭐 먹지?', short: '맛집', sub: '맛집 찾기 · 룰렛', face: 'wow', acc: 'yuzu', tint: '#CDEBB5' },
