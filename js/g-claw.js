@@ -9,14 +9,14 @@ import { FLUFFY } from './fluffy.js';
 import { coinGate } from './arcade.js';
 
 // 상자 안쪽: 가로 x -5~5, 깊이 z -4(뒤)~4(앞), 높이 y 0~9. 나오는 곳은 왼쪽 앞 모서리(바닥이 뚫려 있고 유리 칸막이로 둘러쌈)
-const BX = 5, BZ = 4, HOLE_X = -2.3, HOLE_Z = 1.3, WALL_H = 5.3, TOP = 7.95, REST = 6.6, N_DOLL = 40, PACK = 7, OUT = { x: -3.65, z: 2.65 };
+const BX = 5, BZ = 4, HOLE_X = -2.3, HOLE_Z = 1.3, WALL_H = 5.3, TOP = 7.95, REST = 6.6, N_DOLL = 40, PACK = 7, OUT = { x: -3.65, z: 2.65 }, HOME_Y = 7.45;
 const dollSrc = i => (FLUFFY ? `img/fl/a${i}-base.webp` : 'data:image/svg+xml;utf8,' + encodeURIComponent(animalSvg(i, true)));
 export const dollImg = i => `<img src="${dollSrc(i)}" alt="" loading="lazy">`;
 
 export function mount(el, ctx) {
   let grabTry = false, alive = true, raf = 0, lastT = 0, mine = {}, pity = null, plays = 0, gateAt = 0, busy = false, lucky = false, held = null, slip = null, target = null, ready = false, world = null;
-  const dir = { x: 0, z: 0 }, dolls = [], start = { x: 1.5, z: 0.5 };
-  const claw = { x: 1.5, y: REST, z: 0.5, open: 1, st: 'idle', t: 0 };
+  const dir = { x: 0, z: 0 }, dolls = [], start = { x: OUT.x, z: OUT.z }; /* 집게 정위치 = 나오는 곳 바로 위 */
+  const claw = { x: OUT.x, y: HOME_Y, z: OUT.z, open: 1, st: 'idle', t: 0 };
   const me = { id: 'claw', title: '인형뽑기', face: 'wow', acc: 'ribbon' };
   const canvas = h('canvas', { class: 'claw-cv' });
   const tries = h('small', { class: 'claw-try' }), shelf = h('div', { class: 'claw-shelf' }), load = h('i', { class: 'claw-load' }, '기계 켜는 중…');
@@ -151,8 +151,9 @@ export function mount(el, ctx) {
   const inOut = (x, z, m = 0) => x < HOLE_X + m && z > HOLE_Z - m;
   function drop() {
     if (!ready || busy || claw.st !== 'idle') return;
+    if (inOut(claw.x, claw.z, 0.9)) return toast('집게를 인형 위로 옮긴 다음 눌러 주세요', 1800);
     if (plays <= 0) return gate(false);
-    setPlays(plays - 1); busy = true; dir.x = dir.z = 0; start.x = claw.x; start.z = claw.z; bGo.disabled = true;
+    setPlays(plays - 1); busy = true; dir.x = dir.z = 0; bGo.disabled = true;
     // 점이 찍힌 인형은 반드시 집어 올린다. 집어 올린 것 일곱 번 중 한 번만 끝까지 가져오고(n·k), 나머지 여섯 번은 옮기는 도중에 놓친다
     target = aimDoll(); grabTry = !!target; lucky = false;
     if (target) { const p = pity ? { ...pity } : {}; if (!(p.n < PACK)) { p.n = 0; p.k = Math.floor(Math.random() * PACK); } lucky = p.n === p.k; p.n += 1; pity = p; TEST || ctx.store.set(P + '/claw', p).catch(() => {}); }
@@ -166,7 +167,8 @@ export function mount(el, ctx) {
   function moveClaw(dt) {
     const c = claw;
     if (c.st === 'idle') { const ox = c.x, oz = c.z; c.x = Math.max(-BX + 1, Math.min(BX - 1, c.x + dir.x * 4.6 * dt)); c.z = Math.max(-BZ + 1, Math.min(BZ - 1, c.z + dir.z * 4.6 * dt));
-      if (c.x < HOLE_X + 0.9 && c.z > HOLE_Z - 0.9) { if (ox >= HOLE_X + 0.9) c.x = HOLE_X + 0.9; else if (oz <= HOLE_Z - 0.9) c.z = HOLE_Z - 0.9; else c.x = HOLE_X + 0.9; } } // 나오는 곳 칸 위로는 못 간다(그 뒤쪽·옆쪽은 다 간다)
+      const was = ox < HOLE_X + 0.9 && oz > HOLE_Z - 0.9; if (!was && c.x < HOLE_X + 0.9 && c.z > HOLE_Z - 0.9) { if (ox >= HOLE_X + 0.9) c.x = HOLE_X + 0.9; else c.z = HOLE_Z - 0.9; }
+      const wy = inOut(c.x, c.z, 0.9) ? HOME_Y : REST, dy = wy - c.y; c.y += Math.sign(dy) * Math.min(Math.abs(dy), 3 * dt); } /* 칸 위에서는 칸막이보다 높이 떠 있는다 */ // 나오는 곳 칸 위로는 못 간다(그 뒤쪽·옆쪽은 다 간다)
     else if (c.st === 'down') { c.y -= 5.2 * dt; if (target && !dolls.includes(target)) target = null; // 점 찍힌 인형을 감싸는 높이까지 그대로 내려간다. 없으면 바닥까지
       if ((target && tipY() <= target.body.position.y - 0.05) || tipY() <= 0.55) { c.st = 'close'; c.t = 0; } }
     else if (c.st === 'close') { c.t += dt; c.open = Math.max(0, 1 - c.t / 0.4); c.open = Math.max(target ? 0.3 : 0, c.open); /* 인형을 잡을 때는 인형 둘레까지만 오므린다 */
@@ -176,12 +178,12 @@ export function mount(el, ctx) {
             if (edge < 0.2) slip = lift; /* 출구 바로 옆에서 집었으면 들어 올리다 놓친다 */
             else if (r < 0.25) slip = lift; else if (r < 0.7) slip = { f: edge }; /* 출구 직전에서 놓친다 */ else slip = { f: rnd(0.3, 0.75) * edge }; } }
         c.st = 'up'; } }
-    else if (c.st === 'up') { c.y += 4.4 * dt; if (held && slip && slip.y != null && c.y >= slip.y) letGo(false); if (c.y >= TOP) { c.y = TOP; c.st = held ? 'carry' : 'back'; c.t = 0; c.from = { x: c.x, z: c.z }; } }
+    else if (c.st === 'up') { c.y += 4.4 * dt; if (held && slip && slip.y != null && c.y >= slip.y) letGo(false, true); if (!held) c.open = Math.min(0.6, c.open + dt * 2.5); if (c.y >= TOP) { c.y = TOP; c.st = 'carry'; c.t = 0; c.from = { x: c.x, z: c.z }; } }
     else if (c.st === 'carry') { const L = Math.hypot(OUT.x - c.from.x, OUT.z - c.from.z) || 1; c.t = Math.min(1, c.t + 4 * dt / L); c.x = c.from.x + (OUT.x - c.from.x) * c.t; c.z = c.from.z + (OUT.z - c.from.z) * c.t;
-      if (held && slip && slip.f != null && c.t >= slip.f) { letGo(false, true); c.st = 'back'; } else if (c.t >= 1) { c.st = 'release'; c.t = 0; } }
+      if (held && slip && slip.f != null && c.t >= slip.f) letGo(false, true); if (!held) c.open = Math.min(0.6, c.open + dt * 2.5); /* 놓쳐도 정위치까지 그대로 간다 */ if (c.t >= 1) { c.st = held ? 'release' : 'back'; c.t = 0; } }
     else if (c.st === 'release') { c.t += dt; c.open = Math.min(1, 0.3 + c.t / 0.25); if (held && c.t > 0.12) letGo(true); if (c.t > 0.7) c.st = 'back'; }
-    else if (c.st === 'back') { c.open = Math.min(1, c.open + dt * 3); const dx = start.x - c.x, dz = start.z - c.z, L = Math.hypot(dx, dz), s = Math.min(L, 5 * dt); if (L > 0.001) { c.x += dx / L * s; c.z += dz / L * s; } const dy = REST - c.y; if (L < 1.2) c.y += Math.sign(dy) * Math.min(Math.abs(dy), 3 * dt);
-      if (L < 0.02 && Math.abs(dy) < 0.02 && c.open >= 1) { c.x = start.x; c.z = start.z; c.y = REST; c.st = 'idle'; done(); } }
+    else if (c.st === 'back') { c.open = Math.min(1, c.open + dt * 3); const dx = start.x - c.x, dz = start.z - c.z, L = Math.hypot(dx, dz), s = Math.min(L, 5 * dt); if (L > 0.001) { c.x += dx / L * s; c.z += dz / L * s; } const dy = HOME_Y - c.y; if (L < 1.2) c.y += Math.sign(dy) * Math.min(Math.abs(dy), 3 * dt);
+      if (L < 0.02 && Math.abs(dy) < 0.02 && c.open >= 1) { c.x = start.x; c.z = start.z; c.y = HOME_Y; c.st = 'idle'; done(); } }
     if (held) { const b = held.body, q = b.position, k = Math.min(1, dt * 12), ty = tipY() + 0.62; q.set(q.x + (c.x - q.x) * k, q.y + (ty - q.y) * k, q.z + (c.z - q.z) * k); b.velocity.set(0, 0, 0); }
     // 집게 끝: 내려가거나 오므릴 때 주변 인형을 밀어낸다
     // 집게 끝 충돌체는 집게를 옮길 때만 켠다. 방금 놓친 인형이 집게 끝에 얹혀 딸려 오지 않게, 주변이 비어야 다시 켠다
