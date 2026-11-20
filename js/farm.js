@@ -130,6 +130,57 @@ export function openFarm(o) {
   const wrap = h('div', { class: 'fm' }, h('div', { class: 'fm-top' }, title, coinsEl, barnBtn, visitBtn, h('button', { class: 'top-x', 'aria-label': '닫기', onClick: () => close() }, '✕')), scene, sheet);
   document.body.append(wrap);
 
+  // ===== 농장 관리인(카피철물 관리인) — 지금은 시험판(o.keeper)에서만 나온다 =====
+  // 내 농장: 내가 선 밭을 끝에서 끝까지 오가며 가끔 한마디. 남의 농장: 서리 감시. 등지고 있을 때만 서리 버튼을 누를 수 있고(모두 4초, 떼어도 쌓인다),
+  // '흠…' 하고는 휙 돌아보거나(걸리면 적발) '배고파..' 하고 그냥 간다. 게이지가 찰수록 더 자주, 더 짧은 예고로 돌아본다
+  const STEAL_SEC = 4, FINE = 2000, KP_SAY = ['내가 책임지고 손님 농작물 관리합니다!', '하지만 저는 까마귀 공포증이 있어서 까마귀는 못 막아요ㅠ', '잡초 하나까지 제가 다 지켜봅니다!', '까마귀만 아니면… 뭐든 막아 드려요!'];
+  const KP = o.keeper ? (() => {
+    const img = h('img', { src: 'img/farm/kp-walk.webp', alt: '관리인', draggable: false }), bub = h('b', { class: 'fm-kpb', hidden: true }), el = h('div', { class: 'fm-kp' }, img, bub); world.append(el);
+    const gauge = h('i'), btn = h('button', { class: 'fm-steal', hidden: true }, h('b', null, '🤫 서리'), h('small', null, '꾹 누르기 · 등 돌렸을 때만'), h('span', { class: 'fm-stg' }, gauge));
+    const vig = h('div', { class: 'fm-vig' }); scene.append(vig);
+    let held = false; holdBtn(btn, () => { held = true; }, () => { held = false; });
+    const kp = { x: plotX(0) + PW * 0.8, face: -1, k: 0, mode: 'walk', t: 0, next: 5, grace: 0, beat: 0, pose: '' }, prog = {}; let busy = false, bubT = 0;
+    const say = (t, ms = 1600) => { bub.textContent = t; bub.hidden = false; clearTimeout(bubT); bubT = setTimeout(() => { bub.hidden = true; }, ms); };
+    const pose = n => { if (kp.pose !== n) { kp.pose = n; img.src = `img/farm/kp-${n}.webp`; } };
+    const visit = () => who !== ctx.uid;
+    const target = () => { const t = now(), k = plotEls.findIndex((_, i) => Math.abs(me.x - (plotX(i) + PW / 2)) < PW / 2); if (k < 0 || !isOpen(k)) return null; const rows = rowsOf(k), i = rows.findIndex(r => live(r) && ripe(r, t) && !rotten(r, t)); return i < 0 ? null : { k, i, key: k + '|' + i }; };
+    const frac = () => { const tg = target(); return tg ? Math.min(1, (prog[tg.key] || 0) / STEAL_SEC) : 0; };
+    async function success(tg) { busy = true; held = false; const t = now(), rows = rowsOf(tg.k), r = rows[tg.i]; if (!r) { busy = false; return; }
+      const T = tool(), g = r.g || gradeOf(r, t), leftN = YIELD_ROW - (r.got || 0), bad = r.bad != null ? r.bad : BAD[T][0] + Math.floor(Math.random() * (BAD[T][1] - BAD[T][0] + 1)), good = Math.max(0, leftN - Math.max(0, bad - (r.badGot || 0))), key = `${r.c}|${g}`;
+      rows[tg.i] = null; delete prog[tg.key];
+      if (good && g !== 'F') await ctx.store.update(myRef(), { [`barn/${key}`]: ((mine.barn || {})[key] || 0) + good }).catch(() => {});
+      await setRows(tg.k, rows); ctx.store.set(`farm/${who}/stolen`, { by: ctx.uid, at: t, k: tg.k, c: r.c, n: good }).catch(() => {});
+      sfx('coin'); harvPop(tg.k, `서리 성공! +${good} ${cropOf(r.c).name} ${g}급`, g); toast(`🤫 ${tg.k + 1}번 밭 ${tg.i + 1}번 이랑을 통째로 서리했어요! 헛간에 담았어요`, 2200); drawPlots(); busy = false; }
+    async function bust(tg) { busy = true; held = false; kp.mode = 'bust'; kp.t = 0; if (tg) prog[tg.key] = 0; pose('catch'); kp.face = Math.sign(me.x - kp.x) || 1; say('삐이익—! 앗 서리도둑이다!', 2600); sfx('bad');
+      const fx = h('div', { class: 'fm-bust' }, h('b', null, '🚨 앗 서리도둑이다!'), h('small', null, '관리인에게 딱 걸렸어요')); wrap.append(fx); wrap.classList.add('shake'); setTimeout(() => wrap.classList.remove('shake'), 600);
+      await new Promise(r => setTimeout(r, 1700)); fx.remove(); if (!alive) return;
+      const have = ctx.coins(), owner = ctx.nameOf(who); let lines;
+      if (have >= FINE && await ctx.spend(FINE)) { o.keeper.fine && o.keeper.fine(who, FINE / 2); lines = [h('p', { class: 'fm-fine' }, `합의금 −${FINE.toLocaleString('ko-KR')}코인`), h('p', null, `${owner} ${(FINE / 2).toLocaleString('ko-KR')}코인 · 관리인 ${(FINE / 2).toLocaleString('ko-KR')}코인`)]; }
+      else { const gold = o.keeper.gold ? o.keeper.gold() : []; if (gold.length) { const it = gold[0]; o.keeper.pawn(it); lines = [h('p', { class: 'fm-fine' }, `돈이 모자라 황금 장비를 담보로 맡겼어요`), h('p', null, `「${it.name}」 · 하루 안에 카피철물에서 ${FINE.toLocaleString('ko-KR')}코인을 내고 찾아가세요. 못 찾으면 팔려요!`)]; }
+        else { if (have > 0) await ctx.spend(have); lines = [h('p', { class: 'fm-fine' }, `가진 돈 ${have.toLocaleString('ko-KR')}코인을 전부 냈어요`), h('p', null, '황금 장비도 없어서 주머니를 탈탈 털렸어요…')]; } }
+      modal({ title: '🚨 서리하다 걸렸어요', body: [h('div', { class: 'fm-bustm' }, h('img', { src: 'img/farm/kp-catch.webp', alt: '' }), h('div', null, ...lines, h('small', null, '농장 밖으로 쫓겨났어요. 내 농장으로 돌아갑니다.')))], actions: [{ label: '죄송합니다…', primary: true }], noX: true,
+        onClose: () => { busy = false; kp.mode = 'walk'; pose('walk'); if (who !== ctx.uid) { who = ctx.uid; sel = -1; listen(); } drawPlots(); } }); }
+    function tick(dt) { if (!alive) return; const v = visit(), tg = v ? target() : null, f = frac(), paused = !!document.querySelector('.modal-wrap');
+      const pk = plotEls.findIndex((_, i) => Math.abs(me.x - (plotX(i) + PW / 2)) < PW / 2 + GAP), k = pk >= 0 ? pk : kp.k; kp.k = k; const lo = plotX(k) + PW * 0.05, hi = plotX(k) + PW * 0.95;
+      const toMe = Math.sign(me.x - kp.x) || kp.face, seen = kp.face === toMe && (kp.mode === 'walk' || kp.mode === 'look');
+      btn.hidden = !(v && tg) || busy; if (!btn.hidden) { gauge.style.width = (f * 100).toFixed(1) + '%'; btn.classList.toggle('danger', seen); }
+      const holding = held && v && tg && !busy && !paused && !meEl.classList.contains('walk'); vig.style.opacity = holding ? (0.25 + f * 0.55).toFixed(2) : 0;
+      if (holding) { if (seen) { if ((kp.grace += dt) > 0.12) { kp.grace = 0; bust(tg); return; } } else { kp.grace = 0; prog[tg.key] = (prog[tg.key] || 0) + dt; if ((kp.beat -= dt) <= 0) { kp.beat = 0.62 - f * 0.4; sfx('tock'); } if (prog[tg.key] >= STEAL_SEC) { success(tg); return; } } } else kp.grace = 0;
+      if (paused || kp.mode === 'bust') { /* 멈춤 */ }
+      else if (kp.x < lo - 4 || kp.x > hi + 4) { kp.mode = 'walk'; pose('walk'); kp.face = kp.x < lo ? 1 : -1; kp.x += kp.face * 190 * dt; } // 내가 다른 밭으로 가면 뛰어서 따라온다
+      else if (kp.mode === 'walk') { pose('walk'); kp.x += kp.face * (v ? 62 : 46) * dt; if (kp.x <= lo) { kp.x = lo; kp.face = 1; } else if (kp.x >= hi) { kp.x = hi; kp.face = -1; }
+        if ((kp.next -= dt) <= 0) { if (!v) { kp.mode = 'talk'; kp.t = 2.8; pose('front'); say(KP_SAY[Math.floor(Math.random() * (Math.random() < 0.7 ? 2 : KP_SAY.length))], 2700); kp.next = 5 + Math.random() * 4; }
+          else if (kp.face !== toMe) { kp.mode = 'hum'; kp.t = 0.85 - f * 0.37; say('흠…', kp.t * 1000 + 150); kp.next = (4.2 + Math.random() * 3.6) * (1 - 0.62 * f); } // 등지고 걷다가 문득 멈춘다(게이지가 찰수록 자주·짧게)
+          else kp.next = 0.6; } }
+      else if (kp.mode === 'talk') { if ((kp.t -= dt) <= 0) { kp.mode = 'walk'; pose('walk'); } }
+      else if (kp.mode === 'hum') { if ((kp.t -= dt) <= 0) { if (Math.random() < 0.7 + 0.15 * f) { kp.mode = 'look'; kp.t = 1.15; kp.face = toMe; say('❗', 1000); el.classList.remove('snap'); void el.offsetWidth; el.classList.add('snap'); } else { kp.mode = 'fake'; kp.t = 1.0; say('배고파..', 1100); } } }
+      else if (kp.mode === 'look') { if ((kp.t -= dt) <= 0) { kp.mode = 'walk'; kp.face = -toMe; } } // 다시 등 돌리고 순찰
+      else if (kp.mode === 'fake') { if ((kp.t -= dt) <= 0) kp.mode = 'walk'; }
+      el.style.left = kp.x + 'px'; el.classList.toggle('left', kp.face < 0); el.classList.toggle('walk', kp.mode === 'walk' && !paused); }
+    return { tick, btn, greet: () => h('div', { class: 'fm-kpg' }, h('img', { src: 'img/farm/kp-front.webp', alt: '관리인' }), h('p', null, h('b', null, '카피철물 관리인'), '어서 오세요! ', KP_SAY[0], h('small', null, KP_SAY[1]))) };
+  })() : null;
+  if (KP) quickEl.after(KP.btn);
+
   const plotOf = k => (data.plots || {})[k] || null, isOpen = k => k < (data.open || 1), tool = () => mine.tool || 1;
   const myRef = () => 'farm/' + ctx.uid, curRef = () => 'farm/' + who;
   const save = patch => ctx.store.update(myRef(), patch).catch(() => {});
@@ -292,7 +343,7 @@ export function openFarm(o) {
           rows.push(h('button', { class: 'so-row big' + (have || !next ? ' off' : ''), onClick: () => have ? toast('이미 연 밭이에요') : !next ? toast('앞의 밭부터 열어야 해요') : buy(pr, { open: k + 1 }, `${k + 1}번 밭이 열렸어요! 🌱`) },
             h('span', null, '📜'), h('b', null, `${k + 1}번 밭 땅 문서`), h('small', null, have ? '열었어요' : `${pr.toLocaleString('ko-KR')}코인`))); }); }
       rc(body, tabs, rows); }
-    draw(); modal({ title: '🔨 카피철물', body: [body], actions: [{ label: '나가기', primary: true }] }); }
+    draw(); modal({ title: '🔨 카피철물', body: [KP && KP.greet(), o.keeper && o.keeper.pawned && o.keeper.pawned() && h('button', { class: 'btn primary', onClick: async e => { const it = o.keeper.pawned(); if (!(await ctx.spend(FINE))) return toast(`돈이 모자라요 (${FINE.toLocaleString('ko-KR')}코인 필요)`); o.keeper.redeem(); e.target.remove(); sfx('coin'); toast(`「${it.name}」을(를) 되찾았어요!`, 1800); } }, `🔒 담보 찾기 · ${FINE.toLocaleString('ko-KR')}코인`), body].filter(Boolean), actions: [{ label: '나가기', primary: true }] }); }
 
   // 스프링클러: 밭마다 하나. 밤 12시~아침 10시는 그냥 돌고, 그 밖의 시간은 1시간 SPRK_HOUR코인으로 늘린다(버튼으로 시간을 고른 뒤 결제)
   const sprkN = {}, hhmm = ms => { const d = new Date(ms), td = new Date(); const day = d.toDateString() === td.toDateString() ? '' : d.getDate() === new Date(td.getTime() + 86400000).getDate() ? '내일 ' : `${d.getMonth() + 1}/${d.getDate()} `; return `${day}${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
@@ -350,10 +401,12 @@ export function openFarm(o) {
     const d = me.tx - me.x; if (Math.abs(d) > 2) me.x += Math.sign(d) * Math.min(Math.abs(d), WALK_SP * (sc ? 1.8 : 1) * dt); else if (me.then) { const f = me.then; me.then = null; meEl.classList.remove('walk'); f(); } else if (!dir) meEl.classList.remove('walk'); // 방향키로 걷는 중엔 걸음 모션을 끊지 않는다(매 프레임 지웠다 붙이면 뒤뚱거림이 안 보인다)
     meEl.style.left = me.x + 'px';
     const want = me.x - scroller.clientWidth / 2; if (Math.abs(scroller.scrollLeft - want) > 4 && (meEl.classList.contains('walk') || dir)) scroller.scrollLeft += (want - scroller.scrollLeft) * Math.min(1, dt * 6);
+    if (KP) KP.tick(dt);
     if ((tick += dt) > 1) { tick = 0; drawPlots(); }
     raf = requestAnimationFrame(step); }
   function close() { if (!alive) return; alive = false; window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKey); cancelAnimationFrame(raf); if (off) off(); offMine(); clearInterval(sprkTick); wrap.remove(); o.onClose && o.onClose(); }
   const sprkTick = setInterval(sprkAutoPay, 60000); // 농장을 열어 둔 채 자정이 지나도 그날 사용료를 낸다
+  if (o.startVisit && ctx.partnerId) who = ctx.partnerId;
   listen(); raf = requestAnimationFrame(step); requestAnimationFrame(() => { scroller.scrollLeft = Math.max(0, me.x - scroller.clientWidth / 2); });
   // 상대가 내 밭에 물을 주고 갔으면 알려 준다
   ctx.store.get ? ctx.store.get('farm/' + ctx.uid + '/note').then(v => { if (v && v.by && v.by !== ctx.uid && v.at > ((mine.noteSeen) || 0)) { toast(`${ctx.nameOf(v.by)}가 내 밭에 물을 주고 갔어요 💧`, 2600); save({ noteSeen: v.at }); } }).catch(() => {}) : 0;

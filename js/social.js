@@ -490,7 +490,7 @@ export function mount(el, ctx) {
     toast(`🍳 요리 연습 · ${r.n} (돈·평점·재료에는 영향 없어요)`, 2600); }
   try { const ct = new URLSearchParams(location.search).get('cooktest'); if (ct != null) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); if (!fishOpen && !battle) cookTest(ct || 'maeun'); }, 1400); } catch {}
   // 농장 체험 링크(?farmtest): 진짜 농장·돈과 따로 노는 연습 농장(코인 5,000 · 스프링클러 2개 · 자라는 작물). 닫으면 사라져요
-  function farmTest() { if (farmOpen || fishOpen || battle) return; farmOpen = true; fishOpen = true; keys.clear();
+  function farmTest(guard) { if (farmOpen || fishOpen || battle) return; farmOpen = true; fishOpen = true; keys.clear();
     const root = {}, subs = [], seg = k => k.split('/').filter(Boolean);
     const getP = k => seg(k).reduce((o, x) => (o == null ? undefined : o[x]), root);
     const setP = (k, v) => { const ps = seg(k); let o = root; ps.slice(0, -1).forEach(x => { if (typeof o[x] !== 'object' || o[x] == null) o[x] = {}; o = o[x]; }); if (v == null) delete o[ps[ps.length - 1]]; else o[ps[ps.length - 1]] = JSON.parse(JSON.stringify(v)); };
@@ -501,10 +501,14 @@ export function mount(el, ctx) {
     let coins = 5000; const t = Date.now(), M = 60000, row = (c, ms, ago, wetIn) => ({ c, at: t - ago, ms, wet: t + wetIn, calc: t - ago, dry: 0, wd: 0, weedAt: t + 9e9, cut: 0 });
     setP('farm/' + ctx.uid, { open: 2, tool: 2, sprkInv: 2, seeds: { lettuce: 3, cucumber: 3, corn: 2 },
       plots: { 0: { rows: { 0: row('cucumber', 40 * M, 15 * M, -2 * M), 1: row('corn', 30 * M, 5 * M, -M), 2: row('scallion', 90 * M, 30 * M, 20 * M) } }, 1: { rows: { 0: row('tomato', 40 * M, 10 * M, -3 * M) } } } });
-    const tctx = Object.create(ctx, { store: { value: mem }, partnerId: { value: null }, coins: { value: () => coins }, spend: { value: async n => { if (coins < n) return false; coins -= n; return true; } } });
-    toast('🧪 농장 체험판이에요 · 진짜 농장과 돈에는 영향이 없어요', 2600);
-    openFarm({ ctx: tctx, scoot: () => (scoot ? scootHtml() : null), onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); } }); }
-  try { if (new URLSearchParams(location.search).has('farmtest')) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); farmTest(); }, 1200); } catch {}
+    // 관리인·서리 시험판(?guardtest): 연습용 이웃 농장에 다 익은 이랑을 채워 두고 그 농장에서 시작한다. 돈 4,500 → 두 번 걸리면 세 번째는 황금 장비 담보
+    let keeper = null; if (guard) { coins = 4500; const ripeRow = c => row(c, 20 * M, 60 * M, 9e9), PAL = 'guard-pal'; let gold = [{ id: 'g1', name: '황금 왕관(연습)' }], pawn = null;
+      setP('farm/' + PAL, { open: 3, tool: 2, plots: { 0: { rows: { 0: ripeRow('tomato'), 1: ripeRow('corn'), 2: ripeRow('cucumber') } }, 1: { rows: { 0: ripeRow('potato'), 1: ripeRow('carrot'), 2: row('scallion', 90 * M, 30 * M, 20 * M) } }, 2: { rows: { 0: ripeRow('lettuce'), 1: ripeRow('radish') } } } });
+      keeper = { pal: PAL, fine: () => {}, gold: () => gold, pawn: it => { pawn = it; gold = gold.filter(x => x !== it); }, pawned: () => pawn, redeem: () => { if (pawn) gold.push(pawn); pawn = null; } }; }
+    const tctx = Object.create(ctx, { store: { value: mem }, partnerId: { value: keeper ? keeper.pal : null }, coins: { value: () => coins }, spend: { value: async n => { if (coins < n) return false; coins -= n; return true; } }, nameOf: { value: u => (keeper && u === keeper.pal ? '이웃(연습)' : ctx.nameOf(u)) } });
+    toast(guard ? '🧪 서리 시험판 · 관리인이 등 돌렸을 때 🤫 서리 버튼을 꾹! (진짜 농장·돈과 무관)' : '🧪 농장 체험판이에요 · 진짜 농장과 돈에는 영향이 없어요', guard ? 4200 : 2600);
+    openFarm({ ctx: tctx, keeper, startVisit: !!keeper, scoot: () => (scoot ? scootHtml() : null), onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); } }); }
+  try { const fq = new URLSearchParams(location.search), gd = fq.has('guardtest'); if (fq.has('farmtest') || gd) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); farmTest(gd); }, 1200); } catch {}
   // 까마귀 연습 링크(?crowtest): 친목회에 들어오면 바로 농장으로 데려간다
   try { if (new URLSearchParams(location.search).has('crowtest')) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); if (!farmOpen && !me.boat && !fishOpen && !battle) goFarm(); setTimeout(() => fcrow.practice(), 900); }, 1200); } catch {}
   // 까마귀 퇴치 연습(?taltest)·해적전 연습(?piratetest, =2면 별빛포): 친밀도·돈·배·포탄에는 아무 영향 없음
