@@ -138,10 +138,15 @@ export function openFarm(o) {
     const img = h('img', { src: 'img/farm/kp-walk.webp', alt: '관리인', draggable: false }), bub = h('b', { class: 'fm-kpb', hidden: true }), el = h('div', { class: 'fm-kp' }, h('i', { class: 'fm-kps' }), img, bub); world.append(el);
     const gates = plotEls.map((_, k) => { const g = h('i', { class: 'fm-gate', hidden: true, style: { left: plotX(k) + PW / 2 + 'px' } }, '🚪 출입구'); world.append(g); return g; }), GATE = PW * 0.1; // 서리는 밭 출입구(가운데 문 앞)에서만
     const hint = h('div', { class: 'fm-sthint', hidden: true }, '🚪 서리는 밭 출입구(문 앞)에서만 할 수 있어요');
-    let heldKey = null; const tip = h('div', { class: 'fm-sttip', hidden: true });
-    // 문 앞에 서면 다 익은 이랑 위에 'N번 이랑 서리' 버튼이 뜬다. 그 버튼을 꾹 누르는 동안 그 이랑의 게이지가 찬다
-    let rb = null; const mkRb = () => plotEls.map((_, k) => { const ov = h('div', { class: 'fm-plot fm-stov', style: { left: plotX(k) + 'px', width: PW + 'px', height: PH + 'px' } }); world.append(ov);
-      return ROWBOX.map((b, i) => { const g = null, key = k + '|' + i, e = h('button', { class: 'fm-rsteal', hidden: true, style: { top: b.t + b.h / 2 + '%', left: [26, 50, 74][i] + '%' } }, h('b', null, '🤫'), h('small', null, `${i + 1}번 이랑`)); /* 동그란 버튼: 이랑마다 왼쪽·가운데·오른쪽으로 엇갈려 놓아 서로 안 겹친다. 테두리가 게이지 */ holdBtn(e, () => { heldKey = key; }, () => { if (heldKey === key) heldKey = null; }); ov.append(e); return { e, g, key, k, i }; }); });
+    // 아래 가운데 조작부: [🤫 서리하기] → 이랑 고르기(1·2·3번) → 고른 이랑의 게이지 버튼(꾹 누르기)
+    let chosen = null, pressing = false, mode = 'idle', sig = '', gaugeEl = null, holdEl = null, tipEl = null; const ctl = h('div', { class: 'fm-stctl', hidden: true });
+    const heldKeyOf = () => (pressing ? chosen : null);
+    function drawCtl(k, here) { const t = now(), rows = k >= 0 ? rowsOf(k) : []; gaugeEl = holdEl = tipEl = null;
+      if (mode === 'pick') { rc(ctl, h('div', { class: 'fm-sttip' }, '👇 아래에서 서리할 이랑을 골라요'), h('button', { class: 'fm-stback', onClick: () => { mode = 'idle'; drawSheet(); } }, '취소')); drawSheet(); return; } // 이랑은 아래 밭 카드 자리에서 고른다
+      if (mode === 'hold' && chosen) { const i = +chosen.split('|')[1]; gaugeEl = h('i'); tipEl = h('small');
+        holdEl = h('button', { class: 'fm-steal' }, h('b', null, `🤫 ${i + 1}번 이랑 서리`), tipEl, h('span', { class: 'fm-stg' }, gaugeEl)); holdBtn(holdEl, () => { pressing = true; }, () => { pressing = false; });
+        drawSheet(); return rc(ctl, holdEl, h('button', { class: 'fm-stback', onClick: () => { pressing = false; mode = 'pick'; } }, '이랑', h('br'), '바꾸기')); }
+      drawSheet(); rc(ctl, h('button', { class: 'fm-steal start', onClick: () => { mode = 'pick'; sfx('pop'); } }, h('b', null, '🤫 서리하기'), h('small', null, `익은 이랑 ${here.length}줄 · 눌러서 이랑 고르기`))); }
     const vig = h('div', { class: 'fm-vig' }); scene.append(vig);
     const kp = { x: plotX(0) + PW * 0.8, face: -1, k: 0, mode: 'walk', t: 0, next: 5, grace: 0, beat: 0, pose: '' }, prog = {}; let busy = false, bubT = 0;
     const say = (t, ms = 1600) => { bub.textContent = t; bub.hidden = false; clearTimeout(bubT); bubT = setTimeout(() => { bub.hidden = true; }, ms); };
@@ -149,15 +154,15 @@ export function openFarm(o) {
     const visit = () => who !== ctx.uid;
     const atGate = () => plotEls.findIndex((_, i) => Math.abs(me.x - (plotX(i) + PW / 2)) < GATE);
     const canRow = (k, i) => { const t = now(), r = rowsOf(k)[i]; return live(r) && ripe(r, t) && !rotten(r, t); }, ripeAt = k => k >= 0 && isOpen(k) ? [0, 1, 2].filter(i => canRow(k, i)) : [];
-    const target = () => { const k = atGate(); if (k < 0 || !heldKey) return null; const [hk, hi] = heldKey.split('|').map(Number); return hk === k && isOpen(k) && canRow(k, hi) ? { k, i: hi, key: heldKey } : null; };
-    const frac = () => { const tg = target(), k = atGate(), p = tg ? prog[tg.key] || 0 : Math.max(0, ...ripeAt(k).map(i => prog[k + '|' + i] || 0)); return Math.min(1, p / STEAL_SEC); };
-    async function success(tg) { busy = true; heldKey = null; const t = now(), rows = rowsOf(tg.k), r = rows[tg.i]; if (!r) { busy = false; return; }
+    const target = () => { const k = atGate(), hk0 = heldKeyOf(); if (k < 0 || !hk0) return null; const [hk, hi] = hk0.split('|').map(Number); return hk === k && isOpen(k) && canRow(k, hi) ? { k, i: hi, key: hk0 } : null; };
+    const frac = () => { const k = atGate(), p = chosen ? prog[chosen] || 0 : Math.max(0, ...ripeAt(k).map(i => prog[k + '|' + i] || 0)); return Math.min(1, p / STEAL_SEC); };
+    async function success(tg) { busy = true; pressing = false; chosen = null; mode = 'idle'; const t = now(), rows = rowsOf(tg.k), r = rows[tg.i]; if (!r) { busy = false; return; }
       const T = tool(), g = r.g || gradeOf(r, t), leftN = YIELD_ROW - (r.got || 0), bad = r.bad != null ? r.bad : BAD[T][0] + Math.floor(Math.random() * (BAD[T][1] - BAD[T][0] + 1)), good = Math.max(0, leftN - Math.max(0, bad - (r.badGot || 0))), key = `${r.c}|${g}`;
       rows[tg.i] = null; delete prog[tg.key];
       if (good && g !== 'F') await ctx.store.update(myRef(), { [`barn/${key}`]: ((mine.barn || {})[key] || 0) + good }).catch(() => {});
       await setRows(tg.k, rows); ctx.store.set(`farm/${who}/stolen`, { by: ctx.uid, at: t, k: tg.k, c: r.c, n: good }).catch(() => {});
       sfx('coin'); harvPop(tg.k, `서리 성공! +${good} ${cropOf(r.c).name} ${g}급`, g); toast(`🤫 ${tg.k + 1}번 밭 ${tg.i + 1}번 이랑을 통째로 서리했어요! 헛간에 담았어요`, 2200); drawPlots(); busy = false; }
-    async function bust(tg) { busy = true; heldKey = null; kp.mode = 'bust'; kp.t = 0; if (tg) prog[tg.key] = 0; pose('catch'); kp.face = Math.sign(me.x - kp.x) || 1; say('삐이익—! 앗 서리도둑이다!', 2600); sfx('bad');
+    async function bust(tg) { busy = true; pressing = false; chosen = null; mode = 'idle'; kp.mode = 'bust'; kp.t = 0; if (tg) prog[tg.key] = 0; pose('catch'); kp.face = Math.sign(me.x - kp.x) || 1; say('삐이익—! 앗 서리도둑이다!', 2600); sfx('bad');
       const fx = h('div', { class: 'fm-bust' }, h('b', null, '🚨 앗 서리도둑이다!'), h('small', null, '관리인에게 딱 걸렸어요')); wrap.append(fx); wrap.classList.add('shake'); setTimeout(() => wrap.classList.remove('shake'), 600);
       await new Promise(r => setTimeout(r, 1700)); fx.remove(); if (!alive) return;
       const have = ctx.coins(), owner = ctx.nameOf(who); let lines;
@@ -171,9 +176,9 @@ export function openFarm(o) {
       const toMe = Math.sign(me.x - kp.x) || kp.face, seen = kp.face === toMe && (kp.mode === 'walk' || kp.mode === 'look');
       const walking = meEl.classList.contains('walk'), gk = v && !busy && !walking ? atGate() : -1, here = ripeAt(gk), nearRipe = v && !busy && !walking && gk < 0 && ripeAt(pk).length > 0;
       gates.forEach((g, i) => { g.hidden = !(v && isOpen(i)); g.classList.toggle('on', gk === i && here.length > 0); }); hint.hidden = !nearRipe;
-      if (!rb) rb = mkRb(); /* ROWBOX는 아래에서 정해지므로 처음 돌 때 만든다 */
-      rb.forEach(row => row.forEach(b => { const on = b.k === gk && here.includes(b.i); if (b.e.hidden === on) b.e.hidden = !on; if (on) { b.e.style.setProperty('--p', (Math.min(1, (prog[b.key] || 0) / STEAL_SEC) * 100).toFixed(1)); b.e.classList.toggle('danger', seen); b.e.classList.toggle('held', heldKey === b.key); } else if (heldKey === b.key) heldKey = null; }));
-      tip.hidden = !here.length; if (here.length) { tip.textContent = seen ? '👀 관리인이 보고 있어요! 손 떼요!' : '🤫 이랑 위 동그란 서리 버튼을 꾹 · 관리인이 등 돌렸을 때만'; tip.classList.toggle('danger', seen); }
+      if (chosen) { const [ck, ci] = chosen.split('|').map(Number); if (ck !== gk || !here.includes(ci)) { chosen = null; pressing = false; if (mode === 'hold') mode = here.length ? 'pick' : 'idle'; } } if (!here.length) { mode = 'idle'; pressing = false; }
+      ctl.hidden = !here.length; if (here.length) { const sg = `${mode}|${chosen}|${gk}|${here.join('')}`; if (sg !== sig) { sig = sg; drawCtl(gk, here); }
+        if (holdEl) { gaugeEl.style.width = (Math.min(1, (prog[chosen] || 0) / STEAL_SEC) * 100).toFixed(1) + '%'; holdEl.classList.toggle('danger', seen); tipEl.textContent = seen ? '👀 보고 있어요! 손 떼요!' : '꾹 누르기 · 등 돌렸을 때만'; } } else sig = '';
       quickEl.style.display = v && (here.length || nearRipe) ? 'none' : ''; /* 문 앞에서는 물 주기·스프링클러 버튼 대신 서리만 */
       const holding = !!(v && tg && !busy && !paused && !walking); if (holding !== kp.back && !sc) { kp.back = holding; clearTimeout(heldUse); heldUse = 0; heldK = 'hoe'; heldBack = holding; drawHeld(); } /* 서리하는 동안은 밭 쪽으로 돌아선다(뒷모습) */ vig.style.opacity = holding ? (0.25 + f * 0.55).toFixed(2) : 0;
       if (holding) { if (seen) { if ((kp.grace += dt) > 0.12) { kp.grace = 0; bust(tg); return; } } else { kp.grace = 0; prog[tg.key] = (prog[tg.key] || 0) + dt; if ((kp.beat -= dt) <= 0) { kp.beat = 0.62 - f * 0.4; sfx('tock'); } if (prog[tg.key] >= STEAL_SEC) { success(tg); return; } } } else kp.grace = 0;
@@ -188,9 +193,14 @@ export function openFarm(o) {
       else if (kp.mode === 'look') { if ((kp.t -= dt) <= 0) { kp.mode = 'walk'; kp.face = -toMe; } } // 다시 등 돌리고 순찰
       else if (kp.mode === 'fake') { if ((kp.t -= dt) <= 0) kp.mode = 'walk'; }
       el.style.left = kp.x + 'px'; el.classList.toggle('left', kp.face < 0); el.classList.toggle('walk', kp.mode === 'walk' && !paused && !(kp.rest > 0)); }
-    return { tick, tip, hint, greet: () => h('div', { class: 'fm-kpg' }, h('img', { src: 'img/farm/kp-front.webp', alt: '관리인' }), h('p', null, h('b', null, '카피철물 관리인'), '어서 오세요! ', KP_SAY[0], h('small', null, KP_SAY[1]))) };
+    // 이랑 고르기: 아래 밭 카드 자리에 1·2·3번 이랑을 크게 띄운다
+    const pickView = () => { if (mode !== 'pick' || !visit()) return false; const k = atGate(), here = ripeAt(k), rows = k >= 0 ? rowsOf(k) : []; if (!here.length) return false;
+      rc(sheet, h('div', { class: 'fm-ohead' }, h('b', null, `🤫 ${k + 1}번 밭 · 서리할 이랑 고르기`)), h('div', { class: 'fm-stpick' }, ...[0, 1, 2].map(i => { const ok = here.includes(i), r = rows[i], c = r && r.c ? cropOf(r.c) : null;
+        return h('button', { class: 'fm-stp' + (ok ? '' : ' off'), disabled: !ok, onClick: () => { chosen = k + '|' + i; mode = 'hold'; sfx('pop'); } }, h('i', null, i + 1), c && live(r) ? h('img', { src: cropImg(c.id), alt: '' }) : h('span', null, '–'), h('b', null, `${i + 1}번 이랑`), h('small', null, ok ? `${c.name} · 다 익음` : live(r) ? '덜 익음' : '빈 이랑')); })),
+        h('p', { class: 'dim fm-tip' }, '고르면 가운데 버튼이 서리 게이지로 바뀌어요. 관리인이 등 돌렸을 때 꾹!')); return true; };
+    return { tick, ctl, hint, pickView, greet: () => h('div', { class: 'fm-kpg' }, h('img', { src: 'img/farm/kp-front.webp', alt: '관리인' }), h('p', null, h('b', null, '카피철물 관리인'), '어서 오세요! ', KP_SAY[0], h('small', null, KP_SAY[1]))) };
   })() : null;
-  if (KP) quickEl.after(KP.tip, KP.hint);
+  if (KP) quickEl.after(KP.ctl, KP.hint);
 
   const plotOf = k => (data.plots || {})[k] || null, isOpen = k => k < (data.open || 1), tool = () => mine.tool || 1;
   const myRef = () => 'farm/' + ctx.uid, curRef = () => 'farm/' + who;
@@ -239,6 +249,7 @@ export function openFarm(o) {
 
   // 밭 아래 창
   function drawSheet() { const ae = document.activeElement; if (ae && (ae.type === 'time' || ae.tagName === 'SELECT') && sheet.contains(ae)) return; // 시간 고르는 중엔 다시 그리지 않는다
+    if (KP && KP.pickView()) return;
     const k = sel, t = now(), visit = who !== ctx.uid;
     if (k < 0) { // 한눈에 보기: 밭마다 카드 한 장(이랑 3칸 미리보기 + 상태 + 바로 하기 버튼)
       const seeds = Object.values(mine.seeds || {}).reduce((a, n) => a + (n || 0), 0), barn = Object.values(mine.barn || {}).reduce((a, n) => a + (n || 0), 0);

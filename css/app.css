@@ -2552,3 +2552,23 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fm-rsteal b { font-size: 19px; line-height: 1; display: block; } .fm-rsteal small { font: 800 9.5px var(--head); line-height: 1.1; margin-top: 1px; }
 .fm-rsteal.held { transform: translate(-50%, -50%) scale(.93); box-shadow: 0 0 0 2px #7CFFB0, 0 0 14px rgba(124, 255, 176, .95); filter: brightness(1.2); }
 .fm-rsteal.danger { background: radial-gradient(closest-side, #A03030 0 77%, transparent 79%), conic-gradient(#FFE27A calc(var(--p) * 1%), rgba(44, 10, 10, .82) 0); box-shadow: 0 0 0 2px #FF6B6B, 0 0 10px rgba(255, 80, 80, .85); }
+
+/* 서리 조작부(아래 가운데): 서리하기 → 이랑 고르기 → 게이지 버튼 */
+.fm-stctl { flex: 1; min-width: 0; display: flex; gap: 6px; align-items: stretch; } .fm-stctl[hidden] { display: none; }
+.fm-steal.start { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; } .fm-steal.start small { text-align: center; }
+.fm-stpick { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr) auto; gap: 5px; }
+.fm-stp { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 5px 2px; border-radius: 14px; border: 2px solid #FFE27A; background: linear-gradient(#5A3FA0, #3A2670); color: #fff; box-shadow: 0 3px 0 #24163F; }
+.fm-stp img { width: 26px; height: 26px; object-fit: contain; } .fm-stp span { font-size: 18px; line-height: 26px; } .fm-stp b { font: 900 12.5px var(--head); } .fm-stp small { font-size: 10px; opacity: .9; }
+.fm-stp.off { border-color: #8E82BD; background: #4A4466; opacity: .55; box-shadow: none; } .fm-stp:active:not(.off) { transform: translateY(2px); box-shadow: 0 1px 0 #24163F; }
+.fm-stback { flex: none; padding: 4px 9px; border-radius: 12px; border: 2px solid #B98552; background: #FFF4DC; color: #6B4322; font: 800 11.5px/1.25 var(--head); }
+.fm-stctl .fm-steal { display: flex; flex-direction: column; align-items: stretch; justify-content: center; gap: 2px; padding: 7px 12px 8px; text-align: center; min-height: 62px; }
+.fm-stctl .fm-steal b { font-size: 16px; white-space: nowrap; } .fm-stctl .fm-steal small { text-align: center; white-space: nowrap; font-size: 11px; } .fm-stctl .fm-steal .fm-stg { margin-top: 4px; height: 10px; }
+.fm-stctl .fm-steal.danger small::after { content: none; } .fm-stback { min-width: 46px; }
+
+/* 이랑 고르기(아래 밭 카드 자리) */
+.fm-sheet .fm-stpick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 8px 0 6px; }
+.fm-sheet .fm-stp { position: relative; padding: 12px 4px 10px; border-radius: 18px; border: 3px solid #E2B33C; background: linear-gradient(#FFE58A, #FFD451); color: #5A3A22; box-shadow: 0 4px 0 #C99A2E; }
+.fm-sheet .fm-stp img { width: 46px; height: 46px; } .fm-sheet .fm-stp span { font-size: 26px; line-height: 46px; } .fm-sheet .fm-stp b { font-size: 14.5px; } .fm-sheet .fm-stp small { font-size: 11px; color: #7A5A2E; opacity: 1; }
+.fm-sheet .fm-stp i { position: absolute; left: -6px; top: -8px; width: 26px; height: 26px; border-radius: 50%; background: #5A3FA0; color: #fff; font: 900 14px/26px var(--head); font-style: normal; text-align: center; box-shadow: 0 2px 0 #24163F; }
+.fm-sheet .fm-stp.off { border-color: #D8CBB0; background: #EFE7D6; box-shadow: none; opacity: .6; } .fm-sheet .fm-stp:active:not(.off) { transform: translateY(3px); box-shadow: 0 1px 0 #C99A2E; }
+.fm-stctl .fm-sttip { display: flex; align-items: center; justify-content: center; }
