@@ -10,7 +10,7 @@ import * as mahjong from './g-mahjong.js';
 import * as claw from './g-claw.js';
 import * as bubble from './g-bubble.js';
 import { RATE, ENTRY } from './money.js';
-import { needCoin, hasCredit, PLANS } from './arcade.js';
+import { needCoin, hasCredit, PLANS, leaveArcade } from './arcade.js';
 
 const HOTTEOK = 'https://hyunming9999-hash.github.io/hotteok-tekken/';
 
@@ -19,7 +19,7 @@ export const GAMES = [
   { id: 'volley', mod: volley, title: '카피바라 배구', sub: '유자 공으로 한 판 · 실시간', face: 'happy', acc: 'towel' },
   { id: 'match', mod: match, title: '짝 맞추기', sub: '같은 카피바라 찾기', face: 'wink', acc: 'flower' },
   { id: 'four', mod: four, title: '유자 사목', sub: '네 알을 먼저 이으면 승리', face: 'wow', acc: 'yuzu' },
-  { id: 'yuzu', mod: yuzu, title: '유자 받기', sub: '30초 점수 대결', face: 'love', acc: 'ribbon' },
+  { id: 'yuzu', mod: yuzu, title: '유자 받기', sub: '돌 피해 끝없이 받기', face: 'love', acc: 'ribbon' },
   { id: 'burger', mod: burger, title: '카피 버거', sub: '굽고 튀기고 쌓기 · 경쟁·기록·컴퓨터', face: 'happy', acc: 'yuzu' },
   { id: 'tetris', mod: tetris, title: '카피 테트리스', sub: '줄 지우기 · 경쟁·기록', face: 'wow', acc: 'leaf' },
   { id: 'bubble', mod: bubble, title: '카피 버블', sub: '같은 동물 구슬 3개 펑! · 기록·스테이지·경쟁', face: 'love', acc: 'ribbon' },
@@ -86,11 +86,7 @@ export function mount(el, ctx, sub) {
   if (g && !PLANS[g.id] && !hasCredit() && ctx.money[ctx.uid] && ctx.coins() < ENTRY) { toast(`게임 한 판에 참가비 ${ENTRY}코인이 들어요. 지금 ${ctx.coins()}코인이라 모자라요`, 2600); setTimeout(() => ctx.go('game'), 0); return; }
   if (g) { ctx.setTitle(g.title); el.classList.add('game-' + g.id); const bar = PVP.has(g.id) ? betBar(ctx, g) : null; if (bar) el.append(bar.el); const eye = h('div', { class: 'spect-eye', hidden: true }, `👀 ${ctx.nameOf(ctx.partnerId)} 관전 중`); el.append(eye);
     const off = g.mod.mount(el, ctx), cast = caster(el, ctx, g, eye); needCoin(ctx, g); return () => { cast(); bar && bar.stop(); off && off(); }; }
-  const pp = partnerPlaying(ctx); el.append(pp.el);
-  el.append(h('div', { class: 'g-streak g-fee' }, h('b', null, `🪙 한 판 ${ENTRY}코인 · 동전 넣고 시작`), h('small', null, `게임을 시작할 때 ${ENTRY}코인을 넣어요(바로 빠져요). 이기거나 비기면 그대로 한 판 더, 지거나 기록 판이 끝나면 다시 넣어요.`)));
-  el.append(h('div', { class: 'g-streak' }, h('b', null, '🔥 연승 보너스'), h('small', null, '컴퓨터전·경쟁전에서 이기면 1승 ×1 → 2연승 ×1.5 → 3연승 ×1.8 → 4연승 ×2.3 (4연승에서 확정). 연승 중에 지면 연승으로 번 돈의 2/3를 잃어요. 이길 때마다 그만두고 챙길 수 있고, 컴퓨터는 연승할수록 강해져요. 기록 모드는 해당 없어요.')));
-  el.append(h('div', { class: 'game-list' }, GAMES.map((x, i) => h('button', { class: 'game-card', style: { animationDelay: i * 50 + 'ms' }, onClick: () => ctx.go('game-' + x.id) },
-    capyEl({ color: ['brown', 'cream', 'choco', 'peach'][i % 4], acc: x.acc, face: x.face, head: true }), h('div', null, h('b', null, x.title), h('small', null, x.sub), RATE[x.id] && h('small', { class: 'g-rate' }, '🪙 ' + RATE[x.id])), h('span', { class: 'go' }, '›'))),
-    h('a', { class: 'game-card ext', href: HOTTEOK, target: '_blank', rel: 'noopener', style: { animationDelay: '300ms' } }, h('span', { class: 'ext-ic' }, '🥊'), h('div', null, h('b', null, '호떡 철권'), h('small', null, '따로 만든 게임 · 새 창에서 열려요')), h('span', { class: 'go' }, '↗'))));
-  return () => pp.stop();
+  // 게임 목록 화면은 없어졌다: 친목회로 가서 카피오락 창(게임 고르기)을 띄운다. 게임에서 나올 때도 모두 이 길로 온다
+  leaveArcade(); el.append(h('p', { class: 'dim center' }, '카피오락으로 가는 중…'));
+  setTimeout(() => { if (location.hash !== '#game') return; ctx.go('social'); setTimeout(() => { if (location.hash.startsWith('#social') && !document.querySelector('.arc-list')) ctx.openArcade && ctx.openArcade(); }, 800); }, 0);
 }

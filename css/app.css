@@ -2474,3 +2474,32 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .modal:has(.arc-list) .arc-card span { filter: drop-shadow(0 0 5px rgba(255, 255, 255, .45)); }
 .modal:has(.arc-list) .arc-card b { color: #FFF6B8; text-shadow: 0 0 6px rgba(255, 216, 74, .8); } .modal:has(.arc-list) .arc-card small { color: #C9B8FF; }
 @keyframes arcNeon { 0%, 100% { opacity: 1; } 50% { opacity: .78; } }
+
+/* 카피오락: 게임 쪽 창·목록 네온 (동전 창, 내기, 정산, 기록 줄, 관전) */
+.modal:has(.arc-gate), .modal:has(.bet-pick) { background: radial-gradient(120% 80% at 50% 0%, #3A1470 0%, #1B0B3F 55%, #0E0626 100%); border: 2px solid #36E4FF; box-shadow: 0 0 0 2px #2A0F58, 0 0 18px #36E4FF, 0 0 38px rgba(255, 79, 216, .4), inset 0 0 26px rgba(124, 60, 255, .35); color: #E9E2FF; }
+.modal:has(.arc-gate) h3, .modal:has(.bet-pick) h3 { display: block; width: fit-content; max-width: 86%; margin: 2px auto 12px; padding: 6px 14px; background: #160A36 !important; background-image: none !important; border: 2px solid #FF4FD8 !important; border-radius: 14px; box-shadow: 0 0 10px #FF4FD8, inset 0 0 10px rgba(255, 79, 216, .45) !important; text-align: center; color: #fff !important; font-size: 17px; text-shadow: 0 0 6px #fff, 0 0 12px #FF4FD8; }
+.modal:has(.arc-gate) .modal-x, .modal:has(.bet-pick) .modal-x { background: #1B0B3F; border-color: #36E4FF; color: #36E4FF; box-shadow: 0 0 8px rgba(54, 228, 255, .7); }
+.arc-machine { background: linear-gradient(#3B1A8A, #1F0D52); box-shadow: 0 0 0 2px #FF4FD8, 0 0 16px #FF4FD8, inset 0 0 14px rgba(255, 79, 216, .35); }
+.arc-screen { border-color: #36E4FF; box-shadow: 0 0 10px rgba(54, 228, 255, .7), inset 0 0 14px rgba(54, 228, 255, .25); background: radial-gradient(circle at 50% 30%, #2A1A6B, #0C0626); }
+.arc-screen b { color: #fff; text-shadow: 0 0 8px #36E4FF; } .arc-panel small { color: #FFE27A; text-shadow: 0 0 8px #FFD84A; }
+.arc-slot { background: linear-gradient(#2B1466, #160A36); box-shadow: inset 0 0 0 2px #FFD84A, 0 0 10px rgba(255, 216, 74, .7); } .arc-slot u { background: #05020F; box-shadow: inset 0 0 0 1px #FFD84A; }
+.arc-machine.paid .arc-slot { box-shadow: inset 0 0 0 2px #7CFFB0, 0 0 16px 4px #7CFFB0; }
+.arc-have { color: #BFEFFF; } .arc-have b { color: #FFE27A; text-shadow: 0 0 6px rgba(255, 216, 74, .8); }
+.modal:has(.arc-gate) .btn.primary, .modal:has(.bet-pick) .btn.primary, .modal:has(.arc-list) .btn.primary { background: linear-gradient(#FF62DD, #C92BB0); border-color: #FF9BEA; color: #fff; box-shadow: 0 0 12px rgba(255, 79, 216, .8); text-shadow: 0 0 6px rgba(255, 255, 255, .6); }
+.modal:has(.arc-gate) .btn.primary:disabled { background: #2B1E55; border-color: #4A3A80; color: #8E82BD; box-shadow: none; text-shadow: none; }
+.modal:has(.bet-pick) .btn:not(.primary), .modal:has(.bet-pick) .chip { background: #1F0D52; border: 1.5px solid #36E4FF; color: #BFEFFF; box-shadow: 0 0 6px rgba(54, 228, 255, .5); }
+.modal:has(.bet-pick) .bet-amt { color: #FFE27A; text-shadow: 0 0 10px #FFD84A; } .modal:has(.bet-pick) p, .modal:has(.bet-pick) small { color: #D9CCFF !important; }
+.modal:has(.bet-pick) .inp { background: #120830; border: 1.5px solid #7C3CFF; color: #fff; }
+.bet-bar { background: linear-gradient(#2B1466, #1A0B44); border-color: #FFD84A; box-shadow: 0 0 8px rgba(255, 216, 74, .55); } .bet-bar span { color: #FFE27A; } .bet-bar span.hot { color: #FF8FE6; text-shadow: 0 0 6px #FF4FD8; }
+.bet-bar .btn { background: #160A36; border: 1.5px solid #36E4FF; color: #BFEFFF; } .bet-bar .btn.primary { background: linear-gradient(#FF62DD, #C92BB0); border-color: #FF9BEA; color: #fff; }
+.earn-card.neon { background: linear-gradient(#2B1466, #140833); border: 2px solid #FFD84A; box-shadow: 0 0 16px rgba(255, 216, 74, .7), inset 0 0 18px rgba(124, 60, 255, .4); }
+.earn-card.neon b { color: #FFE27A; text-shadow: 0 0 8px rgba(255, 216, 74, .8); } .earn-card.neon p { color: #E9E2FF; } .earn-card.neon p.sum { color: #7CFFB0; text-shadow: 0 0 10px rgba(124, 255, 176, .8); } .earn-card.neon small { color: #A99BD6; }
+.earn-card.neon.lost { border-color: #FF4F7A; box-shadow: 0 0 16px rgba(255, 79, 122, .7), inset 0 0 18px rgba(124, 60, 255, .4); } .earn-card.neon.lost p.sum { color: #FF7A9C; text-shadow: 0 0 10px rgba(255, 79, 122, .8); }
+.earn-card.neon.hot { border-color: #FF4FD8; box-shadow: 0 0 18px rgba(255, 79, 216, .8), inset 0 0 18px rgba(124, 60, 255, .4); } .earn-card.neon .btn { background: #160A36; border: 1.5px solid #36E4FF; color: #BFEFFF; } .earn-card.neon .btn.primary { background: linear-gradient(#FF62DD, #C92BB0); border-color: #FF9BEA; color: #fff; }
+.g-status { background: linear-gradient(#2B1466, #1A0B44); border-color: #36E4FF; color: #E9E2FF; box-shadow: 0 0 8px rgba(54, 228, 255, .5); } .g-status b { color: #FFE27A; }
+.g-status.my { background: linear-gradient(#4A1470, #2A0B4E); border-color: #FF4FD8; box-shadow: 0 0 10px rgba(255, 79, 216, .7); } .g-status.end { background: linear-gradient(#4A1430, #2A0B22); border-color: #FF4F7A; box-shadow: 0 0 10px rgba(255, 79, 122, .7); }
+.spect-info, .arc-pp { background: linear-gradient(#10244A, #0B1536); border: 1.5px solid #36E4FF; color: #BFEFFF; box-shadow: 0 0 10px rgba(54, 228, 255, .6); }
+.arc-pp { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; padding: 8px 10px 8px 12px; border-radius: 14px; } .arc-pp[hidden] { display: none; } .arc-pp span { flex: 1; font: 800 13px/1.35 var(--head); }
+.spect-eye { background: rgba(22, 10, 54, .9); border: 1.5px solid #FF4FD8; box-shadow: 0 0 10px rgba(255, 79, 216, .7); }
+.arc-ext { text-decoration: none; } .arc-extic { font-size: 34px; line-height: 1.5; width: auto !important; }
+.arc-rule { grid-column: 1 / -1; border: 1.5px dashed #7C3CFF; border-radius: 14px; padding: 8px 12px; color: #D9CCFF; font-size: 12px; line-height: 1.5; } .arc-rule summary { font: 800 13px var(--head); color: #FFE27A; cursor: pointer; } .arc-rule p { margin: 6px 0 0; }

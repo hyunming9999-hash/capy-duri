@@ -33,7 +33,7 @@ const MENU = [
   { id: 'day', mod: day, title: '오늘 무슨 날이지?', short: '일정', sub: '일정 · 예약 · 일기', face: 'smile', acc: 'leaf', tint: '#FFE3A6' },
   { id: 'wear', mod: wear, title: '오늘 뭐 입지?', short: '코디', sub: '서로 옷 봐주기', face: 'wink', acc: 'ribbon', tint: '#FFD0D6' },
   { id: 'eat', mod: eat, title: '오늘 뭐 먹지?', short: '맛집', sub: '맛집 찾기 · 룰렛', face: 'wow', acc: 'yuzu', tint: '#CDEBB5' },
-  { id: 'game', mod: game, title: '오늘 무슨 게임하지?', short: '게임', sub: '카피바라 게임 8종', face: 'happy', acc: 'none', tint: '#C9E4F7' },
+  { id: 'game', hide: true, mod: game, title: '오늘 무슨 게임하지?', short: '게임', sub: '카피바라 게임 8종', face: 'happy', acc: 'none', tint: '#C9E4F7' },
   { id: 'where', mod: where, title: '오늘 어디야?', short: '어디야', sub: '위치 핑 찍기', face: 'wow', acc: 'leaf', tint: '#BFE8E0' },
   { id: 'watch', mod: watch, title: '오늘 뭐 보실?', short: '영화관', sub: '카피바라 영화관', face: 'sleepy', acc: 'towel', tint: '#D9D2F5' },
   { id: 'walk', mod: walk, title: '카피바라 목욕하실?', short: '목욕탕', sub: '히노끼탕 · 음성 대화', face: 'sleepy', acc: 'towel', tint: '#F3DDB8' },
@@ -307,7 +307,7 @@ function render() {
   const body = h('div', { class: 'page-body' });
   const title = h('h2', null, item.title);
   root.replaceChildren(h('div', { class: 'page page-' + name },
-    h('header', { class: 'bar' }, h('button', { class: 'back', 'aria-label': '뒤로', onClick: () => { if (name === 'game' && fromArcade()) { leaveArcade(); return ctx.go('social'); } ctx.go(sub ? name : 'home'); } }, '‹'), title,
+    h('header', { class: 'bar' }, h('button', { class: 'back', 'aria-label': '뒤로', onClick: () => { ctx.go(sub ? name : 'home'); } }, '‹'), title,
       SCENE[name] && sndBtn(),
       name === 'chat' && h('button', { class: 'call tel srch-btn', 'aria-label': '대화 검색', title: '대화 검색', onClick: () => ctx.chatSearch && ctx.chatSearch() }, '🔍'),
       name === 'chat' && ctx.partnerId && h('button', { class: 'call tel', 'aria-label': '전화 걸기', title: '전화 걸기', onClick: () => ctx.phone() }, '📞'),
@@ -378,7 +378,7 @@ function home() {
           : h('button', { class: 'me empty', onClick: invite }, h('span', { class: 'ghost-capy' }, '?'), h('b', null, '초대하기')), pid ? battEl(pid) : h('span', { class: 'batt ghost', 'aria-hidden': 'true' })),
       dday),
     today,
-    h('nav', { class: 'menu' }, MENU.map((m, i) => h('button', { class: 'card' + (m.wide ? ' wide' : ''), style: { '--tint': m.tint, animationDelay: i * 50 + 'ms' }, 'aria-label': m.title, title: m.title, onClick: () => ctx.go(m.id) },
+    h('nav', { class: 'menu' }, MENU.filter(m => !m.hide).map((m, i) => h('button', { class: 'card' + (m.wide ? ' wide' : ''), style: { '--tint': m.tint, animationDelay: i * 50 + 'ms' }, 'aria-label': m.title, title: m.title, onClick: () => ctx.go(m.id) },
       capyEl({ color: i % 2 ? ctx.capyOf(pid || ctx.uid).color : ctx.me.color, acc: m.acc, face: m.face, head: true }), h('b', null, m.short), m.id === 'chat' && badge,
       pid && ctx.presence[pid] && (ctx.partnerWhere || '').split('-')[0] === m.id && h('span', { class: 'here-mark', title: ctx.nameOf(pid) + ' 접속 중' }, capyEl(ctx.capyOf(pid, { head: true }), 'mini'), '여기 있어요')))),
     h('footer', { class: 'foot' },

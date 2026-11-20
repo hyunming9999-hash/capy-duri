@@ -13,7 +13,7 @@ export const leaveArcade = () => { try { sessionStorage.removeItem('capy-arcade'
 const CK = 'capy-credit';
 export const hasCredit = () => { try { return sessionStorage.getItem(CK) === '1'; } catch { return false; } };
 const setCredit = on => { try { on ? sessionStorage.setItem(CK, '1') : sessionStorage.removeItem(CK); } catch {} };
-export const outOfGame = ctx => { if (fromArcade()) { leaveArcade(); ctx.go('social'); } else ctx.go('game'); };
+export const outOfGame = ctx => { leaveArcade(); ctx.go('game'); }; // 게임 목록(#game)은 친목회의 카피오락 창으로 이어진다
 
 // 판 수를 골라 넣는 게임(인형뽑기): [값, 판 수]. 이런 게임은 판 수를 게임이 따로 세고, 들어갈 때의 동전 창은 건너뛴다
 export const PLANS = { claw: [[50, 1], [150, 3], [200, 5]] };
@@ -43,11 +43,21 @@ export function bindCredit(ctx, GAMES) {
     setTimeout(() => { if (location.hash.startsWith('#game-' + id) && !hasCredit() && !document.querySelector('.arc-gate')) coinGate(ctx, g, null, () => outOfGame(ctx), true); }, 2200); };
 }
 
+const HOTTEOK = 'https://hyunming9999-hash.github.io/hotteok-tekken/';
 export function openArcade(ctx, GAMES) {
-  let close;
-  const pick = g => { close && close(); const go = () => { try { sessionStorage.setItem('capy-arcade', '1'); } catch {} ctx.go('game-' + g.id); }; if (PLANS[g.id] || hasCredit()) go(); else coinGate(ctx, g, go); };
-  close = modal({ title: '🕹️ 카피오락', body: h('div', { class: 'arc-list' },
+  let close, iv = 0;
+  const pick = g => { close && close(); const go = () => { try { sessionStorage.setItem('capy-arcade', '1'); } catch {} ctx.go('game-' + g.id); }; if (PLANS[g.id] || hasCredit()) go(); else coinGate(ctx, g, go, () => openArcade(ctx, GAMES)); }; // 동전을 안 넣고 닫으면 다시 게임 고르는 창
+  // 맨 위: 상대가 지금 무슨 게임을 하는지 · 관전하기
+  const pp = h('div', { class: 'arc-pp', hidden: true }), drawPp = () => { const pid = ctx.partnerId, w = (pid && ctx.presence[pid] && ctx.partnerWhere) || '', g = GAMES.find(x => 'game-' + x.id === w);
+    if (!w.startsWith('game-') || w === 'game-watch') { pp.hidden = true; return; } pp.hidden = false;
+    pp.replaceChildren(h('span', null, `🎮 ${ctx.nameOf(pid)} · 지금 「${g ? g.title : '게임'}」 하는 중`), h('button', { class: 'btn sm primary', onClick: () => { close && close(); ctx.go('game-watch'); } }, '👀 관전하기')); };
+  drawPp(); iv = setInterval(drawPp, 1500);
+  close = modal({ title: '🕹️ 카피오락', onClose: () => clearInterval(iv), body: h('div', { class: 'arc-list' }, pp,
     h('p', { class: 'arc-tip' }, `게임을 고르고 ${ENTRY}코인을 넣으면 시작해요 · 이기면 그대로 한 판 더`),
     GAMES.map((g, i) => h('button', { class: 'arc-card', onClick: () => pick(g) },
-      h('span', { html: capy({ color: ['brown', 'cream', 'choco', 'peach'][i % 4], acc: g.acc, face: g.face, head: true }) }), h('b', null, g.title), h('small', null, g.sub)))) });
+      h('span', { html: capy({ color: ['brown', 'cream', 'choco', 'peach'][i % 4], acc: g.acc, face: g.face, head: true }) }), h('b', null, g.title), h('small', null, g.sub))),
+    h('a', { class: 'arc-card arc-ext', href: HOTTEOK, target: '_blank', rel: 'noopener' }, h('span', { class: 'arc-extic' }, '🥊'), h('b', null, '호떡 철권'), h('small', null, '따로 만든 게임 · 새 창')),
+    h('details', { class: 'arc-rule' }, h('summary', null, '🔥 연승 보너스 · 💰 내기 규칙'),
+      h('p', null, '컴퓨터전·경쟁전에서 이기면 1승 ×1 → 2연승 ×1.5 → 3연승 ×1.8 → 4연승 ×2.3 (4연승에서 확정). 연승 중에 지면 연승으로 번 돈의 2/3를 잃어요. 이길 때마다 그만두고 챙길 수 있고, 컴퓨터는 연승할수록 강해져요. 기록 모드는 해당 없어요.'),
+      h('p', null, '내기는 사람끼리 하는 경쟁 게임 화면 맨 위의 「💰 내기 걸기」에서 걸어요. 둘이 같은 돈을 걸고, 다음 경쟁 판에서 이긴 사람이 모두 가져가요.'))) });
 }

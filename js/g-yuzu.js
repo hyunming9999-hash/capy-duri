@@ -1,4 +1,4 @@
-// 유자 받기 — 30초 동안 떨어지는 유자를 받는 점수 대결 (각자 하고 최고 기록을 겨룸)
+// 유자 받기 — 끝없이 떨어지는 유자를 받는 점수 대결. 돌멩이에 한 번 맞으면 끝. 갈수록 빨라지고 돌이 많아진다 (각자 하고 최고 기록을 겨룸)
 import { PAY } from './money.js';
 import { h, loadImg, ymd, gameFx } from './ui.js';
 import { sfx } from './sound.js';
@@ -7,11 +7,11 @@ import { capyUrlReady, yuzuUrl } from './capy.js';
 const W = 360, H = 460, TIME = 30;
 
 export function mount(el, ctx) {
-  let alive = true, raf = 0, best = {}, st = 'idle', score = 0, left = TIME, items = [], px = W / 2, tx = W / 2, lastT = 0, spawn = 0, pops = [], hurt = 0;
+  let alive = true, raf = 0, best = {}, st = 'idle', score = 0, left = TIME, items = [], px = W / 2, tx = W / 2, lastT = 0, spawn = 0, pops = [], hurt = 0, dead = false;
   const canvas = h('canvas', { class: 'yuzu-game', width: W, height: H }), g = canvas.getContext('2d');
   const board = h('div', { class: 'g-status' });
   const btn = h('button', { class: 'btn primary big', onClick: start }, '시작');
-  el.append(board, canvas, h('div', { class: 'center' }, btn), h('p', { class: 'dim center' }, '화면을 끌거나 ← → 로 움직여요. 유자 +1, 큰 유자 +3, 돌멩이 −2'));
+  el.append(board, canvas, h('div', { class: 'center' }, btn), h('p', { class: 'dim center' }, '화면을 끌거나 ← → 로 움직여요. 유자 +1, 큰 유자 +3 · 돌멩이에 맞으면 끝! 유자는 놓쳐도 괜찮아요'));
   let me = null, sad = null; const yz = new Image(); yz.src = yuzuUrl;
   capyUrlReady(ctx.capyOf(ctx.uid, { face: 'happy', noShadow: true })).then(loadImg).then(i => { me = i; }).catch(() => {});
   capyUrlReady(ctx.capyOf(ctx.uid, { face: 'sad', noShadow: true })).then(loadImg).then(i => { sad = i; }).catch(() => {});
@@ -27,11 +27,11 @@ export function mount(el, ctx) {
     const t = ymd();
     board.replaceChildren(...ctx.order.map(u => { const b = best[u]; return h('span', { class: 'rec' }, ctx.nameOf(u), ' 최고 ', h('b', null, b ? b.s : '-'), b && b.d === t ? ' (오늘)' : ''); }));
   }
-  function start() { st = 'play'; score = 0; left = TIME; items = []; pops = []; spawn = 0; btn.hidden = true; }
+  function start() { st = 'play'; score = 0; left = 0; items = []; pops = []; spawn = 0; btn.hidden = true; }
   function end() {
-    st = 'over'; btn.hidden = false; btn.textContent = '다시 하기'; ctx.earn(PAY.yuzu(score), '유자 받기', [`내 점수 ${score}점 × 8 = ${PAY.yuzu(score)}코인`]);
+    st = 'over'; btn.hidden = false; btn.textContent = '다시 하기'; ctx.earn(PAY.yuzu(score), '유자 받기', [`내 점수 ${score}점 × 8 = ${PAY.yuzu(score)}코인${score * 8 > PAY.yuzu(score) ? ' (한 판 최대)' : ''}`]);
     const b = best[ctx.uid], pb = ctx.partnerId && best[ctx.partnerId];
-    // 30초 점수 대결: 상대 최고 기록을 넘으면 승리, 못 넘으면 패배. 상대 기록이 없으면 내 신기록일 때 승리
+    // 점수 대결: 상대 최고 기록을 넘으면 승리, 못 넘으면 패배. 상대 기록이 없으면 내 신기록일 때 승리
     if (pb) gameFx(score > pb.s ? 'win' : score < pb.s ? 'lose' : 'draw', `${score}점 · ${ctx.nameOf(ctx.partnerId)} 최고 ${pb.s}점`); else if (score > 0 && (!b || score > b.s)) gameFx('win', `${score}점 신기록`);
     if (!b || score > b.s) ctx.store.set('games/yuzu/best/' + ctx.uid, { s: score, d: ymd(), ts: ctx.store.now() }).catch(() => {});
   }
@@ -41,15 +41,15 @@ export function mount(el, ctx) {
     if (keys.l) tx = px - 40; if (keys.r) tx = px + 40;
     tx = Math.max(34, Math.min(W - 34, tx)); px += (tx - px) * Math.min(1, dt * 14);
     if (st === 'play') {
-      left -= dt; spawn -= dt; hurt = Math.max(0, hurt - dt);
-      if (spawn <= 0) { const prog = 1 - left / TIME, r = Math.random(); spawn = 0.62 - prog * 0.3; items.push({ x: 26 + Math.random() * (W - 52), y: -30, v: 150 + prog * 150 + Math.random() * 60, k: r < 0.2 ? 'rock' : r < 0.3 ? 'big' : 'yz', rot: Math.random() * 6 }); }
+      left += dt; spawn -= dt; hurt = Math.max(0, hurt - dt);
+      if (spawn <= 0) { const r = Math.random(), rock = Math.min(0.5, 0.2 + left * 0.004); spawn = Math.max(0.2, 0.62 - left * 0.008); /* 갈수록 촘촘하게 · 빠르게 · 돌이 많게 */ items.push({ x: 26 + Math.random() * (W - 52), y: -30, v: 150 + Math.min(430, left * 5) + Math.random() * 60, k: r < rock ? 'rock' : r < rock + 0.1 ? 'big' : 'yz', rot: Math.random() * 6 }); }
       for (const it of items) {
         it.y += it.v * dt; it.rot += dt * 2;
         const rr = it.k === 'big' ? 26 : 18;
-        if (!it.hit && Math.abs(it.x - px) < 34 + rr * 0.6 && it.y > H - 118 - rr && it.y < H - 60) { it.hit = true; const d = it.k === 'rock' ? -2 : it.k === 'big' ? 3 : 1; score = Math.max(0, score + d); sfx(d < 0 ? 'bad' : 'coin'); if (d < 0) hurt = 0.5; pops.push({ x: it.x, y: H - 130, t: 0.7, s: (d > 0 ? '+' : '') + d, c: d > 0 ? '#E08A00' : '#777' }); }
+        if (!it.hit && Math.abs(it.x - px) < 34 + rr * 0.6 && it.y > H - 118 - rr && it.y < H - 60) { it.hit = true; if (it.k === 'rock') { sfx('bad'); hurt = 1.2; dead = true; pops.push({ x: it.x, y: H - 130, t: 0.7, s: '아야!', c: '#777' }); } else { const d = it.k === 'big' ? 3 : 1; score += d; sfx('coin'); pops.push({ x: it.x, y: H - 130, t: 0.7, s: '+' + d, c: '#E08A00' }); } }
       }
       items = items.filter(it => !it.hit && it.y < H + 40);
-      if (left <= 0) { left = 0; end(); }
+      if (dead) { dead = false; end(); } /* 돌멩이에 한 번 맞으면 끝 */
     }
     const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#CDEBB5'); bg.addColorStop(1, '#FFF3D6'); g.fillStyle = bg; g.fillRect(0, 0, W, H);
     g.fillStyle = '#9BD0C7'; g.beginPath(); g.ellipse(W / 2, H - 14, W * 0.62, 40, 0, 0, 7); g.fill();
@@ -63,8 +63,8 @@ export function mount(el, ctx) {
     if (im) g.drawImage(im, px - 40, H - 128, 80, 105);
     g.textAlign = 'center'; g.font = '700 20px Jua, sans-serif';
     pops = pops.filter(p => (p.t -= dt) > 0); for (const p of pops) { g.globalAlpha = Math.min(1, p.t * 2); g.fillStyle = p.c; g.fillText(p.s, p.x, p.y - (0.7 - p.t) * 40); } g.globalAlpha = 1;
-    g.fillStyle = '#5F3F2B'; g.font = '700 26px Jua, sans-serif'; g.textAlign = 'left'; g.fillText('🍊 ' + score, 14, 34); g.textAlign = 'right'; g.fillText(Math.ceil(left) + '초', W - 14, 34);
-    if (st !== 'play') { g.textAlign = 'center'; g.fillStyle = 'rgba(255,255,255,.88)'; g.beginPath(); g.roundRect(50, 150, W - 100, 96, 24); g.fill(); g.fillStyle = '#5F3F2B'; g.font = '700 28px Jua, sans-serif'; g.fillText(st === 'over' ? `${score}점!` : '유자 받기', W / 2, 192); g.font = '16px Jua, sans-serif'; g.fillText(st === 'over' ? (best[ctx.uid] && score >= best[ctx.uid].s && score > 0 ? '내 최고 기록!' : '다시 도전해 봐요') : '30초 동안 많이 받기', W / 2, 224); }
+    g.fillStyle = '#5F3F2B'; g.font = '700 26px Jua, sans-serif'; g.textAlign = 'left'; g.fillText('🍊 ' + score, 14, 34); g.textAlign = 'right'; g.fillText(Math.floor(left) + '초', W - 14, 34);
+    if (st !== 'play') { g.textAlign = 'center'; g.fillStyle = 'rgba(255,255,255,.88)'; g.beginPath(); g.roundRect(50, 150, W - 100, 96, 24); g.fill(); g.fillStyle = '#5F3F2B'; g.font = '700 28px Jua, sans-serif'; g.fillText(st === 'over' ? `${score}점!` : '유자 받기', W / 2, 192); g.font = '16px Jua, sans-serif'; g.fillText(st === 'over' ? (best[ctx.uid] && score >= best[ctx.uid].s && score > 0 ? '내 최고 기록!' : '다시 도전해 봐요') : '돌멩이를 피해 끝없이 받기', W / 2, 224); }
   }
   const off = ctx.store.on('games/yuzu/best', v => { best = v || {}; drawBoard(); });
   drawBoard(); raf = requestAnimationFrame(loop);

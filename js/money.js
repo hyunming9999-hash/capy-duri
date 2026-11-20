@@ -12,14 +12,14 @@ ZOO_HATS.forEach((x, i) => { PRICES[x.id] = 2500 + ((i * 5 + 2) % 6) * 100; }); 
 export const priceOf = id => (FREE.has(id) ? 0 : PRICES[id] || 0);
 // 게임별 환산 규칙(게임 목록과 적립 카드에 그대로 보여 준다)
 // 물가 반영(2026-11): 옷값이 약 3.5~4배 오른 만큼 게임 보상도 4배
-export const RATE = { burger: '2점당 1코인', bubble: '기록 하 10점·중 7점·상 5점당 1코인 · 스테이지 클리어 140~1,080', tetris: '하 20점·중 14점·상 10점당 1코인 (최대 300·450·600) · 이기면 +120', yuzu: '1점당 8코인', mahjong: '3점당 4코인 · 이기면 +80', omok: '승 200 · 무 100 · 패 60 · 혼자 40코인', four: '승 200 · 무 100 · 패 60 · 혼자 40코인', match: '승 200 · 무 100 · 패 60 · 혼자 40코인', volley: '승 200 · 패 60코인 (컴퓨터전은 60%)' };
+export const RATE = { burger: '2점당 1코인', bubble: '기록 하 10점·중 7점·상 5점당 1코인 · 스테이지 클리어 140~1,080', tetris: '하 20점·중 14점·상 10점당 1코인 (최대 300·450·600) · 이기면 +120', yuzu: '1점당 8코인 (한 판 최대 400)', mahjong: '3점당 4코인 · 이기면 +80', omok: '승 200 · 무 100 · 패 60 · 혼자 40코인', four: '승 200 · 무 100 · 패 60 · 혼자 40코인', match: '승 200 · 무 100 · 패 60 · 혼자 40코인', volley: '승 200 · 패 60코인 (컴퓨터전은 60%)' };
 export const won = n => '🪙 ' + Math.round(n).toLocaleString('ko-KR');
 // 테트리스는 난이도마다 점수 값과 상한이 다르다(하·중·상)
 // 2026-11-20 하향: 몇 분만 쌓아도 한 판에 800~2,000코인이 나와 다른 게임(한 판 200 안팎)보다 너무 쉽게 벌렸다 → 잘한 판이 300~600코인
 export const TETRIS_PAY = { e: { base: 40, per: 20, max: 300 }, m: { base: 50, per: 14, max: 450 }, h: { base: 60, per: 10, max: 600 } };
 const BUBBLE_PAY = { e: { base: 40, per: 5, max: 800 }, m: { base: 60, per: 3.5, max: 1400 }, h: { base: 80, per: 2.5, max: 2000 } }; // 버블은 그대로
 // 게임 결과 → 돈
-export const PAY = { burger: s => Math.floor(Math.max(0, s) / 2), bubble: (s, d) => { const t = BUBBLE_PAY[d] || BUBBLE_PAY.e; return Math.min(t.max, t.base + Math.floor(Math.max(0, s) / (t.per * 2))); }, bubbleStage: n => Math.round((120 + n * 20) * (n >= 15 ? 1.5 : 1)), tetris: (s, d) => { const t = TETRIS_PAY[d] || TETRIS_PAY.e; return Math.min(t.max, t.base + Math.floor(Math.max(0, s) / t.per)); }, yuzu: s => Math.max(0, s) * 8, board: r => ({ win: 200, draw: 100, lose: 60, solo: 40 })[r] || 0, volley: w => (w ? 200 : 60), mahjong: s => Math.floor(Math.max(0, s) * 4 / 3) };
+export const PAY = { burger: s => Math.floor(Math.max(0, s) / 2), bubble: (s, d) => { const t = BUBBLE_PAY[d] || BUBBLE_PAY.e; return Math.min(t.max, t.base + Math.floor(Math.max(0, s) / (t.per * 2))); }, bubbleStage: n => Math.round((120 + n * 20) * (n >= 15 ? 1.5 : 1)), tetris: (s, d) => { const t = TETRIS_PAY[d] || TETRIS_PAY.e; return Math.min(t.max, t.base + Math.floor(Math.max(0, s) / t.per)); }, yuzu: s => Math.min(400, Math.max(0, s) * 8), /* 끝없이 하는 판이라 한 판 최대 400 */ board: r => ({ win: 200, draw: 100, lose: 60, solo: 40 })[r] || 0, volley: w => (w ? 200 : 60), mahjong: s => Math.floor(Math.max(0, s) * 4 / 3) };
 
 export const ENTRY = 50; // 게임 참가비: 시작할 때 50코인을 동전으로 넣는다(바로 빠진다). 이기거나 비기면 그대로 한 판 더, 지면 다시 넣는다
 export const STREAK_X = [1, 1.5, 1.8, 2.3]; // 연승 배율(4연승까지)
@@ -32,7 +32,7 @@ export function setupMoney(ctx, onChange) {
     const show = after => { document.querySelectorAll('.earn-card').forEach(e => e.remove());
       const sum = n > 0 || lose || bonus ? [n > 0 && `+${n.toLocaleString('ko-KR')}코인`, bonus && `내기 +${bonus.toLocaleString('ko-KR')}코인`, lose0 && `-${lose0.toLocaleString('ko-KR')}코인`, fee && `참가비 -${fee}코인`].filter(Boolean).join(' ') : '이번 판은 적립 없음';
       const stop = opt.stop && h('button', { class: 'btn sm primary', onClick: e => { e.stopPropagation(); ctx.stopStreak(opt.stop); card.remove(); } }, '💰 연승 그만하고 챙기기');
-      const card = h('div', { class: 'earn-card' + (lose0 ? ' lost' : opt.stop ? ' hot' : ''), onClick: () => card.remove() }, h('b', null, `🪙 ${why || '게임'} 정산`), ...lines.map(t => h('p', null, t)), h('p', { class: 'sum' }, sum), stop, h('small', null, `내 돈 ${before.toLocaleString('ko-KR')} → ${after.toLocaleString('ko-KR')}코인 · 누르면 닫혀요`));
+      const card = h('div', { class: 'earn-card' + (location.hash.startsWith('#game-') ? ' neon' : '') + (lose0 ? ' lost' : opt.stop ? ' hot' : ''), onClick: () => card.remove() }, h('b', null, `🪙 ${why || '게임'} 정산`), ...lines.map(t => h('p', null, t)), h('p', { class: 'sum' }, sum), stop, h('small', null, `내 돈 ${before.toLocaleString('ko-KR')} → ${after.toLocaleString('ko-KR')}코인 · 누르면 닫혀요`));
       document.body.append(card); setTimeout(() => card.remove(), opt.stop || lose0 ? 11000 : 7000);
       // 동전(크레딧): 이기거나 비기면 그대로 한 판 더, 지거나 기록 판이 끝나면 다 쓴 것 → 다시 넣어야 이어 할 수 있다
       if (opt.res !== 'win' && opt.res !== 'draw' && !opt.keep) ctx.useCredit && ctx.useCredit(); };
