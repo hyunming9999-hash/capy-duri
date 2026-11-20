@@ -126,12 +126,12 @@ export function josa(word, noBatchim, batchim) {
 }
 
 // 게임이 끝났을 때 화면 가득 뜨는 효과: 'win' 승리! / 'lose' 패배… / 'draw' 무승부
-export function gameFx(kind, sub = '') {
+export function gameFx(kind, sub = '', head = '') { // head: 큰 글씨를 바꿀 때(인형뽑기는 '승리' 대신 '성공')
   document.querySelectorAll('.gfx').forEach(e => e.remove());
   const T = { win: ['승리!', ['🎉', '✨', '🍊', '⭐', '💛', '🎊']], lose: ['패배…', ['💧', '🌧️', '💦', '😢']], draw: ['무승부', ['🤝', '✨', '🍊']] }[kind] || ['', []];
   const bits = Array.from({ length: kind === 'win' ? 26 : 14 }, (_, i) => h('i', { style: { left: (4 + (i * 37) % 92) + '%', animationDelay: (i % 9) * 0.07 + 's', fontSize: (18 + (i * 7) % 16) + 'px', '--r': ((i * 53) % 90 - 45) + 'deg' } }, T[1][i % T[1].length]));
   sfx(kind);
-  const el = h('div', { class: 'gfx gfx-' + kind, 'aria-live': 'polite' }, bits, h('div', { class: 'gfx-box' }, h('b', null, T[0]), sub && h('small', null, sub)));
+  const el = h('div', { class: 'gfx gfx-' + kind, 'aria-live': 'polite' }, bits, h('div', { class: 'gfx-box' }, h('b', null, head || T[0]), sub && h('small', null, sub)));
   document.body.append(el); setTimeout(() => el.remove(), 2600);
   if (navigator.vibrate) try { navigator.vibrate(kind === 'win' ? [40, 60, 40, 60, 120] : 180); } catch {}
   return el;

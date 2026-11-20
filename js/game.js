@@ -10,7 +10,7 @@ import * as mahjong from './g-mahjong.js';
 import * as claw from './g-claw.js';
 import * as bubble from './g-bubble.js';
 import { RATE, ENTRY } from './money.js';
-import { needCoin, hasCredit } from './arcade.js';
+import { needCoin, hasCredit, PLANS } from './arcade.js';
 
 const HOTTEOK = 'https://hyunming9999-hash.github.io/hotteok-tekken/';
 
@@ -24,7 +24,7 @@ export const GAMES = [
   { id: 'tetris', mod: tetris, title: '카피 테트리스', sub: '줄 지우기 · 경쟁·기록', face: 'wow', acc: 'leaf' },
   { id: 'bubble', mod: bubble, title: '카피 버블', sub: '같은 동물 구슬 3개 펑! · 기록·스테이지·경쟁', face: 'love', acc: 'ribbon' },
   { id: 'mahjong', mod: mahjong, title: '동물 마작', sub: '같은 동물 짝 없애기 · 경쟁·컴퓨터', face: 'smile', acc: 'flower' },
-  { id: 'claw', mod: claw, title: '인형뽑기', sub: '집게로 동물 인형 뽑기 · 선물·배지', face: 'wow', acc: 'ribbon' },
+  { id: 'claw', mod: claw, title: '인형뽑기', sub: '집게로 동물 인형 뽑기 · 1판 50 · 3판 150 · 5판 200', face: 'wow', acc: 'ribbon' },
 ];
 
 // 💰 내기: 사람끼리 하는 경쟁 판에만. 걸지 않아도 된다(선택)
@@ -83,7 +83,7 @@ export function mount(el, ctx, sub) {
   const g = GAMES.find(x => x.id === sub);
   if (sub === 'watch') return watchView(el, ctx);
   // 참가비가 모자라면 못 들어간다. 돈 정보가 아직 안 왔을 때는 막지 않는다(정산에서 0 아래로는 안 내려감)
-  if (g && !hasCredit() && ctx.money[ctx.uid] && ctx.coins() < ENTRY) { toast(`게임 한 판에 참가비 ${ENTRY}코인이 들어요. 지금 ${ctx.coins()}코인이라 모자라요`, 2600); setTimeout(() => ctx.go('game'), 0); return; }
+  if (g && !PLANS[g.id] && !hasCredit() && ctx.money[ctx.uid] && ctx.coins() < ENTRY) { toast(`게임 한 판에 참가비 ${ENTRY}코인이 들어요. 지금 ${ctx.coins()}코인이라 모자라요`, 2600); setTimeout(() => ctx.go('game'), 0); return; }
   if (g) { ctx.setTitle(g.title); el.classList.add('game-' + g.id); const bar = PVP.has(g.id) ? betBar(ctx, g) : null; if (bar) el.append(bar.el); const eye = h('div', { class: 'spect-eye', hidden: true }, `👀 ${ctx.nameOf(ctx.partnerId)} 관전 중`); el.append(eye);
     const off = g.mod.mount(el, ctx), cast = caster(el, ctx, g, eye); needCoin(ctx, g); return () => { cast(); bar && bar.stop(); off && off(); }; }
   const pp = partnerPlaying(ctx); el.append(pp.el);

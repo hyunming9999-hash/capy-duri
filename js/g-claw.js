@@ -1,141 +1,158 @@
-// 인형뽑기 — 집게를 좌우로 옮겨 내려서 동물 인형을 뽑는다. 인형끼리는 물리로 밀리고 쌓인다
+// 인형뽑기(3D) — 유리 상자를 비스듬히 내려다보며 집게를 앞뒤·좌우로 옮겨 내려서 동물 인형을 뽑는다
+// 인형은 얼굴이 그려진 둥근 공. 3D 물리(cannon-es)로 서로 밀리고 쌓인다. 그림은 three.js (둘 다 이 게임을 열 때만 받는다)
 // 일곱 번을 한 묶음으로, 그중 무작위 한 번은 집게가 꽉 잡는다(반드시 한 번). 나머지는 힘이 약해 올리다 놓친다
 // 뽑은 인형은 가방(bag/<uid>/dolls)에 모인다: 친목회에서 동물에게 선물하거나 가슴에 배지로 단다
 import { h, toast, modal, loadImg, gameFx } from './ui.js';
 import { sfx } from './sound.js';
 import { ANIMALS, animalSvg } from './animals.js';
 import { FLUFFY } from './fluffy.js';
-import { hasCredit, needCoin } from './arcade.js';
+import { coinGate } from './arcade.js';
 
-const W = 340, H = 256, FLOOR = H - 6, CHUTE = 66, DIV_TOP = H - 72, RAIL = 12, REST = 38, N_DOLL = 10, G = 1500, PACK = 7; // 유리 칸(그림 속 네온 테두리 안쪽)과 같은 비율
+// 상자 안쪽: 가로 x -5~5, 깊이 z -4(뒤)~4(앞), 높이 y 0~9. 나오는 곳은 왼쪽 앞 모서리(바닥이 뚫려 있고 유리 칸막이로 둘러쌈)
+const BX = 5, BZ = 4, HOLE_X = -2.3, HOLE_Z = 1.3, WALL_H = 4.3, TOP = 7.6, REST = 5.6, N_DOLL = 25, PACK = 7, OUT = { x: -3.65, z: 2.65 };
 const dollSrc = i => (FLUFFY ? `img/fl/a${i}-base.webp` : 'data:image/svg+xml;utf8,' + encodeURIComponent(animalSvg(i, true)));
 export const dollImg = i => `<img src="${dollSrc(i)}" alt="" loading="lazy">`;
 
 export function mount(el, ctx) {
-  let alive = true, raf = 0, lastT = 0, dolls = [], imgs = {}, mine = {}, pity = null, busy = false, dir = 0, lucky = false, held = null, slip = null, startX = 200, target = null, shake = 0;
-  const claw = { x: 200, y: REST, open: 1, st: 'idle', t: 0 };
+  let alive = true, raf = 0, lastT = 0, mine = {}, pity = null, plays = 0, gateAt = 0, busy = false, lucky = false, held = null, slip = null, target = null, ready = false, world = null;
+  const dir = { x: 0, z: 0 }, dolls = [], faces = {}, start = { x: 1.5, z: 0.5 };
+  const claw = { x: 1.5, y: REST, z: 0.5, open: 1, st: 'idle', t: 0 };
   const me = { id: 'claw', title: '인형뽑기', face: 'wow', acc: 'ribbon' };
-  const canvas = h('canvas', { class: 'claw-cv', width: W * 2, height: H * 2 }), g = canvas.getContext('2d');
-  const tries = h('small', { class: 'claw-try' }), shelf = h('div', { class: 'claw-shelf' });
-  const hold = d => ({ onPointerDown: e => { e.preventDefault(); dir = d; }, onPointerUp: () => { dir = 0; }, onPointerLeave: () => { dir = 0; }, onPointerCancel: () => { dir = 0; } });
-  const bL = h('button', { class: 'claw-arrow', 'aria-label': '왼쪽', ...hold(-1) }, '◀'), bR = h('button', { class: 'claw-arrow', 'aria-label': '오른쪽', ...hold(1) }, '▶');
+  const canvas = h('canvas', { class: 'claw-cv' });
+  const tries = h('small', { class: 'claw-try' }), shelf = h('div', { class: 'claw-shelf' }), load = h('i', { class: 'claw-load' }, '기계 켜는 중…');
+  const hold = (ax, d) => ({ onPointerDown: e => { e.preventDefault(); dir[ax] = d; }, onPointerUp: () => { dir[ax] = 0; }, onPointerLeave: () => { dir[ax] = 0; }, onPointerCancel: () => { dir[ax] = 0; } });
   const bGo = h('button', { class: 'claw-go', onClick: () => drop() }, '잡기');
-  el.append(h('div', { class: 'claw' }, h('b', { class: 'claw-name' }, '인형뽑기'), canvas, h('div', { class: 'claw-pad' }, bL, bR, tries, bGo)),
-    h('p', { class: 'dim center claw-tip' }, '◀ ▶ 로 집게를 옮기고 잡기를 눌러요. 한 번에 50코인'),
+  el.append(h('div', { class: 'claw' }, h('b', { class: 'claw-name' }, '인형뽑기'), canvas, load,
+    h('div', { class: 'claw-pad' }, h('div', { class: 'claw-dpad' }, h('button', { class: 'claw-arrow up', 'aria-label': '뒤로', ...hold('z', -1) }, '▲'), h('button', { class: 'claw-arrow lf', 'aria-label': '왼쪽', ...hold('x', -1) }, '◀'), h('button', { class: 'claw-arrow rt', 'aria-label': '오른쪽', ...hold('x', 1) }, '▶'), h('button', { class: 'claw-arrow dn', 'aria-label': '앞으로', ...hold('z', 1) }, '▼')), tries, bGo)),
+    h('p', { class: 'dim center claw-tip' }, '▲▼◀▶ 로 집게를 앞뒤·좌우로 옮기고 잡기를 눌러요. 1판 50 · 3판 150 · 5판 200코인'),
     h('b', { class: 'claw-h' }, '🧸 내가 뽑은 인형'), shelf);
 
   const rnd = (a, b) => a + Math.random() * (b - a);
-  const img = i => { if (!imgs[i]) { imgs[i] = { im: null }; loadImg(dollSrc(i)).then(im => { imgs[i].im = im; }).catch(() => {}); } return imgs[i].im; };
-  const spawnDoll = (x, y) => { const i = Math.floor(Math.random() * ANIMALS.length); img(i); dolls.push({ i, x: x == null ? rnd(CHUTE + 36, W - 30) : x, y: y == null ? rnd(-140, 20) : y, vx: rnd(-20, 20), vy: 0, r: rnd(20.5, 23.5), a: rnd(-0.3, 0.3), va: 0 }); };
-  for (let k = 0; k < N_DOLL; k++) spawnDoll(CHUTE + 32 + (k % 5) * 50 + rnd(-6, 6), 90 + Math.floor(k / 5) * 60 + rnd(-10, 10));
-
-  // 가방의 인형·보장 묶음 상태
+  // ---- 가방의 인형·보장 묶음·남은 판
   const P = 'bag/' + ctx.uid;
-  const offs = [ctx.store.on(P + '/dolls', v => { mine = v || {}; drawShelf(); }), ctx.store.on(P + '/claw', v => { pity = v && typeof v.n === 'number' ? v : null; drawTries(); })];
-  const drawTries = () => { tries.textContent = '한 번 50코인'; }; // 확률(묶음 몇 번째인지)은 화면에 보이지 않는다
+  const drawTries = () => { tries.textContent = `남은 판 ${plays}`; }; // 확률(묶음 몇 번째인지)은 화면에 보이지 않는다
+  const setPlays = n => { plays = Math.max(0, n); drawTries(); return ctx.store.set(P + '/clawPlays', plays || null).catch(() => {}); };
+  function gate(again) { if (document.querySelector('.arc-gate')) return; coinGate(ctx, me, n => setPlays(plays + n), null, again); } // 50코인 1판 · 150코인 3판 · 200코인 5판
   const myDoll = () => (ctx.members[ctx.uid] || {}).doll;
   const wear = async i => { ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), doll: i }; await ctx.store.update('members/' + ctx.uid, { doll: i }).catch(() => {}); drawShelf(); toast(i == null ? '인형 배지를 뗐어요' : `${ANIMALS[i].name} 인형을 가슴에 달았어요`); };
   function drawShelf() { const list = Object.entries(mine).filter(([k, n]) => n > 0 && ANIMALS[k]).map(([k, n]) => [+k, n]), on = myDoll();
-    shelf.replaceChildren(...(list.length ? list.map(([i, n]) => h('button', { class: 'claw-my' + (on === i ? ' on' : ''), onClick: () => { const c = modal({ title: `🧸 ${ANIMALS[i].name} 인형 ${n}개`, body: h('div', { class: 'claw-info' }, h('span', { html: dollImg(i) }), h('p', null, '친목회에서 동물에게 🎁 선물로 줄 수 있어요(친밀도 +6, 그 동물 본인 인형이면 +12). 가슴에 배지로 달 수도 있어요.')), actions: [{ label: '닫기' }, { label: on === i ? '배지 떼기' : '🎀 가슴에 달기', primary: true, onClick: x => { x(); wear(on === i ? null : i); } }] }); } },
+    shelf.replaceChildren(...(list.length ? list.map(([i, n]) => h('button', { class: 'claw-my' + (on === i ? ' on' : ''), onClick: () => { modal({ title: `🧸 ${ANIMALS[i].name} 인형 ${n}개`, body: h('div', { class: 'claw-info' }, h('span', { html: dollImg(i) }), h('p', null, '친목회에서 동물에게 🎁 선물로 줄 수 있어요(친밀도 +6, 그 동물 본인 인형이면 +12). 가슴에 배지로 달 수도 있어요.')), actions: [{ label: '닫기' }, { label: on === i ? '배지 떼기' : '🎀 가슴에 달기', primary: true, onClick: x => { x(); wear(on === i ? null : i); } }] }); } },
       h('span', { html: dollImg(i) }), h('small', null, on === i ? '착용 중' : `${ANIMALS[i].name} ×${n}`))) : [h('p', { class: 'dim center' }, '아직 없어요. 집게로 뽑아 보세요!')])); }
+  const offs = [ctx.store.on(P + '/dolls', v => { mine = v || {}; drawShelf(); }), ctx.store.on(P + '/claw', v => { pity = v && typeof v.n === 'number' ? v : null; }),
+    ctx.store.on(P + '/clawPlays', v => { plays = Math.max(0, +v || 0); drawTries(); if (!plays && !gateAt) { gateAt = 1; setTimeout(() => alive && !plays && gate(false), 600); } })];
   drawShelf(); drawTries();
 
-  // ---- 물리: 인형은 원. 인형끼리·벽·칸막이·집게와 부딪힌다
-  const fixed = []; // 이번 스텝의 움직이지 않는 원(집게 발·잡힌 인형)
-  function step(dt) {
-    for (const d of dolls) { if (d === held) continue; d.vy += G * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.a += d.va * dt; }
-    for (let it = 0; it < 3; it++) {
-      for (let a = 0; a < dolls.length; a++) { const p = dolls[a];
-        for (let b = a + 1; b < dolls.length; b++) { const q = dolls[b]; hit(p, q, p === held ? 0 : 1, q === held ? 0 : 1); }
-        if (p === held) continue;
-        for (const f of fixed) hit(p, f, 1, 0);
-        // 벽·바닥
-        if (p.x > W - p.r) { p.x = W - p.r; if (p.vx > 0) p.vx *= -0.2; }
-        if (p.x < p.r) { p.x = p.r; if (p.vx < 0) p.vx *= -0.2; }
-        if (p.x > CHUTE && p.y > FLOOR - p.r) { p.y = FLOOR - p.r; if (p.vy > 0) p.vy *= -0.12; p.vx *= 0.9; p.va = p.va * 0.85 + (p.vx / p.r) * 0.15; } // 나오는 곳(왼쪽 칸)에는 바닥이 없다
-        // 칸막이(나오는 곳과 인형 더미 사이의 세로 벽): 선분과 원
-        { const cy = Math.max(DIV_TOP, Math.min(FLOOR, p.y)), dx = p.x - CHUTE, dy = p.y - cy, dd = Math.hypot(dx, dy), min = p.r + 3;
-          if (dd < min && dd > 0.001) { const nx = dx / dd, ny = dy / dd, pen = min - dd; p.x += nx * pen; p.y += ny * pen; const vn = p.vx * nx + p.vy * ny; if (vn < 0) { p.vx -= 1.15 * vn * nx; p.vy -= 1.15 * vn * ny; } } }
-      } }
-    for (const d of dolls) { d.vx *= 0.992; d.va *= 0.97; }
+  // ---- 3D 장면
+  let THREE, CANNON, renderer, scene, camera, clawG, cable, gantry, cart, pusher, dollMat; const prongs = [];
+  const faceTex = i => { if (faces[i]) return faces[i]; const cv = document.createElement('canvas'); cv.width = cv.height = 160; const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; const f = faces[i] = { tex, color: new THREE.Color('#F2C58E'), mats: [] };
+    loadImg(dollSrc(i)).then(im => { const g = cv.getContext('2d'); g.clearRect(0, 0, 160, 160); g.save(); g.beginPath(); g.arc(80, 80, 78, 0, 7); g.clip(); g.fillStyle = '#FFF4E4'; g.fillRect(0, 0, 160, 160);
+      if (FLUFFY) g.drawImage(im, 44, 54, 232, 232, 0, 0, 160, 160); else g.drawImage(im, 0, 0, 160, 160 * im.height / im.width); g.restore();
+      try { const d = g.getImageData(70, 22, 20, 12).data; let r = 0, gg = 0, b = 0, n = 0; for (let k = 0; k < d.length; k += 4) { r += d[k]; gg += d[k + 1]; b += d[k + 2]; n++; } f.color.setRGB(r / n / 255, gg / n / 255, b / n / 255, THREE.SRGBColorSpace); f.mats.forEach(m => m.color.copy(f.color)); } catch (e) { /* 색을 못 읽으면 기본색 */ }
+      // 공처럼 보이게: 위쪽은 밝게, 가장자리는 어둡게
+      const sh = g.createRadialGradient(58, 50, 6, 80, 80, 80); sh.addColorStop(0, 'rgba(255,255,255,.22)'); sh.addColorStop(0.55, 'rgba(255,255,255,0)'); sh.addColorStop(1, 'rgba(50,14,90,.42)'); g.fillStyle = sh; g.beginPath(); g.arc(80, 80, 78, 0, 7); g.fill();
+      g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 2.5; g.beginPath(); g.arc(80, 80, 77, 0, 7); g.stroke(); tex.needsUpdate = true; }).catch(() => {});
+    return f; };
+  function addDoll(x, y, z) { const i = Math.floor(Math.random() * ANIMALS.length), r = rnd(0.93, 1.05), f = faceTex(i);
+    const mat = new THREE.MeshLambertMaterial({ color: f.color.clone() }); f.mats.push(mat);
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(r, 20, 14), mat), face = new THREE.Sprite(new THREE.SpriteMaterial({ map: f.tex, transparent: true })); face.scale.set(r * 2.02, r * 2.02, 1); scene.add(ball, face);
+    const body = new CANNON.Body({ mass: 1, shape: new CANNON.Sphere(r), material: dollMat, fixedRotation: true, linearDamping: 0.25 }); // 인형은 돌지 않는다
+    body.position.set(x == null ? rnd(HOLE_X + 1.4, BX - 1.2) : x, y == null ? rnd(9, 12) : y, z == null ? rnd(-BZ + 1.2, BZ - 1.2) : z); world.addBody(body);
+    const d = { i, r, ball, face, body, mat }; dolls.push(d); return d; }
+  function build() {
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true }); renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1)); renderer.outputColorSpace = THREE.SRGBColorSpace;
+    scene = new THREE.Scene(); camera = new THREE.PerspectiveCamera(40, 1.33, 0.1, 100); camera.position.set(0, 9.6, 14.6); camera.lookAt(0, 3.7, 0);
+    scene.add(new THREE.AmbientLight(0xffffff, 1.5)); const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(3, 12, 8); scene.add(sun);
+    const p1 = new THREE.PointLight(0xff6bd6, 60, 30); p1.position.set(-4, 7, 3); const p2 = new THREE.PointLight(0x35e0ff, 60, 30); p2.position.set(4, 7, 3); scene.add(p1, p2);
+    const box = (w, hh, d, mat, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), mat); m.position.set(x, y, z); scene.add(m); return m; };
+    const neonP = new THREE.MeshBasicMaterial({ color: 0xff6bd6 }), neonC = new THREE.MeshBasicMaterial({ color: 0x35e0ff }), dark = new THREE.MeshLambertMaterial({ color: 0x241650 }), side = new THREE.MeshLambertMaterial({ color: 0x2c1a60 }), floorM = new THREE.MeshLambertMaterial({ color: 0x6a45c8 });
+    // 뒷벽·옆벽·바닥(나오는 곳만 뚫림)
+    box(BX * 2, 9, 0.2, dark, 0, 4.5, -BZ - 0.1); box(0.2, 9, BZ * 2, side, -BX - 0.1, 4.5, 0); box(0.2, 9, BZ * 2, side, BX + 0.1, 4.5, 0);
+    box(BX - HOLE_X, 0.4, BZ * 2, floorM, (BX + HOLE_X) / 2, -0.2, 0); box(HOLE_X + BX, 0.4, BZ + HOLE_Z, floorM, (HOLE_X - BX) / 2, -0.2, (HOLE_Z - BZ) / 2);
+    box(HOLE_X + BX, 0.1, BZ - HOLE_Z, new THREE.MeshBasicMaterial({ color: 0x0b0620 }), (HOLE_X - BX) / 2, -2.4, (BZ + HOLE_Z) / 2);
+    const grid = new THREE.GridHelper(10, 10, 0x9d7bff, 0x8a66ee); grid.position.set(0, 0.02, 0); grid.scale.set(1, 1, 0.8); scene.add(grid);
+    [-3.3, -1.1, 1.1, 3.3].forEach((x, k) => box(0.12, 8.6, 0.05, k % 2 ? neonP : neonC, x, 4.5, -BZ + 0.05)); // 뒷벽 네온 줄
+    const post = new THREE.MeshLambertMaterial({ color: 0xcdd3f5 }); [[-BX, -BZ], [BX, -BZ], [-BX, BZ], [BX, BZ]].forEach(([x, z]) => box(0.16, 9, 0.16, post, x, 4.5, z)); // 네 귀퉁이 기둥
+    // 나오는 곳 유리 칸막이
+    const glass = new THREE.MeshBasicMaterial({ color: 0x7cf3ff, transparent: true, opacity: 0.16, depthWrite: false });
+    box(0.08, WALL_H, BZ - HOLE_Z, glass, HOLE_X, WALL_H / 2, (BZ + HOLE_Z) / 2); box(HOLE_X + BX, WALL_H, 0.08, glass, (HOLE_X - BX) / 2, WALL_H / 2, HOLE_Z);
+    box(0.1, 0.1, BZ - HOLE_Z, neonC, HOLE_X, WALL_H, (BZ + HOLE_Z) / 2); box(HOLE_X + BX, 0.1, 0.1, neonC, (HOLE_X - BX) / 2, WALL_H, HOLE_Z); box(0.1, WALL_H, 0.1, neonC, HOLE_X, WALL_H / 2, HOLE_Z); box(0.1, WALL_H, 0.1, neonC, HOLE_X, WALL_H / 2, BZ);
+    // 레일(앞뒤로 움직이는 가로대)·수레·줄·집게
+    const metal = new THREE.MeshStandardMaterial({ color: 0xe6eaff, metalness: 0.7, roughness: 0.3 }), red = new THREE.MeshStandardMaterial({ color: 0xff4f7a, metalness: 0.3, roughness: 0.5 });
+    box(0.25, 0.25, BZ * 2, metal, -BX + 0.3, 8.7, 0); box(0.25, 0.25, BZ * 2, metal, BX - 0.3, 8.7, 0);
+    gantry = box(BX * 2 - 0.4, 0.3, 0.45, metal, 0, 8.7, 0); cart = box(1.3, 0.55, 1.0, red, 0, 8.45, 0);
+    cable = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1, 8), metal); scene.add(cable);
+    clawG = new THREE.Group(); scene.add(clawG); clawG.add(new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.7, 0.5, 16), metal)); const gem = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 8), neonP); gem.position.y = -0.3; clawG.add(gem);
+    for (let k = 0; k < 3; k++) { const piv = new THREE.Group(); piv.rotation.y = k * Math.PI * 2 / 3 + Math.PI / 2; clawG.add(piv); const arm = new THREE.Group(); arm.position.set(0.5, -0.1, 0); piv.add(arm);
+      const a = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.05, 0.22), metal); a.position.set(0.28, -0.42, 0); a.rotation.z = 0.55; arm.add(a); const b = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.95, 0.22), metal); b.position.set(0.36, -1.25, 0); b.rotation.z = -0.42; arm.add(b); prongs.push(arm); }
+    // 물리
+    world = new CANNON.World({ gravity: new CANNON.Vec3(0, -32, 0) }); world.allowSleep = false; world.solver.iterations = 12;
+    dollMat = new CANNON.Material('doll'); const wallMat = new CANNON.Material('wall'); world.addContactMaterial(new CANNON.ContactMaterial(dollMat, dollMat, { friction: 0.5, restitution: 0.05 })); world.addContactMaterial(new CANNON.ContactMaterial(dollMat, wallMat, { friction: 0.35, restitution: 0.05 }));
+    const fix = (hx, hy, hz, x, y, z) => { const b = new CANNON.Body({ mass: 0, material: wallMat, shape: new CANNON.Box(new CANNON.Vec3(hx, hy, hz)) }); b.position.set(x, y, z); world.addBody(b); };
+    fix((BX - HOLE_X) / 2, 1, BZ, (BX + HOLE_X) / 2, -1, 0); fix((HOLE_X + BX) / 2, 1, (BZ + HOLE_Z) / 2, (HOLE_X - BX) / 2, -1, (HOLE_Z - BZ) / 2); // 바닥 두 조각
+    fix(1, 10, BZ, -BX - 1, 8, 0); fix(1, 10, BZ, BX + 1, 8, 0); fix(BX + 2, 10, 1, 0, 8, -BZ - 1); fix(BX + 2, 10, 1, 0, 8, BZ + 1); // 네 벽
+    fix(0.06, (WALL_H + 2) / 2, (BZ - HOLE_Z) / 2, HOLE_X, (WALL_H - 2) / 2, (BZ + HOLE_Z) / 2); fix((HOLE_X + BX) / 2, (WALL_H + 2) / 2, 0.06, (HOLE_X - BX) / 2, (WALL_H - 2) / 2, HOLE_Z); // 칸막이
+    pusher = new CANNON.Body({ mass: 0, type: CANNON.Body.KINEMATIC, material: wallMat, shape: new CANNON.Sphere(0.5) }); pusher.position.set(0, 30, 0); world.addBody(pusher);
+    // 인형 25개: 열 개씩 깔고 그 위에 쌓는다
+    for (let k = 0; k < N_DOLL; k++) { const lay = Math.floor(k / 10), c = k % 10; addDoll(HOLE_X + 1.35 + (c % 5) * 1.45 + rnd(-0.1, 0.1) + (lay % 2) * 0.5, 1.1 + lay * 1.9 + rnd(0, 0.3), (c < 5 ? -2.2 : 0.2) + rnd(-0.2, 0.2) + (lay % 2) * 1.0); }
+    for (let k = 0; k < 90; k++) world.step(1 / 60); // 가라앉힌 채로 시작
+    resize(); ready = true; load.remove();
   }
-  function hit(p, q, mp, mq) { const dx = q.x - p.x, dy = q.y - p.y, min = p.r + q.r, d2 = dx * dx + dy * dy; if (d2 >= min * min || d2 < 0.0001) return; const d = Math.sqrt(d2), nx = dx / d, ny = dy / d, pen = (min - d) * 0.6, tot = mp + mq; if (!tot) return;
-    p.x -= nx * pen * (mp / tot); p.y -= ny * pen * (mp / tot); if (mq) { q.x += nx * pen * (mq / tot); q.y += ny * pen * (mq / tot); }
-    const rvx = (q.vx || 0) - (p.vx || 0), rvy = (q.vy || 0) - (p.vy || 0), vn = rvx * nx + rvy * ny; if (vn >= 0) return;
-    const j = -(1.12) * vn / tot, tx = -ny, ty = nx, vt = rvx * tx + rvy * ty;
-    if (mp) { p.vx -= j * mp * nx - vt * 0.04 * tx; p.vy -= j * mp * ny - vt * 0.04 * ty; p.va -= vt * 0.004; }
-    if (mq) { q.vx += j * mq * nx - vt * 0.04 * tx; q.vy += j * mq * ny - vt * 0.04 * ty; q.va += vt * 0.004; } }
+  function resize() { if (!renderer) return; const w = canvas.clientWidth || 300, hh = canvas.clientHeight || 226; renderer.setSize(w, hh, false); camera.aspect = w / hh; camera.updateProjectionMatrix(); }
 
   // ---- 집게
-  const gap = () => 9 + 19 * claw.open; // 두 발 사이 반 너비
-  const under = () => { let best = null, bd = 1e9; for (const d of dolls) { const dd = Math.hypot(d.x - claw.x, d.y - (claw.y + 8)); if (dd < bd) { bd = dd; best = d; } } return [best, bd]; };
-  async function drop() {
-    if (busy || claw.st !== 'idle') return;
-    if (!hasCredit()) return needCoin(ctx, me);
-    busy = true; dir = 0; startX = claw.x; bGo.disabled = true;
-    // 일곱 번 묶음: 새 묶음이면 꽉 잡는 차례(k)를 무작위로 정한다
-    let p = pity && pity.n < PACK ? { ...pity } : { n: 0, k: Math.floor(Math.random() * PACK) };
-    lucky = p.n === p.k; p.n += 1; pity = p; drawTries(); claw._p = p;
-    ctx.store.set(P + '/claw', p).catch(() => {});
+  const tipY = () => claw.y - 1.75;
+  const under = () => { let best = null, bd = 1e9; for (const d of dolls) { const p = d.body.position, dd = Math.hypot(p.x - claw.x, p.y - (tipY() + 0.5), p.z - claw.z); if (dd < bd) { bd = dd; best = d; } } return [best, bd]; };
+  const inOut = (x, z, m = 0) => x < HOLE_X + m && z > HOLE_Z - m;
+  function drop() {
+    if (!ready || busy || claw.st !== 'idle') return;
+    if (plays <= 0) return gate(false);
+    setPlays(plays - 1); busy = true; dir.x = dir.z = 0; start.x = claw.x; start.z = claw.z; bGo.disabled = true;
+    const p = pity && pity.n < PACK ? { ...pity } : { n: 0, k: Math.floor(Math.random() * PACK) }; // 새 묶음이면 꽉 잡는 차례(k)를 무작위로 정한다
+    lucky = p.n === p.k; p.n += 1; pity = p; claw._p = p; ctx.store.set(P + '/claw', p).catch(() => {});
     claw.st = 'down'; sfx('tock');
   }
+  const grab = d => { held = d; d.body.type = CANNON.Body.KINEMATIC; d.body.mass = 0; d.body.updateMassProperties(); d.body.velocity.set(0, 0, 0); };
+  function letGo(win) { const d = held; held = null; slip = null; if (!d) return; d.body.type = CANNON.Body.DYNAMIC; d.body.mass = 1; d.body.updateMassProperties(); d.body.velocity.set(win ? 0 : rnd(-1.5, 1.5), 0, win ? 0 : rnd(-1.5, 1.5)); if (!win) sfx('bad'); }
+  function done() { busy = false; bGo.disabled = false; lucky = false; target = null; if (plays <= 0) setTimeout(() => alive && plays <= 0 && gate(true), 1600); }
+  function removeDoll(d) { dolls.splice(dolls.indexOf(d), 1); world.removeBody(d.body); scene.remove(d.ball, d.face); d.ball.geometry.dispose(); d.mat.dispose(); d.face.material.dispose(); }
+  function prize(d) { removeDoll(d); const i = d.i; gameFx('win', `${ANIMALS[i].name} 인형을 뽑았어요`, '성공!'); ctx.store.tx(`${P}/dolls/${i}`, c => (c || 0) + 1).catch(() => {}); setTimeout(() => alive && ready && addDoll(), 900); }
   function moveClaw(dt) {
-    const c = claw; fixed.length = 0;
-    if (c.st === 'idle') { c.x = Math.max(CHUTE + 22, Math.min(W - 22, c.x + dir * 150 * dt)); return; }
-    const tip = c.y + 22;
-    if (c.st === 'down') { c.y += 190 * dt; const [d, dd] = under(); if ((d && dd < d.r + 5) || tip >= FLOOR - 2) { c.st = 'close'; c.t = 0; target = null;
-        if (lucky) { if (d && dd < 95) target = d; } else if (d && Math.abs(d.x - c.x) < d.r * 0.62 && d.y - c.y > 0 && dd < d.r + 16) target = d; } }
-    else if (c.st === 'close') { c.t += dt; c.open = Math.max(0, 1 - c.t / 0.4); if (target && lucky) c.x += (target.x - c.x) * Math.min(1, dt * 9);
-      if (c.t >= 0.5) { if (target) { held = target; sfx('pair'); // 약한 손: 올리다가(또는 옮기다가) 놓친다. 위에 인형이 얹혀 있으면 더 빨리 놓친다
-            if (!lucky) { const load = dolls.filter(o => o !== held && o.y < held.y - 4 && Math.hypot(o.x - held.x, o.y - held.y) < o.r + held.r + 3).length, far = Math.random() < 0.25 && !load && c.x > CHUTE + held.r + 70;
-              slip = far ? { x: Math.max(CHUTE + held.r + 14, c.x - (c.x - 33) * rnd(0.25, 0.6)) } : { y: REST + (c.y - REST) * (load ? rnd(0.7, 0.92) : rnd(0.2, 0.8)) }; } else slip = null; }
-          else if (lucky && claw._p) { const p = { ...claw._p, n: claw._p.n - 1 }; pity = p; drawTries(); ctx.store.set(P + '/claw', p).catch(() => {}); } // 꽉 잡는 차례인데 닿은 인형이 없으면 그 차례를 다음으로 넘긴다
+    const c = claw; let push = false;
+    if (c.st === 'idle') { c.x = Math.max(HOLE_X + 0.9, Math.min(BX - 1, c.x + dir.x * 4.6 * dt)); c.z = Math.max(-BZ + 1, Math.min(BZ - 1, c.z + dir.z * 4.6 * dt)); }
+    else if (c.st === 'down') { c.y -= 5.2 * dt; push = true; const [d, dd] = under(); if ((d && dd < d.r + 0.42) || tipY() <= 0.55) { c.st = 'close'; c.t = 0; target = null; if (d) { const p = d.body.position, hz = Math.hypot(p.x - c.x, p.z - c.z);
+          if (lucky ? hz < 2.9 : hz < d.r * 0.62 && dd < d.r + 0.9) target = d; } } }
+    else if (c.st === 'close') { c.t += dt; c.open = Math.max(0, 1 - c.t / 0.4); push = true; if (target && lucky) { const p = target.body.position; c.x += (p.x - c.x) * Math.min(1, dt * 9); c.z += (p.z - c.z) * Math.min(1, dt * 9); }
+      if (c.t >= 0.5) { if (target) { grab(target); sfx('pair'); // 약한 손: 올리다가(또는 옮기다가) 놓친다. 위에 다른 인형이 얹혀 있으면 더 빨리 놓친다
+            if (!lucky) { const hp = held.body.position, n = dolls.filter(o => o !== held && o.body.position.y > hp.y + 0.3 && o.body.position.distanceTo(hp) < o.r + held.r + 0.15).length, f = rnd(0.25, 0.6), fx = c.x + (OUT.x - c.x) * f, fz = c.z + (OUT.z - c.z) * f;
+              slip = Math.random() < 0.3 && !n && !inOut(fx, fz, 1.5) ? { f } : { y: TOP - (TOP - c.y) * (n ? rnd(0.08, 0.25) : rnd(0.2, 0.8)) }; } else slip = null; }
+          else if (lucky && c._p) { const p = { ...c._p, n: c._p.n - 1 }; pity = p; ctx.store.set(P + '/claw', p).catch(() => {}); } // 꽉 잡는 차례인데 닿은 인형이 없으면 그 차례를 다음으로 넘긴다
           c.st = 'up'; } }
-    else if (c.st === 'up') { c.y -= 150 * dt; if (held && slip && slip.y != null && c.y <= slip.y) letGo(false); if (c.y <= REST) { c.y = REST; c.st = held ? 'carry' : 'back'; } }
-    else if (c.st === 'carry') { c.x -= 130 * dt; if (held && slip && slip.x != null && c.x <= slip.x) { letGo(false); c.st = 'back'; } else if (c.x <= 33) { c.x = 33; c.st = 'release'; c.t = 0; } }
+    else if (c.st === 'up') { c.y += 4.4 * dt; if (held && slip && slip.y != null && c.y >= slip.y) letGo(false); if (c.y >= TOP) { c.y = TOP; c.st = held ? 'carry' : 'back'; c.t = 0; c.from = { x: c.x, z: c.z }; } }
+    else if (c.st === 'carry') { const L = Math.hypot(OUT.x - c.from.x, OUT.z - c.from.z) || 1; c.t = Math.min(1, c.t + 4 * dt / L); c.x = c.from.x + (OUT.x - c.from.x) * c.t; c.z = c.from.z + (OUT.z - c.from.z) * c.t;
+      if (held && slip && slip.f != null && c.t >= slip.f) { letGo(false); c.st = 'back'; } else if (c.t >= 1) { c.st = 'release'; c.t = 0; } }
     else if (c.st === 'release') { c.t += dt; c.open = Math.min(1, c.t / 0.25); if (held && c.t > 0.12) letGo(true); if (c.t > 0.7) c.st = 'back'; }
-    else if (c.st === 'back') { c.open = Math.min(1, c.open + dt * 3); const dx = startX - c.x; c.x += Math.sign(dx) * Math.min(Math.abs(dx), 170 * dt); if (Math.abs(dx) < 1 && c.open >= 1) { c.st = 'idle'; done(); } }
-    if (held) { held.x = c.x; held.y = c.y + 12 + held.r * 0.78; held.vx = 0; held.vy = 0; held.va = 0; held.a *= 0.9; }
-    // 집게 발: 내려가거나 오므릴 때 주변 인형을 밀어낸다
-    if (c.st === 'down' || c.st === 'close' || (c.st === 'up' && !held)) { const gp = gap(); fixed.push({ x: c.x - gp, y: c.y + 18, r: 5 }, { x: c.x + gp, y: c.y + 18, r: 5 }); }
+    else if (c.st === 'back') { c.open = Math.min(1, c.open + dt * 3); const dx = start.x - c.x, dz = start.z - c.z, L = Math.hypot(dx, dz), s = Math.min(L, 5 * dt); if (L > 0.001) { c.x += dx / L * s; c.z += dz / L * s; } const dy = REST - c.y; if (L < 1.2) c.y += Math.sign(dy) * Math.min(Math.abs(dy), 3 * dt);
+      if (L < 0.02 && Math.abs(dy) < 0.02 && c.open >= 1) { c.x = start.x; c.z = start.z; c.y = REST; c.st = 'idle'; done(); } }
+    if (held) { const b = held.body; b.position.set(c.x, tipY() + 0.55 - held.r * 0.25, c.z); b.velocity.set(0, 0, 0); }
+    // 집게 끝: 내려가거나 오므릴 때 주변 인형을 밀어낸다
+    if (push && !held) { pusher.position.set(c.x, tipY() + 0.25, c.z); pusher.velocity.set(0, c.st === 'down' ? -5.2 : 0, 0); } else { pusher.position.set(0, 30, 0); pusher.velocity.set(0, 0, 0); }
   }
-  let won = null;
-  function letGo(win) { const d = held; held = null; slip = null; if (!d) return; d.vx = win ? -10 : rnd(-40, 40); d.vy = 0; d.va = rnd(-2, 2); if (win) won = d; else { sfx('bad'); shake = 0.25; } }
-  function done() { busy = false; bGo.disabled = false; lucky = false; target = null; ctx.useCredit && ctx.useCredit(); }
-  function prize(d) { dolls.splice(dolls.indexOf(d), 1); won = null; const i = d.i; sfx('win'); gameFx('win', `${ANIMALS[i].name} 인형`);
-    ctx.store.tx(`${P}/dolls/${i}`, c => (c || 0) + 1).catch(() => {}); setTimeout(() => alive && spawnDoll(), 900); }
+  function sync() {
+    const c = claw; gantry.position.z = c.z; cart.position.set(c.x, 8.45, c.z); clawG.position.set(c.x, c.y, c.z); const len = Math.max(0.1, 8.2 - c.y); cable.scale.y = len; cable.position.set(c.x, c.y + len / 2, c.z);
+    const ang = -0.5 + c.open * 0.62; prongs.forEach(a => { a.rotation.z = ang; });
+    const cam = camera.position;
+    for (const d of dolls) { const p = d.body.position; d.ball.position.set(p.x, p.y, p.z); const vx = cam.x - p.x, vy = cam.y - p.y, vz = cam.z - p.z, L = Math.hypot(vx, vy, vz) || 1, o = d.r * 1.01; /* 얼굴 그림은 공 바로 앞에(공이 그림을 뚫고 나오지 않게) */ d.face.position.set(p.x + vx / L * o, p.y + vy / L * o, p.z + vz / L * o); }
+  }
+  function frame(t) { if (!alive) return; raf = requestAnimationFrame(frame); if (!ready) return; const dt = Math.min(0.033, (t - (lastT || t)) / 1000); lastT = t;
+    moveClaw(dt); world.step(1 / 60, dt, 3);
+    for (const d of [...dolls]) { const p = d.body.position; if (p.y < -2.6) { if (inOut(p.x, p.z, 0.2)) prize(d); else { p.set(rnd(HOLE_X + 1.4, BX - 1.2), 10, rnd(-BZ + 1.2, BZ - 1.2)); d.body.velocity.set(0, 0, 0); } } }
+    sync(); renderer.render(scene, camera); }
 
-  function draw() {
-    g.setTransform(2, 0, 0, 2, 0, 0); g.clearRect(0, 0, W, H); // 배경(기계 안쪽)은 뒤에 깔린 그림이다
-    // 나오는 곳·칸막이
-    g.fillStyle = 'rgba(14,8,40,.82)'; rr(4, DIV_TOP + 20, CHUTE - 10, H - DIV_TOP - 22, 8); g.fill(); g.strokeStyle = '#35E0FF'; g.lineWidth = 2; g.shadowColor = '#35E0FF'; g.shadowBlur = 8; g.stroke(); g.shadowBlur = 0;
-    g.fillStyle = '#7CF3FF'; g.font = '800 8px sans-serif'; g.textAlign = 'center'; g.fillText('▼ OUT', CHUTE / 2 - 1, H - 10);
-    const dg = g.createLinearGradient(CHUTE - 3, 0, CHUTE + 3, 0); dg.addColorStop(0, '#FF9BE6'); dg.addColorStop(1, '#D63DB4'); g.fillStyle = dg; g.shadowColor = '#FF6BD6'; g.shadowBlur = 10; rr(CHUTE - 3, DIV_TOP, 6, H - DIV_TOP, 3); g.fill(); g.shadowBlur = 0;
-    // 인형(바닥 그림자 → 몸)
-    for (const d of dolls) { if (d === held || d.y < FLOOR - d.r - 40 || d.x < CHUTE) continue; g.fillStyle = 'rgba(30,10,70,.28)'; g.beginPath(); g.ellipse(d.x, FLOOR - 1, d.r * 0.85, 4, 0, 0, 7); g.fill(); }
-    for (const d of [...dolls].sort((p, q) => (p === held) - (q === held))) { const im = img(d.i); g.save(); g.translate(d.x, d.y); g.rotate(d.a);
-      if (im) { const hh = d.r * 2.5 * (FLUFFY ? 360 / 262 : 1), w = hh * im.width / im.height; g.shadowColor = 'rgba(20,6,50,.45)'; g.shadowBlur = 5; g.shadowOffsetY = 2; g.drawImage(im, -w / 2, -hh * (FLUFFY ? 0.62 : 0.5), w, hh); } else { g.fillStyle = '#F6C98A'; g.beginPath(); g.arc(0, 0, d.r, 0, 7); g.fill(); }
-      g.restore(); }
-    // 레일·수레·줄·집게(은빛)
-    const c = claw, sx = shake > 0 ? Math.sin(performance.now() / 18) * 2 : 0, X = c.x + sx;
-    const rg = g.createLinearGradient(0, RAIL - 5, 0, RAIL + 4); rg.addColorStop(0, '#F4F6FF'); rg.addColorStop(1, '#8D97C9'); g.fillStyle = rg; rr(2, RAIL - 5, W - 4, 8, 4); g.fill();
-    const cg = g.createLinearGradient(0, RAIL - 9, 0, RAIL + 9); cg.addColorStop(0, '#FFFFFF'); cg.addColorStop(1, '#A9B2DE'); g.fillStyle = cg; rr(X - 17, RAIL - 9, 34, 17, 6); g.fill(); g.fillStyle = '#35E0FF'; g.shadowColor = '#35E0FF'; g.shadowBlur = 6; rr(X - 9, RAIL - 3, 18, 5, 2.5); g.fill(); g.shadowBlur = 0;
-    g.strokeStyle = '#C9D0F0'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(X, RAIL + 8); g.lineTo(X, c.y - 8); g.stroke();
-    const gp = gap(); g.lineCap = 'round'; g.lineJoin = 'round';
-    for (const pass of [0, 1]) { g.strokeStyle = pass ? '#F7F9FF' : '#7C86B8'; g.lineWidth = pass ? 4 : 6.5;
-      for (const s of [-1, 1]) { g.beginPath(); g.moveTo(X + s * 5, c.y); g.bezierCurveTo(X + s * (gp + 15), c.y + 2, X + s * (gp + 13), c.y + 15, X + s * gp, c.y + 22); g.stroke(); }
-      g.beginPath(); g.moveTo(X, c.y + 2); g.lineTo(X, c.y + 15 + 4 * (1 - c.open)); g.stroke(); }
-    const hg = g.createRadialGradient(X - 3, c.y - 5, 1, X, c.y - 2, 11); hg.addColorStop(0, '#FFFFFF'); hg.addColorStop(1, '#8F99CC'); g.fillStyle = hg; g.beginPath(); g.arc(X, c.y - 2, 10, 0, 7); g.fill();
-    g.fillStyle = '#FF6BD6'; g.shadowColor = '#FF6BD6'; g.shadowBlur = 7; g.beginPath(); g.arc(X, c.y - 2, 3.6, 0, 7); g.fill(); g.shadowBlur = 0;
-  }
-  function rr(x, y, w, hh, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + hh, r); g.arcTo(x + w, y + hh, x, y + hh, r); g.arcTo(x, y + hh, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
-  function frame(t) { if (!alive) return; const dt = Math.min(0.033, (t - (lastT || t)) / 1000); lastT = t; shake = Math.max(0, shake - dt);
-    for (let k = 0; k < 4; k++) { moveClaw(dt / 4); step(dt / 4); }
-    for (const d of [...dolls]) { if (d.y > H + 40) { if (d.x < CHUTE + 6) prize(d); else { d.y = -40; d.vy = 0; d.x = rnd(CHUTE + 36, W - 30); } } }
-    draw(); raf = requestAnimationFrame(frame); }
+  Promise.all([import('./vendor/three.module.min.js'), import('./vendor/cannon-es.min.js')]).then(([t, c]) => { if (!alive) return; THREE = t; CANNON = c; try { build(); } catch (e) { console.error(e); load.textContent = '이 기기에서는 3D를 켤 수 없어요'; } }).catch(() => { load.textContent = '기계를 불러오지 못했어요. 다시 들어와 주세요'; });
   raf = requestAnimationFrame(frame);
-  const key = e => { if (e.repeat) return; const dn = e.type === 'keydown'; if (e.key === 'ArrowLeft') dir = dn ? -1 : dir === -1 ? 0 : dir; else if (e.key === 'ArrowRight') dir = dn ? 1 : dir === 1 ? 0 : dir; else if (dn && (e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowDown')) { e.preventDefault(); drop(); } };
-  addEventListener('keydown', key); addEventListener('keyup', key);
-  if (new URLSearchParams(location.search).get('mock')) window.__claw = { claw, dolls, drop, setPity: p => { pity = p; }, state: () => ({ st: claw.st, lucky, pity, n: dolls.length, mine }) };
-  return () => { alive = false; cancelAnimationFrame(raf); removeEventListener('keydown', key); removeEventListener('keyup', key); offs.forEach(f => f && f()); };
+  const key = e => { if (e.repeat) return; const dn = e.type === 'keydown', K = { ArrowLeft: ['x', -1], ArrowRight: ['x', 1], ArrowUp: ['z', -1], ArrowDown: ['z', 1] }[e.key]; if (K) { e.preventDefault(); if (dn) dir[K[0]] = K[1]; else if (dir[K[0]] === K[1]) dir[K[0]] = 0; } else if (dn && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); drop(); } };
+  addEventListener('keydown', key); addEventListener('keyup', key); addEventListener('resize', resize);
+  if (new URLSearchParams(location.search).get('mock')) window.__claw = { claw, dolls, drop, setPlays: n => setPlays(n), plays: () => plays, pos: () => dolls.map(d => [d.body.position.x, d.body.position.y, d.body.position.z]), state: () => ({ st: claw.st, lucky, pity, n: dolls.length, mine, ready }) };
+  return () => { alive = false; cancelAnimationFrame(raf); removeEventListener('keydown', key); removeEventListener('keyup', key); removeEventListener('resize', resize); offs.forEach(f => f && f());
+    try { if (renderer) { dolls.forEach(d => { d.ball.geometry.dispose(); d.mat.dispose(); d.face.material.dispose(); }); Object.values(faces).forEach(f => f.tex.dispose()); renderer.dispose(); } } catch (e) { /* 정리 실패는 무시 */ } };
 }

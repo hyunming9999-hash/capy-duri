@@ -2443,10 +2443,13 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 /* 🧸 인형뽑기: 네온 기계 그림 위에 유리 칸(캔버스)·간판 글씨·버튼을 올린다 */
 .claw { position: relative; max-width: 380px; margin: 0 auto 8px; aspect-ratio: 688 / 1024; background: url(../img/fl/bg/claw-cab.webp) center / 100% 100% no-repeat; border-radius: 22px; overflow: hidden; container-type: inline-size; }
 .claw-name { position: absolute; left: 14%; right: 14%; top: 8.6%; height: 8.6%; display: flex; align-items: center; justify-content: center; font: 900 11cqw/1 var(--head); color: #fff; letter-spacing: 1px; text-shadow: 0 0 5px #FF6BD6, 0 0 12px #FF3DBE, 0 0 18px #35E0FF, 0 2px 0 #6A1E8C; }
-.claw-cv { position: absolute; left: 10%; top: 28%; width: 82%; height: auto; display: block; touch-action: none; border-radius: 10px; }
+.claw-cv { position: absolute; left: 9.6%; top: 27.6%; width: 82.8%; aspect-ratio: 340 / 256; display: block; touch-action: none; border-radius: 10px; background: linear-gradient(#1D1244, #33206E); }
+.claw-load { position: absolute; left: 10%; right: 10%; top: 45%; text-align: center; font: 800 4cqw/1.3 var(--head); font-style: normal; color: #CFE9FF; text-shadow: 0 0 6px #35E0FF; pointer-events: none; }
 .claw-pad { position: absolute; left: 9%; right: 9%; top: 73.6%; height: 9.6%; display: flex; align-items: center; gap: 3%; }
-.claw-arrow { width: 19%; height: 82%; border: 0; border-radius: 16px; background: linear-gradient(#FFFFFF, #D9D0FF); box-shadow: 0 4px 0 #6A4CC8, 0 0 10px rgba(53, 224, 255, .55); font-size: 6cqw; color: #5A34C8; touch-action: none; user-select: none; -webkit-user-select: none; }
-.claw-arrow:active { transform: translateY(3px); box-shadow: 0 1px 0 #6A4CC8; }
+.claw-dpad { position: relative; width: 34%; height: 150%; flex: 0 0 34%; }
+.claw-arrow { position: absolute; width: 34%; height: 46%; border: 0; border-radius: 12px; background: linear-gradient(#FFFFFF, #D9D0FF); box-shadow: 0 3px 0 #6A4CC8, 0 0 8px rgba(53, 224, 255, .55); font-size: 4.4cqw; line-height: 1; color: #5A34C8; touch-action: none; user-select: none; -webkit-user-select: none; padding: 0; }
+.claw-arrow.up { left: 33%; top: 0; } .claw-arrow.dn { left: 33%; bottom: 0; } .claw-arrow.lf { left: 0; top: 27%; } .claw-arrow.rt { right: 0; top: 27%; }
+.claw-arrow:active { transform: translateY(2px); box-shadow: 0 1px 0 #6A4CC8; }
 .claw-try { flex: 1; text-align: center; font: 800 3.4cqw/1.2 var(--head); color: #5A2A9C; }
 .claw-go { width: 27%; height: 96%; border: 0; border-radius: 50px; background: radial-gradient(circle at 35% 26%, #FFB0B0, #F0433F 58%, #B8201E); box-shadow: 0 5px 0 #7E1211, 0 0 14px rgba(255, 90, 140, .8); color: #fff; font: 900 6cqw/1 var(--head); text-shadow: 0 2px 0 #8E1716; }
 .claw-go:active { transform: translateY(3px); box-shadow: 0 2px 0 #7E1211; } .claw-go:disabled { filter: grayscale(.5) brightness(.85); }
@@ -2457,3 +2460,5 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .claw-info { display: flex; gap: 10px; align-items: center; } .claw-info span { flex: 0 0 84px; } .claw-info img { width: 100%; display: block; } .claw-info p { margin: 0; font-size: 13.5px; line-height: 1.5; }
 .so-dollic { width: 34px; height: 34px; overflow: hidden; display: inline-block; } .so-dollic img { width: 100%; margin-top: -24%; display: block; }
 .so-dollpin span { display: block; width: 40px; height: 40px; overflow: hidden; margin: 0 auto; } .so-dollpin img { width: 100%; margin-top: -24%; display: block; }
+
+.arc-plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; } .arc-plan { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 4px; } .arc-plan b { font: 900 18px/1 var(--head); } .arc-plan small { font-weight: 800; font-size: 12px; }
