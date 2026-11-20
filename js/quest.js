@@ -197,7 +197,16 @@ export function createQuest(d) {
   const rwRow = s => { const [c, a] = rewardOf(s); return h('div', { class: 'qw-rw' }, h('b', null, '보상'), h('span', null, `🪙 ${c}코인`), h('span', null, s.final ? `💗 모든 동물 +${a}` : `💗 친밀도 +${a}`), s.end && !s.final && h('span', null, `📁 장 보너스 ${END_BONUS}`)); };
 
   // 동물 창의 🔍 퀘스트 버튼
-  async function open(i) { const s = cur(), ch = s && STORY[s.ci];
+  // 다시 보기(한 번만): 대사가 패치로 바뀐 뒤라, 이미 지나간 16단계부터 지금까지를 눌러만 가며 다시 보여 준다. 저장·보상은 건드리지 않는다
+  let replaying = false;
+  async function replay(from, to) { if (replaying) return false; replaying = true; const total = FLAT.length;
+    try { if (!(await vn([`{smile}이야기가 새로 다듬어져서, ${from + 1}단계부터 다시 보여 줄게.`], 19, '📢 다시 보기', [h('p', { class: 'vn-sub' }, `패치로 대사가 바뀌었어요 · 화면을 누르기만 하면 넘어가요 · 다 보면 ${to + 1}단계로 이어져요`)]))) return false;
+      for (let n = from; n < to; n++) { const st = FLAT[n], title = `다시 보기 · ${STORY[st.ci].t} · ${n + 1}/${total}단계`;
+        if (!(await vn(st.say, st.who, title, [h('p', { class: 'vn-sub' }, '📢 다시 보기 · 누르기만 하면 넘어가요')]))) return false;
+        if (!(await vn(st.done, st.to, title + ' ✔', [h('p', { class: 'vn-sub' }, '📢 다시 보기 · 누르기만 하면 넘어가요')]))) return false; }
+      toast(`📢 다시 보기 끝! 이제 ${to + 1}단계를 이어서 해요`, 3000); return true; } finally { replaying = false; } }
+  async function open(i) { if (ready && !q.rp1 && d.meName === '두두' && (q.s || 0) >= 16 && cur()) { if (!(await replay(15, q.s))) return; await save({ rp1: 1 }); }
+    const s = cur(), ch = s && STORY[s.ci];
     if (!s) return vn(['{happy}고마워. 너 덕분에 섬이 다시 하나가 됐어.'], i, '👑 사건 해결!', [h('p', { class: 'vn-sub' }, '메인 이야기 「누가 왕관을 훔쳤나」를 모두 마쳤어요.')]);
     const title = `🔍 ${ch.t}`;
     if (!q.on && capped()) return vn(['{smile}오늘은 수사를 많이 했네. 푹 쉬고 내일 이어서 하자!'], i, '🌙 오늘은 수사 끝!', [h('p', { class: 'vn-sub' }, `메인 퀘스트는 하루에 ${DAY_MAX}단계까지 할 수 있어요. 내일 ${d.names[s.who]}에게서 이어져요.`)]);
@@ -275,5 +284,5 @@ export function createQuest(d) {
         else { const nt = needText(s); if (!(await vn(s.say, s.who, title, nt ? [h('p', { class: 'vn-sub' }, `조건: ${nt} · 시험판에서는 바로 통과`)] : []))) return; }
         sceneBg = bgOf(n, 'done'); if (!(await vn(s.done, s.to, title + ' ✔', s.clue ? [h('p', { class: 'vn-sub' }, `📝 단서: ${s.clue}`)] : []))) return; }
       { const L = FLAT[total - 1], [c, a2] = rewardOf(L); finale([['🛴', '황금 퀵보드 (전설의 황금사자 스쿠터)', '가방에서 타기 · 육지와 농장에서 빠르게 달려요'], ['🪙', `${c.toLocaleString('ko-KR')}코인`, ''], ['🦁', '사자 친밀도 100', '단짝이 됐어요!'], ['💗', `다른 동물 친밀도 +${a2}`, '']], '🧪 시험판이라 실제로 지급되지는 않아요'); } } finally { sceneBg = ''; } }
-  return { demo, open, status, progress, markOf, cooks, cooked, chatter, gossip, fresh, pirateOn, pirateResult, dispose: () => off && off() };
+  return { demo, replay, open, status, progress, markOf, cooks, cooked, chatter, gossip, fresh, pirateOn, pirateResult, dispose: () => off && off() };
 }

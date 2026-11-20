@@ -517,7 +517,7 @@ export function mount(el, ctx) {
     openFarm({ ctx: tctx, keeper, startVisit: !!keeper, scoot: () => (scoot ? scootHtml() : null), onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); } }); }
   try { const fq = new URLSearchParams(location.search), gd = fq.has('guardtest'); if (fq.has('farmtest') || gd) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); farmTest(gd); }, 1200); } catch {}
   // 퀘스트 시험판(?questtest 또는 ?questtest=23 처럼 시작 단계): 눌러만 가며 전체 이야기를 본다
-  try { const qv = new URLSearchParams(location.search); if (qv.has('questtest')) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); quest.demo(Math.max(0, (+qv.get('questtest') || 1) - 1)); }, 1600); } catch {}
+  try { const qv = new URLSearchParams(location.search); if (qv.has('replaytest')) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); quest.replay(15, 18); }, 1600); /* 다시 보기 연습 */ if (qv.has('questtest')) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); quest.demo(Math.max(0, (+qv.get('questtest') || 1) - 1)); }, 1600); } catch {}
   // 까마귀 연습 링크(?crowtest): 친목회에 들어오면 바로 농장으로 데려간다
   try { if (new URLSearchParams(location.search).has('crowtest')) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); if (!farmOpen && !me.boat && !fishOpen && !battle) goFarm(); setTimeout(() => fcrow.practice(), 900); }, 1200); } catch {}
   // 까마귀 퇴치 연습(?taltest)·해적전 연습(?piratetest, =2면 별빛포): 친밀도·돈·배·포탄에는 아무 영향 없음
