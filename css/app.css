@@ -2615,3 +2615,7 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 @keyframes tangArc { 0% { translate: 0 0; rotate: 0deg; } 50% { translate: 0 -46px; } 100% { translate: 0 0; rotate: 360deg; } }
 .fm-kp.eat img { animation: kpEat .34s ease-in-out infinite; } @keyframes kpEat { 0%, 100% { translate: 0 0; } 50% { translate: 0 2px; rotate: 2deg; } }
 .fm-stctl .fm-steal { padding: 7px 6px 8px; min-width: 0; } .fm-stctl .fm-steal b { font-size: 15px; } .fm-stctl .fm-steal small { font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; } .fm-stctl .fm-stback { padding: 4px 5px; font-size: 11px; }
+
+/* 구매하기 창 · 퀘스트 현황의 상대 진행도 */
+.buy-ask { display: grid; gap: 6px; text-align: center; padding: 4px 0 2px; } .buy-ask b { font: 900 18px/1.35 var(--head); color: #5A3A22; word-break: keep-all; } .buy-price { margin: 0; font: 900 24px var(--head); color: #C47A00; } .buy-ask small { color: #8A6A4A; font-size: 12.5px; }
+.qs-pal { margin: 4px 0 0; text-align: center; font: 800 13px var(--head); color: #7A4E2D; background: #FFF3DC; border-radius: 10px; padding: 5px 8px; }

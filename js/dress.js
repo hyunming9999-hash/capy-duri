@@ -19,6 +19,7 @@ export function mount(el, ctx) {
   const save = async () => {
     if (who !== ctx.uid) return toast('상대 카피바라의 옷은 바꾸거나 벗기거나 입힐 수 없어요');
     if (cost() > ctx.coins()) return toast(`돈이 모자라요 (${won(cost())} 필요, 지금 ${won(ctx.coins())}). 게임을 하면 돈을 벌어요`);
+    if (need().length && cost() > 0 && !(await ctx.askBuy(need().map(nameOf).join(', '), cost()))) return;
     for (const id of need()) if (!(await ctx.buy(id))) return; // 아직 없는 옷은 사서 입는다
     try { await ctx.store.set('dress/' + who, { top: sel.top || '', bottom: sel.bottom || '', hat: sel.hat || '', shoe: sel.shoe || '', by: ctx.uid, ts: ctx.store.now() }); toast(bare() ? (who === ctx.uid ? '다 벗었어요' : `${ctx.nameOf(who)}의 옷을 벗겼어요`) : who === ctx.uid ? '갈아입었어요' : `${ctx.nameOf(who)}에게 입혀 줬어요`); } catch { toast('저장하지 못했어요. 잠시 뒤 다시 해 보세요'); }
   };
@@ -27,7 +28,7 @@ export function mount(el, ctx) {
   const wearG = async i => { const was = rareList((ctx.members[ctx.uid] || {}).rare).includes(i); await wearGold(ctx, i);
     if (!was) { const blk = [...goldBlocks([i])].filter(k => sel[k] || (saved[ctx.uid] || {})[k]); if (blk.length) { const names = blk.map(k => nameOf(sel[k] || (saved[ctx.uid] || {})[k])).filter(Boolean); blk.forEach(k => { sel[k] = ''; }); const d = { ...(saved[ctx.uid] || {}) }; blk.forEach(k => { d[k] = ''; }); saved = { ...saved, [ctx.uid]: d }; await ctx.store.update('dress/' + ctx.uid, Object.fromEntries(blk.map(k => [k, '']))).catch(() => {}); if (names.length) toast(`같은 자리라서 ${names.join(', ')}을(를) 벗었어요`, 2400); } }
     draw(); };
-  const buyOne = async id => { const p = priceOf(id); if (p > ctx.coins()) return toast(`돈이 모자라요 (${won(p)} 필요, 지금 ${won(ctx.coins())})`); if (await ctx.buy(id)) { toast(`${nameOf(id)}을(를) 샀어요! 가진 장비 > 일반 장비에 담겼어요`, 2400); draw(); } };
+  const buyOne = async id => { const p = priceOf(id); if (p > ctx.coins()) return toast(`돈이 모자라요 (${won(p)} 필요, 지금 ${won(ctx.coins())})`); if (!(await ctx.askBuy(nameOf(id), p))) return; if (await ctx.buy(id)) { toast(`${nameOf(id)}을(를) 샀어요! 가진 장비 > 일반 장비에 담겼어요`, 2400); draw(); } };
   const random = () => { const r = a => a[Math.floor(Math.random() * a.length)].id; const f = k => SETS[k].filter(x => (sex === 'all' || x.sex === sex || x.sex === 'u') && ctx.owns(x.id)); sel = { top: r(f('top')), bottom: r(f('bottom')), hat: Math.random() < 0.7 ? r(f('hat')) : '', shoe: f('shoe').length && Math.random() < 0.7 ? r(f('shoe')) : '' }; draw(); };
 
   function draw() {

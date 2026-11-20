@@ -153,7 +153,7 @@ export function openCook(o) {
     kids.push(h('div', { class: 'kb-row2' }, h('button', { class: 'btn', onClick: recipeBook }, '📖 레시피북'), h('button', { class: 'btn', onClick: pantry }, '🧂 내 양념')));
     kids.push(h('p', { class: 'dim kb-tip' }, `가게 평점은 5점 만점이고 하루가 지나면 회복돼요. 손님 요청을 1개 못 맞추면 -${RATE_MISS}, 2개 이상 못 맞추면 -${RATE_MISS2}(0코인), 다 맞추면 +${RATE_GOOD}. ${RATE_BAN}점 이하가 되면 하루 영업정지예요. 손님마다 원하는 익힘·양념·뺄 재료가 달라요.` + ' 생선은 낚시로, 작물은 농장에서, 양념은 카피수퍼에서 구해요. 재료가 없으면 "다음에 다시 오세요"로 돌려보내요(평점은 그대로).'));
     body.replaceChildren(...kids); }
-  async function payRent() { if (st.rent) return; if (!(await ctx.spend(RENT))) return toast(`돈이 모자라요 (${RENT}코인 필요)`); st = { ...st, rent: ctx.store.now() }; await ctx.store.update(ref, { rent: st.rent }).catch(() => {}); sfx('coin'); toast('가게 문을 열었어요! 🍚', 1600); draw(); }
+  async function payRent() { if (st.rent) return; if (ctx.askBuy && !(await ctx.askBuy('가게 빌리기', RENT))) return; if (!(await ctx.spend(RENT))) return toast(`돈이 모자라요 (${RENT}코인 필요)`); st = { ...st, rent: ctx.store.now() }; await ctx.store.update(ref, { rent: st.rent }).catch(() => {}); sfx('coin'); toast('가게 문을 열었어요! 🍚', 1600); draw(); }
   // 다음 장사에 올 손님을 미리 정해 둔다(로비에서 메뉴·재료를 보고 미리 준비할 수 있게). 장사를 시작하면 이 손님들이 그대로 온다
   const newCust = () => { const all = o.animals.map(a => a.i).filter(i => A(i) > -30), cs = []; while (cs.length < PER) { const i = pick(all); if (!cs.some(c => c.a === i)) cs.push(makeOrder(i)); } return cs; };
   let nextBusy = false; function ensureNext() { if (nextBusy || st.next || banned() || (st.n || 0) >= SESSIONS) return; nextBusy = true; st = { ...st, next: newCust() }; ctx.store.update(ref, { next: st.next }).catch(() => {}).finally(() => { nextBusy = false; }); }

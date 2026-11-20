@@ -1,5 +1,5 @@
 // 돈(🪙): 게임에서 번 점수가 돈이 되고, 옷·선물을 사는 데 쓴다. 지갑과 산 물건은 사람마다 따로다
-import { toast, h } from './ui.js';
+import { toast, h, modal } from './ui.js';
 import { TOPS, BOTTOMS, HATS, ZOO_HATS, SHOES } from './clothes.js';
 import { sfx } from './sound.js';
 
@@ -69,6 +69,10 @@ export function setupMoney(ctx, onChange) {
       return ctx.earn(base, why, [...lines, `💥 ${s.n}연승 끝! 연승으로 번 ${s.won}코인의 2/3를 잃었어요`], { lose, bonus, res }); }
     return ctx.earn(base, why, lines, { bonus, res }); };
   // 돈이 모자라면 false. 쓴 뒤에 무엇을 얻는지는 부르는 쪽에서 적는다
+  // 구매하기 창: 물건을 살 때는 꼭 이 창에서 [구매하기]를 눌러야 거래된다
+  ctx.askBuy = function (name, price) { const me = this && this.coins ? this : ctx; return new Promise(res => { let done = false; const have = me.coins(), won = n => Math.round(n).toLocaleString('ko-KR'), short = price > have;
+    modal({ title: '🛒 구매하기', onClose: () => { if (!done) res(false); }, body: [h('div', { class: 'buy-ask' }, h('b', null, name), h('p', { class: 'buy-price' }, `🪙 ${won(price)}코인`), h('small', null, short ? `돈이 모자라요 · 내 돈 ${won(have)}코인 (${won(price - have)}코인 부족)` : `내 돈 ${won(have)}코인 → 사고 나면 ${won(have - price)}코인`))],
+      actions: [{ label: '취소' }, { label: short ? '돈이 모자라요' : '구매하기', primary: true, onClick: c => { if (short) return; done = true; c(); res(true); } }] }); }); };
   ctx.spend = async n => { n = Math.round(n); if (n <= 0) return true; let ok = false;
     try { await ctx.store.tx('money/' + ctx.uid, c => { const have = (c && c.c) || 0; if (have < n) { ok = false; return undefined; } ok = true; return { ...(c || {}), c: have - n }; }); } catch { ok = false; }
     if (ok) sfx('coin'); else toast('돈이 모자라요. 게임을 하면 돈을 벌 수 있어요', 1800); return ok; };

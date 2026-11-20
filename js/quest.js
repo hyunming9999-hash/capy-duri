@@ -146,6 +146,9 @@ export function propSvg(svg, props) { if (!props || !props.length) return svg; c
 
 export function createQuest(d) {
   const { ctx } = d, ref = 'quest/' + ctx.uid; let q = {}, ready = false;
+  // 상대는 몇 단계까지 했는지(퀘스트 현황 창에 한 줄)
+  const palLine = total => { const el = h('p', { class: 'qs-pal' }), pid = ctx.partnerId; if (!pid || !ctx.store.get) return null; el.textContent = `${ctx.nameOf(pid)}: 확인하는 중…`;
+    ctx.store.get('quest/' + pid).then(v => { const n = Math.min(total, (v && v.s) || 0), st = FLAT[n], ch = st ? STORY[st.ci].t : '끝까지 완료!'; el.textContent = `👫 ${ctx.nameOf(pid)}: ${n} / ${total}단계 · ${n >= total ? '모두 끝냈어요 🏆' : ch}`; }).catch(() => { el.textContent = ''; }); return el; };
   const off = ctx.store.on(ref, v => { q = v || {}; ready = true; d.onChange && d.onChange(); });
   const cur = () => FLAT[q.s || 0] || null, save = patch => { q = { ...q, ...patch }; d.onChange && d.onChange(); return ctx.store.update(ref, patch).catch(() => {}); };
   const say = (i, t) => d.toned(i, t), doneToday = () => (q.day === ymd() ? q.dn || 0 : 0), capped = () => doneToday() >= DAY_MAX;
@@ -243,7 +246,7 @@ export function createQuest(d) {
           : capped() ? h('b', null, `🌙 오늘 ${DAY_MAX}단계를 모두 했어요. 내일 ${d.names[s.who]}에게서 이어져요.`) : h('b', null, `❗ ${d.names[s.who]}에게 가서 이야기를 들어요 (머리 위 ! 표시)`),
         (() => { const [c, a] = rewardOf(s); return h('small', { class: 'qs-rw' }, `🏅 보상: 🪙 ${c}코인 · 💗 ${s.final ? `모든 동물 +${a}` : `친밀도 +${a}`}`); })());
     modal({ title: '🔍 퀘스트 현황', body: [h('div', { class: 'qs' }, h('p', { class: 'qs-name' }, '메인 이야기 「누가 왕관을 훔쳤나」'),
-      h('div', { class: 'qs-bar' }, h('i', null, h('u', { style: { width: pct + '%' } })), h('small', null, `${n} / ${total}단계 · ${pct}%`)), h('small', { class: 'dim center' }, `오늘 ${doneToday()} / ${DAY_MAX}단계 진행`),
+      h('div', { class: 'qs-bar' }, h('i', null, h('u', { style: { width: pct + '%' } })), h('small', null, `${n} / ${total}단계 · ${pct}%`)), h('small', { class: 'dim center' }, `오늘 ${doneToday()} / ${DAY_MAX}단계 진행`), palLine(total),
       h('b', { class: 'qs-h' }, '📌 지금 할 일'), todo, clueBox(), h('b', { class: 'qs-h' }, '📁 사건 파일'), h('div', { class: 'qs-chs' }, ...chap))], actions: [{ label: '닫기', primary: true }] }); }
   // 위쪽 '퀘스트' 버튼에 보여 줄 진행도. mark: ! 새 이야기를 들을 차례 · ? 가져갈 준비 완료 · … 진행 중 · ✔ 모두 끝
   const progress = () => { const n = q.s || 0, total = FLAT.length, s = cur(); return { n, total, pct: Math.round(n / total * 100), mark: !ready ? '' : !s ? '✔' : markOf(q.on ? s.to : s.who) }; };
