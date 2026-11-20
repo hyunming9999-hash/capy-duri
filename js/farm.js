@@ -148,6 +148,8 @@ export function openFarm(o) {
         drawSheet(); return rc(ctl, holdEl, h('button', { class: 'fm-stback', onClick: () => { pressing = false; mode = 'pick'; } }, '이랑', h('br'), '바꾸기')); }
       drawSheet(); rc(ctl, h('button', { class: 'fm-steal start', onClick: () => { mode = 'pick'; sfx('pop'); } }, h('b', null, '🤫 서리하기'), h('small', null, `익은 이랑 ${here.length}줄 · 눌러서 이랑 고르기`))); }
     const vig = h('div', { class: 'fm-vig' }); scene.append(vig);
+    // 뒷모습 그림을 미리 받아 둔다: 서리 버튼을 처음 누를 때 그림을 받느라 캐릭터가 잠깐 사라지던 것 방지
+    if (!sc) setTimeout(() => { try { [meSvg(true), meSvg(false)].forEach(html => (html.match(/href="[^"]+"/g) || []).forEach(m => { const im = new Image(); im.src = m.slice(6, -1); im.decode && im.decode().catch(() => {}); })); } catch {} }, 300);
     const kp = { x: plotX(0) + PW * 0.8, face: -1, k: 0, mode: 'walk', t: 0, next: 5, grace: 0, beat: 0, pose: '' }, prog = {}; let busy = false, bubT = 0;
     const say = (t, ms = 1600) => { bub.textContent = t; bub.hidden = false; clearTimeout(bubT); bubT = setTimeout(() => { bub.hidden = true; }, ms); };
     const pose = n => { if (kp.pose !== n) { kp.pose = n; img.src = `img/farm/kp-${n}.webp`; } };
