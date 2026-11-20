@@ -126,7 +126,7 @@ const GIFT_N = { candy: '사탕', flower: '꽃다발', cake: '케이크' };
 // 대사에 맞춰 동물 그림에 소품을 얹는다: "{표정+소품+h:🐟}" (h: = 손에 든 것). 모든 동물은 같은 틀(120×158, 눈 y41, 손 91,99)이라 한 자리에 얹으면 된다
 // 오이팩: 얇게 썬 오이를 양 볼과 이마에 한 장씩 붙인다
 const cukeSvg = (pts, k) => pts.map(([x, y]) => `<g transform="translate(${x} ${y}) scale(${k})"><circle r="10" fill="#E3F7C8" stroke="#4E8A2E" stroke-width="3"/><circle r="6" fill="none" stroke="#9CCB6E" stroke-width="1.4"/>${[[-2, -2], [2, -1], [0, 2.4], [-2.6, 1.6], [2.6, 2]].map(([a, b]) => `<ellipse cx="${a}" cy="${b}" rx=".9" ry="1.4" fill="#7FB55A"/>`).join('')}</g>`).join('');
-const CUKE_FL = cukeSvg([[30, 64], [81, 64], [55.4, 31]], 0.62); // 보송 그림체 돼지: 양 볼 + 이마
+const CUKE_FL = cukeSvg([[30, 64], [81, 64], [55.4, 28]], 0.62); // 보송 그림체 돼지: 양 볼 + 이마
 const PROP = {
   cuke: cukeSvg([[24, 60], [96, 60], [60, 20]], 0.9),
   mud: '<path d="M18 60 q6 -6 12 0 q4 6 -3 8 q-8 2 -9 -8z M86 24 q7 -4 11 2 q2 6 -6 6 q-7 -1 -5 -8z M38 126 q8 -8 16 0 q2 6 -8 6 q-10 0 -8 -6z M70 128 q8 -6 14 0 q0 6 -8 5 q-8 -1 -6 -5z" fill="#7A5230" opacity=".85"/><circle cx="34" cy="70" r="2" fill="#7A5230"/><circle cx="92" cy="34" r="1.8" fill="#7A5230"/>',
