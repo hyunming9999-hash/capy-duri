@@ -2639,3 +2639,5 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fm-topg.danger { background: rgba(200, 30, 50, .92); animation: beat .4s infinite; } .fm-topg.danger i { background: #fff; }
 .fm-bsay { position: relative; flex: 1; padding: 10px 12px; border-radius: 14px; background: #FFF1F1; border: 2px solid #F3B4BC; } .fm-bsay::before { content: ''; position: absolute; left: -9px; top: 26px; border: 8px solid transparent; border-right-color: #F3B4BC; border-left: 0; } .fm-bsay small { display: block; margin-top: 2px; }
 .fm-stctl .fm-stp { overflow: hidden; } .fm-stctl .fm-stp img { width: 30px; height: 30px; } .fm-stctl .fm-stp span { line-height: 30px; } .fm-stctl .fm-stp b { font-size: 13px; }
+.so-clo { aspect-ratio: 600 / 604; } .so-clo b { left: 27%; right: 18%; top: 24.5%; height: 12.5%; font: 900 10.5cqw/1 var(--head); color: #E0559A; letter-spacing: 0; text-shadow: 1.5px 0 #fff, -1.5px 0 #fff, 0 1.5px #fff, 0 -1.5px #fff; }
+.so-facebtn { display: block; width: 100%; margin: 0 0 8px; }

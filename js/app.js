@@ -312,7 +312,7 @@ function render() {
   const body = h('div', { class: 'page-body' });
   const title = h('h2', null, item.title);
   root.replaceChildren(h('div', { class: 'page page-' + name },
-    h('header', { class: 'bar' }, h('button', { class: 'back', 'aria-label': '뒤로', onClick: () => { ctx.go(sub ? name : 'home'); } }, '‹'), title,
+    h('header', { class: 'bar' }, h('button', { class: 'back', 'aria-label': '뒤로', onClick: () => { const bt = !sub && name === 'dress' && ctx.backTo; ctx.backTo = null; ctx.go(sub ? name : bt || 'home'); } }, '‹'), title, // 친목회 카피클로에서 들어온 옷놀이는 뒤로 가면 친목회로
       SCENE[name] && sndBtn(),
       name === 'chat' && h('button', { class: 'call tel srch-btn', 'aria-label': '대화 검색', title: '대화 검색', onClick: () => ctx.chatSearch && ctx.chatSearch() }, '🔍'),
       name === 'chat' && ctx.partnerId && h('button', { class: 'call tel', 'aria-label': '전화 걸기', title: '전화 걸기', onClick: () => ctx.phone() }, '📞'),

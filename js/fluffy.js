@@ -45,6 +45,9 @@ const worn = (id, own, back) => fitG(KFIT[id.slice(0, id.lastIndexOf('-'))] || F
 // 윗옷 소매 끝 자리 [왼쪽 x, 오른쪽 x, y]: 소매만 있고 손이 없어 팔이 잘린 것처럼 보여서, 소매 끝에 작은 손(발 그림을 줄여 씀)을 옷 아래에 그려 준다. 조끼는 소매가 없어 뺀다
 const CUFF = { blouse: [25.5, 94.2, 105.8], cardigan: [28.4, 92, 105.4], hoodie: [26.6, 93.4, 101.8], jeogori: [22.5, 98.2, 104.7], jumper: [24.4, 96.7, 104.7], sailor: [26.2, 93.8, 105.2], shirt: [26.6, 93.8, 101.5], stripe: [27.5, 92.5, 103], tee: [27.5, 92.5, 103] };
 const PAW_K = 0.5, PAW_W = 46 * S, PAW_H = 25 * S, PAW_Y = Y + 331 * S;
+// 손 하나(발 그림을 줄여 쓴다): 물건을 들 때처럼 손만 따로 그릴 때
+export function capyPaw(o, cx, cy, right, k = PAW_K) { const f = capyFile(o.color, o.face, false), px = X + (right ? 158 : 116) * S;
+  return `<g transform="translate(${(cx - PAW_W * k / 2).toFixed(2)} ${(cy - PAW_H * k / 2).toFixed(2)}) scale(${k}) translate(${(-px).toFixed(2)} ${(-PAW_Y).toFixed(2)})">${crop(f, o.own, px, PAW_Y, PAW_W, PAW_H)}</g>`; }
 function hands(top, o, own, back) { const c = top && CUFF[top.slice(2, top.lastIndexOf('-'))]; if (!c) return ''; const f = capyFile(o.color, o.face, back);
   return [[X + 116 * S, c[0]], [X + 158 * S, c[1]]].map(([px, cx]) => `<g transform="translate(${(cx - PAW_W * PAW_K / 2).toFixed(2)} ${(c[2] - PAW_H * PAW_K * 0.3).toFixed(2)}) scale(${PAW_K}) translate(${(-px).toFixed(2)} ${(-PAW_Y).toFixed(2)})">${crop(f, own, px, PAW_Y, PAW_W, PAW_H)}</g>`).join(''); }
 export function capyWear(o, own, back) {

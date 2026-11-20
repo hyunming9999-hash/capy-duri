@@ -1,6 +1,6 @@
 // 2등신 카피바라 캐릭터 (직접 그린 SVG)
 import { wearSvg, hatSvg, shoeSvg } from './clothes.js';
-import { FLUFFY, capyBody, capyWear, capyRare, SHADOW, inlineSvg, dollBadge } from './fluffy.js';
+import { FLUFFY, capyBody, capyWear, capyRare, SHADOW, inlineSvg, dollBadge, capyPaw } from './fluffy.js';
 export const COLORS = {
   brown: { name: '밤색', body: '#BC8C60', dark: '#85593A', light: '#E6C7A1' },
   cream: { name: '크림', body: '#E3C79C', dark: '#AC8656', light: '#F7EBD3' },
@@ -64,6 +64,7 @@ export function capy(o = {}) {
   // 친목회 상징: 배지 같은 것은 가슴에 달고, 먹을 것·물건은 손에 든다. 얼굴에는 절대 붙이지 않는다(머리만 그릴 때는 안 보인다)
   const pin = !o.pin || back || o.head ? ''
     : PIN_CHEST.has(o.pin) ? `<circle cx="44" cy="93" r="9.5" fill="#fff" stroke="#E9C46A" stroke-width="2.2"/><text x="44" y="97.6" font-size="12.5" text-anchor="middle">${o.pin}</text>`
+    : FLUFFY ? `<text x="91" y="112" font-size="17" text-anchor="middle" transform="rotate(-12 91 106)">${o.pin}</text>${capyPaw(o, 86.5, 108.5, true, 0.46)}` // 보송 그림체: 몸이 작아서 물건을 몸 가까이 들고, 손은 털 그림으로
     : `<text x="98" y="115" font-size="23" text-anchor="middle" transform="rotate(-12 98 108)">${o.pin}</text><ellipse cx="92" cy="109" rx="5.5" ry="4.5" fill="${c.body}"/>`;
   // 인형 배지(인형뽑기에서 뽑은 인형): 가슴에 단다. 상징 배지가 왼쪽 가슴에 있으면 오른쪽에
   const dollB = o.doll == null || back || o.head ? '' : FLUFFY ? dollBadge(o.doll, o.pin && PIN_CHEST.has(o.pin) ? 76 : 44, 96, o.own) : `<circle cx="44" cy="93" r="9.5" fill="#fff" stroke="#FF7AD9" stroke-width="2.2"/><text x="44" y="97.6" font-size="12.5" text-anchor="middle">🧸</text>`;
