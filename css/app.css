@@ -2592,3 +2592,13 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fm-mail { display: flex; gap: 10px; align-items: flex-start; } .fm-mail img { width: 74px; flex: none; } .fm-mail p { margin: 0 0 6px; font-size: 13.5px; line-height: 1.45; } .fm-mailsum { font: 900 16px var(--head); color: #2E8B57; }
 .fm-goldpick { margin-top: 8px; padding: 8px; border-radius: 14px; border: 2px dashed #E2B33C; background: #FFF8E1; display: flex; flex-direction: column; gap: 6px; } .fm-goldpick[hidden] { display: none; } .fm-goldpick > b { font: 900 13.5px var(--head); color: #8A5A00; }
 .so-row.pawn { margin-bottom: 8px; border-color: #E2B33C; background: #FFF8E1; }
+
+/* 1:1 교환 창: 긴 이름·좁은 화면에서도 글과 버튼이 창 밖으로 안 나가게 */
+.so-xwin { box-sizing: border-box; max-width: calc(100% - 12px); overflow: hidden; }
+.so-xwin > * { min-width: 0; max-width: 100%; }
+.so-xh { flex-wrap: wrap; align-items: center; row-gap: 2px; } .so-xh b { flex: none; } .so-xh small { min-width: 0; flex: 1 1 120px; line-height: 1.3; word-break: keep-all; } .so-xx { flex: none; margin-left: auto; }
+.so-xrow { min-width: 0; } .so-xpick { overflow: hidden; } .so-xg { overflow: hidden; } .so-xg small { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.so-xg.so-xch { width: 60px; padding: 4px 2px; } .so-xwait { min-width: 0; line-height: 1.3; word-break: keep-all; }
+.so-xgo { width: 100%; box-sizing: border-box; height: auto; white-space: normal; line-height: 1.3; word-break: keep-all; overflow-wrap: anywhere; padding: 7px 10px; }
+.so-xgot { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 5px; } .so-xgot i { font-style: normal; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.so-xgrid { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); } .so-xit small { max-width: 100%; overflow-wrap: anywhere; }
