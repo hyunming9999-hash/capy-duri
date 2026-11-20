@@ -44,7 +44,7 @@ export function mount(el, ctx) {
   if (TEST) plays = 99; drawShelf(); drawTries();
 
   // ---- 3D 장면
-  let THREE, CANNON, renderer, scene, camera, clawG, cable, gantry, cart, pusher, dollMat; const prongs = [];
+  let THREE, CANNON, renderer, scene, camera, clawG, cable, gantry, cart, pusher, dollMat; const prongs = [], marks = [];
   // 인형: 동물마다 색·귀·주둥이가 다른 3D 머리 봉제 인형(공 하나에 귀·눈·코·볼터치를 붙인다). 반지름 1짜리로 만들어 크기만 키운다
   let SPH, CONE; const matOf = {}, mt = col => matOf[col] || (matOf[col] = new THREE.MeshLambertMaterial({ color: col })), INK = '#3A2A22';
   function makeDoll(i) { const a = ANIMALS[i], g = new THREE.Group(), body = a.body, light = a.light, earC = a.earC || a.body, inner = a.inner || light, dark = a.dark || INK, es = a.es || 1, nm = a.name;
@@ -119,6 +119,8 @@ export function mount(el, ctx) {
     clawG = new THREE.Group(); scene.add(clawG); clawG.add(new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.7, 0.5, 16), metal)); const gem = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 8), neonP); gem.position.y = -0.3; clawG.add(gem);
     for (let k = 0; k < 3; k++) { const piv = new THREE.Group(); piv.rotation.y = k * Math.PI * 2 / 3 + Math.PI / 2; clawG.add(piv); const arm = new THREE.Group(); arm.position.set(0.5, -0.1, 0); piv.add(arm);
       const a = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.05, 0.22), metal); a.position.set(0.28, -0.42, 0); a.rotation.z = 0.55; arm.add(a); const b = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.95, 0.22), metal); b.position.set(0.36, -1.25, 0); b.rotation.z = -0.42; arm.add(b); prongs.push(arm); }
+    // 집게 발 세 개가 내려갈 자리: 노란 점 세 개로 미리 보여 준다(인형 위나 바닥에 찍힌다)
+    { const ym = new THREE.MeshBasicMaterial({ color: 0xffe22e, depthTest: false, transparent: true }); for (let k = 0; k < 3; k++) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.21, 14, 10), ym); m.renderOrder = 9; scene.add(m); marks.push(m); } }
     // 물리
     world = new CANNON.World({ gravity: new CANNON.Vec3(0, -32, 0) }); world.allowSleep = false; world.solver.iterations = 12;
     dollMat = new CANNON.Material('doll'); const wallMat = new CANNON.Material('wall'); world.addContactMaterial(new CANNON.ContactMaterial(dollMat, dollMat, { friction: 0.5, restitution: 0.05 })); world.addContactMaterial(new CANNON.ContactMaterial(dollMat, wallMat, { friction: 0.35, restitution: 0.05 }));
@@ -187,6 +189,8 @@ export function mount(el, ctx) {
     const c = claw; gantry.position.z = c.z; cart.position.set(c.x, 8.45, c.z); clawG.position.set(c.x, c.y, c.z); const len = Math.max(0.1, 8.2 - c.y); cable.scale.y = len; cable.position.set(c.x, c.y + len / 2, c.z);
     const ang = -0.5 + c.open * 0.62; prongs.forEach(a => { a.rotation.z = ang; });
     for (const d of dolls) { const p = d.body.position; d.face.position.set(p.x, p.y, p.z); }
+    const show = c.st === 'idle'; marks.forEach((m, k) => { m.visible = show; if (!show) return; const th = k * Math.PI * 2 / 3 + Math.PI / 2, x = c.x + Math.cos(th) * 0.95, z = c.z - Math.sin(th) * 0.95; let y = 0;
+      for (const d of dolls) { const p = d.body.position, hh = (p.x - x) ** 2 + (p.z - z) ** 2; if (hh < d.r * d.r) y = Math.max(y, p.y + Math.sqrt(d.r * d.r - hh)); } m.position.set(x, y + 0.06, z); });
   }
   function frame(t) { if (!alive) return; raf = requestAnimationFrame(frame); if (!ready) return; const dt = Math.min(0.033, (t - (lastT || t)) / 1000); lastT = t;
     moveClaw(dt); world.step(1 / 60, dt, 3);
