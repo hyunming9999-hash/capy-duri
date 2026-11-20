@@ -73,10 +73,13 @@ export function setupMoney(ctx, onChange) {
     try { await ctx.store.tx('money/' + ctx.uid, c => { const have = (c && c.c) || 0; if (have < n) { ok = false; return undefined; } ok = true; return { ...(c || {}), c: have - n }; }); } catch { ok = false; }
     if (ok) sfx('coin'); else toast('돈이 모자라요. 게임을 하면 돈을 벌 수 있어요', 1800); return ok; };
   ctx.buy = async id => { if (ctx.owns(id)) return true; if (!(await ctx.spend(priceOf(id)))) return false; await ctx.store.set(`owned/${ctx.uid}/${id}`, true).catch(() => {}); ctx.owned[ctx.uid] = { ...(ctx.owned[ctx.uid] || {}), [id]: true }; return true; };
+  // 한 번만 주는 지급: 밍땅꾸리에게 10,000코인(2026-11-20). 표시(g1120)가 있으면 다시 주지 않는다
+  let granting = false; const grantOnce = () => { const me = ctx.members[ctx.uid] || {}; if (granting || me.name !== '밍땅꾸리' || (ctx.money[ctx.uid] || {}).g1120) return; granting = true;
+    ctx.store.tx('money/' + ctx.uid, c => ((c && c.g1120) ? undefined : { ...(c || {}), c: ((c && c.c) || 0) + 10000, g1120: true })).catch(() => { granting = false; }); };
   const offs = [
     ctx.store.on('streak/' + ctx.uid, v => { ctx.streak = v || {}; }),
     ctx.store.on('bets', v => { ctx.bets = v || {}; refundCheck(); (ctx.betWatch || []).forEach(f => f()); }),
-    ctx.store.on('money', v => { ctx.money = v || {}; document.querySelectorAll('[data-coins]').forEach(e => { e.textContent = won(ctx.coins()); }); onChange && onChange(); }),
+    ctx.store.on('money', v => { ctx.money = v || {}; grantOnce(); document.querySelectorAll('[data-coins]').forEach(e => { e.textContent = won(ctx.coins()); }); onChange && onChange(); }),
     ctx.store.on('owned', v => { ctx.owned = v || {};
       const me = ctx.owned[ctx.uid] || {}; if (!me._init) { const d = ctx.dress[ctx.uid] || {}, keep = { _init: true }; [d.top, d.bottom, d.hat, d.shoe].forEach(id => { if (id) keep[id] = true; }); ctx.store.update('owned/' + ctx.uid, keep).catch(() => {}); } // 돈이 생기기 전에 입고 있던 옷은 그대로 내 것
       onChange && onChange(); }),
