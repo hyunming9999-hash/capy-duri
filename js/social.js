@@ -529,7 +529,7 @@ export function mount(el, ctx) {
   // 메인 퀘스트: 동물 머리 위 ! ? 표시와 동물 창의 🔍 퀘스트 버튼
   let vnOn = false;
   // 퀘스트를 끝낸 사람에게는 사자가 꽃 왕관을 쓰고 다닌다
-  const questDone = () => { try { const p = quest.progress(); return p.total > 0 && p.n >= p.total; } catch { return false; } }, crowned = (i, svg) => (i === 10 && questDone() ? propSvg(svg, ['flower']) : svg);
+  const crownTest = new URLSearchParams(location.search).has('crowntest'); /* 연습 링크(?crowntest): 퀘스트를 다 깬 뒤의 사자 모습 보기 */ const questDone = () => { if (crownTest) return true; try { const p = quest.progress(); return p.total > 0 && p.n >= p.total; } catch { return false; } }, crowned = (i, svg) => (i === 10 && questDone() ? propSvg(svg, ['flower']) : svg);
   const quest = createQuest({ ctx, names: ANIMALS.map(a => a.name), svg: i => animalSvg(i), svgFull: (i, mood) => animalSvg(i, true, mood || undefined), meSvg: face => capy(ctx.capyOf(ctx.uid, { face })), meName: ctx.me.name,
     host: () => (worldEl && worldEl.parentElement && worldEl.isConnected ? worldEl.parentElement : null), pause: on => { vnOn = on; keys.clear(); }, A, affinity: (i, d) => setRel(i, { a: A(i) + d }), toned, coins: addCoins, bag: () => bag, saveBag,
     fish: () => Object.entries(bag.fish || {}).filter(([, v]) => v).map(([k, v]) => [k, v, fishOf(v.id)]),
