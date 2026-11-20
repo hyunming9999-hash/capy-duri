@@ -9,7 +9,7 @@ import { FLUFFY } from './fluffy.js';
 import { coinGate } from './arcade.js';
 
 // 상자 안쪽: 가로 x -5~5, 깊이 z -4(뒤)~4(앞), 높이 y 0~9. 나오는 곳은 왼쪽 앞 모서리(바닥이 뚫려 있고 유리 칸막이로 둘러쌈)
-const BX = 5, BZ = 4, HOLE_X = -2.3, HOLE_Z = 1.3, WALL_H = 5.3, TOP = 7.95, REST = 6.6, N_DOLL = 40, PACK = 7, OUT = { x: -3.65, z: 2.65 };
+const BX = 5, BZ = 4, HOLE_X = -2.3, HOLE_Z = 1.3, WALL_H = 5.3, TOP = 7.95, REST = 6.6, N_DOLL = 40, PACK = 7, RANGE = 1.0, OUT = { x: -3.65, z: 2.65 };
 const dollSrc = i => (FLUFFY ? `img/fl/a${i}-base.webp` : 'data:image/svg+xml;utf8,' + encodeURIComponent(animalSvg(i, true)));
 export const dollImg = i => `<img src="${dollSrc(i)}" alt="" loading="lazy">`;
 
@@ -119,8 +119,9 @@ export function mount(el, ctx) {
     clawG = new THREE.Group(); scene.add(clawG); clawG.add(new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.7, 0.5, 16), metal)); const gem = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 8), neonP); gem.position.y = -0.3; clawG.add(gem);
     for (let k = 0; k < 3; k++) { const piv = new THREE.Group(); piv.rotation.y = k * Math.PI * 2 / 3 + Math.PI / 2; clawG.add(piv); const arm = new THREE.Group(); arm.position.set(0.5, -0.1, 0); piv.add(arm);
       const a = new THREE.Mesh(new THREE.BoxGeometry(0.16, 1.05, 0.22), metal); a.position.set(0.28, -0.42, 0); a.rotation.z = 0.55; arm.add(a); const b = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.95, 0.22), metal); b.position.set(0.36, -1.25, 0); b.rotation.z = -0.42; arm.add(b); prongs.push(arm); }
-    // 집게 발 세 개가 내려갈 자리: 노란 점 세 개로 미리 보여 준다(인형 위나 바닥에 찍힌다)
-    { const ym = new THREE.MeshBasicMaterial({ color: 0xffe22e, depthTest: false, transparent: true }); for (let k = 0; k < 3; k++) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.21, 14, 10), ym); m.renderOrder = 9; scene.add(m); marks.push(m); } }
+    // 집게가 잡는 범위: 노란 동그라미로 미리 보여 준다. 이 안에 한가운데가 들어온 인형은 집게가 그대로 내려가 감싼다
+    { const m = new THREE.Mesh(new THREE.RingGeometry(RANGE - 0.14, RANGE + 0.04, 48), new THREE.MeshBasicMaterial({ color: 0xffe22e, depthTest: false, transparent: true, opacity: 0.95, side: THREE.DoubleSide })); m.rotation.x = -Math.PI / 2; m.renderOrder = 9; scene.add(m); marks.push(m);
+      const g = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 1, 6), new THREE.MeshBasicMaterial({ color: 0xffe22e, depthTest: false, transparent: true, opacity: 0.55 })); g.renderOrder = 8; scene.add(g); marks.push(g); } // 집게에서 동그라미까지 내려 긋는 안내선
     // 물리
     world = new CANNON.World({ gravity: new CANNON.Vec3(0, -32, 0) }); world.allowSleep = false; world.solver.iterations = 12;
     dollMat = new CANNON.Material('doll'); const wallMat = new CANNON.Material('wall'); world.addContactMaterial(new CANNON.ContactMaterial(dollMat, dollMat, { friction: 0.5, restitution: 0.05 })); world.addContactMaterial(new CANNON.ContactMaterial(dollMat, wallMat, { friction: 0.35, restitution: 0.05 }));
@@ -145,6 +146,8 @@ export function mount(el, ctx) {
 
   // ---- 집게
   const tipY = () => claw.y - 1.75;
+  // 노란 동그라미(집게 범위) 안에 한가운데가 들어온 인형 중 가장 높은 것
+  const aimDoll = () => { let d = null; for (const o of dolls) { const p = o.body.position; if (Math.hypot(p.x - claw.x, p.z - claw.z) < RANGE && (!d || p.y > d.body.position.y)) d = o; } return d; };
   const under = () => { let best = null, bd = 1e9; for (const d of dolls) { const p = d.body.position, dd = Math.hypot(p.x - claw.x, p.y - (tipY() + 0.5), p.z - claw.z); if (dd < bd) { bd = dd; best = d; } } return [best, bd]; };
   const inOut = (x, z, m = 0) => x < HOLE_X + m && z > HOLE_Z - m;
   function drop() {
@@ -165,9 +168,8 @@ export function mount(el, ctx) {
     const c = claw;
     if (c.st === 'idle') { const ox = c.x, oz = c.z; c.x = Math.max(-BX + 1, Math.min(BX - 1, c.x + dir.x * 4.6 * dt)); c.z = Math.max(-BZ + 1, Math.min(BZ - 1, c.z + dir.z * 4.6 * dt));
       if (c.x < HOLE_X + 0.9 && c.z > HOLE_Z - 0.9) { if (ox >= HOLE_X + 0.9) c.x = HOLE_X + 0.9; else if (oz <= HOLE_Z - 0.9) c.z = HOLE_Z - 0.9; else c.x = HOLE_X + 0.9; } } // 나오는 곳 칸 위로는 못 간다(그 뒤쪽·옆쪽은 다 간다)
-    else if (c.st === 'down') { c.y -= 5.2 * dt; // 집게 발 아래(집게 너비 안)에 있는 인형 중 가장 높은 것의 한가운데 높이까지만 내려가 감싼다. 아래에 인형이 없으면 바닥까지
-      let d = null; for (const o of dolls) { const p = o.body.position; if (Math.hypot(p.x - c.x, p.z - c.z) < o.r + 0.35 && (!d || p.y > d.body.position.y)) d = o; }
-      if ((d && tipY() <= d.body.position.y - 0.05) || tipY() <= 0.55) { c.st = 'close'; c.t = 0; target = null; if (d && grabTry && Math.hypot(d.body.position.x - c.x, d.body.position.z - c.z) < d.r * 1.05) target = d; } }
+    else if (c.st === 'down') { c.y -= 5.2 * dt; // 노란 동그라미 안에 한가운데가 든 인형 중 가장 높은 것을 감싸는 높이까지 그대로 내려간다. 없으면 바닥까지
+      const d = aimDoll(); if ((d && tipY() <= d.body.position.y - 0.05) || tipY() <= 0.55) { c.st = 'close'; c.t = 0; target = d && grabTry ? d : null; } }
     else if (c.st === 'close') { c.t += dt; c.open = Math.max(0, 1 - c.t / 0.4); c.open = Math.max(target ? 0.3 : 0, c.open); /* 인형을 잡을 때는 인형 둘레까지만 오므린다 */
       if (c.t >= 0.5) { if (target) { grab(target); sfx('pair'); // 약한 손: 올리다가(또는 옮기다가) 놓친다. 위에 다른 인형이 얹혀 있으면 더 빨리 놓친다
             if (!lucky) { const hp = held.body.position, n = dolls.filter(o => o !== held && o.body.position.y > hp.y + 0.3 && o.body.position.distanceTo(hp) < o.r + held.r + 0.15).length, f = rnd(0.25, 0.6), fx = c.x + (OUT.x - c.x) * f, fz = c.z + (OUT.z - c.z) * f;
@@ -189,8 +191,7 @@ export function mount(el, ctx) {
     const c = claw; gantry.position.z = c.z; cart.position.set(c.x, 8.45, c.z); clawG.position.set(c.x, c.y, c.z); const len = Math.max(0.1, 8.2 - c.y); cable.scale.y = len; cable.position.set(c.x, c.y + len / 2, c.z);
     const ang = -0.5 + c.open * 0.62; prongs.forEach(a => { a.rotation.z = ang; });
     for (const d of dolls) { const p = d.body.position; d.face.position.set(p.x, p.y, p.z); }
-    const show = c.st === 'idle'; marks.forEach((m, k) => { m.visible = show; if (!show) return; const th = k * Math.PI * 2 / 3 + Math.PI / 2, x = c.x + Math.cos(th) * 0.95, z = c.z - Math.sin(th) * 0.95; let y = 0;
-      for (const d of dolls) { const p = d.body.position, hh = (p.x - x) ** 2 + (p.z - z) ** 2; if (hh < d.r * d.r) y = Math.max(y, p.y + Math.sqrt(d.r * d.r - hh)); } m.position.set(x, y + 0.06, z); });
+    const ring = marks[0], aim = aimDoll(); ring.visible = c.st === 'idle'; ring.position.set(c.x, (aim ? aim.body.position.y + aim.r * 0.55 : 0) + 0.06, c.z); { const g = marks[1], y0 = ring.position.y, y1 = tipY(), len = Math.max(0.05, y1 - y0); g.visible = ring.visible; g.scale.y = len; g.position.set(c.x, y0 + len / 2, c.z); }
   }
   function frame(t) { if (!alive) return; raf = requestAnimationFrame(frame); if (!ready) return; const dt = Math.min(0.033, (t - (lastT || t)) / 1000); lastT = t;
     moveClaw(dt); world.step(1 / 60, dt, 3);
