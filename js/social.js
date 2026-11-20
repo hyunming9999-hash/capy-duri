@@ -185,6 +185,9 @@ async function askAI(room, body) {
 export function mount(el, ctx) {
   let alive = true, mine = {}, theirs = {}, bag = {}, scroller, meEl, mePop;
   const pid = () => ctx.partnerId, A = i => (mine[i] && mine[i].a) || 0;
+  // 가로·풀화면 게임(카피배구 등)에서 막 돌아오면 화면이 아직 눕혀져 있어 높이가 작게 잡힌다 → 화면이 다시 커지면 친목회를 새로 그린다(키보드처럼 줄어드는 쪽은 무시)
+  const h0 = innerHeight; let reT = 0; const onGrow = () => { if (!alive || innerHeight < h0 + 80) return; clearTimeout(reT); reT = setTimeout(() => { if (alive && innerHeight >= h0 + 80 && !fishOpen && !battle && !document.querySelector('.modal-wrap')) window.dispatchEvent(new Event('hashchange')); }, 350); };
+  addEventListener('resize', onGrow);
   const H = Math.round(FLUFFY ? Math.max(innerHeight * 0.48, Math.min(innerHeight - 346, 520)) : Math.min(innerHeight * 0.48, 470)), TILE = Math.round(H * 1213 / 520), TILES = 3, PW = TILE * TILES, FISH_X = PW + TILE * 2, WIDTH = FISH_X + PW, // FISH_X부터 끝까지는 낚시터(놀이터만큼 넓다): 배로만 갈 수 있고 동물은 못 들어온다
     zoneOf = x => (x < FISH_X ? 0 : Math.min(3, 1 + Math.floor((x - FISH_X) / TILE))), WATER_X = PW + TILE * 0.275, // 놀이터 3장 + 오른쪽 바닷가 1장 + 넓은 바다 1장, WATER_X부터 끝까지 물
      IW = 1344, IH = 576;
@@ -1258,5 +1261,5 @@ export function mount(el, ctx) {
       if (first) { const t = ctx.store.now(); if (vit.seen && t - vit.seen >= AWAY_MS) saveVit({ missAt: t }); saveVit({ seen: t }); }
       if (first) { if (vit.deadAt && ctx.store.now() - vit.deadAt < TEN_MIN) lock(); else { if (vit.deadAt) saveVit({ hp: HP_MAX, deadAt: 0 }); scene(); } } else drawHp(); }),
   ];
-  return () => { clearInterval(seenT); if (vit) saveVit({ seen: ctx.store.now() }); fcrow.dispose(); quest.dispose(); trial = null; kingTrial = 0; keepPos(); alive = false; if (battle) { battle.stop(); battle = null; } voice.destroy(); bgm.duck(false); window.removeEventListener('pointerdown', wakeVoice); leavePos(); if (xMine().k) ctx.store.remove(XP + '/' + ctx.uid).catch(() => {}); me.boat = null; offer = null; endSorry(); clearInterval(lockT); cancelAnimationFrame(raf); offs.forEach(f => f()); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
+  return () => { removeEventListener('resize', onGrow); clearTimeout(reT); clearInterval(seenT); if (vit) saveVit({ seen: ctx.store.now() }); fcrow.dispose(); quest.dispose(); trial = null; kingTrial = 0; keepPos(); alive = false; if (battle) { battle.stop(); battle = null; } voice.destroy(); bgm.duck(false); window.removeEventListener('pointerdown', wakeVoice); leavePos(); if (xMine().k) ctx.store.remove(XP + '/' + ctx.uid).catch(() => {}); me.boat = null; offer = null; endSorry(); clearInterval(lockT); cancelAnimationFrame(raf); offs.forEach(f => f()); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); };
 }
