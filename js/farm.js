@@ -171,7 +171,7 @@ export function openFarm(o) {
       setTimeout(() => { f.remove(); kp.fly = false; if (!alive || kp.mode === 'bust') return; kp.mode = 'eat'; kp.t = 3.5; kp.face = -(Math.sign(me.x - kp.x) || 1); pose('walk'); say('🍊 오! 감귤이다~ 냠냠…', 3300); }, 420); }
     function drawCtl(k, here) { const t = now(), rows = k >= 0 ? rowsOf(k) : []; gaugeEl = holdEl = tipEl = null;
       if (mode === 'pick') return rc(ctl, h('div', { class: 'fm-stpick' }, ...[0, 1, 2].map(i => { const ok = here.includes(i), r = rows[i], c = r && r.c ? cropOf(r.c) : null; // 이랑은 가운데 자리에서 바로 고른다(스크롤 없이)
-        return h('button', { class: 'fm-stp' + (ok ? '' : ' off'), disabled: !ok, onClick: () => { chosen = k + '|' + i; mode = 'hold'; sfx('pop'); } }, c && live(r) ? h('img', { src: cropImg(c.id), alt: '' }) : h('span', null, '–'), h('b', null, `${i + 1}번 이랑`), h('small', null, ok ? c.name : live(r) ? '덜 익음' : '빈 이랑')); })),
+        return h('button', { class: 'fm-stp' + (ok ? '' : ' off'), disabled: !ok, onClick: () => { chosen = k + '|' + i; mode = 'hold'; sfx('pop'); } }, c && live(r) ? h('img', { src: cropImg(c.id), alt: '' }) : h('span', null, '–'), h('b', null, `${i + 1}번`)); })),
         h('button', { class: 'fm-stback', onClick: () => { mode = 'idle'; } }, '취소'));
       if (mode === 'hold' && chosen) { const i = +chosen.split('|')[1]; gaugeEl = h('i'); tipEl = h('small');
         holdEl = h('button', { class: 'fm-steal' }, h('b', null, `🤫 ${i + 1}번 이랑`), tipEl, h('span', { class: 'fm-stg' }, gaugeEl)); holdBtn(holdEl, () => { pressing = true; }, () => { pressing = false; });
