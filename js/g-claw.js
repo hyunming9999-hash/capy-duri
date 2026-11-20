@@ -145,7 +145,7 @@ export function mount(el, ctx) {
   function resize() { if (!renderer) return; const w = canvas.clientWidth || 300, hh = canvas.clientHeight || 226; renderer.setSize(w, hh, false); camera.aspect = w / hh; camera.updateProjectionMatrix(); }
 
   // ---- 집게
-  const tipY = () => claw.y - 1.75;
+  const tipY = () => claw.y - 1.75, bend = () => Math.sqrt(Math.max(0.2, 1.75 * 1.75 - (claw.tx || 0) ** 2 - (claw.tz || 0) ** 2)); /* bend = 꺾인 집게의 세로 길이 */
   // 조준: 집게 바로 아래에서 가장 위에 있는 인형. 인형 사이 틈에 서도 깊은 데 인형이 아니라 위쪽 인형을 고르고, 한번 고른 인형은 쉽게 안 바뀐다(깜빡임 방지)
   let aimed = null; const aimPos = { x: 0, y: 0, z: 0, has: false };
   const aimDoll = () => { let d = null, best = -1e9, cur = -1e9; for (const o of dolls) { const p = o.body.position, h = Math.hypot(p.x - claw.x, p.z - claw.z); if (h < o.r + 0.2) { const sc = p.y - 0.5 * h; if (o === aimed) cur = sc; if (sc > best) { best = sc; d = o; } } }
@@ -157,7 +157,7 @@ export function mount(el, ctx) {
     if (plays <= 0) return gate(false);
     setPlays(plays - 1); busy = true; dir.x = dir.z = 0; bGo.disabled = true;
     // 점이 찍힌 인형은 반드시 집어 올린다. 집어 올린 것 일곱 번 중 한 번만 끝까지 가져오고(n·k), 나머지 여섯 번은 옮기는 도중에 놓친다
-    target = aimDoll(); grabTry = !!target; lucky = false; claw.kx = claw.x; claw.kz = claw.z; claw.y0 = claw.y; /* 수레는 제자리, 집게만 인형 쪽으로 비스듬히 내려간다 */
+    target = aimDoll(); grabTry = !!target; lucky = false; claw.tx = claw.tz = 0; claw.y0 = claw.y; /* 줄은 수직 그대로, 집게만 인형 쪽으로 꺾인다(tx·tz = 집게 끝이 옆으로 나간 거리) */
     if (target) { const p = pity ? { ...pity } : {}; if (!(p.n < PACK)) { p.n = 0; p.k = Math.floor(Math.random() * PACK); } lucky = p.n === p.k; p.n += 1; pity = p; TEST || ctx.store.set(P + '/claw', p).catch(() => {}); }
     claw.st = 'down'; sfx('tock');
   }
@@ -172,8 +172,8 @@ export function mount(el, ctx) {
       const was = ox < HOLE_X + 0.9 && oz > HOLE_Z - 0.9; if (!was && c.x < HOLE_X + 0.9 && c.z > HOLE_Z - 0.9) { if (ox >= HOLE_X + 0.9) c.x = HOLE_X + 0.9; else c.z = HOLE_Z - 0.9; }
       const wy = inOut(c.x, c.z, 0.9) ? HOME_Y : REST, dy = wy - c.y; c.y += Math.sign(dy) * Math.min(Math.abs(dy), 3 * dt); } /* 칸 위에서는 칸막이보다 높이 떠 있는다 */ // 나오는 곳 칸 위로는 못 간다(그 뒤쪽·옆쪽은 다 간다)
     else if (c.st === 'down') { c.y -= 5.2 * dt; if (target && !dolls.includes(target)) target = null;
-      if (target) { const q = target.body.position, yEnd = q.y - 0.05 + 1.75, pr = Math.max(0, Math.min(1, (c.y0 - c.y) / Math.max(0.3, c.y0 - yEnd))), e = pr * pr * 0.75; c.x = c.kx + (q.x - c.kx) * e; c.z = c.kz + (q.z - c.kz) * e; } /* 0.75: 기운 만큼 집게 끝이 더 나가므로 */ /* 빗겨 있으면 내려가면서 인형 쪽으로 꺾인다 */ // 점 찍힌 인형을 감싸는 높이까지 그대로 내려간다. 없으면 바닥까지
-      if ((target && tipY() <= target.body.position.y - 0.05) || tipY() <= 0.55) { c.st = 'close'; c.t = 0; } }
+      if (target) { const q = target.body.position, yEnd = q.y - 0.05 + 1.75, pr = Math.max(0, Math.min(1, (c.y0 - c.y) / Math.max(0.3, c.y0 - yEnd))), e = pr * pr; let ax = q.x - c.x, az = q.z - c.z; const al = Math.hypot(ax, az), m = Math.min(1, 1.2 / (al || 1)); c.tx = ax * m * e; c.tz = az * m * e; } /* 빗겨 있으면 내려가면서 집게가 인형 쪽으로 꺾인다 */ /* 빗겨 있으면 내려가면서 인형 쪽으로 꺾인다 */ // 점 찍힌 인형을 감싸는 높이까지 그대로 내려간다. 없으면 바닥까지
+      if ((target && tipY() + 1.75 - bend() <= target.body.position.y - 0.05) || tipY() <= 0.55) { c.st = 'close'; c.t = 0; } }
     else if (c.st === 'close') { c.t += dt; c.open = Math.max(0, 1 - c.t / 0.4); c.open = Math.max(target ? 0.3 : 0, c.open); /* 인형을 잡을 때는 인형 둘레까지만 오므린다 */
       if (c.t >= 0.5) { if (target) { grab(target); sfx('pair'); slip = null;
           if (!lucky) { const at = f => inOut(c.x + (OUT.x - c.x) * f, c.z + (OUT.z - c.z) * f, 1.15); let edge = 1; while (edge > 0 && at(edge)) edge -= 0.02; /* 나오는 곳 칸막이 바로 앞 */
@@ -181,13 +181,13 @@ export function mount(el, ctx) {
             if (edge < 0.2) slip = lift; /* 출구 바로 옆에서 집었으면 들어 올리다 놓친다 */
             else if (r < 0.25) slip = lift; else if (r < 0.7) slip = { f: edge }; /* 출구 직전에서 놓친다 */ else slip = { f: rnd(0.3, 0.75) * edge }; } }
         c.st = 'up'; } }
-    else if (c.st === 'up') { c.y += 4.4 * dt; { const k = Math.min(1, dt * 3.5); c.x += (c.kx - c.x) * k; c.z += (c.kz - c.z) * k; if (c.y >= TOP) { c.x = c.kx; c.z = c.kz; } } /* 올라오면서 수레 아래로 돌아온다 */ if (held && slip && slip.y != null && c.y >= slip.y) letGo(false, true); if (!held) c.open = Math.min(0.6, c.open + dt * 2.5); if (c.y >= TOP) { c.y = TOP; c.st = 'carry'; c.t = 0; c.from = { x: c.x, z: c.z }; } }
+    else if (c.st === 'up') { c.y += 4.4 * dt; { const k = Math.min(1, dt * 3.5); c.tx -= c.tx * k; c.tz -= c.tz * k; if (c.y >= TOP) c.tx = c.tz = 0; } /* 올라오면서 집게가 다시 곧게 펴진다 */ if (held && slip && slip.y != null && c.y >= slip.y) letGo(false, true); if (!held) c.open = Math.min(0.6, c.open + dt * 2.5); if (c.y >= TOP) { c.y = TOP; c.st = 'carry'; c.t = 0; c.from = { x: c.x, z: c.z }; } }
     else if (c.st === 'carry') { const L = Math.hypot(OUT.x - c.from.x, OUT.z - c.from.z) || 1; c.t = Math.min(1, c.t + 4 * dt / L); c.x = c.from.x + (OUT.x - c.from.x) * c.t; c.z = c.from.z + (OUT.z - c.from.z) * c.t;
       if (held && slip && slip.f != null && c.t >= slip.f) letGo(false, true); if (!held) c.open = Math.min(0.6, c.open + dt * 2.5); /* 놓쳐도 정위치까지 그대로 간다 */ if (c.t >= 1) { c.st = held ? 'release' : 'back'; c.t = 0; } }
     else if (c.st === 'release') { c.t += dt; c.open = Math.min(1, 0.3 + c.t / 0.25); if (held && c.t > 0.12) letGo(true); if (c.t > 0.7) c.st = 'back'; }
     else if (c.st === 'back') { c.open = Math.min(1, c.open + dt * 3); const dx = start.x - c.x, dz = start.z - c.z, L = Math.hypot(dx, dz), s = Math.min(L, 5 * dt); if (L > 0.001) { c.x += dx / L * s; c.z += dz / L * s; } const dy = HOME_Y - c.y; if (L < 1.2) c.y += Math.sign(dy) * Math.min(Math.abs(dy), 3 * dt);
       if (L < 0.02 && Math.abs(dy) < 0.02 && c.open >= 1) { c.x = start.x; c.z = start.z; c.y = HOME_Y; c.st = 'idle'; done(); } }
-    if (held) { const b = held.body, q = b.position, k = Math.min(1, dt * 12), ty = tipY() + 0.62; { const sw = c.st === 'close' || c.st === 'up', f = sw ? 1.2 / Math.max(1, 8.2 - c.y) : 0, hx = c.x + (c.x - c.kx) * f, hz = c.z + (c.z - c.kz) * f; q.set(q.x + (hx - q.x) * k, q.y + (ty - q.y) * k, q.z + (hz - q.z) * k); } /* 기운 집게 끝을 따라간다 */ b.velocity.set(0, 0, 0); }
+    if (held) { const b = held.body, q = b.position, k = Math.min(1, dt * 12), ty = tipY() + 0.62; { const hx = c.x + (c.tx || 0), hz = c.z + (c.tz || 0), hy = ty + 1.75 - bend(); q.set(q.x + (hx - q.x) * k, q.y + (hy - q.y) * k, q.z + (hz - q.z) * k); } /* 꺾인 집게 끝을 따라간다 */ b.velocity.set(0, 0, 0); }
     // 집게 끝: 내려가거나 오므릴 때 주변 인형을 밀어낸다
     // 집게 끝 충돌체는 집게를 옮길 때만 켠다. 방금 놓친 인형이 집게 끝에 얹혀 딸려 오지 않게, 주변이 비어야 다시 켠다
     const parked = pusher.position.y > 20, tx0 = c.x, ty0 = tipY() + 0.3, tz0 = c.z, clear = !parked || !dolls.some(o => { const p = o.body.position; return Math.hypot(p.x - tx0, p.y - ty0, p.z - tz0) < o.r + 0.55; });
@@ -195,8 +195,8 @@ export function mount(el, ctx) {
     else { pusher.position.set(0, 30, 0); pusher.velocity.set(0, 0, 0); }
   }
   function sync() {
-    const c = claw, sw = c.st === 'down' || c.st === 'close' || c.st === 'up', kx = sw ? c.kx : c.x, kz = sw ? c.kz : c.z; gantry.position.z = kz; cart.position.set(kx, 8.45, kz); clawG.position.set(c.x, c.y, c.z);
-    { const vx = kx - c.x, vy = 8.2 - c.y, vz = kz - c.z, len = Math.max(0.1, Math.hypot(vx, vy, vz)); TMP.set(vx / len, vy / len, vz / len); cable.scale.y = len; cable.position.set(c.x + vx / 2, c.y + vy / 2, c.z + vz / 2); cable.quaternion.setFromUnitVectors(UP, TMP); clawG.quaternion.setFromUnitVectors(UP, TMP); } /* 줄과 집게가 수레 쪽으로 기운다 */
+    const c = claw; gantry.position.z = c.z; cart.position.set(c.x, 8.45, c.z); clawG.position.set(c.x, c.y, c.z); const len = Math.max(0.1, 8.2 - c.y); cable.scale.y = len; cable.position.set(c.x, c.y + len / 2, c.z);
+    TMP.set(-(c.tx || 0), bend(), -(c.tz || 0)).normalize(); clawG.quaternion.setFromUnitVectors(UP, TMP); /* 줄은 수직, 집게만 꺾인다 */
     const ang = -0.5 + c.open * 0.62; prongs.forEach(a => { a.rotation.z = ang; });
     for (const d of dolls) { const p = d.body.position; d.face.position.set(p.x, p.y, p.z); }
     { const a = c.st === 'idle' ? aimDoll() : null, on = c.st === 'idle', w = 0.5 + 0.5 * Math.sin(performance.now() / 170), [dot, halo, beam] = marks; marks.forEach(m => { m.visible = on; });
