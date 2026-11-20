@@ -2415,7 +2415,7 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 
 /* 🕹️ 카피 오락실(시험판) */
 .so-arcade { aspect-ratio: 600 / 600; }
-.so-arcade b { left: 9%; right: 9%; top: 14.5%; height: 19.5%; font-size: 18.5cqw; letter-spacing: 1px; color: #FFF; text-shadow: 0 0 4px #FF6BD6, 0 0 10px #FF3DBE, 0 0 16px #35E0FF, 0 2px 0 #7A1E8C; }
+.so-arcade b { left: 9%; right: 9%; top: 14.5%; height: 19.5%; font-size: 10.9cqw; letter-spacing: 1px; color: #FFF; text-shadow: 0 0 4px #FF6BD6, 0 0 10px #FF3DBE, 0 0 16px #35E0FF, 0 2px 0 #7A1E8C; }
 .arc-tip { margin: 0 0 8px; text-align: center; color: #8A6A44; font-weight: 800; font-size: 13px; }
 .arc-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; } .arc-list .arc-tip { grid-column: 1 / -1; }
 .arc-card { border: 0; border-radius: 16px; background: #FFF3DC; box-shadow: 0 3px 0 #E3C9A0; outline: 1.5px dashed #E0BF8C; outline-offset: -4px; padding: 8px 4px 9px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
@@ -2439,3 +2439,22 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 @keyframes arcIn { 0% { transform: translate(0, 0) rotate(0); } 35% { transform: translate(-60px, -34px) rotate(-200deg); } 70% { transform: translate(-101px, -6px) rotate(-360deg) scaleX(.25); opacity: 1; } 100% { transform: translate(-101px, 8px) rotate(-360deg) scaleX(.1) scaleY(.5); opacity: 0; } }
 .arc-have { margin: 0; color: #8A6A44; font-size: 13px; } .arc-have b { color: #5A3A12; }
 .arc-go { width: 100%; }
+
+/* 🧸 인형뽑기 */
+.claw { max-width: 360px; margin: 0 auto 10px; border-radius: 26px; padding: 10px 10px 12px; background: linear-gradient(#7B4DE0, #4B2AA8); box-shadow: 0 6px 0 #2E1670, 0 0 0 3px #FF6BD6, 0 0 18px 3px rgba(255, 107, 214, .55); }
+.claw-top { display: flex; align-items: baseline; justify-content: space-between; padding: 2px 8px 8px; } .claw-top b { font: 900 22px/1 var(--head); color: #fff; text-shadow: 0 0 6px #FF6BD6, 0 0 12px #35E0FF; letter-spacing: 1px; } .claw-try { color: #CFE9FF; font-weight: 800; }
+.claw-box { position: relative; border-radius: 16px; overflow: hidden; box-shadow: inset 0 0 0 3px #35E0FF, 0 0 12px rgba(53, 224, 255, .7); background: #2B1B5C; }
+.claw-cv { display: block; width: 100%; height: auto; touch-action: none; }
+.claw-out { position: absolute; left: 3%; bottom: 3%; font: 800 9px/1 var(--head); font-style: normal; color: #7CF3FF; text-shadow: 0 0 4px #35E0FF; pointer-events: none; }
+.claw-pad { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 0 4px; }
+.claw-arrow { width: 62px; height: 56px; border: 0; border-radius: 16px; background: linear-gradient(#EDE7FF, #C9BDF5); box-shadow: 0 4px 0 #6A4CC8; font-size: 22px; color: #4B2AA8; touch-action: none; user-select: none; -webkit-user-select: none; }
+.claw-arrow:active { transform: translateY(3px); box-shadow: 0 1px 0 #6A4CC8; }
+.claw-go { margin-left: auto; width: 96px; height: 62px; border: 0; border-radius: 50px; background: radial-gradient(circle at 35% 28%, #FF9A9A, #F0433F 60%, #B8201E); box-shadow: 0 5px 0 #7E1211, 0 0 14px rgba(255, 90, 90, .7); color: #fff; font: 900 20px/1 var(--head); text-shadow: 0 2px 0 #8E1716; }
+.claw-go:active { transform: translateY(3px); box-shadow: 0 2px 0 #7E1211; } .claw-go:disabled { filter: grayscale(.5) brightness(.85); }
+.claw-tip { margin: 6px 0 12px; font-size: 12.5px; } .claw-h { display: block; margin: 4px 2px 6px; font: 800 15px/1.2 var(--head); color: #5A3A12; }
+.claw-shelf { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; } .claw-shelf > p { grid-column: 1 / -1; }
+.claw-my { border: 0; border-radius: 14px; background: #FFF3DC; box-shadow: 0 3px 0 #E3C9A0; padding: 4px 2px 5px; display: flex; flex-direction: column; align-items: center; }
+.claw-my.on { background: #FFE0F6; box-shadow: 0 3px 0 #F29AD8; } .claw-my span { display: block; width: 100%; height: 46px; overflow: hidden; } .claw-my img { width: 100%; margin-top: -22%; display: block; } .claw-my small { font: 800 9.5px/1.2 var(--head); color: #5A3A12; white-space: nowrap; }
+.claw-info { display: flex; gap: 10px; align-items: center; } .claw-info span { flex: 0 0 84px; } .claw-info img { width: 100%; display: block; } .claw-info p { margin: 0; font-size: 13.5px; line-height: 1.5; }
+.so-dollic { width: 34px; height: 34px; overflow: hidden; display: inline-block; } .so-dollic img { width: 100%; margin-top: -24%; display: block; }
+.so-dollpin span { display: block; width: 40px; height: 40px; overflow: hidden; margin: 0 auto; } .so-dollpin img { width: 100%; margin-top: -24%; display: block; }

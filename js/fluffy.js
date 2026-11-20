@@ -74,6 +74,8 @@ export function capyRare(list, own) {
     else over += R_HEAD.has(k) ? `<g transform="translate(0 ${HAT_UP + (k === 21 ? 9 : 0)})">${wide(f, own)}</g>` : fitG(R_FIT[k], wide(f, own)); });
   return { over, shoe, back };
 }
+// 인형 배지: 뽑은 동물 인형의 얼굴을 가슴에 동그란 배지로 단다
+export const dollBadge = (i, cx, cy, own) => { const id = 'db' + (++clipN), s = 0.112; return `<circle cx="${cx}" cy="${cy}" r="10.6" fill="#FFF7FD" stroke="#FF7AD9" stroke-width="2"/><defs><clipPath id="${id}" clipPathUnits="userSpaceOnUse"><circle cx="${cx}" cy="${cy}" r="9.4"/></clipPath></defs><g clip-path="url(#${id})"><image href="${src(`a${i}-base.webp`, own)}" x="${(cx - 160 * s).toFixed(2)}" y="${(cy - 168 * s).toFixed(2)}" width="${(320 * s).toFixed(2)}" height="${(360 * s).toFixed(2)}"/></g>`; };
 export const rareIcon = i => (on ? `img/fl/r/ic/${i}.webp` : `img/rare/ic/${i}.webp`);
 export const rarePic = i => (on ? `img/fl/r/ic/${i}.webp` : `img/rare/${i}.webp`);
 // 배·대포·해적선: 예전 그림과 같은 틀(배 170×120, 해적선 170×130)에 그림을 맞춰 넣는다. 포신은 gun-b 무리라 예전처럼 돌아간다

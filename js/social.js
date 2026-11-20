@@ -14,6 +14,7 @@ import { openCook, SAUCES, SAUCE_PACK, SAUCE_IMG } from './cook.js';
 import { farmCrow } from './farmcrow.js';
 import { createQuest } from './quest.js';
 import { ARCADE_TEST } from './arcade.js';
+import { dollImg } from './g-claw.js';
 import { recOf } from './cook.js';
 import { TANKS as AQT, DECO as AQD } from './aquarium.js';
 const AQACT = { peck: '콕콕 쪼기', hide: '숨바꼭질', circle: '빙글빙글', bubble: '거품 타기', glow: '반짝반짝', heart: '하트 뿅', startle: '깜짝 놀라기', slide: '미끄럼 타기' };
@@ -1008,12 +1009,16 @@ export function mount(el, ctx) {
       say(r.reply, d > 0 ? 'glad' : d < 0 ? 'angry' : '', !!r.ai); busy = false; drawQuick(); after(d);
     }
     function give() {
-      const have = Object.keys(GIFTS).filter(k => (bag[k] || 0) > 0);
-      if (!have.length) return modal({ title: '🎁 줄 선물이 없어요', body: h('p', { class: 'center' }, '카피수퍼에서 선물을 살 수 있어요.'), actions: [{ label: '닫기' }, { label: '🏪 카피수퍼 가기', primary: true, onClick: c => { c(); openShop(); } }] });
+      const have = Object.keys(GIFTS).filter(k => (bag[k] || 0) > 0), dl = Object.entries(bag.dolls || {}).filter(([k, n]) => n > 0 && ANIMALS[k]).map(([k]) => +k); // dl: 인형뽑기에서 뽑은 인형
+      if (!have.length && !dl.length) return modal({ title: '🎁 줄 선물이 없어요', body: h('p', { class: 'center' }, '카피수퍼에서 선물을 살 수 있어요.'), actions: [{ label: '닫기' }, { label: '🏪 카피수퍼 가기', primary: true, onClick: c => { c(); openShop(); } }] });
       const cl = modal({ title: `🎁 ${a.name}에게 선물하기`, body: h('div', { class: 'so-list' }, have.map(k => { const [ic, nm, , up] = GIFTS[k]; return h('button', { class: 'so-row', onClick: async () => { cl(); const bonus = p.fav === k ? Math.ceil(up * 0.5) : 0, was = A(i), v = capA(i, was + up + bonus, k === 'cake');
         await ctx.store.update('bag/' + ctx.uid, { [k]: (bag[k] || 0) - 1 }).catch(() => {}); bag = { ...bag, [k]: (bag[k] || 0) - 1 }; await setRel(i, { a: v, fedAt: ctx.store.now() }, k === 'cake');
         if (v === 99 && was + up + bonus >= 100 && k !== 'cake') { say(pick(CAKE_HINT), 'glad'); after(v - was); } else if (v >= 100 && was < 100) { say('케이크다…! 이제 우리는 진짜 단짝이야! 💗', 'glad'); after(v - was); } else
-        if (demand === 'gift') { demand = ''; drawQuick(); say(bonus ? `흥, ${nm}라… 내가 좋아하는 걸 아네. 이번엔 봐준다.` : `${nm}? 뭐, 받아는 줄게.`, 'glad'); } else say(bonus ? `우와, ${nm}! 내가 제일 좋아하는 거야! 고마워!` : `${nm} 주는 거야? 고마워, 잘 쓸게!`, 'glad'); after(up + bonus); } }, itemIcon(ic) ? h('span', { class: 'so-rodic', html: itemIcon(ic) }) : h('span', null, ic), h('b', null, nm), h('small', null, `${bag[k]}개 · 친밀도 +${up}`)); })), actions: [{ label: '닫기' }] });
+        if (demand === 'gift') { demand = ''; drawQuick(); say(bonus ? `흥, ${nm}라… 내가 좋아하는 걸 아네. 이번엔 봐준다.` : `${nm}? 뭐, 받아는 줄게.`, 'glad'); } else say(bonus ? `우와, ${nm}! 내가 제일 좋아하는 거야! 고마워!` : `${nm} 주는 거야? 고마워, 잘 쓸게!`, 'glad'); after(up + bonus); } }, itemIcon(ic) ? h('span', { class: 'so-rodic', html: itemIcon(ic) }) : h('span', null, ic), h('b', null, nm), h('small', null, `${bag[k]}개 · 친밀도 +${up}`)); }).concat(dl.map(k => { const n = bag.dolls[k], up = k === i ? 12 : 6; return h('button', { class: 'so-row', onClick: async () => { cl(); const was = A(i), v = capA(i, was + up, false), left = n - 1;
+        bag = { ...bag, dolls: { ...(bag.dolls || {}), [k]: left } }; await ctx.store.update('bag/' + ctx.uid + '/dolls', { [k]: left > 0 ? left : null }).catch(() => {});
+        if (left <= 0 && (ctx.members[ctx.uid] || {}).doll === k) { ctx.members[ctx.uid] = { ...ctx.members[ctx.uid], doll: null }; ctx.store.update('members/' + ctx.uid, { doll: null }).catch(() => {}); refreshMe(); }
+        await setRel(i, { a: v, fedAt: ctx.store.now() }, false); if (demand === 'gift') { demand = ''; drawQuick(); }
+        say(k === i ? '어? 나랑 똑같이 생긴 인형이잖아! 평생 간직할게!' : `${ANIMALS[k].name} 인형이네! 귀엽다, 고마워!`, 'glad'); after(v - was); } }, h('span', { class: 'so-rodic so-dollic', html: dollImg(k) }), h('b', null, `${ANIMALS[k].name} 인형`), h('small', null, `${n}개 · 친밀도 +${up}`)); }))), actions: [{ label: '닫기' }] });
     }
     function trade() {
       const v = A(i), ware = wareOf(i), disc = (bag.resold || {})[i] ? 1 : v >= 50 ? 0.5 : v >= 20 ? 0.75 : 1, wp = Math.round(priceOf(ware.id) * disc), hasPin = (bag.pins || {})[i];
@@ -1181,6 +1186,9 @@ export function mount(el, ctx) {
           sd.length ? h('div', { class: 'so-seedl' }, sd.map(([k, n]) => h('span', { class: 'so-seed' }, h('img', { src: cropImg(k), alt: '' }), `${cropOf(k).name} ${n}`))) : h('p', { class: 'dim center' }, '씨앗이 없어요. 농장의 카피철물에서 사요.')); })(),
         h('p', { class: 'center' }, Object.entries(GIFTS).map(([k, [ic, nm]]) => `${ic} ${nm} ${bag[k] || 0}개`).join(' · ')),
         h('p', { class: 'center so-charm' }, h('img', { src: 'img/crow/pearl-win.webp', alt: '' }), ` 진주부적 ${bag.pcharm || 0}장`, h('small', { class: 'dim' }, (bag.pcharm || 0) >= 3 ? ' · 고급 바다에서 3장 쓰면 10번 안에 진주(90%)' : ' · 3장 모으면 진주 성공률 90%')),
+        (() => { const dl = Object.entries(bag.dolls || {}).filter(([k, n]) => n > 0 && ANIMALS[k]).map(([k, n]) => [+k, n]), on = (ctx.members[ctx.uid] || {}).doll;
+          const wearDoll = async k => { ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), doll: k }; await ctx.store.update('members/' + ctx.uid, { doll: k }).catch(() => {}); refreshMe(); draw(); };
+          return h('div', null, h('b', null, `🧸 뽑은 인형 ${dl.reduce((a, [, n]) => a + n, 0)}개`), dl.length ? h('div', { class: 'so-pins' }, dl.map(([k, n]) => h('button', { class: 'so-pin so-dollpin' + (on === k ? ' on' : ''), onClick: () => wearDoll(on === k ? null : k) }, h('span', { html: dollImg(k) }), h('small', null, on === k ? '착용 중' : `${ANIMALS[k].name} ×${n}`), h('small', { class: 'dim' }, '가슴 배지 · 선물')))) : h('p', { class: 'dim center' }, '카피오락의 인형뽑기에서 뽑아요. 동물에게 선물하거나 가슴에 달 수 있어요.')); })(),
         h('b', null, `동물에게 받은 액세서리 ${pins.length} / ${ANIMALS.length}`),
         pins.length ? h('div', { class: 'so-pins' }, pins.map(i => h('button', { class: 'so-pin' + (worn === i ? ' on' : ''), onClick: async () => { await wearPin(worn === i ? null : i); draw(); } }, h('span', null, PERSONA[i].pin), h('small', null, worn === i ? '착용 중' : ANIMALS[i].name), h('small', { class: 'dim' }, PIN_CHEST.has(PERSONA[i].pin) ? '가슴에' : '손에')))) : h('p', { class: 'dim center' }, `동물과 ${PIN_AT}점까지 친해지면 그 동물의 상징을 선물로 받아요.`),
         h('b', null, `🐟 물고기 도감 ${Object.keys(dex).length} / ${FISH.length}${dex.pearl ? ' · 진주 ' + dex.pearl.n + '개' : ''}`),
