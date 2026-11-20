@@ -42,12 +42,17 @@ const fitG = (f, inner) => (f && inner ? `<g transform="translate(${f[0] + f[4]}
 // 종류별 보정: 발까지 내려오는 긴 옷은 작은 다리에 맞게 더 줄인다(발이 보이게)
 const KFIT = { 'b-baji': [60, 128.5, 0.82, 0.66, 0, -2.5], 'b-track': [60, 128.5, 0.84, 0.74, 0, -1.5], 'b-jeans': [60, 128.5, 0.84, 0.76, 0, -1] };
 const worn = (id, own, back) => fitG(KFIT[id.slice(0, id.lastIndexOf('-'))] || FIT[id[0]], wimg(id, own, back));
+// 윗옷 소매 끝 자리 [왼쪽 x, 오른쪽 x, y]: 소매만 있고 손이 없어 팔이 잘린 것처럼 보여서, 소매 끝에 작은 손(발 그림을 줄여 씀)을 옷 아래에 그려 준다. 조끼는 소매가 없어 뺀다
+const CUFF = { blouse: [25.5, 94.2, 105.8], cardigan: [28.4, 92, 105.4], hoodie: [26.6, 93.4, 101.8], jeogori: [22.5, 98.2, 104.7], jumper: [24.4, 96.7, 104.7], sailor: [26.2, 93.8, 105.2], shirt: [26.6, 93.8, 101.5], stripe: [27.5, 92.5, 103], tee: [27.5, 92.5, 103] };
+const PAW_K = 0.5, PAW_W = 46 * S, PAW_H = 25 * S, PAW_Y = Y + 331 * S;
+function hands(top, o, own, back) { const c = top && CUFF[top.slice(2, top.lastIndexOf('-'))]; if (!c) return ''; const f = capyFile(o.color, o.face, back);
+  return [[X + 116 * S, c[0]], [X + 158 * S, c[1]]].map(([px, cx]) => `<g transform="translate(${(cx - PAW_W * PAW_K / 2).toFixed(2)} ${(c[2] - PAW_H * PAW_K * 0.3).toFixed(2)}) scale(${PAW_K}) translate(${(-px).toFixed(2)} ${(-PAW_Y).toFixed(2)})">${crop(f, own, px, PAW_Y, PAW_W, PAW_H)}</g>`).join(''); }
 export function capyWear(o, own, back) {
   const ok = (id, ch) => (typeof id === 'string' && id[0] === ch ? id : '');
   const top = ok(o.top, 't'), bot = ok(o.bottom, 'b'), hat = ok(o.hat, 'h'), sh = ok(o.shoe, 's'), over = bot.startsWith('b-overalls');
   const f = sh ? (back ? 'wb/' : 'w/') + sh + '.webp' : '';
   return { shoe: f ? `<g class="cf-l">${fitG(FIT.s, crop(f, own, -20, FOOT - 14, 80, 54))}</g><g class="cf-r">${fitG(FIT.s, crop(f, own, 60, FOOT - 14, 80, 54))}</g>` : '',
-    body: (bot && !over ? worn(bot, own, back) : '') + (top ? worn(top, own, back) : '') + (over ? worn(bot, own, back) : ''), hat: hat ? `<g transform="translate(0 ${HAT_UP})">${worn(hat, own, back)}</g>` : '' };
+    body: hands(top, o, own, back) + (bot && !over ? worn(bot, own, back) : '') + (top ? worn(top, own, back) : '') + (over ? worn(bot, own, back) : ''), hat: hat ? `<g transform="translate(0 ${HAT_UP})">${worn(hat, own, back)}</g>` : '' };
 }
 const MOOD = new Set(['happy', 'love', 'sad', 'cry', 'wow', 'smug', 'think', 'shy', 'angry']);
 export const animalImg = (i, mood, own) => img(`a${i}-${mood === 'mad' ? 'angry' : MOOD.has(mood) ? mood : 'base'}.webp`, own);
