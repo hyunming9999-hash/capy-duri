@@ -9,12 +9,12 @@ import { FLUFFY } from './fluffy.js';
 import { coinGate } from './arcade.js';
 
 // 상자 안쪽: 가로 x -5~5, 깊이 z -4(뒤)~4(앞), 높이 y 0~9. 나오는 곳은 왼쪽 앞 모서리(바닥이 뚫려 있고 유리 칸막이로 둘러쌈)
-const BX = 5, BZ = 4, HOLE_X = -2.3, HOLE_Z = 1.3, WALL_H = 4.3, TOP = 7.6, REST = 5.6, N_DOLL = 25, PACK = 7, OUT = { x: -3.65, z: 2.65 };
+const BX = 5, BZ = 4, HOLE_X = -2.3, HOLE_Z = 1.3, WALL_H = 5.3, TOP = 7.95, REST = 6.1, N_DOLL = 40, PACK = 7, OUT = { x: -3.65, z: 2.65 };
 const dollSrc = i => (FLUFFY ? `img/fl/a${i}-base.webp` : 'data:image/svg+xml;utf8,' + encodeURIComponent(animalSvg(i, true)));
 export const dollImg = i => `<img src="${dollSrc(i)}" alt="" loading="lazy">`;
 
 export function mount(el, ctx) {
-  let alive = true, raf = 0, lastT = 0, mine = {}, pity = null, plays = 0, gateAt = 0, busy = false, lucky = false, held = null, slip = null, target = null, ready = false, world = null;
+  let init = [], grabTry = false, alive = true, raf = 0, lastT = 0, mine = {}, pity = null, plays = 0, gateAt = 0, busy = false, lucky = false, held = null, slip = null, target = null, ready = false, world = null;
   const dir = { x: 0, z: 0 }, dolls = [], start = { x: 1.5, z: 0.5 };
   const claw = { x: 1.5, y: REST, z: 0.5, open: 1, st: 'idle', t: 0 };
   const me = { id: 'claw', title: '인형뽑기', face: 'wow', acc: 'ribbon' };
@@ -86,8 +86,8 @@ export function mount(el, ctx) {
     if (nm === '문어') for (const x of [-0.6, -0.3, 0, 0.3, 0.6]) P(SPH, body, [0.17, 0.24, 0.17], [x, -0.92, 0.2]);
     if (nm === '여우' || nm === '늑대') for (const s of [-1, 1]) P(SPH, light, [0.26, 0.22, 0.1], [s * 0.6, -0.32, 0.66]);
     return g; }
-  function addDoll(x, y, z) { const i = Math.floor(Math.random() * ANIMALS.length), r = rnd(0.9, 1.02), face = makeDoll(i); face.scale.setScalar(r);
-    face.rotation.set(rnd(-0.55, 0.15), rnd(-1.0, 1.0), rnd(-0.4, 0.4)); scene.add(face); // 제각각 기울어진 채로 쌓인다(굴러도 돌지는 않는다)
+  function addDoll(x, y, z, sp) { const i = sp ? sp.i : Math.floor(Math.random() * ANIMALS.length), r = sp ? sp.r : rnd(0.78, 0.87), face = makeDoll(i); face.scale.setScalar(r);
+    if (sp) face.rotation.set(sp.rx, sp.ry, sp.rz); else face.rotation.set(rnd(-0.55, 0.15), rnd(-1.0, 1.0), rnd(-0.4, 0.4)); scene.add(face); // 제각각 기울어진 채로 쌓인다(굴러도 돌지는 않는다)
     const body = new CANNON.Body({ mass: 1, shape: new CANNON.Sphere(r), material: dollMat, fixedRotation: true, linearDamping: 0.25 }); // 인형은 돌지 않는다
     body.position.set(x == null ? rnd(HOLE_X + 1.4, BX - 1.2) : x, y == null ? rnd(9, 12) : y, z == null ? rnd(-BZ + 1.2, BZ - 1.2) : z); world.addBody(body);
     const d = { i, r, face, body }; dolls.push(d); return d; }
@@ -125,10 +125,15 @@ export function mount(el, ctx) {
     fix((BX - HOLE_X) / 2, 1, BZ, (BX + HOLE_X) / 2, -1, 0); fix((HOLE_X + BX) / 2, 1, (BZ + HOLE_Z) / 2, (HOLE_X - BX) / 2, -1, (HOLE_Z - BZ) / 2); // 바닥 두 조각
     fix(1, 10, BZ, -BX - 1, 8, 0); fix(1, 10, BZ, BX + 1, 8, 0); fix(BX + 2, 10, 1, 0, 8, -BZ - 1); fix(BX + 2, 10, 1, 0, 8, BZ + 1); // 네 벽
     fix(0.06, (WALL_H + 2) / 2, (BZ - HOLE_Z) / 2, HOLE_X, (WALL_H - 2) / 2, (BZ + HOLE_Z) / 2); fix((HOLE_X + BX) / 2, (WALL_H + 2) / 2, 0.06, (HOLE_X - BX) / 2, (WALL_H - 2) / 2, HOLE_Z); // 칸막이
-    pusher = new CANNON.Body({ mass: 0, type: CANNON.Body.KINEMATIC, material: wallMat, shape: new CANNON.Sphere(0.5) }); pusher.position.set(0, 30, 0); world.addBody(pusher);
-    // 인형 25개: 열 개씩 깔고 그 위에 쌓는다
-    for (let k = 0; k < N_DOLL; k++) { const lay = Math.floor(k / 10), c = k % 10; addDoll(HOLE_X + 1.35 + (c % 5) * 1.45 + rnd(-0.1, 0.1) + (lay % 2) * 0.5, 1.1 + lay * 1.9 + rnd(0, 0.3), (c < 5 ? -2.2 : 0.2) + rnd(-0.2, 0.2) + (lay % 2) * 1.0); }
-    for (let k = 0; k < 90; k++) world.step(1 / 60); // 가라앉힌 채로 시작
+    // 집게 몸통: 발끝 쪽 공 + 머리 쪽 공. 움직이는 내내 인형과 부딪혀 밀어낸다(그냥 통과하지 않는다)
+    pusher = new CANNON.Body({ mass: 0, type: CANNON.Body.KINEMATIC, material: wallMat }); pusher.addShape(new CANNON.Sphere(0.46), new CANNON.Vec3(0, 0, 0)); pusher.addShape(new CANNON.Sphere(0.7), new CANNON.Vec3(0, 1.25, 0)); pusher.position.set(0, 30, 0); world.addBody(pusher);
+    // 인형을 빼곡히: 바닥을 다 덮는 격자로 두 겹 넘게 깔고(나오는 곳 칸은 비움), 가라앉힌 채로 시작한다
+    { const cells = []; for (let lay = 0; lay < 4; lay++) for (let zi = 0; zi < 4; zi++) for (let xi = 0; xi < 5; xi++) { const x = -3.9 + xi * 1.95 + (lay % 2) * 0.5 - 0.25, z = -2.9 + zi * 1.9 + (lay % 2) * 0.5 - 0.25; if (!inOut(x, z, 1.1)) cells.push([x, 0.95 + lay * 1.5, z]); }
+      cells.slice(0, N_DOLL).forEach(([x, y, z]) => addDoll(x + rnd(-0.12, 0.12), y, z + rnd(-0.12, 0.12))); }
+    for (let k = 0; k < 300; k++) world.step(1 / 60);
+    for (const d of dolls) { const p = d.body.position; if (p.y < -1 || p.y > 8 || inOut(p.x, p.z, 0)) { p.set(rnd(0, BX - 1.2), 6, rnd(-BZ + 1.2, 0)); d.body.velocity.set(0, 0, 0); } }
+    for (let k = 0; k < 120; k++) world.step(1 / 60);
+    init = dolls.map(d => ({ i: d.i, r: d.r, x: d.body.position.x, y: d.body.position.y, z: d.body.position.z, rx: d.face.rotation.x, ry: d.face.rotation.y, rz: d.face.rotation.z })); dolls.forEach((d, k) => { d.slot = k; }); // 처음 쌓인 모습을 적어 둔다(하나 뽑히면 이대로 다시 채운다)
     resize(); ready = true; load.remove();
   }
   function resize() { if (!renderer) return; const w = canvas.clientWidth || 300, hh = canvas.clientHeight || 226; renderer.setSize(w, hh, false); camera.aspect = w / hh; camera.updateProjectionMatrix(); }
@@ -141,25 +146,28 @@ export function mount(el, ctx) {
     if (!ready || busy || claw.st !== 'idle') return;
     if (plays <= 0) return gate(false);
     setPlays(plays - 1); busy = true; dir.x = dir.z = 0; start.x = claw.x; start.z = claw.z; bGo.disabled = true;
-    const p = pity && pity.n < PACK ? { ...pity } : { n: 0, k: Math.floor(Math.random() * PACK) }; // 새 묶음이면 꽉 잡는 차례(k)를 무작위로 정한다
-    lucky = p.n === p.k; p.n += 1; pity = p; claw._p = p; ctx.store.set(P + '/claw', p).catch(() => {});
+    // 두 번에 한 번은 인형을 잡아 올린다(gn·gk: 두 번 묶음에서 잡는 차례). 잡아 올린 것 일곱 번 중 한 번만 끝까지 가져온다(n·k)
+    const p = pity ? { ...pity } : {}; if (!(p.gn < 2)) { p.gn = 0; p.gk = Math.floor(Math.random() * 2); } if (!(p.n < PACK)) { p.n = 0; p.k = Math.floor(Math.random() * PACK); }
+    grabTry = p.gn === p.gk; p.gn += 1; lucky = grabTry && p.n === p.k; if (grabTry) p.n += 1; pity = p; claw._p = p; ctx.store.set(P + '/claw', p).catch(() => {});
     claw.st = 'down'; sfx('tock');
   }
   const grab = d => { held = d; d.body.type = CANNON.Body.KINEMATIC; d.body.mass = 0; d.body.updateMassProperties(); d.body.velocity.set(0, 0, 0); };
   function letGo(win) { const d = held; held = null; slip = null; if (!d) return; d.body.type = CANNON.Body.DYNAMIC; d.body.mass = 1; d.body.updateMassProperties(); d.body.velocity.set(win ? 0 : rnd(-1.5, 1.5), 0, win ? 0 : rnd(-1.5, 1.5)); if (!win) sfx('bad'); }
   function done() { busy = false; bGo.disabled = false; lucky = false; target = null; if (plays <= 0) setTimeout(() => alive && plays <= 0 && gate(true), 1600); }
   function removeDoll(d) { dolls.splice(dolls.indexOf(d), 1); world.removeBody(d.body); scene.remove(d.face); }
-  function prize(d) { removeDoll(d); const i = d.i; gameFx('win', `${ANIMALS[i].name} 인형을 뽑았어요`, '성공!'); ctx.store.tx(`${P}/dolls/${i}`, c => (c || 0) + 1).catch(() => {}); setTimeout(() => alive && ready && addDoll(), 900); }
+  function prize(d) { removeDoll(d); const i = d.i; gameFx('win', `${ANIMALS[i].name} 인형을 뽑았어요`, '성공!'); ctx.store.tx(`${P}/dolls/${i}`, c => (c || 0) + 1).catch(() => {}); if (d.slot != null && init[d.slot]) init[d.slot].i = Math.floor(Math.random() * ANIMALS.length); setTimeout(() => alive && ready && refill(), 1100); }
+  // 하나 뽑히면: 인형을 처음 쌓여 있던 자리로 전부 다시 놓는다(뽑힌 자리에는 새 인형)
+  function refill() { if (claw.st !== 'idle' || held) return setTimeout(() => alive && ready && refill(), 400); [...dolls].forEach(removeDoll); init.forEach((s, k) => { addDoll(s.x, s.y, s.z, s).slot = k; }); }
   function moveClaw(dt) {
-    const c = claw; let push = false;
+    const c = claw;
     if (c.st === 'idle') { c.x = Math.max(HOLE_X + 0.9, Math.min(BX - 1, c.x + dir.x * 4.6 * dt)); c.z = Math.max(-BZ + 1, Math.min(BZ - 1, c.z + dir.z * 4.6 * dt)); }
-    else if (c.st === 'down') { c.y -= 5.2 * dt; push = true; const [d, dd] = under(); if ((d && dd < d.r + 0.42) || tipY() <= 0.55) { c.st = 'close'; c.t = 0; target = null; if (d) { const p = d.body.position, hz = Math.hypot(p.x - c.x, p.z - c.z);
-          if (lucky ? hz < 2.9 : hz < d.r * 0.62 && dd < d.r + 0.9) target = d; } } }
-    else if (c.st === 'close') { c.t += dt; c.open = Math.max(0, 1 - c.t / 0.4); push = true; if (target && lucky) { const p = target.body.position; c.x += (p.x - c.x) * Math.min(1, dt * 9); c.z += (p.z - c.z) * Math.min(1, dt * 9); }
+    else if (c.st === 'down') { c.y -= 5.2 * dt; const [d, dd] = under(); if ((d && dd < d.r + 0.42) || tipY() <= 0.55) { c.st = 'close'; c.t = 0; target = null; if (d) { const p = d.body.position, hz = Math.hypot(p.x - c.x, p.z - c.z);
+          if (grabTry && hz < (lucky ? 2.9 : 2.2)) target = d; } } } /* 닿은 인형은 일단 잡는다(약한 손이면 올리다 놓친다). 예전에는 정가운데가 아니면 아예 못 잡았다 */
+    else if (c.st === 'close') { c.t += dt; c.open = Math.max(0, 1 - c.t / 0.4); if (target) { const p = target.body.position; c.x += (p.x - c.x) * Math.min(1, dt * 9); c.z += (p.z - c.z) * Math.min(1, dt * 9); } /* 오므리면서 인형 한가운데로 당겨 잡는다 */
       if (c.t >= 0.5) { if (target) { grab(target); sfx('pair'); // 약한 손: 올리다가(또는 옮기다가) 놓친다. 위에 다른 인형이 얹혀 있으면 더 빨리 놓친다
             if (!lucky) { const hp = held.body.position, n = dolls.filter(o => o !== held && o.body.position.y > hp.y + 0.3 && o.body.position.distanceTo(hp) < o.r + held.r + 0.15).length, f = rnd(0.25, 0.6), fx = c.x + (OUT.x - c.x) * f, fz = c.z + (OUT.z - c.z) * f;
-              slip = Math.random() < 0.3 && !n && !inOut(fx, fz, 1.5) ? { f } : { y: TOP - (TOP - c.y) * (n ? rnd(0.08, 0.25) : rnd(0.2, 0.8)) }; } else slip = null; }
-          else if (lucky && c._p) { const p = { ...c._p, n: c._p.n - 1 }; pity = p; ctx.store.set(P + '/claw', p).catch(() => {}); } // 꽉 잡는 차례인데 닿은 인형이 없으면 그 차례를 다음으로 넘긴다
+              slip = Math.random() < 0.4 && !inOut(fx, fz, 1.5) ? { f } : { y: TOP - (TOP - c.y) * (n ? rnd(0.3, 0.6) : rnd(0.05, 0.55)) }; } /* 꽤 높이 들어 올린 뒤에(또는 옮기다가) 놓친다 */ else slip = null; }
+          else if (grabTry && c._p) { const p = { ...c._p, gn: c._p.gn - 1, n: c._p.n - 1 }; pity = p; ctx.store.set(P + '/claw', p).catch(() => {}); } // 잡는 차례인데 닿은 인형이 없으면 그 차례를 다음으로 넘긴다
           c.st = 'up'; } }
     else if (c.st === 'up') { c.y += 4.4 * dt; if (held && slip && slip.y != null && c.y >= slip.y) letGo(false); if (c.y >= TOP) { c.y = TOP; c.st = held ? 'carry' : 'back'; c.t = 0; c.from = { x: c.x, z: c.z }; } }
     else if (c.st === 'carry') { const L = Math.hypot(OUT.x - c.from.x, OUT.z - c.from.z) || 1; c.t = Math.min(1, c.t + 4 * dt / L); c.x = c.from.x + (OUT.x - c.from.x) * c.t; c.z = c.from.z + (OUT.z - c.from.z) * c.t;
@@ -169,7 +177,8 @@ export function mount(el, ctx) {
       if (L < 0.02 && Math.abs(dy) < 0.02 && c.open >= 1) { c.x = start.x; c.z = start.z; c.y = REST; c.st = 'idle'; done(); } }
     if (held) { const b = held.body; b.position.set(c.x, tipY() + 0.55 - held.r * 0.25, c.z); b.velocity.set(0, 0, 0); }
     // 집게 끝: 내려가거나 오므릴 때 주변 인형을 밀어낸다
-    if (push && !held) { pusher.position.set(c.x, tipY() + 0.25, c.z); pusher.velocity.set(0, c.st === 'down' ? -5.2 : 0, 0); } else { pusher.position.set(0, 30, 0); pusher.velocity.set(0, 0, 0); }
+    if (!held) { const px = c.x, py = tipY() + 0.3, pz = c.z, q = pusher.position, far = q.y > 20, k = dt > 0 ? 1 / dt : 0; pusher.velocity.set(far ? 0 : (px - q.x) * k, far ? 0 : (py - q.y) * k, far ? 0 : (pz - q.z) * k); q.set(px, py, pz); } /* 속도를 같이 넘겨야 부딪힌 인형이 밀려난다 */
+    else { pusher.position.set(0, 30, 0); pusher.velocity.set(0, 0, 0); }
   }
   function sync() {
     const c = claw; gantry.position.z = c.z; cart.position.set(c.x, 8.45, c.z); clawG.position.set(c.x, c.y, c.z); const len = Math.max(0.1, 8.2 - c.y); cable.scale.y = len; cable.position.set(c.x, c.y + len / 2, c.z);
@@ -185,7 +194,7 @@ export function mount(el, ctx) {
   raf = requestAnimationFrame(frame);
   const key = e => { if (e.repeat) return; const dn = e.type === 'keydown', K = { ArrowLeft: ['x', -1], ArrowRight: ['x', 1], ArrowUp: ['z', -1], ArrowDown: ['z', 1] }[e.key]; if (K) { e.preventDefault(); if (dn) dir[K[0]] = K[1]; else if (dir[K[0]] === K[1]) dir[K[0]] = 0; } else if (dn && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); drop(); } };
   addEventListener('keydown', key); addEventListener('keyup', key); addEventListener('resize', resize);
-  if (new URLSearchParams(location.search).get('mock')) window.__claw = { claw, dolls, drop, setPlays: n => setPlays(n), plays: () => plays, pos: () => dolls.map(d => [d.body.position.x, d.body.position.y, d.body.position.z]), state: () => ({ st: claw.st, lucky, pity, n: dolls.length, mine, ready }) };
+  if (new URLSearchParams(location.search).get('mock')) window.__claw = { claw, dolls, drop, force: () => { pity = { n: 0, k: 0, gn: 0, gk: 0 }; }, setPlays: n => setPlays(n), plays: () => plays, pos: () => dolls.map(d => [d.body.position.x, d.body.position.y, d.body.position.z]), state: () => ({ st: claw.st, lucky, grabTry, held: !!held, pity, n: dolls.length, mine, ready }) };
   return () => { alive = false; cancelAnimationFrame(raf); removeEventListener('keydown', key); removeEventListener('keyup', key); removeEventListener('resize', resize); offs.forEach(f => f && f());
     try { if (renderer) { Object.values(matOf).forEach(m => m.dispose()); SPH && SPH.dispose(); CONE && CONE.dispose(); renderer.dispose(); } } catch (e) { /* 정리 실패는 무시 */ } };
 }
