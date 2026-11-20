@@ -2462,3 +2462,15 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .so-dollpin span { display: block; width: 40px; height: 40px; overflow: hidden; margin: 0 auto; } .so-dollpin img { width: 100%; margin-top: -24%; display: block; }
 
 .arc-plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; } .arc-plan { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 4px; } .arc-plan b { font: 900 18px/1 var(--head); } .arc-plan small { font-weight: 800; font-size: 12px; }
+
+/* 카피오락 게임 고르기 창: 네온 */
+.modal:has(.arc-list) { background: radial-gradient(120% 80% at 50% 0%, #3A1470 0%, #1B0B3F 55%, #0E0626 100%); border: 2px solid #FF4FD8; box-shadow: 0 0 0 2px #2A0F58, 0 0 18px #FF4FD8, 0 0 38px rgba(54, 228, 255, .45), inset 0 0 26px rgba(124, 60, 255, .35); }
+.modal:has(.arc-list) h3 { display: block; width: fit-content; margin: 2px auto 10px; padding: 6px 18px; background: #160A36 !important; background-image: none !important; border: 2px solid #FF4FD8 !important; border-radius: 14px; box-shadow: 0 0 10px #FF4FD8, inset 0 0 10px rgba(255, 79, 216, .45) !important; text-align: center; color: #fff !important; font-size: 22px; letter-spacing: 1px; text-shadow: 0 0 6px #fff, 0 0 12px #FF4FD8, 0 0 24px #FF4FD8; animation: arcNeon 2.2s ease-in-out infinite; }
+.modal:has(.arc-list) .modal-x { background: #1B0B3F; border-color: #36E4FF; color: #36E4FF; box-shadow: 0 0 8px rgba(54, 228, 255, .7); }
+.modal:has(.arc-list) .arc-tip { color: #BFEFFF; text-shadow: 0 0 6px rgba(54, 228, 255, .7); }
+.modal:has(.arc-list) .arc-card { background: linear-gradient(#2B1466, #1A0B44); outline: 0; border: 1.5px solid #36E4FF; box-shadow: 0 0 9px rgba(54, 228, 255, .6), inset 0 0 12px rgba(54, 228, 255, .16); }
+.modal:has(.arc-list) .arc-card:nth-of-type(even) { border-color: #FF4FD8; box-shadow: 0 0 9px rgba(255, 79, 216, .6), inset 0 0 12px rgba(255, 79, 216, .16); }
+.modal:has(.arc-list) .arc-card:active { transform: scale(.96); filter: brightness(1.25); }
+.modal:has(.arc-list) .arc-card span { filter: drop-shadow(0 0 5px rgba(255, 255, 255, .45)); }
+.modal:has(.arc-list) .arc-card b { color: #FFF6B8; text-shadow: 0 0 6px rgba(255, 216, 74, .8); } .modal:has(.arc-list) .arc-card small { color: #C9B8FF; }
+@keyframes arcNeon { 0%, 100% { opacity: 1; } 50% { opacity: .78; } }
