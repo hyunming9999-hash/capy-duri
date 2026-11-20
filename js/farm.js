@@ -80,6 +80,28 @@ export const water = (p, t) => { const q = settle(p, t); return { ...q, wet: t +
 export const weed = (p, t) => { const q = settle(p, t); return { ...q, cut: t }; };
 const left = ms => { const m = Math.ceil(ms / 60000); return m >= 60 ? `${Math.floor(m / 60)}시간 ${m % 60 ? (m % 60) + '분' : ''}`.trim() : `${m}분`; };
 
+// ===== 서리 뒤처리(농장을 열 때·친목회에 들어올 때 한 번씩) =====
+// 우편함 farm/{주인}/inbox/{키} = { t: 'steal'|'fine'|'sale', by, n(받을 코인), k, i, c, name, at } — 주인이 접속했을 때 돈을 받고 알림을 본다
+// 담보 farm/{나}/pawn/{장비 번호} = { at, owner, name } — 하루가 지나면 팔리고, 판 값의 절반이 밭 주인에게 간다(나머지는 관리인)
+export const STEAL_FINE = 2000, PAWN_MS = 86400000, BAN_MS = 600000;
+const mailTo = (ctx, owner, m) => ctx.store.set(`farm/${owner}/inbox/${ctx.store.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`, { ...m, by: ctx.uid, at: ctx.store.now() }).catch(() => {});
+let mailBusy = false;
+export async function farmMail(ctx, K) { if (mailBusy || !ctx.store.get) return; mailBusy = true;
+  try { const f = (await ctx.store.get('farm/' + ctx.uid)) || {}, t = ctx.store.now();
+    // 1) 내가 맡긴 담보 중 하루가 지난 것은 팔린다
+    for (const [id, pw] of Object.entries(f.pawn || {})) { if (!pw || t - pw.at < PAWN_MS) continue; await ctx.store.update('farm/' + ctx.uid, { ['pawn/' + id]: null }).catch(() => {});
+      const v = K && K.value ? K.value(+id) : 0; if (pw.owner && v > 0) mailTo(ctx, pw.owner, { t: 'sale', n: Math.floor(v / 2), name: pw.name });
+      toast(`⏰ 담보로 맡긴 「${pw.name}」이(가) 하루가 지나 팔렸어요…`, 3600); }
+    // 2) 내 밭에서 생긴 일: 서리당함 · 합의금 · 담보 매각 대금
+    const box = Object.entries(f.inbox || {}).filter(([, m]) => m).sort((a, b) => (a[1].at || 0) - (b[1].at || 0)); if (!box.length) return;
+    const patch = {}; box.forEach(([k]) => { patch['inbox/' + k] = null; }); await ctx.store.update('farm/' + ctx.uid, patch).catch(() => {});
+    const sum = box.reduce((a, [, m]) => a + (m.n > 0 && m.t !== 'steal' ? m.n : 0), 0); if (sum > 0 && K && K.credit) await K.credit(sum);
+    const won = n => n.toLocaleString('ko-KR'), line = m => { const who = ctx.nameOf(m.by), c = m.c ? cropOf(m.c) : null;
+      return m.t === 'steal' ? h('p', null, `🥷 ${who}가 ${m.k + 1}번 밭 ${m.i + 1}번 이랑을 서리해 갔어요${c ? ` (${c.name} ${m.n}개)` : ''}`)
+        : m.t === 'fine' ? h('p', null, `🚨 관리인이 서리하던 ${who}를 잡았어요! 합의금 +${won(m.n)}코인`) : h('p', null, `💰 ${who}가 담보(「${m.name}」)를 못 찾아가서 팔렸어요. +${won(m.n)}코인`); };
+    modal({ title: '📬 내 농장 소식', body: [h('div', { class: 'fm-mail' }, h('img', { src: 'img/farm/kp-front.webp', alt: '' }), h('div', null, ...box.slice(-8).map(([, m]) => line(m)), sum > 0 && h('p', { class: 'fm-mailsum' }, `모두 +${won(sum)}코인을 받았어요`)))], actions: [{ label: '확인', primary: true }] });
+  } catch {} finally { mailBusy = false; } }
+
 const BG_W = 1344, BG_H = 752, WALK_SP = 150; // 걷는 빠르기: 친목회 육지(ME_SP)와 같다. 스쿠터면 1.8배
 const rc = (el, ...k) => el.replaceChildren(...k.flat().filter(x => x != null && x !== false && x !== '')); // false·빈칸은 건너뛰고 채운다
 // openFarm: o = { ctx, coins, onClose } — o.coins(n)는 번 돈을 더한다
@@ -134,7 +156,7 @@ export function openFarm(o) {
   // ===== 농장 관리인(카피철물 관리인) — 지금은 시험판(o.keeper)에서만 나온다 =====
   // 내 농장: 내가 선 밭을 끝에서 끝까지 오가며 가끔 한마디. 남의 농장: 서리 감시. 등지고 있을 때만 서리 버튼을 누를 수 있고(모두 4초, 떼어도 쌓인다),
   // '흠…' 하고는 휙 돌아보거나(걸리면 적발) '배고파..' 하고 그냥 간다. 게이지가 찰수록 더 자주, 더 짧은 예고로 돌아본다
-  const STEAL_SEC = 4, FINE = 2000, KP_SAY = ['내가 책임지고 손님 농작물 관리합니다!', '하지만 저는 까마귀 공포증이 있어서 까마귀는 못 막아요ㅠ', '잡초 하나까지 제가 다 지켜봅니다!', '까마귀만 아니면… 뭐든 막아 드려요!'];
+  const STEAL_SEC = 4, FINE = STEAL_FINE, KP_SAY = ['내가 책임지고 손님 농작물 관리합니다!', '하지만 저는 까마귀 공포증이 있어서 까마귀는 못 막아요ㅠ', '잡초 하나까지 제가 다 지켜봅니다!', '까마귀만 아니면… 뭐든 막아 드려요!'];
   const KP = o.keeper ? (() => {
     const img = h('img', { src: 'img/farm/kp-walk.webp', alt: '관리인', draggable: false }), bub = h('b', { class: 'fm-kpb', hidden: true }), el = h('div', { class: 'fm-kp' }, h('i', { class: 'fm-kps' }), img, bub); world.append(el);
     const gates = plotEls.map((_, k) => { const g = h('i', { class: 'fm-gate', hidden: true, style: { left: plotX(k) + PW / 2 + 'px' } }, '🚪 출입구'); world.append(g); return g; }), GATE = PW * 0.1; // 서리는 밭 출입구(가운데 문 앞)에서만
@@ -165,21 +187,23 @@ export function openFarm(o) {
       const T = tool(), g = r.g || gradeOf(r, t), leftN = YIELD_ROW - (r.got || 0), bad = r.bad != null ? r.bad : BAD[T][0] + Math.floor(Math.random() * (BAD[T][1] - BAD[T][0] + 1)), good = Math.max(0, leftN - Math.max(0, bad - (r.badGot || 0))), key = `${r.c}|${g}`;
       rows[tg.i] = null; delete prog[tg.key];
       if (good && g !== 'F') await ctx.store.update(myRef(), { [`barn/${key}`]: ((mine.barn || {})[key] || 0) + good }).catch(() => {});
-      await setRows(tg.k, rows); ctx.store.set(`farm/${who}/stolen`, { by: ctx.uid, at: t, k: tg.k, c: r.c, n: good }).catch(() => {});
+      await setRows(tg.k, rows); mailTo(ctx, who, { t: 'steal', k: tg.k, i: tg.i, c: r.c, n: good });
       sfx('coin'); harvPop(tg.k, `서리 성공! +${good} ${cropOf(r.c).name} ${g}급`, g); toast(`🤫 ${tg.k + 1}번 밭 ${tg.i + 1}번 이랑을 통째로 서리했어요! 헛간에 담았어요`, 2200); drawPlots(); busy = false; }
     async function bust(tg) { busy = true; pressing = false; chosen = null; mode = 'idle'; kp.mode = 'bust'; kp.t = 0; if (tg) prog[tg.key] = 0; pose('catch'); kp.face = Math.sign(me.x - kp.x) || 1; say('삐이익—! 앗 서리도둑이다!', 2600); sfx('bad');
       const fx = h('div', { class: 'fm-bust' }, h('b', null, '🚨 앗 서리도둑이다!'), h('small', null, '관리인에게 딱 걸렸어요')); wrap.append(fx); wrap.classList.add('shake'); setTimeout(() => wrap.classList.remove('shake'), 600);
       await new Promise(r => setTimeout(r, 1700)); fx.remove(); if (!alive) return;
-      const have = ctx.coins(), owner = ctx.nameOf(who), gold = o.keeper.gold ? o.keeper.gold() : [], canPay = have >= FINE, canPawn = gold.length > 0, won = n => n.toLocaleString('ko-KR');
+      const pal = who, have = ctx.coins(), owner = ctx.nameOf(pal), gold = o.keeper.gold ? o.keeper.gold() : [], canPay = have >= FINE, canPawn = gold.length > 0, won = n => n.toLocaleString('ko-KR');
+      save({ ['ban/' + pal]: now() + BAN_MS }); // 쫓겨난 농장에는 10분 동안 다시 못 들어간다
       const out = () => { busy = false; kp.mode = 'walk'; pose('walk'); if (who !== ctx.uid) { who = ctx.uid; sel = -1; listen(); } drawPlots(); };
-      const done = lines => modal({ title: '🚨 서리하다 걸렸어요', body: [h('div', { class: 'fm-bustm' }, h('img', { src: 'img/farm/kp-catch.webp', alt: '' }), h('div', null, ...lines, h('small', null, '농장 밖으로 쫓겨났어요. 내 농장으로 돌아갑니다.')))], actions: [{ label: '죄송합니다…', primary: true }], noX: true, onClose: out });
-      if (!canPay && !canPawn) { if (have > 0) await ctx.spend(have); return done([h('p', { class: 'fm-fine' }, `가진 돈 ${won(have)}코인을 전부 냈어요`), h('p', null, '합의금도 모자라고 황금 장비도 없어서 주머니를 탈탈 털렸어요…')]); }
-      let picked = false, cl; const pay = async () => { if (picked) return; picked = true; cl(); if (await ctx.spend(FINE)) { o.keeper.fine && o.keeper.fine(who, FINE / 2); done([h('p', { class: 'fm-fine' }, `합의금 −${won(FINE)}코인`), h('p', null, `${owner} ${won(FINE / 2)}코인 · 관리인 ${won(FINE / 2)}코인`)]); } else out(); };
-      const pawn = () => { if (picked) return; picked = true; cl(); const it = gold[0]; o.keeper.pawn(it); done([h('p', { class: 'fm-fine' }, '황금 장비를 담보로 맡겼어요'), h('p', null, `「${it.name}」 · 하루 안에 카피철물에서 ${won(FINE)}코인을 내고 찾아가세요. 못 찾으면 팔려요!`)]); };
+      const done = lines => modal({ title: '🚨 서리하다 걸렸어요', body: [h('div', { class: 'fm-bustm' }, h('img', { src: 'img/farm/kp-catch.webp', alt: '' }), h('div', null, ...lines, h('small', null, `농장 밖으로 쫓겨났어요. ${owner}네 농장에는 10분 동안 못 들어가요.`)))], actions: [{ label: '죄송합니다…', primary: true }], noX: true, onClose: out });
+      if (!canPay && !canPawn) { if (have > 0) { await ctx.spend(have); mailTo(ctx, pal, { t: 'fine', n: Math.floor(have / 2) }); } return done([h('p', { class: 'fm-fine' }, `가진 돈 ${won(have)}코인을 전부 냈어요`), h('p', null, '합의금도 모자라고 황금 장비도 없어서 주머니를 탈탈 털렸어요…')]); }
+      let picked = false, cl; const pay = async () => { if (picked) return; picked = true; cl(); if (await ctx.spend(FINE)) { mailTo(ctx, pal, { t: 'fine', n: FINE / 2 }); done([h('p', { class: 'fm-fine' }, `합의금 −${won(FINE)}코인`), h('p', null, `${owner} ${won(FINE / 2)}코인 · 관리인 ${won(FINE / 2)}코인`)]); } else out(); };
+      const pawn = async it => { if (picked) return; picked = true; cl(); await o.keeper.take(it); await save({ ['pawn/' + it.id]: { at: now(), owner: pal, name: it.name } }); done([h('p', { class: 'fm-fine' }, '황금 장비를 담보로 맡겼어요'), h('p', null, `「${it.name}」 · 하루 안에 카피철물에서 ${won(FINE)}코인을 내고 찾아가세요. 못 찾으면 팔려요!`)]); };
+      const goldBox = h('div', { class: 'fm-goldpick', hidden: true }, h('b', null, '맡길 황금 장비를 골라요'), ...gold.map(it => h('button', { class: 'so-row', onClick: () => pawn(it) }, h('span', null, '👑'), h('b', null, it.name), h('small', null, '이 장비를 맡겨요'))));
       cl = modal({ title: '🚨 서리하다 걸렸어요', noX: true, body: [h('div', { class: 'fm-bustm' }, h('img', { src: 'img/farm/kp-catch.webp', alt: '' }), h('div', null, h('p', { class: 'fm-fine' }, '어떻게 해결할까요?'), h('p', null, `내 돈 ${won(have)}코인 · 황금 장비 ${gold.length}개`))),
         h('button', { class: 'so-row big' + (canPay ? '' : ' off'), disabled: !canPay, onClick: pay }, h('span', null, '🪙'), h('b', null, `합의금 ${won(FINE)}코인 내기`), h('small', null, canPay ? `바로 끝나요 · ${owner} ${won(FINE / 2)} + 관리인 ${won(FINE / 2)}` : `돈이 모자라요 (${won(FINE - have)}코인 부족)`)),
-        h('button', { class: 'so-row big' + (canPawn ? '' : ' off'), disabled: !canPawn, onClick: pawn }, h('span', null, '👑'), h('b', null, '황금 장비 담보로 맡기기'), h('small', null, canPawn ? `「${gold[0].name}」을(를) 맡겨요 · 지금 돈은 안 내요` : '맡길 황금 장비가 없어요')),
-        h('p', { class: 'dim fm-pawnnote' }, `담보란? 합의금 대신 황금 장비 1개를 관리인에게 맡기는 거예요. 맡긴 장비는 그동안 쓸 수 없고, 하루(24시간) 안에 카피철물에서 ${won(FINE)}코인을 내면 되찾아요. 하루가 지나면 장비는 팔려서 영영 사라져요.`)], actions: [] }); }
+        h('button', { class: 'so-row big' + (canPawn ? '' : ' off'), disabled: !canPawn, onClick: () => { if (gold.length === 1) pawn(gold[0]); else goldBox.hidden = false; } }, h('span', null, '👑'), h('b', null, '황금 장비 담보로 맡기기'), h('small', null, canPawn ? `가진 장비 ${gold.length}개 중에서 골라 맡겨요 · 지금 돈은 안 내요` : '맡길 황금 장비가 없어요')), goldBox,
+        h('p', { class: 'dim fm-pawnnote' }, `담보란? 합의금 대신 황금 장비 1개를 관리인에게 맡기는 거예요. 맡긴 장비는 그동안 쓸 수 없고, 하루(24시간) 안에 카피철물에서 ${won(FINE)}코인을 내면 되찾아요. 하루가 지나면 장비는 팔려서 영영 사라져요(판 값은 밭 주인과 관리인이 반씩).`)], actions: [] }); }
     function tick(dt) { if (!alive) return; const v = visit(), tg = v ? target() : null, f = frac(), paused = !!document.querySelector('.modal-wrap');
       const pk = plotEls.findIndex((_, i) => Math.abs(me.x - (plotX(i) + PW / 2)) < PW / 2 + GAP), k = pk >= 0 ? pk : kp.k; kp.k = k; const lo = plotX(k) + PW * 0.04, hi = plotX(k) + PW * 0.96;
       const toMe = Math.sign(me.x - kp.x) || kp.face, seen = kp.face === toMe && (kp.mode === 'walk' || kp.mode === 'look');
@@ -245,7 +269,7 @@ export function openFarm(o) {
     const pn = ctx.nameOf(ctx.partnerId);
     title.textContent = who === ctx.uid ? '🌱 카피 농장' : `🌱 ${pn}네 농장 (구경)`;
     visitBtn.hidden = !ctx.partnerId; visitBtn.textContent = who === ctx.uid ? `${pn}네 농장` : '내 농장';
-    visitBtn.onclick = () => { who = who === ctx.uid ? ctx.partnerId : ctx.uid; sel = -1; listen(); };
+    visitBtn.onclick = () => { if (who === ctx.uid) { const until = ((mine.ban || {})[ctx.partnerId]) || 0; if (until > now()) return toast(`🚫 서리하다 쫓겨났어요. ${left(until - now())} 뒤에 다시 갈 수 있어요`, 2400); } who = who === ctx.uid ? ctx.partnerId : ctx.uid; sel = -1; listen(); };
     barnBtn.hidden = who !== ctx.uid;
     drawSheet();
   }
@@ -382,7 +406,7 @@ export function openFarm(o) {
           rows.push(h('button', { class: 'so-row big' + (have || !next ? ' off' : ''), onClick: () => have ? toast('이미 연 밭이에요') : !next ? toast('앞의 밭부터 열어야 해요') : buy(pr, { open: k + 1 }, `${k + 1}번 밭이 열렸어요! 🌱`) },
             h('span', null, '📜'), h('b', null, `${k + 1}번 밭 땅 문서`), h('small', null, have ? '열었어요' : `${pr.toLocaleString('ko-KR')}코인`))); }); }
       rc(body, tabs, rows); }
-    draw(); modal({ title: '🔨 카피철물', body: [KP && KP.greet(), o.keeper && o.keeper.pawned && o.keeper.pawned() && h('button', { class: 'btn primary', onClick: async e => { const it = o.keeper.pawned(); if (!(await ctx.spend(FINE))) return toast(`돈이 모자라요 (${FINE.toLocaleString('ko-KR')}코인 필요)`); o.keeper.redeem(); e.target.remove(); sfx('coin'); toast(`「${it.name}」을(를) 되찾았어요!`, 1800); } }, `🔒 담보 찾기 · ${FINE.toLocaleString('ko-KR')}코인`), body].filter(Boolean), actions: [{ label: '나가기', primary: true }] }); }
+    draw(); modal({ title: '🔨 카피철물', body: [KP && KP.greet(), ...Object.entries(mine.pawn || {}).filter(([, pw]) => pw).map(([id, pw]) => h('button', { class: 'so-row pawn', onClick: async e => { if (!(await ctx.spend(FINE))) return toast(`돈이 모자라요 (${FINE.toLocaleString('ko-KR')}코인 필요)`); await o.keeper.give({ id: +id, name: pw.name }); await save({ ['pawn/' + id]: null }); e.currentTarget.remove(); sfx('coin'); toast(`「${pw.name}」을(를) 되찾았어요!`, 1800); } }, h('span', null, '🔒'), h('b', null, `담보 찾기 · 「${pw.name}」`), h('small', null, `${FINE.toLocaleString('ko-KR')}코인 · ${left(Math.max(60000, pw.at + PAWN_MS - now()))} 안에 찾아가세요`))), body].filter(Boolean), actions: [{ label: '나가기', primary: true }] }); }
 
   // 스프링클러: 밭마다 하나. 밤 12시~아침 10시는 그냥 돌고, 그 밖의 시간은 1시간 SPRK_HOUR코인으로 늘린다(버튼으로 시간을 고른 뒤 결제)
   const sprkN = {}, hhmm = ms => { const d = new Date(ms), td = new Date(); const day = d.toDateString() === td.toDateString() ? '' : d.getDate() === new Date(td.getTime() + 86400000).getDate() ? '내일 ' : `${d.getMonth() + 1}/${d.getDate()} `; return `${day}${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
@@ -446,6 +470,7 @@ export function openFarm(o) {
   function close() { if (!alive) return; alive = false; window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKey); cancelAnimationFrame(raf); if (off) off(); offMine(); clearInterval(sprkTick); wrap.remove(); o.onClose && o.onClose(); }
   const sprkTick = setInterval(sprkAutoPay, 60000); // 농장을 열어 둔 채 자정이 지나도 그날 사용료를 낸다
   if (o.startVisit && ctx.partnerId) who = ctx.partnerId;
+  if (o.keeper) setTimeout(() => farmMail(ctx, o.keeper), 900);
   listen(); raf = requestAnimationFrame(step); requestAnimationFrame(() => { scroller.scrollLeft = Math.max(0, me.x - scroller.clientWidth / 2); });
   // 상대가 내 밭에 물을 주고 갔으면 알려 준다
   ctx.store.get ? ctx.store.get('farm/' + ctx.uid + '/note').then(v => { if (v && v.by && v.by !== ctx.uid && v.at > ((mine.noteSeen) || 0)) { toast(`${ctx.nameOf(v.by)}가 내 밭에 물을 주고 갔어요 💧`, 2600); save({ noteSeen: v.at }); } }).catch(() => {}) : 0;

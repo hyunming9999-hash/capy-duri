@@ -9,7 +9,7 @@ import { sfx, animalVoice, bgm } from './sound.js';
 import { makeVoice } from './walk.js';
 import { PUSH_URL } from './push.js';
 import { isMock } from './store.js';
-import { openFarm, cropOf, cropImg, cropPrice } from './farm.js';
+import { openFarm, cropOf, cropImg, cropPrice, farmMail } from './farm.js';
 import { openCook, SAUCES, SAUCE_PACK, SAUCE_IMG } from './cook.js';
 import { farmCrow } from './farmcrow.js';
 import { createQuest } from './quest.js';
@@ -462,7 +462,7 @@ export function mount(el, ctx) {
       coins: addCoins, cropName: id => (cropOf(id) || { name: id }).name, cropImg, fishSvg, onClose: () => { fishOpen = false; lastT = performance.now(); } }); }
   let farmOpen = false;
   function goFarm() { if (farmOpen) return; if (fishOpen || battle) return toast('하던 걸 끝내고 농장에 갈 수 있어요'); if (me.boat) return toast('배에서 내린 뒤에 농장에 갈 수 있어요'); fishOpen = true; farmOpen = true; keys.clear(); sfx('pop');
-    openFarm({ ctx, scoot: () => (scoot ? scootHtml() : null), onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); } }); }
+    openFarm({ ctx, keeper: farmKeeper, scoot: () => (scoot ? scootHtml() : null), onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); } }); }
   const fcrow = farmCrow(ctx, { goFarm: () => goFarm() });
   // 카피수족관 시험판 링크(?aqtest=1·2·3): 실제 물고기 자료로 채운 수족관을 바로 띄운다. 아무것도 저장하지 않음
   try { const at = +new URLSearchParams(location.search).get('aqtest'); if (at >= 1 && at <= 3) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); import('./aquarium.js').then(m => m.openAquarium({ test: true, tank: at, me: ctx.me.name, partner: ctx.nameOf(ctx.partnerId) || '두두' })); }, 1200); } catch {}
@@ -490,6 +490,12 @@ export function mount(el, ctx) {
     toast(`🍳 요리 연습 · ${r.n} (돈·평점·재료에는 영향 없어요)`, 2600); }
   try { const ct = new URLSearchParams(location.search).get('cooktest'); if (ct != null) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); if (!fishOpen && !battle) cookTest(ct || 'maeun'); }, 1400); } catch {}
   // 농장 체험 링크(?farmtest): 진짜 농장·돈과 따로 노는 연습 농장(코인 5,000 · 스프링클러 2개 · 자라는 작물). 닫으면 사라져요
+  // 농장 관리인(서리)에서 쓰는 것: 내 황금 장비 목록 · 담보로 맡기기(가방에서 빼고, 입고 있으면 벗는다) · 되찾기 · 판 값 · 받은 돈 넣기
+  const farmKeeper = { gold: () => Object.keys(bag.rares || {}).filter(k => bag.rares[k] && ANIMALS[k]).map(k => ({ id: +k, name: rareName(+k) })),
+    take: async it => { if (myRares().includes(it.id)) await wearRare(it.id); bag = { ...bag, rares: { ...(bag.rares || {}), [it.id]: null } }; await ctx.store.update('bag/' + ctx.uid + '/rares', { [it.id]: null }).catch(() => {}); },
+    give: async it => { bag = { ...bag, rares: { ...(bag.rares || {}), [it.id]: true } }; await ctx.store.update('bag/' + ctx.uid + '/rares', { [it.id]: true }).catch(() => {}); },
+    value: i => Math.max(1, Math.round(RARE_BASE(i) / 2)), credit: n => addCoins(n) };
+  if (!trial) setTimeout(() => farmMail(ctx, farmKeeper), 4000); // 친목회에 들어오면 내 농장 소식(서리당함·합의금·담보 매각)을 받는다
   function farmTest(guard) { if (farmOpen || fishOpen || battle) return; farmOpen = true; fishOpen = true; keys.clear();
     const root = {}, subs = [], seg = k => k.split('/').filter(Boolean);
     const getP = k => seg(k).reduce((o, x) => (o == null ? undefined : o[x]), root);
@@ -504,7 +510,7 @@ export function mount(el, ctx) {
     // 관리인·서리 시험판(?guardtest): 연습용 이웃 농장에 다 익은 이랑을 채워 두고 그 농장에서 시작한다. 돈 4,500 → 두 번 걸리면 세 번째는 황금 장비 담보
     let keeper = null; if (guard) { coins = 4500; const ripeRow = c => row(c, 20 * M, 60 * M, 9e9), PAL = 'guard-pal'; let gold = [{ id: 'g1', name: '황금 왕관(연습)' }], pawn = null;
       setP('farm/' + PAL, { open: 3, tool: 2, plots: { 0: { rows: { 0: ripeRow('tomato'), 1: ripeRow('corn'), 2: ripeRow('cucumber') } }, 1: { rows: { 0: ripeRow('potato'), 1: ripeRow('carrot'), 2: row('scallion', 90 * M, 30 * M, 20 * M) } }, 2: { rows: { 0: ripeRow('lettuce'), 1: ripeRow('radish') } } } });
-      keeper = { pal: PAL, fine: () => {}, gold: () => gold, pawn: it => { pawn = it; gold = gold.filter(x => x !== it); }, pawned: () => pawn, redeem: () => { if (pawn) gold.push(pawn); pawn = null; } }; }
+      gold.push({ id: 'g2', name: '황금 망토(연습)' }); keeper = { pal: PAL, gold: () => gold, take: async it => { gold = gold.filter(x => x.id !== it.id); }, give: async it => { gold.push(it); }, value: () => 3000, credit: async n => { coins += n; } }; }
     const tctx = Object.create(ctx, { store: { value: mem }, partnerId: { value: keeper ? keeper.pal : null }, coins: { value: () => coins }, spend: { value: async n => { if (coins < n) return false; coins -= n; return true; } }, nameOf: { value: u => (keeper && u === keeper.pal ? '이웃(연습)' : ctx.nameOf(u)) } });
     toast(guard ? '🧪 서리 시험판 · 관리인이 등 돌렸을 때 🤫 서리 버튼을 꾹! (진짜 농장·돈과 무관)' : '🧪 농장 체험판이에요 · 진짜 농장과 돈에는 영향이 없어요', guard ? 4200 : 2600);
     openFarm({ ctx: tctx, keeper, startVisit: !!keeper, scoot: () => (scoot ? scootHtml() : null), onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); } }); }
