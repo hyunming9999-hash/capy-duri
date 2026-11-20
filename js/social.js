@@ -12,7 +12,7 @@ import { isMock } from './store.js';
 import { openFarm, cropOf, cropImg, cropPrice, farmMail } from './farm.js';
 import { openCook, SAUCES, SAUCE_PACK, SAUCE_IMG } from './cook.js';
 import { farmCrow } from './farmcrow.js';
-import { createQuest } from './quest.js';
+import { createQuest, propSvg } from './quest.js';
 import { ARCADE_TEST } from './arcade.js';
 import { dollImg } from './g-claw.js';
 import { recOf } from './cook.js';
@@ -526,6 +526,8 @@ export function mount(el, ctx) {
   } catch {}
   // 메인 퀘스트: 동물 머리 위 ! ? 표시와 동물 창의 🔍 퀘스트 버튼
   let vnOn = false;
+  // 퀘스트를 끝낸 사람에게는 사자가 꽃 왕관을 쓰고 다닌다
+  const questDone = () => { try { const p = quest.progress(); return p.total > 0 && p.n >= p.total; } catch { return false; } }, crowned = (i, svg) => (i === 10 && questDone() ? propSvg(svg, ['flower']) : svg);
   const quest = createQuest({ ctx, names: ANIMALS.map(a => a.name), svg: i => animalSvg(i), svgFull: (i, mood) => animalSvg(i, true, mood || undefined), meSvg: face => capy(ctx.capyOf(ctx.uid, { face })), meName: ctx.me.name,
     host: () => (worldEl && worldEl.parentElement && worldEl.isConnected ? worldEl.parentElement : null), pause: on => { vnOn = on; keys.clear(); }, A, affinity: (i, d) => setRel(i, { a: A(i) + d }), toned, coins: addCoins, bag: () => bag, saveBag,
     fish: () => Object.entries(bag.fish || {}).filter(([, v]) => v).map(([k, v]) => [k, v, fishOf(v.id)]),
@@ -823,7 +825,7 @@ export function mount(el, ctx) {
     if (!scroller) return;
     scroller.querySelectorAll('.so-an').forEach(e => { const i = +e.dataset.i, a = A(i), lv = levelOf(a), t = pid() && theirs[i] ? theirs[i].a || 0 : null, s = e.querySelector('.so-score'), mood = moodOf(a), hearts = a >= 80 ? 3 : a >= 50 ? 2 : a >= 30 ? 1 : 0;
       s.className = 'so-score' + (a < 0 ? ' neg' : a >= PIN_AT ? ' hi' : ''); s.replaceChildren(h('b', null, `${lv[2]} ${a}`), t != null && h('i', null, `${ctx.nameOf(pid()).slice(0, 3)} ${t}`) || '');
-      if (e.dataset.mood !== mood) { e.dataset.mood = mood; e.querySelector('.so-body').innerHTML = animalSvg(i, true, mood); }
+      { const mk = mood + (i === 10 && questDone() ? '+f' : ''); if (e.dataset.mood !== mk) { e.dataset.mood = mk; e.querySelector('.so-body').innerHTML = crowned(i, animalSvg(i, true, mood)); } }
       if (+e.dataset.hearts !== hearts) { e.dataset.hearts = hearts; e.querySelector('.so-hearts').replaceChildren(...Array.from({ length: hearts }, (_, k) => h('i', { style: { animationDelay: k * 0.7 + 's', left: [50, 22, 78][k] + '%' } }, '💗'))); } });
     refreshMe(); drawPal();
   }
@@ -959,7 +961,7 @@ export function mount(el, ctx) {
   // ----- 동물과 만나기 -----
   function openAnimal(i) {
     const a = ANIMALS[i], p = PERSONA[i]; let busy = false, said = '', close; held = i; animalVoice(i); actors[i] && actors[i].e.classList.remove('walk');
-    const faceEl = h('span', { html: animalSvg(i, true, moodOf(A(i))) }); let faceMood = moodOf(A(i));
+    const faceEl = h('span', { html: crowned(i, animalSvg(i, true, moodOf(A(i)))) }); let faceMood = moodOf(A(i));
     const bubble = h('p', { class: 'so-bubble' }), meter = h('div', { class: 'so-meter' }), quick = h('div', { class: 'so-quick' }), input = h('input', { class: 'so-input', maxLength: 60, placeholder: `${a.name}에게 하고 싶은 말`, enterKeyHint: 'send' });
     const say = (t, cls = '', raw = false) => { bubble.className = 'so-bubble ' + cls; bubble.textContent = raw || t === '…' ? t : toned(i, t); };
     const fedNote = h('p', { class: 'so-fed' });
@@ -967,7 +969,7 @@ export function mount(el, ctx) {
       fedNote.textContent = left > DAY_MS ? '💬 오늘은 말을 걸었어요. 사이가 식지 않아요'
         : v <= KEEP_AT ? '💬 사흘 동안 말을 안 걸면 친밀도가 -3 돼요. 말을 걸면 멈춰요'
         : left <= 0 ? '💬 하루를 건너뛰어서 서운해해요. 말을 걸면 바로 멈춰요 (하루 최대 -3)'
-        : `💬 하루에 한 번만 말을 걸면 사이가 유지돼요 (남은 시간 ${Math.floor(left / 3600000)}시간 ${Math.floor(left / 60000) % 60}분)`; } if (moodNow(v) !== faceMood) { faceMood = moodNow(v); faceEl.innerHTML = animalSvg(i, true, faceMood); } meter.replaceChildren(h('b', null, `${lv[2]} ${lv[1]}`), h('i', null, h('u', { style: { width: (v + 100) / 2 + '%', background: v < 0 ? '#E5484D' : v >= PIN_AT ? '#FF7FA8' : '#57C26B' } })), h('span', null, `${v}점${nx ? ` · ${nx[1]}까지 ${nx[0] - v}` : ''}`)); scores(); };
+        : `💬 하루에 한 번만 말을 걸면 사이가 유지돼요 (남은 시간 ${Math.floor(left / 3600000)}시간 ${Math.floor(left / 60000) % 60}분)`; } if (moodNow(v) !== faceMood) { faceMood = moodNow(v); faceEl.innerHTML = crowned(i, animalSvg(i, true, faceMood)); } meter.replaceChildren(h('b', null, `${lv[2]} ${lv[1]}`), h('i', null, h('u', { style: { width: (v + 100) / 2 + '%', background: v < 0 ? '#E5484D' : v >= PIN_AT ? '#FF7FA8' : '#57C26B' } })), h('span', null, `${v}점${nx ? ` · ${nx[1]}까지 ${nx[0] - v}` : ''}`)); scores(); };
     const lie = () => (fakeLie.has(i) ? { n: 5, fake: true } : (mine[i] || {}).crowLie), moodNow = v => (lie() ? 'angry' : moodOf(v)); // 이간질당해 삐진 동안은 화난 얼굴
     // 까마귀 이간질로 삐진 동물에게는 해명할 수 있다(한 번, 최대 +5)
     async function explain() { const L = lie(); if (!L) return; if (L.fake) { fakeLie.delete(i); say(pick(['…정말? 까마귀가 꾸민 거였구나. 오해해서 미안해.', '그랬구나… 그 까마귀 말만 믿고 서운해했네.']), 'glad'); drawQuick(); drawMeter(); return void toast('연습이라 친밀도는 그대로예요', 2400); } const back = Math.max(1, Math.min(L.n || 5, 2 + Math.floor(Math.random() * 4)));
