@@ -1041,7 +1041,7 @@ export function mount(el, ctx) {
       const v = A(i), ware = wareOf(i), disc = (bag.resold || {})[i] ? 1 : v >= 50 ? 0.5 : v >= 20 ? 0.75 : 1, wp = Math.round(priceOf(ware.id) * disc), hasPin = (bag.pins || {})[i];
       if (v < 0) return say('너한텐 아무것도 안 팔아. 저리 가!', 'angry');
       const row = (ic, nm, sub, price, owned, fn) => h('button', { class: 'so-row' + (typeof ic === 'string' ? '' : ' big'), disabled: owned, onClick: fn }, typeof ic === 'string' ? h('span', null, ic) : ic, h('b', null, nm), h('small', null, owned ? '이미 갖고 있어요' : `${won(price)} · ${sub}`));
-      // 감귤: 토끼만 판다. 개당 100코인, 하루 3개까지. 서리할 때 관리인에게 던지면 2초 동안 등 돌리고 먹는다
+      // 감귤: 토끼만 판다. 개당 100코인, 하루 3개까지. 서리할 때 관리인에게 던지면 3.5초 동안 등 돌리고 먹는다
       const tangRow = () => { const TP = 100, sm = h('small'), cnt = () => { const tb = bag.tangBuy && bag.tangBuy.d === ymd() ? bag.tangBuy.n || 0 : 0; return tb; }, put = () => { sm.textContent = `${won(TP)} · 오늘 ${cnt()}/3개 샀어요 · 가진 감귤 ${bag.tang || 0}개`; }; put();
         return h('button', { class: 'so-row big', onClick: async () => { if (cnt() >= 3) return toast('감귤은 하루에 3개까지만 팔아요. 내일 또 오세요!'); if (!(await ctx.askBuy('🍊 감귤 1개', TP))) return; if (!(await ctx.spend(TP))) return; const tb = { d: ymd(), n: cnt() + 1 }, n = (bag.tang || 0) + 1; bag = { ...bag, tang: n, tangBuy: tb }; await ctx.store.update('bag/' + ctx.uid, { tang: n, tangBuy: tb }).catch(() => {}); sfx('coin'); put(); toast('🍊 감귤을 샀어요! 서리할 때 관리인에게 던져 보세요', 2200); say('친척이 감귤 농사를 짓거든. 너무너무 많이 줘서 다 먹기 힘들어… 사 줘서 고마워!'); } },
           h('span', null, '🍊'), h('b', null, '감귤 · 친척이 감귤 농사를 짓는데 너무 많이 줘서 팔아요'), sm); };

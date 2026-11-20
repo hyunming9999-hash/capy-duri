@@ -139,7 +139,8 @@ const PROP = {
 };
 export function propSvg(svg, props) { if (!props || !props.length) return svg; const fur = (svg.match(/<rect x="31" y="76" width="58" height="50" rx="24" fill="([^"]+)"/) || [])[1] || '#ccc';
   const hold = props.find(p => p.startsWith('h:')), list = props.filter(p => !p.startsWith('h:'));
-  let add = list.map(p => PROP[p] || '').join('');
+  const fl = svg.includes('<image'); // 보송 그림체: 머리가 더 아래·작게 있어서 꽃 왕관을 머리 위에 맞춰 얹는다
+  let add = list.map(p => (p === 'flower' && fl ? `<g transform="translate(8.5 10.5) scale(.77)">${PROP[p]}</g>` : PROP[p] || '')).join('');
   if (list.includes('det') && !hold) add += PROP.lens + `<ellipse cx="27" cy="108" rx="7.5" ry="6.5" fill="${fur}"/>`; // 탐정은 다른 손에 돋보기
   if (hold) add += `<text x="101" y="126" font-size="34" text-anchor="middle">${hold.slice(2)}</text><ellipse cx="91" cy="110" rx="7.5" ry="6.5" fill="${fur}"/>`;
   return svg.replace(/<\/svg>$/, add + '</svg>').replace('<svg ', '<svg style="overflow:visible" '); }
@@ -183,7 +184,7 @@ export function createQuest(d) {
       const end = v => { if (done) return; done = true; el.remove(); d.pause && d.pause(false); res(v); };
       function show() { const l = parse(lines[k], def), me = l.who === 'me', last = k === lines.length - 1;
         const face = me ? d.meSvg(l.mood || 'smile') : propSvg(d.svgFull(l.who, l.mood), l.who === 19 ? ['det', ...l.props] : l.props), name = me ? d.meName : d.names[l.who], text = me ? l.text : say(l.who, l.text);
-        el.className = 'vn ' + (me ? 'l' : 'r') + (bgNow ? ' bg' : ''); el.style.backgroundImage = bgNow ? `url(img/quest/bg-${bgNow}.webp)` : '';
+        el.className = 'vn ' + (me ? 'l' : 'r') + (bgNow ? ' bg' : ''); el.style.backgroundImage = bgNow ? `url(img/quest/bg-${bgNow === 'plaza' ? 'plaza-all' : bgNow}.webp)` : '';
         const box = h('div', { class: 'vn-box' }, h('b', { class: 'vn-nm' }, name), h('button', { class: 'vn-x', 'aria-label': '닫기', onClick: e => { e.stopPropagation(); end(null); } }, '✕'), h('p', { class: 'vn-tx' }, text),
           ...(last ? (extra || []).filter(Boolean) : []), last && buttons && buttons.length ? h('div', { class: 'vn-bt' }, ...buttons.map(b => h('button', { class: 'btn' + (b.primary ? ' primary' : ''), onClick: e => { e.stopPropagation(); end(b.value); } }, b.label))) : h('span', { class: 'vn-nx' }, last ? '▼ 눌러서 닫기' : '▼ 눌러서 다음'));
         el.replaceChildren(h('i', { class: 'vn-ch' }, chapter), h('div', { class: 'vn-pf', html: face }), box); sfx('tock'); }
@@ -221,10 +222,20 @@ export function createQuest(d) {
     const next = FLAT[(q.s || 0)], nextT = next && capped() ? `오늘 ${DAY_MAX}단계를 모두 했어요. 내일 ${d.names[next.who]}에게서 이어져요!` : next ? (next.ci !== s.ci ? `다음: ${STORY[next.ci].t} — ${d.names[next.who]}에게 가 보세요` : `다음: ${d.names[next.who]}에게 가 보세요`) : '메인 이야기 끝! 👑';
     await vn(s.done, i, title + (s.end ? ' · 장 완료!' : ' · 완료'), [s.clue && h('p', { class: 'qw-new' }, `🔎 수첩에 적었어요: ${s.clue}`)], [{ label: '🏅 보상 받기', primary: true, value: 1 }]);
     // 보상 알림 창: (보상 내용)을 받았습니다
-    const items = s.final ? [['🛴', '전설의 황금사자 스쿠터', '가방에서 타기 · 육지와 농장에서 빠르게 달려요'], ['🪙', `${(c + bonus).toLocaleString('ko-KR')}코인`, ''], ['🦁', '사자 친밀도 100', '단짝이 됐어요!'], ['💗', `다른 동물 친밀도 +${a}`, '']]
+    const items = s.final ? [['🛴', '황금 퀵보드 (전설의 황금사자 스쿠터)', '가방에서 타기 · 육지와 농장에서 빠르게 달려요'], ['🪙', `${(c + bonus).toLocaleString('ko-KR')}코인`, ''], ['🦁', '사자 친밀도 100', '단짝이 됐어요!'], ['💗', `다른 동물 친밀도 +${a}`, '']]
       : [['🪙', `${(c + bonus).toLocaleString('ko-KR')}코인`, bonus ? `(장 보너스 ${bonus} 포함)` : ''], ['💗', `${d.names[i]} 친밀도 +${a}`, ''], ...(s.who !== i ? [['💗', `${d.names[s.who]} 친밀도 +2`, '']] : [])];
-    sfx(s.final ? 'bigfish' : 'coin'); modal({ title: s.final ? '🏆 전설의 보상!' : s.end ? '📁 장 완료! 수사 보상' : '🏅 수사 보상', body: [s.final && h('img', { class: 'rw-sc', src: 'img/scooter-b.webp', alt: '황금사자 스쿠터' }), h('div', { class: 'rw-pop' }, ...items.map(([ic, t, sub]) => h('div', { class: 'rw-it' }, h('span', null, ic), h('b', null, t), sub && h('small', null, sub)))),
+    if (s.final) return finale(items, nextT);
+    sfx('coin'); modal({ title: s.final ? '🏆 전설의 보상!' : s.end ? '📁 장 완료! 수사 보상' : '🏅 수사 보상', body: [s.final && h('img', { class: 'rw-sc', src: 'img/scooter-b.webp', alt: '황금사자 스쿠터' }), h('div', { class: 'rw-pop' }, ...items.map(([ic, t, sub]) => h('div', { class: 'rw-it' }, h('span', null, ic), h('b', null, t), sub && h('small', null, sub)))),
       h('p', { class: 'center rw-msg' }, `${items.map(x => x[1]).join(', ')}을(를) 받았습니다.`), h('p', { class: 'center dim' }, nextT)], actions: [{ label: '확인', primary: true }] }); }
+  // 메인 이야기 끝: 폭죽·꽃가루와 함께 마을 주민들의 감사 인사 + 최종 보상
+  function finale(items, nextT) { sfx('bigfish'); const fx = h('div', { class: 'qf-fx' }), E = ['🎉', '✨', '🌸', '⭐', '🎊', '💛', '🌼'];
+    for (let k = 0; k < 46; k++) fx.append(h('i', { style: { left: Math.random() * 100 + '%', animationDelay: (Math.random() * 2.6).toFixed(2) + 's', animationDuration: (2.6 + Math.random() * 2.2).toFixed(2) + 's', fontSize: 16 + Math.random() * 18 + 'px' } }, E[k % E.length]));
+    for (let k = 0; k < 7; k++) fx.append(h('b', { style: { left: 8 + Math.random() * 84 + '%', top: 6 + Math.random() * 46 + '%', animationDelay: (k * 0.45).toFixed(2) + 's', color: ['#FF4D6D', '#FFD23F', '#4DD0FF', '#8CE06B', '#C79BFF'][k % 5] } }));
+    document.body.append(fx); const t1 = setInterval(() => sfx('coin'), 900), end = () => { clearInterval(t1); fx.remove(); }; setTimeout(() => clearInterval(t1), 3700);
+    modal({ title: '🎉 사건 해결! 전설의 보상', onClose: end, body: [h('div', { class: 'qf-top' }, h('img', { class: 'rw-sc', src: 'img/scooter-b.webp', alt: '황금 퀵보드' })),
+      h('p', { class: 'center qf-msg' }, '마을 주민들이 소란을 잠재워 줘서 고맙대요!', h('br'), h('b', null, '황금 퀵보드를 선물로 드려요!')),
+      h('div', { class: 'rw-pop' }, ...items.map(([ic, t, sub], k) => h('div', { class: 'rw-it', style: { animationDelay: 0.5 + k * 0.22 + 's' } }, h('span', null, ic), h('div', null, h('b', null, t), sub && h('small', null, sub))))),
+      h('p', { class: 'center dim' }, nextT)], actions: [{ label: '고마워요!', primary: true }] }); }
   async function accuse(i, s, title) {
     const c = await vn(s.say, i, title, [clueBox()], s.need.opts.map(([nm], k) => ({ label: `☝️ ${nm}`, value: k + 1 }))); if (!c) return;
     const [, ok, why] = s.need.opts[c - 1]; if (ok) { await save({ on: 1 }); return finish(i, s, title); }
@@ -260,6 +271,6 @@ export function createQuest(d) {
         if (s.type === 'accuse') { for (;;) { const c = await vn(s.say, s.who, title, [], s.need.opts.map(([nm], k) => ({ label: `☝️ ${nm}`, value: k + 1 }))); if (!c) return; const [, good, why] = s.need.opts[c - 1]; if (good) break; if (!(await vn([why], s.who, title, [], [{ label: '다시 고르기', primary: true, value: 1 }]))) return; } }
         else { const nt = needText(s); if (!(await vn(s.say, s.who, title, nt ? [h('p', { class: 'vn-sub' }, `조건: ${nt} · 시험판에서는 바로 통과`)] : []))) return; }
         sceneBg = bgOf(n, 'done'); if (!(await vn(s.done, s.to, title + ' ✔', s.clue ? [h('p', { class: 'vn-sub' }, `📝 단서: ${s.clue}`)] : []))) return; }
-      toast('🧪 시험판 끝! 마지막 장면까지 봤어요', 2600); } finally { sceneBg = ''; } }
+      { const L = FLAT[total - 1], [c, a2] = rewardOf(L); finale([['🛴', '황금 퀵보드 (전설의 황금사자 스쿠터)', '가방에서 타기 · 육지와 농장에서 빠르게 달려요'], ['🪙', `${c.toLocaleString('ko-KR')}코인`, ''], ['🦁', '사자 친밀도 100', '단짝이 됐어요!'], ['💗', `다른 동물 친밀도 +${a2}`, '']], '🧪 시험판이라 실제로 지급되지는 않아요'); } } finally { sceneBg = ''; } }
   return { demo, open, status, progress, markOf, cooks, cooked, chatter, gossip, fresh, pirateOn, pirateResult, dispose: () => off && off() };
 }

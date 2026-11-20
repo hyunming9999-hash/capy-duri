@@ -2622,3 +2622,14 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 
 /* 퀘스트 장면 배경(동굴·광장) */
 .vn.bg { background-size: cover; background-position: center 30%; background-repeat: no-repeat; } .vn.bg::before { content: ''; position: absolute; inset: 0; background: linear-gradient(rgba(20, 12, 30, 0) 40%, rgba(20, 12, 30, .35)); pointer-events: none; }
+
+/* 퀘스트 최종 완료 축하 */
+.qf-fx { position: fixed; inset: 0; z-index: 9999; pointer-events: none; overflow: hidden; }
+.qf-fx i { position: absolute; top: -40px; font-style: normal; animation: qfFall linear 2 both; }
+@keyframes qfFall { to { transform: translateY(112vh) rotate(540deg); } }
+.qf-fx b { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: 0; animation: qfBoom 1.5s ease-out infinite;
+  box-shadow: 0 -46px, 33px -33px, 46px 0, 33px 33px, 0 46px, -33px 33px, -46px 0, -33px -33px, 0 -24px #fff, 17px -17px #fff, 24px 0 #fff, 17px 17px #fff, 0 24px #fff, -17px 17px #fff, -24px 0 #fff, -17px -17px #fff; }
+@keyframes qfBoom { 0% { transform: scale(.1); opacity: 1; } 70% { opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+.qf-top { position: relative; } .qf-top::before { content: ''; position: absolute; left: 50%; top: 50%; width: 230px; height: 230px; margin: -115px; border-radius: 50%; background: repeating-conic-gradient(rgba(255, 210, 63, .5) 0 12deg, transparent 12deg 24deg); animation: spin 9s linear infinite; -webkit-mask: radial-gradient(circle, #000 30%, transparent 70%); mask: radial-gradient(circle, #000 30%, transparent 70%); }
+.qf-top .rw-sc { position: relative; animation: scPop .6s ease-out, bob 1.8s ease-in-out .6s infinite; }
+.qf-msg { font-weight: 800; font-size: 16px; line-height: 1.5; margin: 4px 0 10px; word-break: keep-all; } .qf-msg b { color: #D98A00; font-size: 18px; }
