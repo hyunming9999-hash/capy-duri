@@ -126,15 +126,17 @@ export function openAquarium(o) {
   function react() { const rare = fish.filter(f => isRare(f) && inView(f)); if (!rare.length) return; const f = pick(rare), seatsEl = [...room.children]; if (!seatsEl.length) return;
     const e = pick(seatsEl), i = +e.dataset.i; e.classList.remove('wow'); void e.offsetWidth; e.classList.add('wow'); const em = h('i', { class: 'aq-em' }, pick(['💖', '✨', '❗', '😍', '⭐'])); e.append(em); setTimeout(() => em.remove(), 1600);
     const say = h('div', { class: 'aq-say' }, Math.random() < 0.5 ? `${f.shiny ? '이로치 ' : ''}${f.f0.name}다!!` : pick(WOW)); e.append(say);
-    if (mode === 'me' && (o.fee ? o.fee(i) : (feeN[i] || 0) < FEE_MAX)) { feeN[i] = (feeN[i] || 0) + 1; fee++; const c = h('div', { class: 'aq-coin' }, '+1🪙'); e.append(c); setTimeout(() => c.remove(), 1500); sfx('coin'); drawInfo(); }
+    const amt = feeAmt(); if (mode === 'me' && (o.fee ? o.fee(i, amt) : (feeN[i] || 0) < FEE_MAX)) { feeN[i] = (feeN[i] || 0) + 1; fee += amt; const c = h('div', { class: 'aq-coin' }, `+${amt}🪙`); e.append(c); setTimeout(() => c.remove(), 1500); sfx('coin'); drawInfo(); }
     setTimeout(() => { say.remove(); e.classList.remove('wow'); }, 2200); }
   function inView(f) { const x = f.x * ppm, y = f.y * ppm; return x > view.scrollLeft - 20 && x < view.scrollLeft + view.clientWidth + 20 && y > view.scrollTop - 20 && y < view.scrollTop + view.clientHeight + 20; }
+  // 관람료 한 번: 기본 1코인 + 용품을 5개 이상 놓았으면 +1 + 비싼 용품(3,500코인 이상: 용궁·거북선 등)을 놓았으면 +1. 둘 다 받을 수 있다
+  const BIG_DECO = 3500, feeAmt = () => 1 + (decos.length >= 5 ? 1 : 0) + (decos.some(x => DECO[x.d.k][1] >= BIG_DECO) ? 1 : 0);
   // 제목 칸을 누르면 아래로 살짝 넓어지면서 관람료를 얼마 벌었는지 보여 준다. 다시 누르면 원래대로
   let infoOpen = false; const feeBox = h('div', { class: 'aq-fee', hidden: true });
   function drawInfo() { const rare = fish.filter(isRare).length, T = TANKS[tank]; info.innerHTML = `${T.n} ${T.w}m×${T.h}m · ${fish.length}/${T.max}마리${T.cap ? ` · ${T.cap}cm까지` : ''} · 귀한 물고기 ${rare} · 관람료 ${fee}🪙${mode === 'pal' ? ' · 구경만 할 수 있어요' : ''}${o.test ? ' (시험판)' : ''}`;
     const tl = root.querySelector('.aq-title'); if (!tl) return; if (!feeBox.parentNode) { tl.append(feeBox); tl.onclick = () => { infoOpen = !infoOpen; sfx('pop'); drawInfo(); }; }
     root.classList.toggle('tio', infoOpen); feeBox.hidden = !infoOpen; if (!infoOpen) return; const st = mode === 'me' && o.feeStat ? o.feeStat() : null;
-    feeBox.replaceChildren(...(mode === 'pal' ? [h('span', null, '🐾 놀러 온 수족관이라 관람료는 주인에게만 들어가요')] : [h('span', null, `🪙 이번 관람 ${fee}코인`), st && h('span', null, `오늘 ${st.today}코인`), st && h('span', null, `지금까지 ${st.total}코인`), h('small', null, '귀한 물고기를 본 동물이 1코인씩 · 동물마다 하루 3번')].filter(Boolean)), h('em', null, '▲ 누르면 접혀요')); }
+    feeBox.replaceChildren(...(mode === 'pal' ? [h('span', null, '🐾 놀러 온 수족관이라 관람료는 주인에게만 들어가요')] : [h('span', null, `🪙 이번 관람 ${fee}코인`), st && h('span', null, `오늘 ${st.today}코인`), st && h('span', null, `지금까지 ${st.total}코인`), h('small', null, `귀한 물고기를 본 동물이 한 번에 ${feeAmt()}코인 · 동물마다 하루 3번 · 용품 5개 이상 +1${decos.length >= 5 ? ' ✔' : ''} · 비싼 용품(용궁·거북선 등) +1${decos.some(x => DECO[x.d.k][1] >= BIG_DECO) ? ' ✔' : ''}`)].filter(Boolean)), h('em', null, '▲ 누르면 접혀요')); }
 
   // ----- 물고기 움직임: 헤엄 → 가끔 방향 틀기·돌진·잠 · 벽에서 돌아서고 · 서로 겹치면 작은 쪽이 비켜 간다 -----
   function step(dt) {
