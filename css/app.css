@@ -2530,3 +2530,18 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fm.shake { animation: fmShake .5s; } @keyframes fmShake { 0%, 100% { translate: 0 0; } 20% { translate: -8px 3px; } 40% { translate: 7px -4px; } 60% { translate: -5px 2px; } 80% { translate: 4px -2px; } }
 .fm-bustm { display: flex; gap: 10px; align-items: center; } .fm-bustm img { width: 92px; flex: none; } .fm-bustm p { margin: 0 0 4px; } .fm-fine { font: 900 19px var(--head); color: #D9364A; } .fm-bustm small { color: #8a6a4a; }
 .fm-kpg { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 8px; } .fm-kpg img { width: 70px; flex: none; } .fm-kpg p { margin: 0; flex: 1; background: #FFF8E6; border: 2px solid #E9C46A; border-radius: 14px; padding: 8px 10px; font-size: 13px; line-height: 1.45; color: #5A3A22; } .fm-kpg b { display: block; font: 900 13px var(--head); color: #8A5A00; } .fm-kpg small { display: block; color: #9A7B55; margin-top: 2px; }
+
+/* 관리인: 키를 정면 그림 기준으로 통일 · 그림자 · 내 캐릭터보다 한 줄 뒤(울타리 쪽)에서 순찰 · 출입구 표시 */
+.fm-kp { width: auto; height: 96px; bottom: 5%; z-index: 3; } .fm-kp img { width: auto; height: 100%; position: relative; }
+.fm-kps { position: absolute; left: 50%; bottom: -3px; width: 58px; height: 13px; margin-left: -29px; border-radius: 50%; background: rgba(60, 35, 10, .28); filter: blur(1.5px); }
+.fm-kpb { font-size: 13.5px; max-width: 170px; }
+.fm-gate { position: absolute; bottom: 0; transform: translateX(-50%); z-index: 2; padding: 1px 8px; border-radius: 9px; background: rgba(255, 248, 230, .92); border: 1.5px solid #B98552; font: 800 10.5px var(--head); font-style: normal; color: #6B4322; white-space: nowrap; pointer-events: none; } .fm-gate[hidden] { display: none; }
+.fm-gate.on { background: #5A3FA0; border-color: #FFE27A; color: #fff; box-shadow: 0 0 8px rgba(255, 226, 122, .9); }
+.fm-sthint { flex: 1; min-width: 0; text-align: center; padding: 10px 8px; border-radius: 14px; border: 2px dashed #B98552; background: rgba(255, 248, 230, .9); font: 800 13px/1.35 var(--head); color: #6B4322; } .fm-sthint[hidden] { display: none; }
+
+/* 이랑 위 서리 버튼 */
+.fm-stov { background: none !important; border: 0 !important; box-shadow: none !important; pointer-events: none; z-index: 7; }
+.fm-rsteal { position: absolute; left: 50%; transform: translate(-50%, -50%); pointer-events: auto; padding: 4px 12px 6px; border-radius: 12px; border: 2px solid #FFE27A; background: linear-gradient(#5A3FA0, #3A2670); color: #fff; box-shadow: 0 3px 0 #24163F, 0 0 10px rgba(255, 226, 122, .6); touch-action: none; user-select: none; -webkit-user-select: none; white-space: nowrap; }
+.fm-rsteal[hidden] { display: none; } .fm-rsteal b { font: 900 13px var(--head); display: block; } .fm-rsteal .fm-stg { display: block; height: 6px; margin-top: 3px; border-radius: 6px; background: rgba(0,0,0,.4); overflow: hidden; } .fm-rsteal .fm-stg i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #7CFFB0, #FFE27A); }
+.fm-rsteal.held { transform: translate(-50%, -46%); box-shadow: 0 0 0 #24163F, 0 0 14px rgba(124, 255, 176, .9); filter: brightness(1.2); } .fm-rsteal.danger { border-color: #FF6B6B; background: linear-gradient(#B03A3A, #7A2222); box-shadow: 0 3px 0 #4A1010, 0 0 10px rgba(255, 80, 80, .8); }
+.fm-sttip { flex: 1; min-width: 0; text-align: center; padding: 10px 8px; border-radius: 14px; border: 2px solid #3B2A66; background: linear-gradient(#5A3FA0, #3A2670); font: 800 13px/1.35 var(--head); color: #fff; } .fm-sttip[hidden] { display: none; } .fm-sttip.danger { border-color: #FF4F4F; background: linear-gradient(#B03A3A, #7A2222); }
