@@ -2579,3 +2579,11 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fm-stctl .fm-stback { min-width: 0; padding: 4px 6px; }
 
 .fm-meb { transition: none; } .fm-pawnnote { font-size: 12px; line-height: 1.5; margin: 8px 2px 0; text-align: left; } .fm-bustm + .so-row { margin-top: 10px; }
+
+/* 씨앗 심기 창 */
+.fm-pmrows { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+.fm-pmrow { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 8px 2px; border-radius: 14px; border: 2.5px dashed #C9A56B; background: #FFF8E6; color: #6B4322; }
+.fm-pmrow img { width: 34px; height: 34px; object-fit: contain; } .fm-pmrow span { font-size: 24px; line-height: 34px; } .fm-pmrow b { font: 900 13.5px var(--head); } .fm-pmrow small { font-size: 10.5px; color: #9A7B55; }
+.fm-pmrow.on { border-style: solid; border-color: #4E8A2E; background: #E6F7D4; box-shadow: 0 0 0 3px rgba(123, 199, 77, .35); } .fm-pmrow.on small { color: #3E7A22; font-weight: 800; } .fm-pmrow.full { border-style: solid; border-color: #E3D6BC; background: #F3ECDD; opacity: .7; }
+.fm-pmseeds { max-height: 44vh; overflow-y: auto; }
+.fm-qb.seed { border-color: #4E8A2E; } .fm-qb.seed b { font-size: 26px; line-height: 1.1; }
