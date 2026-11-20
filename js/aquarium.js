@@ -184,11 +184,12 @@ export function openAquarium(o) {
   // ===== 수족관 용품: 놓기·옮기기·뒤집기·보관함 · 물고기 반응 =====
   let decos = [], editing = false, inv = o.test ? Object.fromEntries(DECO.map((_, k) => [k, 1])) : { ...(o.decoInv || {}) }, selD = null;
   function demoDeco() { return [[10, 4], [5, 7.5], [17, 12], [6, 15], [26, 18], [29, 21]].map(([k, x], n) => ({ key: 'd' + n, k, x: Math.min(x, TANKS[tank].w - 1), y: 0, fl: n % 2 })); }
-  const dW = d => DECO[d.k][2] * (tank === 1 ? 0.32 : 1);
+  const dW = d => DECO[d.k][2] * (tank === 1 ? 0.4 : 1.7); // 용품 크기(가로 m): 중급·고급은 1.7배, 초급은 작은 수조에 맞춰 0.4배
   function makeDeco(d) { const el = h('div', { class: 'aq-deco' }, h('img', { src: decoImg(d.k), alt: DECO[d.k][0], draggable: false })), o2 = { d, el }; decos.push(o2); layer.append(el); placeDeco(o2);
     el.addEventListener('pointerdown', e => { if (!editing) return; e.stopPropagation(); e.preventDefault(); selectDeco(o2); const sx = e.clientX, sy = e.clientY, x0 = d.x, y0 = d.y; el.setPointerCapture(e.pointerId);
-      const mv = ev => { d.x = Math.max(dW(d) / 2, Math.min(W - dW(d) / 2, x0 + (ev.clientX - sx) / ppm)); d.y = Math.max(0, Math.min(H * 0.35, y0 - (ev.clientY - sy) / ppm)); placeDeco(o2); };
-      const up = () => { el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); }; el.addEventListener('pointermove', mv); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); });
+      const rot = root.classList.contains('rot'); /* 세로 폰에서는 화면을 눕혀 그리므로 손가락 방향도 같이 돌려야 한다 */
+      const mv = ev => { const sdx = ev.clientX - sx, sdy = ev.clientY - sy, lx = rot ? sdy : sdx, ly = rot ? -sdx : sdy; if (Math.abs(lx) + Math.abs(ly) > 4) root.classList.add('ddrag'); d.x = Math.max(dW(d) / 2, Math.min(W - dW(d) / 2, x0 + lx / ppm)); d.y = Math.max(0, Math.min(H * 0.55, y0 - ly / ppm)); placeDeco(o2); };
+      const up = () => { root.classList.remove('ddrag'); el.removeEventListener('pointermove', mv); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); }; el.addEventListener('pointermove', mv); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); });
     return o2; }
   // d.y: 바닥(모래)에서 얼마나 위로 떠 있나(m). 바닥 쪽에 놓을수록 앞(아래)에 보인다
   function placeDeco(o2) { const d = o2.d, w = dW(d) * ppm, bottom = H * 0.95 - d.y; o2.el.style.width = w + 'px'; o2.el.style.transform = `translate(${(d.x * ppm - w / 2).toFixed(1)}px, ${(bottom * ppm - w).toFixed(1)}px)`; o2.el.style.zIndex = 470 - Math.round(d.y * 10); o2.el.firstChild.style.transform = d.fl ? 'scaleX(-1)' : ''; }
@@ -216,8 +217,10 @@ export function openAquarium(o) {
   root.querySelector('.aq-frame').append(tray, dmenu);
   function setEdit(on) { editing = on; root.classList.toggle('edit', on); tray.hidden = !on; dmenu.hidden = true; selD = null; decoBtn.textContent = on ? '✔ 꾸미기 끝' : '✏️ 꾸미기'; decos.forEach(x => x.el.classList.remove('sel')); panel.hidden = true; tip.hidden = true;
     if (on) drawTray(); else saveDeco(); }
-  function drawTray() { const ks = Object.keys(inv).filter(k => inv[k] > 0).map(Number);
-    tray.replaceChildren(h('b', { class: 'aq-trayt' }, '📦 보관함'), ...(ks.length ? ks.map(k => h('button', { class: 'aq-ti', onClick: () => putDeco(k) }, h('img', { src: decoImg(k), alt: '' }), h('small', null, `${DECO[k][0]}${inv[k] > 1 ? ' ×' + inv[k] : ''}`))) : [h('small', { class: 'aq-tnone' }, '보관함이 비었어요. 카피수퍼에서 용품을 사 오세요.')])); }
+  let trayFold = false; // 보관함 접기: 접으면 작은 단추만 남아 수조가 다 보인다
+  function drawTray() { const ks = Object.keys(inv).filter(k => inv[k] > 0).map(Number); tray.classList.toggle('fold', trayFold);
+    if (trayFold) return tray.replaceChildren(h('button', { class: 'aq-trayt aq-foldb', onClick: () => { trayFold = false; drawTray(); } }, `📦 보관함 ${ks.reduce((n, k) => n + inv[k], 0)}개 ▴ 펴기`));
+    tray.replaceChildren(h('button', { class: 'aq-trayt aq-foldb', onClick: () => { trayFold = true; drawTray(); } }, '📦 ▾ 접기'), ...(ks.length ? ks.map(k => h('button', { class: 'aq-ti', onClick: () => putDeco(k) }, h('img', { src: decoImg(k), alt: '' }), h('small', null, `${DECO[k][0]}${inv[k] > 1 ? ' ×' + inv[k] : ''}`))) : [h('small', { class: 'aq-tnone' }, '보관함이 비었어요. 카피수퍼에서 용품을 사 오세요.')])); }
   function putDeco(k) { inv[k]--; const d = { key: 'd' + Date.now().toString(36) + Math.floor(Math.random() * 99), k, x: Math.max(dW({ k }) / 2, Math.min(W - dW({ k }) / 2, (view.scrollLeft + view.clientWidth / 2) / ppm)), y: 0, fl: 0 }; selectDeco(makeDeco(d)); drawTray(); sfx('pop'); }
   function selectDeco(o2) { selD = o2; decos.forEach(x => x.el.classList.toggle('sel', x === o2)); dmenu.replaceChildren(h('b', null, DECO[o2.d.k][0]), h('button', { onClick: () => { o2.d.fl = o2.d.fl ? 0 : 1; placeDeco(o2); } }, '↔ 뒤집기'), h('button', { onClick: () => { inv[o2.d.k] = (inv[o2.d.k] || 0) + 1; o2.el.remove(); decos = decos.filter(x => x !== o2); dmenu.hidden = true; drawTray(); } }, '📦 보관함에 넣기')); dmenu.hidden = false; }
   function saveDeco() { if (o.saveDeco) o.saveDeco(decos.map(x => x.d), inv); }
