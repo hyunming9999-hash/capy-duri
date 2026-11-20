@@ -127,6 +127,7 @@ export function openFarm(o) {
   const keys = new Set(), padBtn = (k, t) => { const b = h('button', { class: 'dp fm-dp', 'aria-label': k === 'L' ? '왼쪽' : '오른쪽' }, t); holdBtn(b, () => keys.add(k), () => keys.delete(k)); return b; };
   const enterBtn = h('button', { class: 'fm-enter', hidden: true, onClick: () => openShop() }, '🔨 카피철물 들어가기');
   // 밭 앞에 서면 화면 아래에 💧 물 주기·🧺 수확 버튼이 뜬다(농기구 등급만큼 한 번에)
+  const UI = +(new URLSearchParams(location.search).get('farmui')) || 0; // 시험: 심기·거두기 화면 방식 1(밭 직접 누르기) · 2(가운데 버튼) · 3(밭 카드 한 줄)
   const quickEl = h('div', { class: 'fm-quick' }); let quickKey = '', quickAt = 0;
   // 물 주기 안내: 초급은 'N번 이랑 차례에요'(물이 가장 먼저 마를 이랑부터 한 줄씩), 중급은 2줄씩·남으면 '한 번 더', 고급은 밭 전체
   // 물 줄 차례(밭마다): 다음에 줄 이랑 번호를 기억해 두고, 자라는 이랑만 그 번호부터 차례로 돈다
@@ -150,7 +151,7 @@ export function openFarm(o) {
   window.addEventListener('keydown', onKey); window.addEventListener('keyup', onKey);
   const title = h('b'), coinsEl = h('span', { class: 'fm-coins' }), visitBtn = h('button', { class: 'btn sm' }), barnBtn = h('button', { class: 'btn sm', onClick: () => openBarn() }, '🧺 헛간');
   const sheet = h('div', { class: 'fm-sheet' });
-  const wrap = h('div', { class: 'fm' }, h('div', { class: 'fm-top' }, title, coinsEl, barnBtn, visitBtn, h('button', { class: 'top-x', 'aria-label': '닫기', onClick: () => close() }, '✕')), scene, sheet);
+  const wrap = h('div', { class: 'fm' + (UI ? ' fm-ui' + UI : '') }, h('div', { class: 'fm-top' }, title, coinsEl, barnBtn, visitBtn, h('button', { class: 'top-x', 'aria-label': '닫기', onClick: () => close() }, '✕')), scene, sheet);
   document.body.append(wrap);
 
   // ===== 농장 관리인(카피철물 관리인) — 지금은 시험판(o.keeper)에서만 나온다 =====
@@ -259,7 +260,7 @@ export function openFarm(o) {
       e.className = 'fm-plot' + (sel === k ? ' on' : '');
       e.dataset.dry = rows.some(r => live(r) && dryNow(r, t)) ? 1 : 0;
       const kids = [h('img', { class: 'fm-pimg', src: `img/farm/plot-${open ? 'empty' : 'locked'}.webp`, alt: '' })];
-      if (open) rows.forEach((r, i) => { if (!live(r)) return; const b = ROWBOX[i], rp = ripe(r, t), c = cropOf(r.c);
+      if (open) rows.forEach((r, i) => { if (!live(r)) { if (UI === 1 && who === ctx.uid) { const b = ROWBOX[i]; kids.push(h('div', { class: 'fm-rowc empty tap', style: { top: b.t + '%', height: b.h + '%', left: b.l + '%', right: b.r + '%' }, onClick: e => { e.stopPropagation(); walkTo(plotX(k) + PW / 2, () => plantModal(k, i)); } }, h('em', null, '🌱 눌러서 심기'))); } return; } const b = ROWBOX[i], rp = ripe(r, t), c = cropOf(r.c);
         const shownN = rp ? Math.max(1, Math.ceil(b.n * (YIELD_ROW - (r.got || 0)) / YIELD_ROW)) : b.n;
         kids.push(h('div', { class: 'fm-rowc' + (rp ? ' ripe' : ' grow') + (rotten(r, t) ? ' rot' : '') + (rp && who === ctx.uid ? ' tap' : !rp ? ' tapw' : ''), style: { top: b.t + '%', height: b.h + '%', left: b.l + '%', right: b.r + '%', gridTemplateColumns: `repeat(${b.n}, 1fr)` },
             onClick: rp && who === ctx.uid ? e => { e.stopPropagation(); walkTo(plotX(k) + PW / 2, () => harvestTap(k, i)); } : !rp ? e => { e.stopPropagation(); walkTo(plotX(k) + PW / 2, () => doWater(k, i)); } : null }, // 자라는 이랑을 누르면 그 이랑에 물을 준다
@@ -285,7 +286,7 @@ export function openFarm(o) {
   const offMine = ctx.store.on(myRef(), v => { mine = v || {}; sprkAutoPay(); drawHeld(); if (who === ctx.uid) { data = mine; drawPlots(); } }); // 내 농기구·씨앗·헛간은 상대 농장 구경 중에도 알아야 한다
 
   function walkTo(x, then) { me.tx = Math.max(30, Math.min(WIDTH - 30, x)); me.then = then; meEl.classList.add('walk'); meEl.classList.toggle('left', me.tx < me.x); }
-  function goPlot(k) { walkTo(plotX(k) + PW / 2, () => { sel = k; pickRow = -1; drawPlots(); if (who === ctx.uid && isOpen(k) && !rowsOf(k).some(live) && Object.values(mine.seeds || {}).some(n => n > 0)) plantModal(k); }); } // 텅 빈 내 밭을 누르면 바로 씨앗 심기 창
+  function goPlot(k) { walkTo(plotX(k) + PW / 2, () => { sel = UI && isOpen(k) ? -1 : k; pickRow = -1; drawPlots(); if (who === ctx.uid && isOpen(k) && !rowsOf(k).some(live) && Object.values(mine.seeds || {}).some(n => n > 0)) plantModal(k); }); } // 텅 빈 내 밭을 누르면 바로 씨앗 심기 창
   // 씨앗 심기 창: 빈 이랑을 고르고(위 칩) 씨앗을 누르면 바로 심는다. 심고 나면 다음 빈 이랑으로 넘어가서 이어서 심을 수 있다
   function plantModal(k, row) { if (who !== ctx.uid || !isOpen(k)) return; const body = h('div', { class: 'fm-pm' }); let cur = row, cl = null;
     const draw = () => { const rows = rowsOf(k), empty = [0, 1, 2].filter(i => !live(rows[i])); if (!empty.length) { cl && cl(); return; } if (!empty.includes(cur)) cur = empty[0];
@@ -310,7 +311,7 @@ export function openFarm(o) {
           return h('span', { class: 'fm-ps' + (rp ? ' ripe' : '') + (!rp && dryNow(r, t) ? ' dry' : '') }, h('img', { src: cropImg(c.id), alt: '', style: rp ? null : { opacity: (0.35 + 0.65 * pr).toFixed(2), transform: `scale(${(0.6 + 0.4 * pr).toFixed(2)})` } }), h('u', null, h('em', { style: { width: Math.round(pr * 100) + '%' } }))); };
         const quick = []; if (grow.length) quick.push(h('button', { class: 'fm-pq water' + (dry ? ' on' : ''), 'aria-label': '물 주기', onClick: e => { e.stopPropagation(); walkTo(plotX(i) + PW / 2, () => doWater(i)); } }, h('img', { src: toolImg(tool(), 'can'), alt: '' })));
         if (rip.length > 0 && !visit) quick.push(h('button', { class: 'fm-pq harv on', 'aria-label': '수확', onClick: e => { e.stopPropagation(); walkTo(plotX(i) + PW / 2, () => harvestTap(i)); } }, '🧺'));
-        return h('button', { class: 'fm-pc ' + st[0], onClick: () => goPlot(i) }, h('span', { class: 'fm-pn' }, i + 1), h('div', { class: 'fm-pmid' }, h('div', { class: 'fm-pslots' }, ...rs.map(slot)), h('small', { class: 'fm-pst' }, st[1])), quick.length ? h('div', { class: 'fm-pqs' }, ...quick) : null); };
+        return h('button', { class: 'fm-pc ' + st[0], onClick: () => UI === 3 && !visit ? walkTo(plotX(i) + PW / 2, () => { sel = -1; rip.length ? harvestTap(i) : rs.some(r => !live(r)) ? plantModal(i) : grow.length ? doWater(i) : 0; }) : goPlot(i) }, h('span', { class: 'fm-pn' }, i + 1), h('div', { class: 'fm-pmid' }, h('div', { class: 'fm-pslots' }, ...rs.map(slot)), h('small', { class: 'fm-pst' }, st[1])), quick.length ? h('div', { class: 'fm-pqs' }, ...quick) : null); };
       rc(sheet, h('div', { class: 'fm-ohead' }, h('b', null, visit ? `🌾 ${ctx.nameOf(who)}네 밭` : '🌾 내 밭'), !visit && h('span', { class: 'fm-chips' }, h('i', null, `🌱 씨앗 ${seeds}`), h('i', null, `🧺 헛간 ${barn}`), h('i', null, h('img', { src: toolImg(tool()), alt: '' }), TOOLS[tool()].name))),
         h('div', { class: 'fm-plist' }, ...Array.from({ length: PLOTS }, (_, i) => card(i))),
         h('p', { class: 'dim fm-tip' }, visit ? '구경 중이에요. 💧 버튼으로 물을 주고 올 수 있어요.' : `밭 한 칸은 이랑 3줄, 씨앗 1세트로 이랑 1줄. 💧·🧺 버튼을 누르면 그 밭으로 걸어가서 바로 해요. ${TOOLS[tool()].name}: 물 ${tool() >= 3 ? '밭 전체' : `${tool()}이랑`}씩 · 수확 ${['', '하나씩', '한 이랑씩', '밭 전체'][tool()]}`),

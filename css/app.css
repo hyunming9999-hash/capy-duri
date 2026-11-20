@@ -2674,3 +2674,13 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .page-dress .dress-item { border-color: #F7D3E3; background: #fff; border-radius: 16px; } .page-dress .dress-item.on { border-color: #F0619E; background: #FFE6F1; box-shadow: 0 3px 0 #F0619E; }
 .page-dress .dress-item.lock::after { background: #6FCFAA; color: #fff; }
 .fm-pmstep { margin: 0 0 8px; text-align: center; font-size: 13px; color: #7A5A3A; } .fm-pmstep b { color: #3F8A2E; } .fm-pmnone { margin: 10px 0 2px; padding: 9px 10px; border-radius: 12px; background: #FFF3C4; font-weight: 700; word-break: keep-all; font-size: 13.5px; }
+
+/* 농장 화면 방식 시험(?farmui=1·2·3) */
+.fm-ui1 .fm-plist, .fm-ui1 .fm-tip, .fm-ui2 .fm-plist, .fm-ui2 .fm-tip, .fm-ui3 .fm-tip { display: none; }
+.fm-ui1 .fm-sheet, .fm-ui2 .fm-sheet, .fm-ui3 .fm-sheet { flex: 0 0 auto; overflow: visible; }
+.fm-ui1 .fm-quick .fm-qb.seed, .fm-ui1 .fm-quick .fm-qb.harv { display: none; }
+.fm-rowc.empty { display: flex; align-items: center; justify-content: center; } .fm-rowc.empty em { font-style: normal; font: 900 11px/1 var(--head); color: #fff; background: rgba(63, 138, 46, .88); padding: 4px 9px; border-radius: 999px; box-shadow: 0 2px 0 rgba(0, 0, 0, .2); animation: fmBob 1.4s ease-in-out infinite; white-space: nowrap; }
+.fm-ui1 .fm-rowc.ripe.tap::after { content: '🧺 눌러서 거두기'; position: absolute; right: 2%; top: -6px; font: 900 10px/1 var(--head); color: #fff; background: rgba(217, 138, 0, .92); padding: 3px 7px; border-radius: 999px; white-space: nowrap; }
+.fm-ui3 .fm-plist { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
+.fm-ui3 .fm-pc { flex-direction: column; gap: 3px; padding: 7px 2px 6px; border-radius: 14px; text-align: center; min-width: 0; }
+.fm-ui3 .fm-pslots, .fm-ui3 .fm-pqs { display: none; } .fm-ui3 .fm-pmid { min-width: 0; width: 100%; } .fm-ui3 .fm-pst, .fm-ui3 .fm-pmid small, .fm-ui3 .fm-pmid b { font-size: 9.5px; line-height: 1.25; white-space: normal; word-break: keep-all; display: block; }

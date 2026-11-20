@@ -515,6 +515,7 @@ export function mount(el, ctx) {
     let coins = 5000; const t = Date.now(), M = 60000, row = (c, ms, ago, wetIn) => ({ c, at: t - ago, ms, wet: t + wetIn, calc: t - ago, dry: 0, wd: 0, weedAt: t + 9e9, cut: 0 });
     setP('farm/' + ctx.uid, { open: 2, tool: 2, sprkInv: 2, seeds: { lettuce: 3, cucumber: 3, corn: 2 },
       plots: { 0: { rows: { 0: row('cucumber', 40 * M, 15 * M, -2 * M), 1: row('corn', 30 * M, 5 * M, -M), 2: row('scallion', 90 * M, 30 * M, 20 * M) } }, 1: { rows: { 0: row('tomato', 40 * M, 10 * M, -3 * M) } } } });
+    if (new URLSearchParams(location.search).has('farmui')) setP('farm/' + ctx.uid + '/plots/0', { rows: { 0: row('cucumber', 20 * M, 60 * M, 9e9), 1: row('corn', 30 * M, 5 * M, 20 * M) } }); // 화면 방식 시험: 1번 밭에 다 익은 이랑·자라는 이랑·빈 이랑을 하나씩
     // 관리인·서리 시험판(?guardtest): 연습용 이웃 농장에 다 익은 이랑을 채워 두고 그 농장에서 시작한다. 돈 2,500 → 두 번 걸리면 세 번째는 황금 장비 담보
     let keeper = null, tangN = 3; if (guard) { coins = 2500; const ripeRow = c => row(c, 20 * M, 60 * M, 9e9), PAL = 'guard-pal'; let gold = [{ id: 'g1', name: '황금 왕관(연습)' }], pawn = null;
       setP('farm/' + PAL, { open: 3, tool: 2, plots: { 0: { rows: { 0: ripeRow('tomato'), 1: ripeRow('corn'), 2: ripeRow('cucumber') } }, 1: { rows: { 0: ripeRow('potato'), 1: ripeRow('carrot'), 2: row('scallion', 90 * M, 30 * M, 20 * M) } }, 2: { rows: { 0: ripeRow('lettuce'), 1: ripeRow('radish') } } } });
