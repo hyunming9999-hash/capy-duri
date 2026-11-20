@@ -15,7 +15,7 @@ export const dollImg = i => `<img src="${dollSrc(i)}" alt="" loading="lazy">`;
 
 export function mount(el, ctx) {
   let alive = true, raf = 0, lastT = 0, mine = {}, pity = null, plays = 0, gateAt = 0, busy = false, lucky = false, held = null, slip = null, target = null, ready = false, world = null;
-  const dir = { x: 0, z: 0 }, dolls = [], faces = {}, start = { x: 1.5, z: 0.5 };
+  const dir = { x: 0, z: 0 }, dolls = [], start = { x: 1.5, z: 0.5 };
   const claw = { x: 1.5, y: REST, z: 0.5, open: 1, st: 'idle', t: 0 };
   const me = { id: 'claw', title: '인형뽑기', face: 'wow', acc: 'ribbon' };
   const canvas = h('canvas', { class: 'claw-cv' });
@@ -44,25 +44,59 @@ export function mount(el, ctx) {
 
   // ---- 3D 장면
   let THREE, CANNON, renderer, scene, camera, clawG, cable, gantry, cart, pusher, dollMat; const prongs = [];
-  const faceTex = i => { if (faces[i]) return faces[i]; const cv = document.createElement('canvas'); cv.width = cv.height = 160; const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; const f = faces[i] = { tex, color: new THREE.Color('#F2C58E'), mats: [] };
-    loadImg(dollSrc(i)).then(im => { const g = cv.getContext('2d'); g.clearRect(0, 0, 160, 160); g.save(); g.beginPath(); g.arc(80, 80, 78, 0, 7); g.clip(); g.fillStyle = '#FFF4E4'; g.fillRect(0, 0, 160, 160);
-      if (FLUFFY) g.drawImage(im, 44, 54, 232, 232, 0, 0, 160, 160); else g.drawImage(im, 0, 0, 160, 160 * im.height / im.width); g.restore();
-      try { const d = g.getImageData(70, 22, 20, 12).data; let r = 0, gg = 0, b = 0, n = 0; for (let k = 0; k < d.length; k += 4) { r += d[k]; gg += d[k + 1]; b += d[k + 2]; n++; } f.color.setRGB(r / n / 255, gg / n / 255, b / n / 255, THREE.SRGBColorSpace); f.mats.forEach(m => m.color.copy(f.color)); } catch (e) { /* 색을 못 읽으면 기본색 */ }
-      // 공처럼 보이게: 위쪽은 밝게, 가장자리는 어둡게
-      const sh = g.createRadialGradient(58, 50, 6, 80, 80, 80); sh.addColorStop(0, 'rgba(255,255,255,.22)'); sh.addColorStop(0.55, 'rgba(255,255,255,0)'); sh.addColorStop(1, 'rgba(50,14,90,.42)'); g.fillStyle = sh; g.beginPath(); g.arc(80, 80, 78, 0, 7); g.fill();
-      g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 2.5; g.beginPath(); g.arc(80, 80, 77, 0, 7); g.stroke(); tex.needsUpdate = true; }).catch(() => {});
-    return f; };
-  function addDoll(x, y, z) { const i = Math.floor(Math.random() * ANIMALS.length), r = rnd(0.93, 1.05), f = faceTex(i);
-    const mat = new THREE.MeshLambertMaterial({ color: f.color.clone() }); f.mats.push(mat);
-    const ball = new THREE.Mesh(new THREE.SphereGeometry(r, 20, 14), mat), face = new THREE.Sprite(new THREE.SpriteMaterial({ map: f.tex, transparent: true })); face.scale.set(r * 2.02, r * 2.02, 1); scene.add(ball, face);
+  // 인형: 동물마다 색·귀·주둥이가 다른 3D 머리 봉제 인형(공 하나에 귀·눈·코·볼터치를 붙인다). 반지름 1짜리로 만들어 크기만 키운다
+  let SPH, CONE; const matOf = {}, mt = col => matOf[col] || (matOf[col] = new THREE.MeshLambertMaterial({ color: col })), INK = '#3A2A22';
+  function makeDoll(i) { const a = ANIMALS[i], g = new THREE.Group(), body = a.body, light = a.light, earC = a.earC || a.body, inner = a.inner || light, dark = a.dark || INK, es = a.es || 1, nm = a.name;
+    const P = (geo, col, s, p, rz = 0, rx = 0) => { const m = new THREE.Mesh(geo, mt(col)); m.scale.set(s[0], s[1], s[2]); m.position.set(p[0], p[1], p[2]); m.rotation.set(rx, 0, rz); g.add(m); return m; };
+    P(SPH, body, [1, 0.95, 0.96], [0, 0, 0]);
+    for (const s of [-1, 1]) {
+      if (a.ear === 'round') { P(SPH, earC, [0.34 * es, 0.34 * es, 0.17], [s * 0.66, 0.72, -0.02]); P(SPH, inner, [0.2 * es, 0.2 * es, 0.1], [s * 0.66, 0.72, 0.1]); }
+      else if (a.ear === 'pointy') { P(CONE, earC, [0.3, 0.66, 0.2], [s * 0.56, 0.95, 0], -s * 0.28); P(CONE, inner, [0.16, 0.4, 0.1], [s * 0.56, 0.9, 0.12], -s * 0.28); }
+      else if (a.ear === 'long') { P(SPH, earC, [0.2, 0.72, 0.14], [s * 0.36, 1.38, 0], -s * 0.14); P(SPH, inner, [0.1, 0.52, 0.08], [s * 0.36, 1.38, 0.1], -s * 0.14); }
+      else if (a.ear === 'side') { P(SPH, earC, [0.3, 0.3, 0.15], [s * 1.0, 0.28, 0]); P(SPH, inner, [0.17, 0.17, 0.09], [s * 1.02, 0.28, 0.1]); }
+      else if (a.ear === 'fold') P(CONE, earC, [0.28, 0.44, 0.16], [s * 0.6, 0.86, 0.12], -s * 0.55, 0.5);
+      else if (a.ear === 'narrow') { P(CONE, earC, [0.17, 0.54, 0.12], [s * 0.44, 1.04, 0], -s * 0.16); P(CONE, inner, [0.09, 0.34, 0.07], [s * 0.44, 1.0, 0.08], -s * 0.16); }
+      else if (a.ear === 'tuft') P(CONE, earC, [0.15, 0.4, 0.12], [s * 0.56, 0.96, 0], -s * 0.55);
+      // 눈 주변 무늬(판다·너구리·부엉이) → 눈 → 반짝임 → 볼터치
+      if (nm === '판다' || nm === '너구리') P(SPH, nm === '판다' ? '#3B3B44' : '#4A4038', [0.22, 0.26, 0.08], [s * 0.37, 0.12, 0.84], s * 0.3);
+      if (nm === '부엉이') P(SPH, '#F3E2C4', [0.27, 0.27, 0.08], [s * 0.36, 0.14, 0.84]);
+      const top = a.muz === 'frog' && nm === '개구리', ex = s * (top ? 0.44 : 0.36), ey = top ? 0.82 : 0.14, ez = top ? 0.52 : 0.9;
+      if (top) P(SPH, body, [0.27, 0.27, 0.27], [ex, 0.76, 0.36]);
+      P(SPH, nm === '판다' ? '#FFFFFF' : INK, [0.125, 0.15, 0.08], [ex, ey, ez]); P(SPH, nm === '판다' ? INK : '#FFFFFF', [0.05, 0.05, 0.035], [ex + 0.04, ey + 0.06, ez + 0.065]);
+      P(SPH, '#FF9FB0', [0.15, 0.09, 0.05], [s * 0.6, -0.14, 0.74]);
+      if (a.muz === 'snout' || a.muz === 'cow') P(SPH, dark, [0.045, 0.065, 0.03], [s * 0.11, a.muz === 'cow' ? -0.3 : -0.18, a.muz === 'cow' ? 1.06 : 1.1]);
+    }
+    // 주둥이
+    if (a.muz === 'std') { P(SPH, light, [0.4, 0.3, 0.22], [0, -0.22, 0.84]); P(SPH, a.nose || INK, [0.1, 0.075, 0.06], [0, -0.1, 1.03]); }
+    else if (a.muz === 'snout') P(SPH, light, [0.3, 0.22, 0.2], [0, -0.18, 0.92]);
+    else if (a.muz === 'cow') P(SPH, light, [0.5, 0.3, 0.28], [0, -0.32, 0.8]);
+    else if (a.muz === 'beak') P(CONE, light, [0.17, 0.34, 0.17], [0, -0.12, 1.04], 0, Math.PI / 2);
+    else if (a.muz === 'bill') P(SPH, light, [0.3, 0.1, 0.26], [0, -0.2, 1.0]);
+    else if (a.muz === 'big') P(SPH, INK, [0.17, 0.24, 0.14], [0, -0.08, 0.98]);
+    else if (a.muz === 'tiny') P(SPH, '#B5544A', [0.08, 0.07, 0.05], [0, -0.15, 0.98]);
+    else if (a.muz === 'frog') P(SPH, dark, [0.32, 0.03, 0.05], [0, -0.3, 0.92]);
+    // 동물마다 한 가지 특징
+    if (nm === '사자') for (let k = 0; k < 12; k++) { const t = k * Math.PI / 6; P(SPH, '#D98A2B', [0.3, 0.3, 0.26], [Math.cos(t) * 0.98, Math.sin(t) * 0.94, -0.12]); }
+    if (nm === '유니콘') P(CONE, '#FFD75E', [0.13, 0.6, 0.13], [0, 1.18, 0.3], 0, 0.25);
+    if (nm === '닭') { P(SPH, '#E5484D', [0.14, 0.2, 0.2], [0, 1.02, 0.15]); P(SPH, '#E5484D', [0.12, 0.16, 0.16], [0, 0.98, -0.12]); }
+    if (nm === '병아리' || nm === '오리') P(CONE, body, [0.1, 0.3, 0.1], [0, 1.02, 0.05], 0.3);
+    if (nm === '펭귄') P(SPH, '#FFFFFF', [0.66, 0.62, 0.3], [0, -0.1, 0.72]);
+    if (nm === '호랑이') for (const x of [-0.2, 0, 0.2]) P(SPH, INK, [0.045, 0.2, 0.1], [x, 0.84, 0.44]);
+    if (nm === '고슴도치') for (let k = 0; k < 9; k++) { const t = (k - 4) * 0.36; P(CONE, '#8A5E3A', [0.14, 0.42, 0.14], [Math.sin(t) * 0.9, Math.cos(t) * 0.86, -0.38], -t); }
+    if (nm === '문어') for (const x of [-0.6, -0.3, 0, 0.3, 0.6]) P(SPH, body, [0.17, 0.24, 0.17], [x, -0.92, 0.2]);
+    if (nm === '여우' || nm === '늑대') for (const s of [-1, 1]) P(SPH, light, [0.26, 0.22, 0.1], [s * 0.6, -0.32, 0.66]);
+    return g; }
+  function addDoll(x, y, z) { const i = Math.floor(Math.random() * ANIMALS.length), r = rnd(0.9, 1.02), face = makeDoll(i); face.scale.setScalar(r);
+    face.rotation.set(rnd(-0.55, 0.15), rnd(-1.0, 1.0), rnd(-0.4, 0.4)); scene.add(face); // 제각각 기울어진 채로 쌓인다(굴러도 돌지는 않는다)
     const body = new CANNON.Body({ mass: 1, shape: new CANNON.Sphere(r), material: dollMat, fixedRotation: true, linearDamping: 0.25 }); // 인형은 돌지 않는다
     body.position.set(x == null ? rnd(HOLE_X + 1.4, BX - 1.2) : x, y == null ? rnd(9, 12) : y, z == null ? rnd(-BZ + 1.2, BZ - 1.2) : z); world.addBody(body);
-    const d = { i, r, ball, face, body, mat }; dolls.push(d); return d; }
+    const d = { i, r, face, body }; dolls.push(d); return d; }
   function build() {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true }); renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1)); renderer.outputColorSpace = THREE.SRGBColorSpace;
+    SPH = new THREE.SphereGeometry(1, 20, 14); CONE = new THREE.ConeGeometry(1, 1, 14);
     scene = new THREE.Scene(); camera = new THREE.PerspectiveCamera(40, 1.33, 0.1, 100); camera.position.set(0, 9.6, 14.6); camera.lookAt(0, 3.7, 0);
-    scene.add(new THREE.AmbientLight(0xffffff, 1.5)); const sun = new THREE.DirectionalLight(0xffffff, 1.6); sun.position.set(3, 12, 8); scene.add(sun);
-    const p1 = new THREE.PointLight(0xff6bd6, 60, 30); p1.position.set(-4, 7, 3); const p2 = new THREE.PointLight(0x35e0ff, 60, 30); p2.position.set(4, 7, 3); scene.add(p1, p2);
+    scene.add(new THREE.AmbientLight(0xffffff, 1.25)); const sun = new THREE.DirectionalLight(0xffffff, 1.7); sun.position.set(3, 12, 8); scene.add(sun);
+    const p1 = new THREE.PointLight(0xff6bd6, 30, 30); p1.position.set(-4, 7, 3); const p2 = new THREE.PointLight(0x35e0ff, 30, 30); p2.position.set(4, 7, 3); scene.add(p1, p2);
     const box = (w, hh, d, mat, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, hh, d), mat); m.position.set(x, y, z); scene.add(m); return m; };
     const neonP = new THREE.MeshBasicMaterial({ color: 0xff6bd6 }), neonC = new THREE.MeshBasicMaterial({ color: 0x35e0ff }), dark = new THREE.MeshLambertMaterial({ color: 0x241650 }), side = new THREE.MeshLambertMaterial({ color: 0x2c1a60 }), floorM = new THREE.MeshLambertMaterial({ color: 0x6a45c8 });
     // 뒷벽·옆벽·바닥(나오는 곳만 뚫림)
@@ -114,7 +148,7 @@ export function mount(el, ctx) {
   const grab = d => { held = d; d.body.type = CANNON.Body.KINEMATIC; d.body.mass = 0; d.body.updateMassProperties(); d.body.velocity.set(0, 0, 0); };
   function letGo(win) { const d = held; held = null; slip = null; if (!d) return; d.body.type = CANNON.Body.DYNAMIC; d.body.mass = 1; d.body.updateMassProperties(); d.body.velocity.set(win ? 0 : rnd(-1.5, 1.5), 0, win ? 0 : rnd(-1.5, 1.5)); if (!win) sfx('bad'); }
   function done() { busy = false; bGo.disabled = false; lucky = false; target = null; if (plays <= 0) setTimeout(() => alive && plays <= 0 && gate(true), 1600); }
-  function removeDoll(d) { dolls.splice(dolls.indexOf(d), 1); world.removeBody(d.body); scene.remove(d.ball, d.face); d.ball.geometry.dispose(); d.mat.dispose(); d.face.material.dispose(); }
+  function removeDoll(d) { dolls.splice(dolls.indexOf(d), 1); world.removeBody(d.body); scene.remove(d.face); }
   function prize(d) { removeDoll(d); const i = d.i; gameFx('win', `${ANIMALS[i].name} 인형을 뽑았어요`, '성공!'); ctx.store.tx(`${P}/dolls/${i}`, c => (c || 0) + 1).catch(() => {}); setTimeout(() => alive && ready && addDoll(), 900); }
   function moveClaw(dt) {
     const c = claw; let push = false;
@@ -140,8 +174,7 @@ export function mount(el, ctx) {
   function sync() {
     const c = claw; gantry.position.z = c.z; cart.position.set(c.x, 8.45, c.z); clawG.position.set(c.x, c.y, c.z); const len = Math.max(0.1, 8.2 - c.y); cable.scale.y = len; cable.position.set(c.x, c.y + len / 2, c.z);
     const ang = -0.5 + c.open * 0.62; prongs.forEach(a => { a.rotation.z = ang; });
-    const cam = camera.position;
-    for (const d of dolls) { const p = d.body.position; d.ball.position.set(p.x, p.y, p.z); const vx = cam.x - p.x, vy = cam.y - p.y, vz = cam.z - p.z, L = Math.hypot(vx, vy, vz) || 1, o = d.r * 1.01; /* 얼굴 그림은 공 바로 앞에(공이 그림을 뚫고 나오지 않게) */ d.face.position.set(p.x + vx / L * o, p.y + vy / L * o, p.z + vz / L * o); }
+    for (const d of dolls) { const p = d.body.position; d.face.position.set(p.x, p.y, p.z); }
   }
   function frame(t) { if (!alive) return; raf = requestAnimationFrame(frame); if (!ready) return; const dt = Math.min(0.033, (t - (lastT || t)) / 1000); lastT = t;
     moveClaw(dt); world.step(1 / 60, dt, 3);
@@ -154,5 +187,5 @@ export function mount(el, ctx) {
   addEventListener('keydown', key); addEventListener('keyup', key); addEventListener('resize', resize);
   if (new URLSearchParams(location.search).get('mock')) window.__claw = { claw, dolls, drop, setPlays: n => setPlays(n), plays: () => plays, pos: () => dolls.map(d => [d.body.position.x, d.body.position.y, d.body.position.z]), state: () => ({ st: claw.st, lucky, pity, n: dolls.length, mine, ready }) };
   return () => { alive = false; cancelAnimationFrame(raf); removeEventListener('keydown', key); removeEventListener('keyup', key); removeEventListener('resize', resize); offs.forEach(f => f && f());
-    try { if (renderer) { dolls.forEach(d => { d.ball.geometry.dispose(); d.mat.dispose(); d.face.material.dispose(); }); Object.values(faces).forEach(f => f.tex.dispose()); renderer.dispose(); } } catch (e) { /* 정리 실패는 무시 */ } };
+    try { if (renderer) { Object.values(matOf).forEach(m => m.dispose()); SPH && SPH.dispose(); CONE && CONE.dispose(); renderer.dispose(); } } catch (e) { /* 정리 실패는 무시 */ } };
 }
