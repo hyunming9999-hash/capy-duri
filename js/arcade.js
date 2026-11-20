@@ -13,7 +13,7 @@ export const leaveArcade = () => { try { sessionStorage.removeItem('capy-arcade'
 const CK = 'capy-credit';
 export const hasCredit = () => { try { return sessionStorage.getItem(CK) === '1'; } catch { return false; } };
 const setCredit = on => { try { on ? sessionStorage.setItem(CK, '1') : sessionStorage.removeItem(CK); } catch {} };
-const outOfGame = ctx => { if (fromArcade()) { leaveArcade(); ctx.go('social'); } else ctx.go('game'); };
+export const outOfGame = ctx => { if (fromArcade()) { leaveArcade(); ctx.go('social'); } else ctx.go('game'); };
 
 // 판 수를 골라 넣는 게임(인형뽑기): [값, 판 수]. 이런 게임은 판 수를 게임이 따로 세고, 들어갈 때의 동전 창은 건너뛴다
 export const PLANS = { claw: [[50, 1], [150, 3], [200, 5]] };

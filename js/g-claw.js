@@ -6,7 +6,7 @@ import { h, toast, modal, loadImg, gameFx } from './ui.js';
 import { sfx } from './sound.js';
 import { ANIMALS, animalSvg } from './animals.js';
 import { FLUFFY } from './fluffy.js';
-import { coinGate, fromArcade } from './arcade.js';
+import { coinGate, fromArcade, outOfGame } from './arcade.js';
 
 // 상자 안쪽: 가로 x -5~5, 깊이 z -4(뒤)~4(앞), 높이 y 0~9. 나오는 곳은 왼쪽 앞 모서리(바닥이 뚫려 있고 유리 칸막이로 둘러쌈)
 const BX = 5, BZ = 4, HOLE_X = -2.3, HOLE_Z = 1.3, WALL_H = 5.3, TOP = 7.95, REST = 6.6, N_DOLL = 40, PACK = 7, OUT = { x: -3.65, z: 2.65 }, HOME_Y = 7.45;
@@ -33,7 +33,7 @@ export function mount(el, ctx) {
   const TEST = new URLSearchParams(location.search).has('clawtest') && !fromArcade(); // 연습 링크(?clawtest): 코인이 안 들고, 뽑은 인형과 차례도 저장하지 않는다
   const drawTries = () => { tries.textContent = TEST ? '연습 중 · 무료' : `남은 판 ${plays}`; }; // 확률(묶음 몇 번째인지)은 화면에 보이지 않는다
   const setPlays = n => { if (TEST) { plays = 99; drawTries(); return Promise.resolve(); } plays = Math.max(0, n); drawTries(); return ctx.store.set(P + '/clawPlays', plays || null).catch(() => {}); };
-  function gate(again) { if (TEST || document.querySelector('.arc-gate')) return; coinGate(ctx, me, n => setPlays(plays + n), null, again); } // 50코인 1판 · 150코인 3판 · 200코인 5판
+  function gate(again) { if (TEST || document.querySelector('.arc-gate')) return; coinGate(ctx, me, n => setPlays(plays + n), () => { if (alive && plays <= 0) outOfGame(ctx); }, again); /* 동전을 안 넣고 닫으면 게임에서 나간다 */ } // 50코인 1판 · 150코인 3판 · 200코인 5판
   const myDoll = () => (ctx.members[ctx.uid] || {}).doll;
   const wear = async i => { ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), doll: i }; await ctx.store.update('members/' + ctx.uid, { doll: i }).catch(() => {}); drawShelf(); toast(i == null ? '인형 배지를 뗐어요' : `${ANIMALS[i].name} 인형을 가슴에 달았어요`); };
   function drawShelf() { const list = Object.entries(mine).filter(([k, n]) => n > 0 && ANIMALS[k]).map(([k, n]) => [+k, n]), on = myDoll();
