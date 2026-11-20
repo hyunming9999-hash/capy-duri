@@ -141,7 +141,7 @@ export function openFarm(o) {
     let heldKey = null; const tip = h('div', { class: 'fm-sttip', hidden: true });
     // 문 앞에 서면 다 익은 이랑 위에 'N번 이랑 서리' 버튼이 뜬다. 그 버튼을 꾹 누르는 동안 그 이랑의 게이지가 찬다
     let rb = null; const mkRb = () => plotEls.map((_, k) => { const ov = h('div', { class: 'fm-plot fm-stov', style: { left: plotX(k) + 'px', width: PW + 'px', height: PH + 'px' } }); world.append(ov);
-      return ROWBOX.map((b, i) => { const g = h('i'), key = k + '|' + i, e = h('button', { class: 'fm-rsteal', hidden: true, style: { top: b.t + b.h / 2 + '%' } }, h('b', null, `🤫 ${i + 1}번 이랑 서리`), h('span', { class: 'fm-stg' }, g)); holdBtn(e, () => { heldKey = key; }, () => { if (heldKey === key) heldKey = null; }); ov.append(e); return { e, g, key, k, i }; }); });
+      return ROWBOX.map((b, i) => { const g = null, key = k + '|' + i, e = h('button', { class: 'fm-rsteal', hidden: true, style: { top: b.t + b.h / 2 + '%', left: [26, 50, 74][i] + '%' } }, h('b', null, '🤫'), h('small', null, `${i + 1}번 이랑`)); /* 동그란 버튼: 이랑마다 왼쪽·가운데·오른쪽으로 엇갈려 놓아 서로 안 겹친다. 테두리가 게이지 */ holdBtn(e, () => { heldKey = key; }, () => { if (heldKey === key) heldKey = null; }); ov.append(e); return { e, g, key, k, i }; }); });
     const vig = h('div', { class: 'fm-vig' }); scene.append(vig);
     const kp = { x: plotX(0) + PW * 0.8, face: -1, k: 0, mode: 'walk', t: 0, next: 5, grace: 0, beat: 0, pose: '' }, prog = {}; let busy = false, bubT = 0;
     const say = (t, ms = 1600) => { bub.textContent = t; bub.hidden = false; clearTimeout(bubT); bubT = setTimeout(() => { bub.hidden = true; }, ms); };
@@ -172,8 +172,8 @@ export function openFarm(o) {
       const walking = meEl.classList.contains('walk'), gk = v && !busy && !walking ? atGate() : -1, here = ripeAt(gk), nearRipe = v && !busy && !walking && gk < 0 && ripeAt(pk).length > 0;
       gates.forEach((g, i) => { g.hidden = !(v && isOpen(i)); g.classList.toggle('on', gk === i && here.length > 0); }); hint.hidden = !nearRipe;
       if (!rb) rb = mkRb(); /* ROWBOX는 아래에서 정해지므로 처음 돌 때 만든다 */
-      rb.forEach(row => row.forEach(b => { const on = b.k === gk && here.includes(b.i); if (b.e.hidden === on) b.e.hidden = !on; if (on) { b.g.style.width = (Math.min(1, (prog[b.key] || 0) / STEAL_SEC) * 100).toFixed(1) + '%'; b.e.classList.toggle('danger', seen); b.e.classList.toggle('held', heldKey === b.key); } else if (heldKey === b.key) heldKey = null; }));
-      tip.hidden = !here.length; if (here.length) { tip.textContent = seen ? '👀 관리인이 보고 있어요! 손 떼요!' : '🤫 이랑 위 서리 버튼을 꾹 · 관리인이 등 돌렸을 때만'; tip.classList.toggle('danger', seen); }
+      rb.forEach(row => row.forEach(b => { const on = b.k === gk && here.includes(b.i); if (b.e.hidden === on) b.e.hidden = !on; if (on) { b.e.style.setProperty('--p', (Math.min(1, (prog[b.key] || 0) / STEAL_SEC) * 100).toFixed(1)); b.e.classList.toggle('danger', seen); b.e.classList.toggle('held', heldKey === b.key); } else if (heldKey === b.key) heldKey = null; }));
+      tip.hidden = !here.length; if (here.length) { tip.textContent = seen ? '👀 관리인이 보고 있어요! 손 떼요!' : '🤫 이랑 위 동그란 서리 버튼을 꾹 · 관리인이 등 돌렸을 때만'; tip.classList.toggle('danger', seen); }
       quickEl.style.display = v && (here.length || nearRipe) ? 'none' : ''; /* 문 앞에서는 물 주기·스프링클러 버튼 대신 서리만 */
       const holding = !!(v && tg && !busy && !paused && !walking); if (holding !== kp.back && !sc) { kp.back = holding; clearTimeout(heldUse); heldUse = 0; heldK = 'hoe'; heldBack = holding; drawHeld(); } /* 서리하는 동안은 밭 쪽으로 돌아선다(뒷모습) */ vig.style.opacity = holding ? (0.25 + f * 0.55).toFixed(2) : 0;
       if (holding) { if (seen) { if ((kp.grace += dt) > 0.12) { kp.grace = 0; bust(tg); return; } } else { kp.grace = 0; prog[tg.key] = (prog[tg.key] || 0) + dt; if ((kp.beat -= dt) <= 0) { kp.beat = 0.62 - f * 0.4; sfx('tock'); } if (prog[tg.key] >= STEAL_SEC) { success(tg); return; } } } else kp.grace = 0;
