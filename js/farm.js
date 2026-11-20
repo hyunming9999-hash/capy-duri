@@ -164,12 +164,17 @@ export function openFarm(o) {
     // 아래 가운데 조작부: [🤫 서리하기] → 이랑 고르기(1·2·3번) → 고른 이랑의 게이지 버튼(꾹 누르기)
     let meB = null, chosen = null, pressing = false, mode = 'idle', sig = '', gaugeEl = null, holdEl = null, tipEl = null; const ctl = h('div', { class: 'fm-stctl', hidden: true });
     const heldKeyOf = () => (pressing ? chosen : null);
+    // 감귤 던지기: 관리인이 2초 동안 등 돌리고 감귤을 먹는다. 다 먹으면 그냥 순찰로 돌아간다. 먹는 2초가 끝나야 다음 감귤을 던질 수 있다
+    const tangN = h('small'), tangB = h('button', { class: 'fm-tang', hidden: true, onClick: throwTang }, h('b', null, '🍊'), tangN);
+    async function throwTang() { if (busy || kp.mode === 'bust' || kp.mode === 'eat' || kp.fly) return; if (!o.keeper.tang || o.keeper.tang() <= 0) return toast('감귤이 없어요. 친목회의 토끼에게서 살 수 있어요 (개당 100코인 · 하루 3개)', 2600);
+      kp.fly = true; await o.keeper.useTang(); sfx('pop'); const f = h('i', { class: 'fm-tfly', style: { left: me.x + 'px' } }, '🍊'); world.append(f); void f.offsetWidth; f.style.left = kp.x + 'px'; f.classList.add('go');
+      setTimeout(() => { f.remove(); kp.fly = false; if (!alive || kp.mode === 'bust') return; kp.mode = 'eat'; kp.t = 2; kp.face = -(Math.sign(me.x - kp.x) || 1); pose('walk'); say('🍊 오! 감귤이다~ 냠냠…', 1900); }, 420); }
     function drawCtl(k, here) { const t = now(), rows = k >= 0 ? rowsOf(k) : []; gaugeEl = holdEl = tipEl = null;
       if (mode === 'pick') return rc(ctl, h('div', { class: 'fm-stpick' }, ...[0, 1, 2].map(i => { const ok = here.includes(i), r = rows[i], c = r && r.c ? cropOf(r.c) : null; // 이랑은 가운데 자리에서 바로 고른다(스크롤 없이)
         return h('button', { class: 'fm-stp' + (ok ? '' : ' off'), disabled: !ok, onClick: () => { chosen = k + '|' + i; mode = 'hold'; sfx('pop'); } }, c && live(r) ? h('img', { src: cropImg(c.id), alt: '' }) : h('span', null, '–'), h('b', null, `${i + 1}번 이랑`), h('small', null, ok ? c.name : live(r) ? '덜 익음' : '빈 이랑')); })),
         h('button', { class: 'fm-stback', onClick: () => { mode = 'idle'; } }, '취소'));
       if (mode === 'hold' && chosen) { const i = +chosen.split('|')[1]; gaugeEl = h('i'); tipEl = h('small');
-        holdEl = h('button', { class: 'fm-steal' }, h('b', null, `🤫 ${i + 1}번 이랑 서리`), tipEl, h('span', { class: 'fm-stg' }, gaugeEl)); holdBtn(holdEl, () => { pressing = true; }, () => { pressing = false; });
+        holdEl = h('button', { class: 'fm-steal' }, h('b', null, `🤫 ${i + 1}번 이랑`), tipEl, h('span', { class: 'fm-stg' }, gaugeEl)); holdBtn(holdEl, () => { pressing = true; }, () => { pressing = false; });
         drawSheet(); return rc(ctl, holdEl, h('button', { class: 'fm-stback', onClick: () => { pressing = false; mode = 'pick'; } }, '이랑', h('br'), '바꾸기')); }
       drawSheet(); rc(ctl, h('button', { class: 'fm-steal start', onClick: () => { mode = 'pick'; sfx('pop'); } }, h('b', null, '🤫 서리하기'), h('small', null, `익은 이랑 ${here.length}줄 · 눌러서 이랑 고르기`))); }
     const vig = h('div', { class: 'fm-vig' }); scene.append(vig);
@@ -210,8 +215,9 @@ export function openFarm(o) {
       const walking = meEl.classList.contains('walk'), gk = v && !busy && !walking ? atGate() : -1, here = ripeAt(gk), nearRipe = v && !busy && !walking && gk < 0 && ripeAt(pk).length > 0;
       gates.forEach((g, i) => { g.hidden = !(v && isOpen(i)); g.classList.toggle('on', gk === i && here.length > 0); }); hint.hidden = !nearRipe;
       if (chosen) { const [ck, ci] = chosen.split('|').map(Number); if (ck !== gk || !here.includes(ci)) { chosen = null; pressing = false; if (mode === 'hold') mode = here.length ? 'pick' : 'idle'; } } if (!here.length) { mode = 'idle'; pressing = false; }
+      tangB.hidden = !here.length || !o.keeper.tang; if (!tangB.hidden) { const tn = o.keeper.tang(); tangN.textContent = '×' + tn; tangB.classList.toggle('off', tn <= 0); }
       ctl.hidden = !here.length; sheet.style.display = here.length ? 'none' : ''; /* 서리할 때는 아래 밭 카드가 필요 없다 */ if (here.length) { const sg = `${mode}|${chosen}|${gk}|${here.join('')}`; if (sg !== sig) { sig = sg; drawCtl(gk, here); }
-        if (holdEl) { gaugeEl.style.width = (Math.min(1, (prog[chosen] || 0) / STEAL_SEC) * 100).toFixed(1) + '%'; holdEl.classList.toggle('danger', seen); tipEl.textContent = seen ? '👀 보고 있어요! 손 떼요!' : '꾹 누르기 · 등 돌렸을 때만'; } } else sig = '';
+        if (holdEl) { gaugeEl.style.width = (Math.min(1, (prog[chosen] || 0) / STEAL_SEC) * 100).toFixed(1) + '%'; holdEl.classList.toggle('danger', seen); tipEl.textContent = seen ? '👀 보고 있어요! 손 떼요' : '등 돌렸을 때 꾹!'; } } else sig = '';
       quickEl.style.display = v && (here.length || nearRipe) ? 'none' : ''; /* 문 앞에서는 물 주기·스프링클러 버튼 대신 서리만 */
       const holding = !!(v && tg && !busy && !paused && !walking); if (!sc) { if (!meB) { meB = h('div', { class: 'fm-me turned fm-meb', html: holdSvg(meSvg(true), 'hoe', tool()) }); meB.style.opacity = 0; world.append(meB); } meB.style.left = me.x + 'px'; if (holding !== kp.back) { kp.back = holding; meB.style.opacity = holding ? 1 : 0; meEl.style.opacity = holding ? 0 : 1; } } /* 서리하는 동안은 밭 쪽으로 돌아선다: 미리 그려 둔 뒷모습 겹을 보여 주기만 해서 깜빡이지 않는다 */ vig.style.opacity = holding ? (0.25 + f * 0.55).toFixed(2) : 0;
       if (holding) { if (seen) { if ((kp.grace += dt) > 0.12) { kp.grace = 0; bust(tg); return; } } else { kp.grace = 0; prog[tg.key] = (prog[tg.key] || 0) + dt; if ((kp.beat -= dt) <= 0) { kp.beat = 0.62 - f * 0.4; sfx('tock'); } if (prog[tg.key] >= STEAL_SEC) { success(tg); return; } } } else kp.grace = 0;
@@ -222,18 +228,19 @@ export function openFarm(o) {
           else if (kp.face !== toMe) { kp.mode = 'hum'; kp.t = 0.85 - f * 0.37; say('흠…', kp.t * 1000 + 150); kp.next = (4.2 + Math.random() * 3.6) * (1 - 0.62 * f); } // 등지고 걷다가 문득 멈춘다(게이지가 찰수록 자주·짧게)
           else kp.next = 0.6; } }
       else if (kp.mode === 'talk') { if ((kp.t -= dt) <= 0) { kp.mode = 'walk'; pose('walk'); } }
-      else if (kp.mode === 'hum') { if ((kp.t -= dt) <= 0) { if (Math.random() < 0.7 + 0.15 * f) { kp.mode = 'look'; kp.t = 1.15; kp.face = toMe; say('❗', 1000); el.classList.remove('snap'); void el.offsetWidth; el.classList.add('snap'); } else { kp.mode = 'fake'; kp.t = 1.0; say('배고파..', 1100); } } }
+      else if (kp.mode === 'eat') { if ((kp.t -= dt) <= 0) { kp.mode = 'walk'; kp.next = Math.max(kp.next, 1.5); say('잘 먹었다~', 900); } }
+      else if (kp.mode === 'hum') { if ((kp.t -= dt) <= 0) { const fc = kp.force; kp.force = false; if (fc || Math.random() < 0.7 + 0.15 * f) { kp.mode = 'look'; kp.t = 1.15; kp.face = toMe; say('❗', 1000); el.classList.remove('snap'); void el.offsetWidth; el.classList.add('snap'); } else { kp.mode = 'fake'; kp.t = 1.0; say('배고파..', 1100); } } }
       else if (kp.mode === 'look') { if ((kp.t -= dt) <= 0) { kp.mode = 'walk'; kp.face = -toMe; } } // 다시 등 돌리고 순찰
       else if (kp.mode === 'fake') { if ((kp.t -= dt) <= 0) kp.mode = 'walk'; }
-      el.style.left = kp.x + 'px'; el.classList.toggle('left', kp.face < 0); el.classList.toggle('walk', kp.mode === 'walk' && !paused && !(kp.rest > 0)); }
+      el.style.left = kp.x + 'px'; el.classList.toggle('left', kp.face < 0); el.classList.toggle('walk', kp.mode === 'walk' && !paused && !(kp.rest > 0)); el.classList.toggle('eat', kp.mode === 'eat'); }
     // 이랑 고르기: 아래 밭 카드 자리에 1·2·3번 이랑을 크게 띄운다
     const pickView = () => { if (mode !== 'pick' || !visit()) return false; const k = atGate(), here = ripeAt(k), rows = k >= 0 ? rowsOf(k) : []; if (!here.length) return false;
       rc(sheet, h('div', { class: 'fm-ohead' }, h('b', null, `🤫 ${k + 1}번 밭 · 서리할 이랑 고르기`)), h('div', { class: 'fm-stpick' }, ...[0, 1, 2].map(i => { const ok = here.includes(i), r = rows[i], c = r && r.c ? cropOf(r.c) : null;
         return h('button', { class: 'fm-stp' + (ok ? '' : ' off'), disabled: !ok, onClick: () => { chosen = k + '|' + i; mode = 'hold'; sfx('pop'); } }, h('i', null, i + 1), c && live(r) ? h('img', { src: cropImg(c.id), alt: '' }) : h('span', null, '–'), h('b', null, `${i + 1}번 이랑`), h('small', null, ok ? `${c.name} · 다 익음` : live(r) ? '덜 익음' : '빈 이랑')); })),
         h('p', { class: 'dim fm-tip' }, '고르면 가운데 버튼이 서리 게이지로 바뀌어요. 관리인이 등 돌렸을 때 꾹!')); return true; };
-    return { tick, ctl, hint, pickView, greet: () => h('div', { class: 'fm-kpg' }, h('img', { src: 'img/farm/kp-front.webp', alt: '관리인' }), h('p', null, h('b', null, '카피철물 관리인'), '어서 오세요! ', KP_SAY[0], h('small', null, KP_SAY[1]))) };
+    return { tick, ctl, hint, tangB, pickView, greet: () => h('div', { class: 'fm-kpg' }, h('img', { src: 'img/farm/kp-front.webp', alt: '관리인' }), h('p', null, h('b', null, '카피철물 관리인'), '어서 오세요! ', KP_SAY[0], h('small', null, KP_SAY[1]))) };
   })() : null;
-  if (KP) quickEl.after(KP.ctl, KP.hint);
+  if (KP) quickEl.after(KP.ctl, KP.tangB, KP.hint);
 
   const plotOf = k => (data.plots || {})[k] || null, isOpen = k => k < (data.open || 1), tool = () => mine.tool || 1;
   const myRef = () => 'farm/' + ctx.uid, curRef = () => 'farm/' + who;

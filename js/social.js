@@ -494,7 +494,8 @@ export function mount(el, ctx) {
   const farmKeeper = { gold: () => Object.keys(bag.rares || {}).filter(k => bag.rares[k] && ANIMALS[k]).map(k => ({ id: +k, name: rareName(+k) })),
     take: async it => { if (myRares().includes(it.id)) await wearRare(it.id); bag = { ...bag, rares: { ...(bag.rares || {}), [it.id]: null } }; await ctx.store.update('bag/' + ctx.uid + '/rares', { [it.id]: null }).catch(() => {}); },
     give: async it => { bag = { ...bag, rares: { ...(bag.rares || {}), [it.id]: true } }; await ctx.store.update('bag/' + ctx.uid + '/rares', { [it.id]: true }).catch(() => {}); },
-    value: i => Math.max(1, Math.round(RARE_BASE(i) / 2)), credit: n => addCoins(n) };
+    value: i => Math.max(1, Math.round(RARE_BASE(i) / 2)), credit: n => addCoins(n),
+    tang: () => bag.tang || 0, useTang: async () => { const n = Math.max(0, (bag.tang || 0) - 1); bag = { ...bag, tang: n }; await ctx.store.update('bag/' + ctx.uid, { tang: n }).catch(() => {}); } };
   if (!trial) setTimeout(() => farmMail(ctx, farmKeeper), 4000); // 친목회에 들어오면 내 농장 소식(서리당함·합의금·담보 매각)을 받는다
   function farmTest(guard) { if (farmOpen || fishOpen || battle) return; farmOpen = true; fishOpen = true; keys.clear();
     const root = {}, subs = [], seg = k => k.split('/').filter(Boolean);
@@ -508,9 +509,9 @@ export function mount(el, ctx) {
     setP('farm/' + ctx.uid, { open: 2, tool: 2, sprkInv: 2, seeds: { lettuce: 3, cucumber: 3, corn: 2 },
       plots: { 0: { rows: { 0: row('cucumber', 40 * M, 15 * M, -2 * M), 1: row('corn', 30 * M, 5 * M, -M), 2: row('scallion', 90 * M, 30 * M, 20 * M) } }, 1: { rows: { 0: row('tomato', 40 * M, 10 * M, -3 * M) } } } });
     // 관리인·서리 시험판(?guardtest): 연습용 이웃 농장에 다 익은 이랑을 채워 두고 그 농장에서 시작한다. 돈 2,500 → 두 번 걸리면 세 번째는 황금 장비 담보
-    let keeper = null; if (guard) { coins = 2500; const ripeRow = c => row(c, 20 * M, 60 * M, 9e9), PAL = 'guard-pal'; let gold = [{ id: 'g1', name: '황금 왕관(연습)' }], pawn = null;
+    let keeper = null, tangN = 3; if (guard) { coins = 2500; const ripeRow = c => row(c, 20 * M, 60 * M, 9e9), PAL = 'guard-pal'; let gold = [{ id: 'g1', name: '황금 왕관(연습)' }], pawn = null;
       setP('farm/' + PAL, { open: 3, tool: 2, plots: { 0: { rows: { 0: ripeRow('tomato'), 1: ripeRow('corn'), 2: ripeRow('cucumber') } }, 1: { rows: { 0: ripeRow('potato'), 1: ripeRow('carrot'), 2: row('scallion', 90 * M, 30 * M, 20 * M) } }, 2: { rows: { 0: ripeRow('lettuce'), 1: ripeRow('radish') } } } });
-      gold.push({ id: 'g2', name: '황금 망토(연습)' }); keeper = { pal: PAL, gold: () => gold, take: async it => { gold = gold.filter(x => x.id !== it.id); }, give: async it => { gold.push(it); }, value: () => 3000, credit: async n => { coins += n; } }; }
+      gold.push({ id: 'g2', name: '황금 망토(연습)' }); keeper = { pal: PAL, gold: () => gold, take: async it => { gold = gold.filter(x => x.id !== it.id); }, give: async it => { gold.push(it); }, value: () => 3000, credit: async n => { coins += n; }, tang: () => tangN, useTang: async () => { tangN = Math.max(0, tangN - 1); } }; }
     const tctx = Object.create(ctx, { store: { value: mem }, partnerId: { value: keeper ? keeper.pal : null }, coins: { value: () => coins }, spend: { value: async n => { if (coins < n) return false; coins -= n; return true; } }, nameOf: { value: u => (keeper && u === keeper.pal ? '이웃(연습)' : ctx.nameOf(u)) } });
     toast(guard ? '🧪 서리 시험판 · 관리인이 등 돌렸을 때 🤫 서리 버튼을 꾹! (진짜 농장·돈과 무관)' : '🧪 농장 체험판이에요 · 진짜 농장과 돈에는 영향이 없어요', guard ? 4200 : 2600);
     openFarm({ ctx: tctx, keeper, startVisit: !!keeper, scoot: () => (scoot ? scootHtml() : null), onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); } }); }
@@ -1036,7 +1037,11 @@ export function mount(el, ctx) {
       const v = A(i), ware = wareOf(i), disc = (bag.resold || {})[i] ? 1 : v >= 50 ? 0.5 : v >= 20 ? 0.75 : 1, wp = Math.round(priceOf(ware.id) * disc), hasPin = (bag.pins || {})[i];
       if (v < 0) return say('너한텐 아무것도 안 팔아. 저리 가!', 'angry');
       const row = (ic, nm, sub, price, owned, fn) => h('button', { class: 'so-row' + (typeof ic === 'string' ? '' : ' big'), disabled: owned, onClick: fn }, typeof ic === 'string' ? h('span', null, ic) : ic, h('b', null, nm), h('small', null, owned ? '이미 갖고 있어요' : `${won(price)} · ${sub}`));
-      const cl = modal({ title: `🤝 ${a.name}와 거래`, body: h('div', { class: 'so-list' },
+      // 감귤: 토끼만 판다. 개당 100코인, 하루 3개까지. 서리할 때 관리인에게 던지면 2초 동안 등 돌리고 먹는다
+      const tangRow = () => { const TP = 100, sm = h('small'), cnt = () => { const tb = bag.tangBuy && bag.tangBuy.d === ymd() ? bag.tangBuy.n || 0 : 0; return tb; }, put = () => { sm.textContent = `${won(TP)} · 오늘 ${cnt()}/3개 샀어요 · 가진 감귤 ${bag.tang || 0}개`; }; put();
+        return h('button', { class: 'so-row big', onClick: async () => { if (cnt() >= 3) return toast('감귤은 하루에 3개까지만 팔아요. 내일 또 오세요!'); if (!(await ctx.spend(TP))) return; const tb = { d: ymd(), n: cnt() + 1 }, n = (bag.tang || 0) + 1; bag = { ...bag, tang: n, tangBuy: tb }; await ctx.store.update('bag/' + ctx.uid, { tang: n, tangBuy: tb }).catch(() => {}); sfx('coin'); put(); toast('🍊 감귤을 샀어요! 서리할 때 관리인에게 던져 보세요', 2200); say('친척이 감귤 농사를 짓거든. 너무너무 많이 줘서 다 먹기 힘들어… 사 줘서 고마워!'); } },
+          h('span', null, '🍊'), h('b', null, '감귤 · 친척이 감귤 농사를 짓는데 너무 많이 줘서 팔아요'), sm); };
+      const cl = modal({ title: `🤝 ${a.name}와 거래`, body: h('div', { class: 'so-list' }, a.name === '토끼' && tangRow(),
         row(p.pin, `${a.name}의 상징 액세서리`, v >= 10 ? '친해지면(50점) 그냥 줘요' : '아는 사이(10점)부터 팔아요', PIN_PRICE(i), hasPin, async () => { if (v < 10) return toast('아직 그 정도로 친하지 않대요'); if (!(await ctx.spend(PIN_PRICE(i)))) return; await ctx.store.update('bag/' + ctx.uid + '/pins', { [i]: true }).catch(() => {}); bag = { ...bag, pins: { ...(bag.pins || {}), [i]: true } }; await setRel(i, { got: true }); await wearPin(i); cl(); say(`자, ${p.pin} 여기. 내가 달아 줬어, 잘 달고 다녀!`, 'glad'); }),
         h('button', { class: 'so-row big rare' + (v >= RARE_AT ? ' open' : ''), disabled: !!(bag.rares || {})[i], onClick: async () => { if (v < RARE_AT) return toast(`단짝(${RARE_AT}점)이 되어야 열려요. 지금 ${v}점`); if (!(await ctx.spend(rarePrice(i)))) return; bag = { ...bag, rares: { ...(bag.rares || {}), [i]: true } }; await ctx.store.update('bag/' + ctx.uid + '/rares', { [i]: true }).catch(() => {}); await wearRare(i); cl(); goldGet(i); say('이건 단짝한테만 주는 내 보물이야. 네가 걸치니까 눈이 부셔!', 'gift'); } },
           h('span', { class: 'so-try', html: capy({ color: ctx.me.color, acc: 'none', face: 'happy', rare: rareOf(i) }) }), h('b', null, `✨ 초레어 · ${rareName(i)}`), h('small', null, (bag.rares || {})[i] ? '이미 갖고 있어요' : v >= RARE_AT ? `${won(rarePrice(i))}${(mine[i] || {}).x2 ? ' (까마귀 사건 뒤라 2배)' : ''} · 걸치면 모두가 칭찬해요` : `🔒 단짝(${RARE_AT}점)이 되면 열려요 · ${won(rarePrice(i))}`)),
