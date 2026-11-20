@@ -1,7 +1,7 @@
 import { $, h, toast, modal, ask, ymd, dayDiff, niceDate, banner, josa } from './ui.js';
 import { openStore, isMock, setErrorHandler } from './store.js';
 import { capy, capyEl, COLORS, ACCS } from './capy.js';
-import { openArcade, fromArcade, leaveArcade } from './arcade.js';
+import { openArcade, fromArcade, leaveArcade, bindCredit } from './arcade.js';
 import { enablePush, sendPush } from './push.js';
 import * as day from './day.js';
 import * as wear from './wear.js';
@@ -49,7 +49,7 @@ Object.defineProperties(ctx, {
   partner: { get() { return ctx.members[ctx.partnerId] || null; } },
 });
 ctx.go = r => { location.hash = r; };
-ctx.openArcade = () => openArcade(ctx, GAMES); // 친목회 오락실 건물(시험판)
+ctx.openArcade = () => openArcade(ctx, GAMES); bindCredit(ctx, GAMES); // 친목회 카피오락 건물 · 동전(크레딧)
 ctx.nameOf = uid => (ctx.members[uid] || {}).name || '카피';
 // 황금 장비 입어 보기 링크(?goldtest 또는 ?goldtest=10,3,17): 내 화면에서만 입혀 보고 저장하지 않는다
 const GOLD_TEST = (() => { try { const v = new URLSearchParams(location.search).get('goldtest'); if (v == null) return null; const l = v.split(',').filter(x => x.trim() !== '').map(Number).filter(n => Number.isInteger(n) && n >= 0); return l.length ? l : [10, 3, 17, 2, 0, 9, 18, 12]; } catch { return null; } })();
@@ -215,6 +215,7 @@ const DAY = 86400000, PATCH = [
   { at: '2026-11-20T09:00:00+09:00', head: '😊 표정 고르기 · 새 카피바라', sub: '11/20 업데이트 ①', img: 'img/patch-face.webp', li: [
     ['😊', '표정 고르기', '옷놀이의 😊 표정 버튼 · 내 카피바라 바꾸기에서 10가지 중 선택'],
     ['🧸', '새 카피바라', '머리는 크게 · 몸은 작게 · 옷과 황금 장비도 새 몸에 맞춤'],
+    ['🕹️', '카피오락', '친목회 수족관 옆 건물 · 게임 시작할 때 50코인 넣기 · 이기면 그대로 한 판 더'],
     ['⛵', '둘이 배 타기', '둘 다 배 안쪽에 나란히 앉아요']] },
   { at: '2026-11-20T09:00:00+09:00', head: '🎁 교환 · 방명록 · 스프링클러', sub: '11/20 업데이트 ②', img: 'img/patch-1120.webp', li: [
     ['🎁', '1:1 교환', '친목회 🎁 교환 · 가방 안 무엇이든 1개씩 · 둘 다 동의'],

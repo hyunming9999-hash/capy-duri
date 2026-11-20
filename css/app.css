@@ -2415,7 +2415,7 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 
 /* 🕹️ 카피 오락실(시험판) */
 .so-arcade { aspect-ratio: 600 / 600; }
-.so-arcade b { top: 12.5%; height: 18%; font-size: 13cqw; color: #FFF7E6; text-shadow: 0 2px 0 #7A4416, 0 0 6px rgba(90, 40, 0, .5); }
+.so-arcade b { left: 9%; right: 9%; top: 14.5%; height: 19.5%; font-size: 18.5cqw; letter-spacing: 1px; color: #FFF; text-shadow: 0 0 4px #FF6BD6, 0 0 10px #FF3DBE, 0 0 16px #35E0FF, 0 2px 0 #7A1E8C; }
 .arc-tip { margin: 0 0 8px; text-align: center; color: #8A6A44; font-weight: 800; font-size: 13px; }
 .arc-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; } .arc-list .arc-tip { grid-column: 1 / -1; }
 .arc-card { border: 0; border-radius: 16px; background: #FFF3DC; box-shadow: 0 3px 0 #E3C9A0; outline: 1.5px dashed #E0BF8C; outline-offset: -4px; padding: 8px 4px 9px; display: flex; flex-direction: column; align-items: center; gap: 2px; }

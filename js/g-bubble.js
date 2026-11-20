@@ -212,7 +212,7 @@ export function mount(el, ctx) {
   function result() {
     const o = them(), vs = S.kind === 'vs', st = S.kind === 'stage', my = G ? G.score : 0, key = `${S.diff}-${ctx.uid}`, prev = best[key], won = vs && o ? !(G && G.over) : null, clr = st && G && G.clear;
     if (fxDone !== S.id) { fxDone = S.id; sfx(won === false || (st && !clr) ? 'lose' : 'win');
-      if (st) { if (clr) { const pay = PAY.bubbleStage(S.stage); ctx.earn(pay, '카피 버블', [`${S.stage}단계 클리어 보상 ${pay}코인${S.stage >= 15 ? ' (고난도)' : ''}`]); if (S.stage > cleared()) ctx.store.set(`games/bubbleStage/${ctx.uid}`, S.stage).catch(() => {}); gameFx('win', `${S.stage}단계 클리어!`); }
+      if (st) { if (clr) { const pay = PAY.bubbleStage(S.stage); ctx.earn(pay, '카피 버블', [`${S.stage}단계 클리어 보상 ${pay}코인${S.stage >= 15 ? ' (고난도)' : ''}`], { keep: true }); if (S.stage > cleared()) ctx.store.set(`games/bubbleStage/${ctx.uid}`, S.stage).catch(() => {}); gameFx('win', `${S.stage}단계 클리어!`); }
         else gameFx('lose', `${S.stage}단계 실패`); }
       else { const pay = PAY.bubble(my, S.diff), bl = [`${LEVELS[S.diff].name} 단계: 내 점수 ${my}점 → ${pay}코인`];
         if (vs && o) { ctx.earnMatch(pay + (won ? 120 : 0), '카피 버블', won ? [...bl, '승리 보너스 +120코인'] : bl, won ? 'win' : 'lose', 'bubble', true); gameFx(won ? 'win' : 'lose', `${my.toLocaleString()} : ${(o.s || 0).toLocaleString()}`); }

@@ -21,19 +21,21 @@ const BUBBLE_PAY = { e: { base: 40, per: 5, max: 800 }, m: { base: 60, per: 3.5,
 // 게임 결과 → 돈
 export const PAY = { burger: s => Math.floor(Math.max(0, s) / 2), bubble: (s, d) => { const t = BUBBLE_PAY[d] || BUBBLE_PAY.e; return Math.min(t.max, t.base + Math.floor(Math.max(0, s) / (t.per * 2))); }, bubbleStage: n => Math.round((120 + n * 20) * (n >= 15 ? 1.5 : 1)), tetris: (s, d) => { const t = TETRIS_PAY[d] || TETRIS_PAY.e; return Math.min(t.max, t.base + Math.floor(Math.max(0, s) / t.per)); }, yuzu: s => Math.max(0, s) * 8, board: r => ({ win: 200, draw: 100, lose: 60, solo: 40 })[r] || 0, volley: w => (w ? 200 : 60), mahjong: s => Math.floor(Math.max(0, s) * 4 / 3) };
 
-export const ENTRY = 50; // 게임 참가비: 한 판 끝날 때마다 50코인(정산에서 뺀다). 50코인이 없으면 게임에 못 들어간다
+export const ENTRY = 50; // 게임 참가비: 시작할 때 50코인을 동전으로 넣는다(바로 빠진다). 이기거나 비기면 그대로 한 판 더, 지면 다시 넣는다
 export const STREAK_X = [1, 1.5, 1.8, 2.3]; // 연승 배율(4연승까지)
 export function setupMoney(ctx, onChange) {
   ctx.money = {}; ctx.owned = {};
   ctx.coins = (u = ctx.uid) => ((ctx.money[u] || {}).c) || 0;
   ctx.owns = id => !id || FREE.has(id) || !!((ctx.owned[ctx.uid] || {})[id]);
   // 게임이 끝나면: 점수가 얼마로 환산됐고 얼마가 쌓였는지 카드로 보여 준다. lines = 환산 내역(글 줄들)
-  ctx.earn = (n, why, lines = [], opt = {}) => { n = Math.max(0, Math.round(n)); const fee = opt.fee === 0 ? 0 : ENTRY, lose0 = Math.max(0, Math.round(opt.lose || 0)), lose = lose0 + fee, bonus = Math.max(0, Math.round(opt.bonus || 0)), before = ctx.coins();
+  ctx.earn = (n, why, lines = [], opt = {}) => { n = Math.max(0, Math.round(n)); const fee = 0, lose0 = Math.max(0, Math.round(opt.lose || 0)), lose = lose0 + fee, bonus = Math.max(0, Math.round(opt.bonus || 0)), before = ctx.coins();
     const show = after => { document.querySelectorAll('.earn-card').forEach(e => e.remove());
       const sum = n > 0 || lose || bonus ? [n > 0 && `+${n.toLocaleString('ko-KR')}코인`, bonus && `내기 +${bonus.toLocaleString('ko-KR')}코인`, lose0 && `-${lose0.toLocaleString('ko-KR')}코인`, fee && `참가비 -${fee}코인`].filter(Boolean).join(' ') : '이번 판은 적립 없음';
       const stop = opt.stop && h('button', { class: 'btn sm primary', onClick: e => { e.stopPropagation(); ctx.stopStreak(opt.stop); card.remove(); } }, '💰 연승 그만하고 챙기기');
       const card = h('div', { class: 'earn-card' + (lose0 ? ' lost' : opt.stop ? ' hot' : ''), onClick: () => card.remove() }, h('b', null, `🪙 ${why || '게임'} 정산`), ...lines.map(t => h('p', null, t)), h('p', { class: 'sum' }, sum), stop, h('small', null, `내 돈 ${before.toLocaleString('ko-KR')} → ${after.toLocaleString('ko-KR')}코인 · 누르면 닫혀요`));
-      document.body.append(card); setTimeout(() => card.remove(), opt.stop || lose0 ? 11000 : 7000); };
+      document.body.append(card); setTimeout(() => card.remove(), opt.stop || lose0 ? 11000 : 7000);
+      // 동전(크레딧): 이기거나 비기면 그대로 한 판 더, 지거나 기록 판이 끝나면 다 쓴 것 → 다시 넣어야 이어 할 수 있다
+      if (opt.res !== 'win' && opt.res !== 'draw' && !opt.keep) ctx.useCredit && ctx.useCredit(); };
     if (!(n > 0) && !lose && !bonus) { show(before); return Promise.resolve(0); }
     let after = before;
     return ctx.store.tx('money/' + ctx.uid, c => { const have = (c && c.c) || 0; after = Math.max(0, have + n + bonus - lose); return { ...(c || {}), c: after, total: ((c && c.total) || 0) + n }; }).then(() => { show(after); return n - lose; }).catch(() => 0); };
@@ -62,10 +64,10 @@ export function setupMoney(ctx, onChange) {
     if (res === 'win') { const n = s.n + 1, x = STREAK_X[n - 1], pay = Math.round(base * x), won = s.won + pay, done = n >= STREAK_X.length;
       setStreak(g, done ? null : { n, won });
       return ctx.earn(pay, why, [...lines, n > 1 ? `🔥 ${n}연승! ×${x} = ${pay}코인` : '🔥 1승! 다음 판부터 연승 보너스 ×1.5 → ×1.8 → ×2.3',
-        done ? '🏆 4연승 달성! 번 돈이 모두 확정됐어요. 다음 판부터 새로 시작해요' : `연승으로 번 돈 ${won}코인 · 다음 판에 지면 ${Math.round(won * 2 / 3)}코인을 잃어요${g === 'mahjong' || g === 'volley' || g === 'burger' ? ' · 컴퓨터도 더 강해져요' : ''}`], done ? { bonus } : { stop: g, bonus }); }
+        done ? '🏆 4연승 달성! 번 돈이 모두 확정됐어요. 다음 판부터 새로 시작해요' : `연승으로 번 돈 ${won}코인 · 다음 판에 지면 ${Math.round(won * 2 / 3)}코인을 잃어요${g === 'mahjong' || g === 'volley' || g === 'burger' ? ' · 컴퓨터도 더 강해져요' : ''}`], done ? { bonus, res } : { stop: g, bonus, res }); }
     if (res === 'lose' && s.n > 0) { const lose = Math.round(s.won * 2 / 3); setStreak(g, null);
-      return ctx.earn(base, why, [...lines, `💥 ${s.n}연승 끝! 연승으로 번 ${s.won}코인의 2/3를 잃었어요`], { lose, bonus }); }
-    return ctx.earn(base, why, lines, { bonus }); };
+      return ctx.earn(base, why, [...lines, `💥 ${s.n}연승 끝! 연승으로 번 ${s.won}코인의 2/3를 잃었어요`], { lose, bonus, res }); }
+    return ctx.earn(base, why, lines, { bonus, res }); };
   // 돈이 모자라면 false. 쓴 뒤에 무엇을 얻는지는 부르는 쪽에서 적는다
   ctx.spend = async n => { n = Math.round(n); if (n <= 0) return true; let ok = false;
     try { await ctx.store.tx('money/' + ctx.uid, c => { const have = (c && c.c) || 0; if (have < n) { ok = false; return undefined; } ok = true; return { ...(c || {}), c: have - n }; }); } catch { ok = false; }
