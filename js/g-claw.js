@@ -6,7 +6,7 @@ import { h, toast, modal, loadImg, gameFx } from './ui.js';
 import { sfx } from './sound.js';
 import { ANIMALS, animalSvg } from './animals.js';
 import { FLUFFY } from './fluffy.js';
-import { coinGate } from './arcade.js';
+import { coinGate, fromArcade } from './arcade.js';
 
 // 상자 안쪽: 가로 x -5~5, 깊이 z -4(뒤)~4(앞), 높이 y 0~9. 나오는 곳은 왼쪽 앞 모서리(바닥이 뚫려 있고 유리 칸막이로 둘러쌈)
 const BX = 5, BZ = 4, HOLE_X = -2.3, HOLE_Z = 1.3, WALL_H = 5.3, TOP = 7.95, REST = 6.6, N_DOLL = 40, PACK = 7, OUT = { x: -3.65, z: 2.65 }, HOME_Y = 7.45;
@@ -30,7 +30,7 @@ export function mount(el, ctx) {
   const rnd = (a, b) => a + Math.random() * (b - a);
   // ---- 가방의 인형·보장 묶음·남은 판
   const P = 'bag/' + ctx.uid;
-  const TEST = new URLSearchParams(location.search).has('clawtest'); // 연습 링크(?clawtest): 코인이 안 들고, 뽑은 인형과 차례도 저장하지 않는다
+  const TEST = new URLSearchParams(location.search).has('clawtest') && !fromArcade(); // 연습 링크(?clawtest): 코인이 안 들고, 뽑은 인형과 차례도 저장하지 않는다
   const drawTries = () => { tries.textContent = TEST ? '연습 중 · 무료' : `남은 판 ${plays}`; }; // 확률(묶음 몇 번째인지)은 화면에 보이지 않는다
   const setPlays = n => { if (TEST) { plays = 99; drawTries(); return Promise.resolve(); } plays = Math.max(0, n); drawTries(); return ctx.store.set(P + '/clawPlays', plays || null).catch(() => {}); };
   function gate(again) { if (TEST || document.querySelector('.arc-gate')) return; coinGate(ctx, me, n => setPlays(plays + n), null, again); } // 50코인 1판 · 150코인 3판 · 200코인 5판
@@ -217,6 +217,6 @@ export function mount(el, ctx) {
   const key = e => { if (e.repeat) return; const dn = e.type === 'keydown', K = { ArrowLeft: ['x', -1], ArrowRight: ['x', 1], ArrowUp: ['z', -1], ArrowDown: ['z', 1] }[e.key]; if (K) { e.preventDefault(); if (dn) dir[K[0]] = K[1]; else if (dir[K[0]] === K[1]) dir[K[0]] = 0; } else if (dn && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); drop(); } };
   addEventListener('keydown', key); addEventListener('keyup', key); addEventListener('resize', resize);
   if (new URLSearchParams(location.search).get('mock')) window.__claw = { claw, dolls, drop, force: () => { pity = { n: 0, k: 0 }; }, dump: () => dolls.map(d => [d.body.type, d.body.mass, +d.body.position.y.toFixed(2), +d.body.velocity.y.toFixed(2), d.body.sleepState, +d.body.invMass.toFixed(2)]), setPlays: n => setPlays(n), plays: () => plays, pos: () => dolls.map(d => [d.body.position.x, d.body.position.y, d.body.position.z]), state: () => ({ st: claw.st, lucky, grabTry, held: !!held, pity, n: dolls.length, mine, ready }) };
-  return () => { alive = false; cancelAnimationFrame(raf); removeEventListener('keydown', key); removeEventListener('keyup', key); removeEventListener('resize', resize); offs.forEach(f => f && f());
+  return () => { if (new URLSearchParams(location.search).has('clawtest')) { try { const u = new URL(location.href); u.searchParams.delete('clawtest'); history.replaceState(history.state, '', u); } catch {} } /* 연습 링크는 한 번 나가면 끝: 그 뒤로는 코인을 낸다 */ alive = false; cancelAnimationFrame(raf); removeEventListener('keydown', key); removeEventListener('keyup', key); removeEventListener('resize', resize); offs.forEach(f => f && f());
     try { if (renderer) { Object.values(matOf).forEach(m => m.dispose()); SPH && SPH.dispose(); CONE && CONE.dispose(); renderer.dispose(); } } catch (e) { /* 정리 실패는 무시 */ } };
 }
