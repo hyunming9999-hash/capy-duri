@@ -507,8 +507,8 @@ export function mount(el, ctx) {
     let coins = 5000; const t = Date.now(), M = 60000, row = (c, ms, ago, wetIn) => ({ c, at: t - ago, ms, wet: t + wetIn, calc: t - ago, dry: 0, wd: 0, weedAt: t + 9e9, cut: 0 });
     setP('farm/' + ctx.uid, { open: 2, tool: 2, sprkInv: 2, seeds: { lettuce: 3, cucumber: 3, corn: 2 },
       plots: { 0: { rows: { 0: row('cucumber', 40 * M, 15 * M, -2 * M), 1: row('corn', 30 * M, 5 * M, -M), 2: row('scallion', 90 * M, 30 * M, 20 * M) } }, 1: { rows: { 0: row('tomato', 40 * M, 10 * M, -3 * M) } } } });
-    // 관리인·서리 시험판(?guardtest): 연습용 이웃 농장에 다 익은 이랑을 채워 두고 그 농장에서 시작한다. 돈 4,500 → 두 번 걸리면 세 번째는 황금 장비 담보
-    let keeper = null; if (guard) { coins = 4500; const ripeRow = c => row(c, 20 * M, 60 * M, 9e9), PAL = 'guard-pal'; let gold = [{ id: 'g1', name: '황금 왕관(연습)' }], pawn = null;
+    // 관리인·서리 시험판(?guardtest): 연습용 이웃 농장에 다 익은 이랑을 채워 두고 그 농장에서 시작한다. 돈 2,500 → 두 번 걸리면 세 번째는 황금 장비 담보
+    let keeper = null; if (guard) { coins = 2500; const ripeRow = c => row(c, 20 * M, 60 * M, 9e9), PAL = 'guard-pal'; let gold = [{ id: 'g1', name: '황금 왕관(연습)' }], pawn = null;
       setP('farm/' + PAL, { open: 3, tool: 2, plots: { 0: { rows: { 0: ripeRow('tomato'), 1: ripeRow('corn'), 2: ripeRow('cucumber') } }, 1: { rows: { 0: ripeRow('potato'), 1: ripeRow('carrot'), 2: row('scallion', 90 * M, 30 * M, 20 * M) } }, 2: { rows: { 0: ripeRow('lettuce'), 1: ripeRow('radish') } } } });
       gold.push({ id: 'g2', name: '황금 망토(연습)' }); keeper = { pal: PAL, gold: () => gold, take: async it => { gold = gold.filter(x => x.id !== it.id); }, give: async it => { gold.push(it); }, value: () => 3000, credit: async n => { coins += n; } }; }
     const tctx = Object.create(ctx, { store: { value: mem }, partnerId: { value: keeper ? keeper.pal : null }, coins: { value: () => coins }, spend: { value: async n => { if (coins < n) return false; coins -= n; return true; } }, nameOf: { value: u => (keeper && u === keeper.pal ? '이웃(연습)' : ctx.nameOf(u)) } });

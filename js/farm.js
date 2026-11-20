@@ -83,7 +83,7 @@ const left = ms => { const m = Math.ceil(ms / 60000); return m >= 60 ? `${Math.f
 // ===== 서리 뒤처리(농장을 열 때·친목회에 들어올 때 한 번씩) =====
 // 우편함 farm/{주인}/inbox/{키} = { t: 'steal'|'fine'|'sale', by, n(받을 코인), k, i, c, name, at } — 주인이 접속했을 때 돈을 받고 알림을 본다
 // 담보 farm/{나}/pawn/{장비 번호} = { at, owner, name } — 하루가 지나면 팔리고, 판 값의 절반이 밭 주인에게 간다(나머지는 관리인)
-export const STEAL_FINE = 2000, PAWN_MS = 86400000, BAN_MS = 600000;
+export const STEAL_FINE = 1000, PAWN_MS = 86400000, BAN_MS = 600000;
 const mailTo = (ctx, owner, m) => ctx.store.set(`farm/${owner}/inbox/${ctx.store.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`, { ...m, by: ctx.uid, at: ctx.store.now() }).catch(() => {});
 let mailBusy = false;
 export async function farmMail(ctx, K) { if (mailBusy || !ctx.store.get) return; mailBusy = true;
