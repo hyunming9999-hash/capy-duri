@@ -124,8 +124,11 @@ const GIFT_N = { candy: '사탕', flower: '꽃다발', cake: '케이크' };
 
 // d = { ctx, names[i], svg(i), A(i), affinity(i,d), toned(i,t), coins(n), bag(), saveBag(patch), fish(), useFish(key), barn(), useCrops(map), cropName(id), onChange() }
 // 대사에 맞춰 동물 그림에 소품을 얹는다: "{표정+소품+h:🐟}" (h: = 손에 든 것). 모든 동물은 같은 틀(120×158, 눈 y41, 손 91,99)이라 한 자리에 얹으면 된다
+// 오이팩: 얼굴 팩 + 눈 위 오이 두 장 (가운데, 반지름, 눈 자리, 크기)
+const cukeSvg = (cx, cy, rx, ry, xs, ey, k) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#BDE59E" opacity=".78"/>` + xs.map(x => `<g transform="translate(${x} ${ey}) scale(${k})"><circle r="10" fill="#E3F7C8" stroke="#4E8A2E" stroke-width="3"/><circle r="6" fill="none" stroke="#9CCB6E" stroke-width="1.4"/>${[[-2, -2], [2, -1], [0, 2.4], [-2.6, 1.6], [2.6, 2]].map(([a, b]) => `<ellipse cx="${a}" cy="${b}" rx=".9" ry="1.4" fill="#7FB55A"/>`).join('')}</g>`).join('');
+const CUKE_FL = cukeSvg(55.4, 49.5, 30, 22, [33, 74], 50, 0.72); // 보송 그림체 돼지 얼굴에 맞춘 자리
 const PROP = {
-  cuke: '<ellipse cx="60" cy="52" rx="47" ry="31" fill="#BDE59E" opacity=".78"/>' + [24, 96].map(x => `<circle cx="${x}" cy="41" r="10" fill="#E3F7C8" stroke="#4E8A2E" stroke-width="3"/><circle cx="${x}" cy="41" r="6" fill="none" stroke="#9CCB6E" stroke-width="1.4"/>${[[-2, -2], [2, -1], [0, 2.4], [-2.6, 1.6], [2.6, 2]].map(([a, b]) => `<ellipse cx="${x + a}" cy="${41 + b}" rx=".9" ry="1.4" fill="#7FB55A"/>`).join('')}`).join(''),
+  cuke: cukeSvg(60, 52, 47, 31, [24, 96], 41, 1),
   mud: '<path d="M18 60 q6 -6 12 0 q4 6 -3 8 q-8 2 -9 -8z M86 24 q7 -4 11 2 q2 6 -6 6 q-7 -1 -5 -8z M38 126 q8 -8 16 0 q2 6 -8 6 q-10 0 -8 -6z M70 128 q8 -6 14 0 q0 6 -8 5 q-8 -1 -6 -5z" fill="#7A5230" opacity=".85"/><circle cx="34" cy="70" r="2" fill="#7A5230"/><circle cx="92" cy="34" r="1.8" fill="#7A5230"/>',
   flower: [[20, 18, '#FF8FB1'], [33, 10, '#FFD45E'], [47, 6, '#FFFFFF'], [60, 5, '#FF8FB1'], [73, 6, '#B79CFF'], [87, 10, '#FFD45E'], [100, 18, '#FFFFFF']].map(([x, y, c]) => `<g transform="translate(${x} ${y})">${[0, 72, 144, 216, 288].map(r => `<ellipse cx="0" cy="-5" rx="3.6" ry="5" fill="${c}" stroke="#E07A9A" stroke-width=".8" transform="rotate(${r})"/>`).join('')}<circle r="2.6" fill="#FFB020"/></g>`).join('') + '<path d="M14 22 Q60 -2 106 22" fill="none" stroke="#5FA846" stroke-width="2.4"/>',
   det: '<path d="M20 22 Q22 -6 60 -8 Q98 -6 100 22 Q60 12 20 22z" fill="#9B6A3E" stroke="#5A3A20" stroke-width="2"/><path d="M30 18 Q60 8 90 18 M38 2 v16 M60 -6 v16 M82 2 v16" stroke="#7A4E2C" stroke-width="1.6" fill="none" opacity=".7"/><path d="M14 24 Q60 10 106 24 Q102 30 90 28 Q60 20 30 28 Q18 30 14 24z" fill="#7A4E2C" stroke="#5A3A20" stroke-width="1.6"/><circle cx="60" cy="-9" r="3" fill="#5A3A20"/>',
@@ -140,7 +143,7 @@ const PROP = {
 export function propSvg(svg, props) { if (!props || !props.length) return svg; const fur = (svg.match(/<rect x="31" y="76" width="58" height="50" rx="24" fill="([^"]+)"/) || [])[1] || '#ccc';
   const hold = props.find(p => p.startsWith('h:')), list = props.filter(p => !p.startsWith('h:'));
   const fl = svg.includes('<image'); // 보송 그림체: 머리가 더 아래·작게 있어서 꽃 왕관을 머리 위에 맞춰 얹는다
-  let add = list.map(p => (p === 'flower' && fl ? `<g transform="translate(8.5 10.5) scale(.77)">${PROP[p]}</g>` : PROP[p] || '')).join('');
+  let add = list.map(p => (p === 'flower' && fl ? `<g transform="translate(8.5 10.5) scale(.77)">${PROP[p]}</g>` : p === 'cuke' && fl ? CUKE_FL : PROP[p] || '')).join('');
   if (list.includes('det') && !hold) add += PROP.lens + `<ellipse cx="27" cy="108" rx="7.5" ry="6.5" fill="${fur}"/>`; // 탐정은 다른 손에 돋보기
   if (hold) add += `<text x="101" y="126" font-size="34" text-anchor="middle">${hold.slice(2)}</text><ellipse cx="91" cy="110" rx="7.5" ry="6.5" fill="${fur}"/>`;
   return svg.replace(/<\/svg>$/, add + '</svg>').replace('<svg ', '<svg style="overflow:visible" '); }
