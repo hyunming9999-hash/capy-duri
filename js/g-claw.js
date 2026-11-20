@@ -33,7 +33,7 @@ export function mount(el, ctx) {
   const TEST = new URLSearchParams(location.search).has('clawtest') && !fromArcade(); // 연습 링크(?clawtest): 코인이 안 들고, 뽑은 인형과 차례도 저장하지 않는다
   const drawTries = () => { tries.textContent = TEST ? '연습 중 · 무료' : `남은 판 ${plays}`; }; // 확률(묶음 몇 번째인지)은 화면에 보이지 않는다
   const setPlays = n => { if (TEST) { plays = 99; drawTries(); return Promise.resolve(); } plays = Math.max(0, n); drawTries(); return ctx.store.set(P + '/clawPlays', plays || null).catch(() => {}); };
-  function gate(again) { if (TEST || document.querySelector('.arc-gate')) return; coinGate(ctx, me, n => setPlays(plays + n), () => { if (alive && plays <= 0) outOfGame(ctx); }, again); /* 동전을 안 넣고 닫으면 게임에서 나간다 */ } // 50코인 1판 · 150코인 3판 · 200코인 5판
+  function gate(again) { if (TEST || document.querySelector('.arc-gate')) return; coinGate(ctx, me, n => setPlays(plays + n), () => { if (!(alive && plays <= 0)) return; const arc = fromArcade(); outOfGame(ctx); if (arc) setTimeout(() => { if (location.hash.startsWith('#social') && !document.querySelector('.arc-list')) ctx.openArcade && ctx.openArcade(); }, 700); }, again); /* 동전을 안 넣고 닫으면 게임 고르는 창으로 돌아간다 */ } // 50코인 1판 · 150코인 3판 · 200코인 5판
   const myDoll = () => (ctx.members[ctx.uid] || {}).doll;
   const wear = async i => { ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), doll: i }; await ctx.store.update('members/' + ctx.uid, { doll: i }).catch(() => {}); drawShelf(); toast(i == null ? '인형 배지를 뗐어요' : `${ANIMALS[i].name} 인형을 가슴에 달았어요`); };
   function drawShelf() { const list = Object.entries(mine).filter(([k, n]) => n > 0 && ANIMALS[k]).map(([k, n]) => [+k, n]), on = myDoll();
