@@ -139,7 +139,7 @@ export function openFarm(o) {
     const gates = plotEls.map((_, k) => { const g = h('i', { class: 'fm-gate', hidden: true, style: { left: plotX(k) + PW / 2 + 'px' } }, '🚪 출입구'); world.append(g); return g; }), GATE = PW * 0.1; // 서리는 밭 출입구(가운데 문 앞)에서만
     const hint = h('div', { class: 'fm-sthint', hidden: true }, '🚪 서리는 밭 출입구(문 앞)에서만 할 수 있어요');
     // 아래 가운데 조작부: [🤫 서리하기] → 이랑 고르기(1·2·3번) → 고른 이랑의 게이지 버튼(꾹 누르기)
-    let chosen = null, pressing = false, mode = 'idle', sig = '', gaugeEl = null, holdEl = null, tipEl = null; const ctl = h('div', { class: 'fm-stctl', hidden: true });
+    let meB = null, chosen = null, pressing = false, mode = 'idle', sig = '', gaugeEl = null, holdEl = null, tipEl = null; const ctl = h('div', { class: 'fm-stctl', hidden: true });
     const heldKeyOf = () => (pressing ? chosen : null);
     function drawCtl(k, here) { const t = now(), rows = k >= 0 ? rowsOf(k) : []; gaugeEl = holdEl = tipEl = null;
       if (mode === 'pick') return rc(ctl, h('div', { class: 'fm-stpick' }, ...[0, 1, 2].map(i => { const ok = here.includes(i), r = rows[i], c = r && r.c ? cropOf(r.c) : null; // 이랑은 가운데 자리에서 바로 고른다(스크롤 없이)
@@ -169,12 +169,16 @@ export function openFarm(o) {
     async function bust(tg) { busy = true; pressing = false; chosen = null; mode = 'idle'; kp.mode = 'bust'; kp.t = 0; if (tg) prog[tg.key] = 0; pose('catch'); kp.face = Math.sign(me.x - kp.x) || 1; say('삐이익—! 앗 서리도둑이다!', 2600); sfx('bad');
       const fx = h('div', { class: 'fm-bust' }, h('b', null, '🚨 앗 서리도둑이다!'), h('small', null, '관리인에게 딱 걸렸어요')); wrap.append(fx); wrap.classList.add('shake'); setTimeout(() => wrap.classList.remove('shake'), 600);
       await new Promise(r => setTimeout(r, 1700)); fx.remove(); if (!alive) return;
-      const have = ctx.coins(), owner = ctx.nameOf(who); let lines;
-      if (have >= FINE && await ctx.spend(FINE)) { o.keeper.fine && o.keeper.fine(who, FINE / 2); lines = [h('p', { class: 'fm-fine' }, `합의금 −${FINE.toLocaleString('ko-KR')}코인`), h('p', null, `${owner} ${(FINE / 2).toLocaleString('ko-KR')}코인 · 관리인 ${(FINE / 2).toLocaleString('ko-KR')}코인`)]; }
-      else { const gold = o.keeper.gold ? o.keeper.gold() : []; if (gold.length) { const it = gold[0]; o.keeper.pawn(it); lines = [h('p', { class: 'fm-fine' }, `돈이 모자라 황금 장비를 담보로 맡겼어요`), h('p', null, `「${it.name}」 · 하루 안에 카피철물에서 ${FINE.toLocaleString('ko-KR')}코인을 내고 찾아가세요. 못 찾으면 팔려요!`)]; }
-        else { if (have > 0) await ctx.spend(have); lines = [h('p', { class: 'fm-fine' }, `가진 돈 ${have.toLocaleString('ko-KR')}코인을 전부 냈어요`), h('p', null, '황금 장비도 없어서 주머니를 탈탈 털렸어요…')]; } }
-      modal({ title: '🚨 서리하다 걸렸어요', body: [h('div', { class: 'fm-bustm' }, h('img', { src: 'img/farm/kp-catch.webp', alt: '' }), h('div', null, ...lines, h('small', null, '농장 밖으로 쫓겨났어요. 내 농장으로 돌아갑니다.')))], actions: [{ label: '죄송합니다…', primary: true }], noX: true,
-        onClose: () => { busy = false; kp.mode = 'walk'; pose('walk'); if (who !== ctx.uid) { who = ctx.uid; sel = -1; listen(); } drawPlots(); } }); }
+      const have = ctx.coins(), owner = ctx.nameOf(who), gold = o.keeper.gold ? o.keeper.gold() : [], canPay = have >= FINE, canPawn = gold.length > 0, won = n => n.toLocaleString('ko-KR');
+      const out = () => { busy = false; kp.mode = 'walk'; pose('walk'); if (who !== ctx.uid) { who = ctx.uid; sel = -1; listen(); } drawPlots(); };
+      const done = lines => modal({ title: '🚨 서리하다 걸렸어요', body: [h('div', { class: 'fm-bustm' }, h('img', { src: 'img/farm/kp-catch.webp', alt: '' }), h('div', null, ...lines, h('small', null, '농장 밖으로 쫓겨났어요. 내 농장으로 돌아갑니다.')))], actions: [{ label: '죄송합니다…', primary: true }], noX: true, onClose: out });
+      if (!canPay && !canPawn) { if (have > 0) await ctx.spend(have); return done([h('p', { class: 'fm-fine' }, `가진 돈 ${won(have)}코인을 전부 냈어요`), h('p', null, '합의금도 모자라고 황금 장비도 없어서 주머니를 탈탈 털렸어요…')]); }
+      let picked = false, cl; const pay = async () => { if (picked) return; picked = true; cl(); if (await ctx.spend(FINE)) { o.keeper.fine && o.keeper.fine(who, FINE / 2); done([h('p', { class: 'fm-fine' }, `합의금 −${won(FINE)}코인`), h('p', null, `${owner} ${won(FINE / 2)}코인 · 관리인 ${won(FINE / 2)}코인`)]); } else out(); };
+      const pawn = () => { if (picked) return; picked = true; cl(); const it = gold[0]; o.keeper.pawn(it); done([h('p', { class: 'fm-fine' }, '황금 장비를 담보로 맡겼어요'), h('p', null, `「${it.name}」 · 하루 안에 카피철물에서 ${won(FINE)}코인을 내고 찾아가세요. 못 찾으면 팔려요!`)]); };
+      cl = modal({ title: '🚨 서리하다 걸렸어요', noX: true, body: [h('div', { class: 'fm-bustm' }, h('img', { src: 'img/farm/kp-catch.webp', alt: '' }), h('div', null, h('p', { class: 'fm-fine' }, '어떻게 해결할까요?'), h('p', null, `내 돈 ${won(have)}코인 · 황금 장비 ${gold.length}개`))),
+        h('button', { class: 'so-row big' + (canPay ? '' : ' off'), disabled: !canPay, onClick: pay }, h('span', null, '🪙'), h('b', null, `합의금 ${won(FINE)}코인 내기`), h('small', null, canPay ? `바로 끝나요 · ${owner} ${won(FINE / 2)} + 관리인 ${won(FINE / 2)}` : `돈이 모자라요 (${won(FINE - have)}코인 부족)`)),
+        h('button', { class: 'so-row big' + (canPawn ? '' : ' off'), disabled: !canPawn, onClick: pawn }, h('span', null, '👑'), h('b', null, '황금 장비 담보로 맡기기'), h('small', null, canPawn ? `「${gold[0].name}」을(를) 맡겨요 · 지금 돈은 안 내요` : '맡길 황금 장비가 없어요')),
+        h('p', { class: 'dim fm-pawnnote' }, `담보란? 합의금 대신 황금 장비 1개를 관리인에게 맡기는 거예요. 맡긴 장비는 그동안 쓸 수 없고, 하루(24시간) 안에 카피철물에서 ${won(FINE)}코인을 내면 되찾아요. 하루가 지나면 장비는 팔려서 영영 사라져요.`)], actions: [] }); }
     function tick(dt) { if (!alive) return; const v = visit(), tg = v ? target() : null, f = frac(), paused = !!document.querySelector('.modal-wrap');
       const pk = plotEls.findIndex((_, i) => Math.abs(me.x - (plotX(i) + PW / 2)) < PW / 2 + GAP), k = pk >= 0 ? pk : kp.k; kp.k = k; const lo = plotX(k) + PW * 0.04, hi = plotX(k) + PW * 0.96;
       const toMe = Math.sign(me.x - kp.x) || kp.face, seen = kp.face === toMe && (kp.mode === 'walk' || kp.mode === 'look');
@@ -184,7 +188,7 @@ export function openFarm(o) {
       ctl.hidden = !here.length; if (here.length) { const sg = `${mode}|${chosen}|${gk}|${here.join('')}`; if (sg !== sig) { sig = sg; drawCtl(gk, here); }
         if (holdEl) { gaugeEl.style.width = (Math.min(1, (prog[chosen] || 0) / STEAL_SEC) * 100).toFixed(1) + '%'; holdEl.classList.toggle('danger', seen); tipEl.textContent = seen ? '👀 보고 있어요! 손 떼요!' : '꾹 누르기 · 등 돌렸을 때만'; } } else sig = '';
       quickEl.style.display = v && (here.length || nearRipe) ? 'none' : ''; /* 문 앞에서는 물 주기·스프링클러 버튼 대신 서리만 */
-      const holding = !!(v && tg && !busy && !paused && !walking); if (holding !== kp.back && !sc) { kp.back = holding; clearTimeout(heldUse); heldUse = 0; heldK = 'hoe'; heldBack = holding; drawHeld(); } /* 서리하는 동안은 밭 쪽으로 돌아선다(뒷모습) */ vig.style.opacity = holding ? (0.25 + f * 0.55).toFixed(2) : 0;
+      const holding = !!(v && tg && !busy && !paused && !walking); if (!sc) { if (!meB) { meB = h('div', { class: 'fm-me turned fm-meb', html: holdSvg(meSvg(true), 'hoe', tool()) }); meB.style.opacity = 0; world.append(meB); } meB.style.left = me.x + 'px'; if (holding !== kp.back) { kp.back = holding; meB.style.opacity = holding ? 1 : 0; meEl.style.opacity = holding ? 0 : 1; } } /* 서리하는 동안은 밭 쪽으로 돌아선다: 미리 그려 둔 뒷모습 겹을 보여 주기만 해서 깜빡이지 않는다 */ vig.style.opacity = holding ? (0.25 + f * 0.55).toFixed(2) : 0;
       if (holding) { if (seen) { if ((kp.grace += dt) > 0.12) { kp.grace = 0; bust(tg); return; } } else { kp.grace = 0; prog[tg.key] = (prog[tg.key] || 0) + dt; if ((kp.beat -= dt) <= 0) { kp.beat = 0.62 - f * 0.4; sfx('tock'); } if (prog[tg.key] >= STEAL_SEC) { success(tg); return; } } } else kp.grace = 0;
       if (paused || kp.mode === 'bust') { /* 멈춤 */ }
       else if (kp.x < lo - 4 || kp.x > hi + 4) { kp.mode = 'walk'; pose('walk'); kp.face = kp.x < lo ? 1 : -1; kp.x += kp.face * 150 * dt; } // 내가 다른 밭으로 가면 뛰어서 따라온다

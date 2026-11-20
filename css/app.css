@@ -2577,3 +2577,5 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fm-stctl .fm-stpick { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
 .fm-stctl .fm-stp { padding: 4px 1px 5px; border-radius: 12px; min-width: 0; } .fm-stctl .fm-stp img { width: 24px; height: 24px; } .fm-stctl .fm-stp span { font-size: 16px; line-height: 24px; } .fm-stctl .fm-stp b { font-size: 11.5px; white-space: nowrap; } .fm-stctl .fm-stp small { font-size: 9.5px; white-space: nowrap; }
 .fm-stctl .fm-stback { min-width: 0; padding: 4px 6px; }
+
+.fm-meb { transition: none; } .fm-pawnnote { font-size: 12px; line-height: 1.5; margin: 8px 2px 0; text-align: left; } .fm-bustm + .so-row { margin-top: 10px; }
