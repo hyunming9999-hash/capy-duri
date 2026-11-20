@@ -2684,3 +2684,16 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fm-ui3 .fm-plist { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
 .fm-ui3 .fm-pc { flex-direction: column; gap: 3px; padding: 7px 2px 6px; border-radius: 14px; text-align: center; min-width: 0; }
 .fm-ui3 .fm-pslots, .fm-ui3 .fm-pqs { display: none; } .fm-ui3 .fm-pmid { min-width: 0; width: 100%; } .fm-ui3 .fm-pst, .fm-ui3 .fm-pmid small, .fm-ui3 .fm-pmid b { font-size: 9.5px; line-height: 1.25; white-space: normal; word-break: keep-all; display: block; }
+
+/* 농장 기본 화면(방식 3): 아래는 밭 카드 한 줄만 — 잘리지 않게 낮고 촘촘하게 */
+.fm-ui3 .fm-sheet { flex: 1 1 auto; min-height: 0; overflow: hidden; padding: 8px 10px calc(env(safe-area-inset-bottom) + 8px); display: flex; flex-direction: column; gap: 6px; }
+.fluffy .fm-ui3 .fm-sheet, .fluffy.fm-ui3 .fm-sheet { margin: 4px 10px calc(env(safe-area-inset-bottom) + 8px); }
+.fm-ui3 .fm-ohead { margin: 0; flex-wrap: nowrap; gap: 6px; } .fm-ui3 .fm-ohead > b { font-size: 15px; white-space: nowrap; }
+.fm-obtns { display: flex; gap: 4px; flex: none; } .fm-obtns .btn { padding: 4px 9px; font-size: 12.5px; min-height: 0; white-space: nowrap; }
+.fm-ui3 .fm-chips { flex-wrap: nowrap; min-width: 0; overflow: hidden; } .fm-ui3 .fm-chips i { font-size: 11px; padding: 2px 6px; white-space: nowrap; }
+.fm-ui3 .fm-plist { flex: 1; min-height: 0; align-items: stretch; }
+.fm-ui3 .fm-pc { justify-content: center; gap: 2px; padding: 4px 2px; box-shadow: 0 2px 0 #E3CBA0; }
+.fm-ui3 .fm-pn { width: 22px; height: 22px; font-size: 12px; }
+.fm-ui3 .fm-pc.lock .fm-pmid b { font-size: 11px; }
+.fm-ui3 .fm-pst, .fm-ui3 .fm-pmid small, .fm-ui3 .fm-pmid b { white-space: nowrap; overflow: hidden; text-overflow: clip; font-size: 10.5px; line-height: 1.2; } .fm-ui3 .fm-pn { width: 20px; height: 20px; font-size: 11.5px; } .fm-ui3 .fm-pc { overflow: hidden; }
+.fm-ui3 .fm-plist { align-items: start; } .fm-ui3 .fm-pc { max-height: 72px; height: 100%; }
