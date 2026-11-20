@@ -30,17 +30,18 @@ export function mount(el, ctx) {
   const rnd = (a, b) => a + Math.random() * (b - a);
   // ---- 가방의 인형·보장 묶음·남은 판
   const P = 'bag/' + ctx.uid;
-  const drawTries = () => { tries.textContent = `남은 판 ${plays}`; }; // 확률(묶음 몇 번째인지)은 화면에 보이지 않는다
-  const setPlays = n => { plays = Math.max(0, n); drawTries(); return ctx.store.set(P + '/clawPlays', plays || null).catch(() => {}); };
-  function gate(again) { if (document.querySelector('.arc-gate')) return; coinGate(ctx, me, n => setPlays(plays + n), null, again); } // 50코인 1판 · 150코인 3판 · 200코인 5판
+  const TEST = new URLSearchParams(location.search).has('clawtest'); // 연습 링크(?clawtest): 코인이 안 들고, 뽑은 인형과 차례도 저장하지 않는다
+  const drawTries = () => { tries.textContent = TEST ? '연습 중 · 무료' : `남은 판 ${plays}`; }; // 확률(묶음 몇 번째인지)은 화면에 보이지 않는다
+  const setPlays = n => { if (TEST) { plays = 99; drawTries(); return Promise.resolve(); } plays = Math.max(0, n); drawTries(); return ctx.store.set(P + '/clawPlays', plays || null).catch(() => {}); };
+  function gate(again) { if (TEST || document.querySelector('.arc-gate')) return; coinGate(ctx, me, n => setPlays(plays + n), null, again); } // 50코인 1판 · 150코인 3판 · 200코인 5판
   const myDoll = () => (ctx.members[ctx.uid] || {}).doll;
   const wear = async i => { ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), doll: i }; await ctx.store.update('members/' + ctx.uid, { doll: i }).catch(() => {}); drawShelf(); toast(i == null ? '인형 배지를 뗐어요' : `${ANIMALS[i].name} 인형을 가슴에 달았어요`); };
   function drawShelf() { const list = Object.entries(mine).filter(([k, n]) => n > 0 && ANIMALS[k]).map(([k, n]) => [+k, n]), on = myDoll();
     shelf.replaceChildren(...(list.length ? list.map(([i, n]) => h('button', { class: 'claw-my' + (on === i ? ' on' : ''), onClick: () => { modal({ title: `🧸 ${ANIMALS[i].name} 인형 ${n}개`, body: h('div', { class: 'claw-info' }, h('span', { html: dollImg(i) }), h('p', null, '친목회에서 동물에게 🎁 선물로 줄 수 있어요(친밀도 +6, 그 동물 본인 인형이면 +12). 가슴에 배지로 달 수도 있어요.')), actions: [{ label: '닫기' }, { label: on === i ? '배지 떼기' : '🎀 가슴에 달기', primary: true, onClick: x => { x(); wear(on === i ? null : i); } }] }); } },
       h('span', { html: dollImg(i) }), h('small', null, on === i ? '착용 중' : `${ANIMALS[i].name} ×${n}`))) : [h('p', { class: 'dim center' }, '아직 없어요. 집게로 뽑아 보세요!')])); }
-  const offs = [ctx.store.on(P + '/dolls', v => { mine = v || {}; drawShelf(); }), ctx.store.on(P + '/claw', v => { pity = v && typeof v.n === 'number' ? v : null; }),
-    ctx.store.on(P + '/clawPlays', v => { plays = Math.max(0, +v || 0); drawTries(); if (!plays && !gateAt) { gateAt = 1; setTimeout(() => alive && !plays && gate(false), 600); } })];
-  drawShelf(); drawTries();
+  const offs = [ctx.store.on(P + '/dolls', v => { mine = v || {}; drawShelf(); }), ctx.store.on(P + '/claw', v => { if (!TEST) pity = v && typeof v.n === 'number' ? v : null; }),
+    ctx.store.on(P + '/clawPlays', v => { if (TEST) { plays = 99; drawTries(); return; } plays = Math.max(0, +v || 0); drawTries(); if (!plays && !gateAt) { gateAt = 1; setTimeout(() => alive && !plays && gate(false), 600); } })];
+  if (TEST) plays = 99; drawShelf(); drawTries();
 
   // ---- 3D 장면
   let THREE, CANNON, renderer, scene, camera, clawG, cable, gantry, cart, pusher, dollMat; const prongs = [];
@@ -150,14 +151,14 @@ export function mount(el, ctx) {
     setPlays(plays - 1); busy = true; dir.x = dir.z = 0; start.x = claw.x; start.z = claw.z; bGo.disabled = true;
     // 두 번에 한 번은 인형을 잡아 올린다(gn·gk: 두 번 묶음에서 잡는 차례). 잡아 올린 것 일곱 번 중 한 번만 끝까지 가져온다(n·k)
     const p = pity ? { ...pity } : {}; if (!(p.gn < 2)) { p.gn = 0; p.gk = Math.floor(Math.random() * 2); } if (!(p.n < PACK)) { p.n = 0; p.k = Math.floor(Math.random() * PACK); }
-    grabTry = p.gn === p.gk; p.gn += 1; lucky = grabTry && p.n === p.k; if (grabTry) p.n += 1; pity = p; claw._p = p; ctx.store.set(P + '/claw', p).catch(() => {});
+    grabTry = p.gn === p.gk; p.gn += 1; lucky = grabTry && p.n === p.k; if (grabTry) p.n += 1; pity = p; claw._p = p; TEST || ctx.store.set(P + '/claw', p).catch(() => {});
     claw.st = 'down'; sfx('tock');
   }
   const grab = d => { held = d; d.body.type = CANNON.Body.KINEMATIC; d.body.mass = 0; d.body.updateMassProperties(); d.body.velocity.set(0, 0, 0); };
   function letGo(win) { const d = held; held = null; slip = null; if (!d) return; d.body.type = CANNON.Body.DYNAMIC; d.body.mass = 1; d.body.updateMassProperties(); d.body.wakeUp(); d.body.velocity.set(win ? 0 : rnd(-1.5, 1.5), 0, win ? 0 : rnd(-1.5, 1.5)); if (!win) sfx('bad'); }
   function done() { busy = false; bGo.disabled = false; lucky = false; target = null; if (plays <= 0) setTimeout(() => alive && plays <= 0 && gate(true), 1600); }
   function removeDoll(d) { dolls.splice(dolls.indexOf(d), 1); world.removeBody(d.body); scene.remove(d.face); }
-  function prize(d) { removeDoll(d); const i = d.i; gameFx('win', `${ANIMALS[i].name} 인형을 뽑았어요`, '성공!'); ctx.store.tx(`${P}/dolls/${i}`, c => (c || 0) + 1).catch(() => {}); if (!dolls.length) setTimeout(() => alive && ready && !dolls.length && fill(), 1500); } // 뽑은 인형은 기계에서 없어진다. 다 뽑으면 새로 채운다
+  function prize(d) { removeDoll(d); const i = d.i; gameFx('win', `${ANIMALS[i].name} 인형을 뽑았어요`, '성공!'); if (TEST) toast('연습이라 인형은 가방에 들어가지 않아요', 2200); else ctx.store.tx(`${P}/dolls/${i}`, c => (c || 0) + 1).catch(() => {}); if (!dolls.length) setTimeout(() => alive && ready && !dolls.length && fill(), 1500); } // 뽑은 인형은 기계에서 없어진다. 다 뽑으면 새로 채운다
   function moveClaw(dt) {
     const c = claw;
     if (c.st === 'idle') { const ox = c.x, oz = c.z; c.x = Math.max(-BX + 1, Math.min(BX - 1, c.x + dir.x * 4.6 * dt)); c.z = Math.max(-BZ + 1, Math.min(BZ - 1, c.z + dir.z * 4.6 * dt));
@@ -168,7 +169,7 @@ export function mount(el, ctx) {
       if (c.t >= 0.5) { if (target) { grab(target); sfx('pair'); // 약한 손: 올리다가(또는 옮기다가) 놓친다. 위에 다른 인형이 얹혀 있으면 더 빨리 놓친다
             if (!lucky) { const hp = held.body.position, n = dolls.filter(o => o !== held && o.body.position.y > hp.y + 0.3 && o.body.position.distanceTo(hp) < o.r + held.r + 0.15).length, f = rnd(0.25, 0.6), fx = c.x + (OUT.x - c.x) * f, fz = c.z + (OUT.z - c.z) * f;
               slip = Math.random() < 0.4 && !inOut(fx, fz, 1.5) ? { f } : { y: TOP - (TOP - c.y) * (n ? rnd(0.3, 0.6) : rnd(0.05, 0.55)) }; } /* 꽤 높이 들어 올린 뒤에(또는 옮기다가) 놓친다 */ else slip = null; }
-          else if (grabTry && c._p) { const p = { ...c._p, gn: c._p.gn - 1, n: c._p.n - 1 }; pity = p; ctx.store.set(P + '/claw', p).catch(() => {}); } // 잡는 차례인데 닿은 인형이 없으면 그 차례를 다음으로 넘긴다
+          else if (grabTry && c._p) { const p = { ...c._p, gn: c._p.gn - 1, n: c._p.n - 1 }; pity = p; TEST || ctx.store.set(P + '/claw', p).catch(() => {}); } // 잡는 차례인데 닿은 인형이 없으면 그 차례를 다음으로 넘긴다
           c.st = 'up'; } }
     else if (c.st === 'up') { c.y += 4.4 * dt; if (held && slip && slip.y != null && c.y >= slip.y) letGo(false); if (c.y >= TOP) { c.y = TOP; c.st = held ? 'carry' : 'back'; c.t = 0; c.from = { x: c.x, z: c.z }; } }
     else if (c.st === 'carry') { const L = Math.hypot(OUT.x - c.from.x, OUT.z - c.from.z) || 1; c.t = Math.min(1, c.t + 4 * dt / L); c.x = c.from.x + (OUT.x - c.from.x) * c.t; c.z = c.from.z + (OUT.z - c.from.z) * c.t;
