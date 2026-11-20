@@ -9,7 +9,7 @@ import { FLUFFY } from './fluffy.js';
 import { coinGate } from './arcade.js';
 
 // 상자 안쪽: 가로 x -5~5, 깊이 z -4(뒤)~4(앞), 높이 y 0~9. 나오는 곳은 왼쪽 앞 모서리(바닥이 뚫려 있고 유리 칸막이로 둘러쌈)
-const BX = 5, BZ = 4, HOLE_X = -2.3, HOLE_Z = 1.3, WALL_H = 5.3, TOP = 7.95, REST = 6.1, N_DOLL = 40, PACK = 7, OUT = { x: -3.65, z: 2.65 };
+const BX = 5, BZ = 4, HOLE_X = -2.3, HOLE_Z = 1.3, WALL_H = 5.3, TOP = 7.95, REST = 6.6, N_DOLL = 40, PACK = 7, OUT = { x: -3.65, z: 2.65 };
 const dollSrc = i => (FLUFFY ? `img/fl/a${i}-base.webp` : 'data:image/svg+xml;utf8,' + encodeURIComponent(animalSvg(i, true)));
 export const dollImg = i => `<img src="${dollSrc(i)}" alt="" loading="lazy">`;
 
@@ -155,7 +155,7 @@ export function mount(el, ctx) {
     claw.st = 'down'; sfx('tock');
   }
   const grab = d => { held = d; d.body.type = CANNON.Body.KINEMATIC; d.body.mass = 0; d.body.updateMassProperties(); d.body.velocity.set(0, 0, 0); };
-  function letGo(win) { const d = held; held = null; slip = null; if (!d) return; d.body.type = CANNON.Body.DYNAMIC; d.body.mass = 1; d.body.updateMassProperties(); d.body.wakeUp(); d.body.velocity.set(win ? 0 : rnd(-1.5, 1.5), 0, win ? 0 : rnd(-1.5, 1.5)); if (!win) sfx('bad'); }
+  function letGo(win, straight) { const d = held; held = null; slip = null; if (!d) return; if (straight) win = 2; /* 옮기다 놓칠 때는 옆으로 튀지 않고 그대로 떨어진다 */ d.body.type = CANNON.Body.DYNAMIC; d.body.mass = 1; d.body.updateMassProperties(); d.body.wakeUp(); d.body.velocity.set(win ? 0 : rnd(-1.5, 1.5), 0, win ? 0 : rnd(-1.5, 1.5)); if (win !== true) sfx('bad'); }
   function done() { busy = false; bGo.disabled = false; lucky = false; target = null; if (plays <= 0) setTimeout(() => alive && plays <= 0 && gate(true), 1600); }
   function removeDoll(d) { dolls.splice(dolls.indexOf(d), 1); world.removeBody(d.body); scene.remove(d.face); }
   function prize(d) { removeDoll(d); const i = d.i; gameFx('win', `${ANIMALS[i].name} 인형을 뽑았어요`, '성공!'); if (TEST) toast('연습이라 인형은 가방에 들어가지 않아요', 2200); else ctx.store.tx(`${P}/dolls/${i}`, c => (c || 0) + 1).catch(() => {}); if (!dolls.length) setTimeout(() => alive && ready && !dolls.length && fill(), 1500); } // 뽑은 인형은 기계에서 없어진다. 다 뽑으면 새로 채운다
@@ -163,23 +163,24 @@ export function mount(el, ctx) {
     const c = claw;
     if (c.st === 'idle') { const ox = c.x, oz = c.z; c.x = Math.max(-BX + 1, Math.min(BX - 1, c.x + dir.x * 4.6 * dt)); c.z = Math.max(-BZ + 1, Math.min(BZ - 1, c.z + dir.z * 4.6 * dt));
       if (c.x < HOLE_X + 0.9 && c.z > HOLE_Z - 0.9) { if (ox >= HOLE_X + 0.9) c.x = HOLE_X + 0.9; else if (oz <= HOLE_Z - 0.9) c.z = HOLE_Z - 0.9; else c.x = HOLE_X + 0.9; } } // 나오는 곳 칸 위로는 못 간다(그 뒤쪽·옆쪽은 다 간다)
-    else if (c.st === 'down') { c.y -= 5.2 * dt; const [d, dd] = under(); if ((d && dd < d.r + 0.42) || tipY() <= 0.55) { c.st = 'close'; c.t = 0; target = null; if (d) { const p = d.body.position, hz = Math.hypot(p.x - c.x, p.z - c.z);
-          if (grabTry && hz < d.r * 1.05) target = d; } } } /* 닿은 인형은 일단 잡는다(약한 손이면 올리다 놓친다). 예전에는 정가운데가 아니면 아예 못 잡았다 */
+    else if (c.st === 'down') { c.y -= 5.2 * dt; // 집게 발 아래(집게 너비 안)에 있는 인형 중 가장 높은 것의 한가운데 높이까지만 내려가 감싼다. 아래에 인형이 없으면 바닥까지
+      let d = null; for (const o of dolls) { const p = o.body.position; if (Math.hypot(p.x - c.x, p.z - c.z) < o.r + 0.35 && (!d || p.y > d.body.position.y)) d = o; }
+      if ((d && tipY() <= d.body.position.y - 0.05) || tipY() <= 0.55) { c.st = 'close'; c.t = 0; target = null; if (d && grabTry && Math.hypot(d.body.position.x - c.x, d.body.position.z - c.z) < d.r * 1.05) target = d; } }
     else if (c.st === 'close') { c.t += dt; c.open = Math.max(0, 1 - c.t / 0.4); c.open = Math.max(target ? 0.3 : 0, c.open); /* 인형을 잡을 때는 인형 둘레까지만 오므린다 */
       if (c.t >= 0.5) { if (target) { grab(target); sfx('pair'); // 약한 손: 올리다가(또는 옮기다가) 놓친다. 위에 다른 인형이 얹혀 있으면 더 빨리 놓친다
             if (!lucky) { const hp = held.body.position, n = dolls.filter(o => o !== held && o.body.position.y > hp.y + 0.3 && o.body.position.distanceTo(hp) < o.r + held.r + 0.15).length, f = rnd(0.25, 0.6), fx = c.x + (OUT.x - c.x) * f, fz = c.z + (OUT.z - c.z) * f;
-              slip = Math.random() < 0.4 && !inOut(fx, fz, 1.5) ? { f } : { y: TOP - (TOP - c.y) * (n ? rnd(0.3, 0.6) : rnd(0.05, 0.55)) }; } /* 꽤 높이 들어 올린 뒤에(또는 옮기다가) 놓친다 */ else slip = null; }
+              slip = Math.random() < 0.4 && !inOut(fx, fz, 2.4) ? { f, straight: 1 } : { y: TOP - (TOP - c.y) * (n ? rnd(0.3, 0.6) : rnd(0.05, 0.55)) }; } /* 꽤 높이 들어 올린 뒤에(또는 옮기다가) 놓친다 */ else slip = null; }
           else if (grabTry && c._p) { const p = { ...c._p, gn: c._p.gn - 1, n: c._p.n - 1 }; pity = p; TEST || ctx.store.set(P + '/claw', p).catch(() => {}); } // 잡는 차례인데 닿은 인형이 없으면 그 차례를 다음으로 넘긴다
           c.st = 'up'; } }
     else if (c.st === 'up') { c.y += 4.4 * dt; if (held && slip && slip.y != null && c.y >= slip.y) letGo(false); if (c.y >= TOP) { c.y = TOP; c.st = held ? 'carry' : 'back'; c.t = 0; c.from = { x: c.x, z: c.z }; } }
     else if (c.st === 'carry') { const L = Math.hypot(OUT.x - c.from.x, OUT.z - c.from.z) || 1; c.t = Math.min(1, c.t + 4 * dt / L); c.x = c.from.x + (OUT.x - c.from.x) * c.t; c.z = c.from.z + (OUT.z - c.from.z) * c.t;
-      if (held && slip && slip.f != null && c.t >= slip.f) { letGo(false); c.st = 'back'; } else if (c.t >= 1) { c.st = 'release'; c.t = 0; } }
+      if (held && slip && slip.f != null && c.t >= slip.f) { letGo(false, true); c.st = 'back'; } else if (c.t >= 1) { c.st = 'release'; c.t = 0; } }
     else if (c.st === 'release') { c.t += dt; c.open = Math.min(1, 0.3 + c.t / 0.25); if (held && c.t > 0.12) letGo(true); if (c.t > 0.7) c.st = 'back'; }
     else if (c.st === 'back') { c.open = Math.min(1, c.open + dt * 3); const dx = start.x - c.x, dz = start.z - c.z, L = Math.hypot(dx, dz), s = Math.min(L, 5 * dt); if (L > 0.001) { c.x += dx / L * s; c.z += dz / L * s; } const dy = REST - c.y; if (L < 1.2) c.y += Math.sign(dy) * Math.min(Math.abs(dy), 3 * dt);
       if (L < 0.02 && Math.abs(dy) < 0.02 && c.open >= 1) { c.x = start.x; c.z = start.z; c.y = REST; c.st = 'idle'; done(); } }
     if (held) { const b = held.body, q = b.position, k = Math.min(1, dt * 12), ty = tipY() + 0.62; q.set(q.x + (c.x - q.x) * k, q.y + (ty - q.y) * k, q.z + (c.z - q.z) * k); b.velocity.set(0, 0, 0); }
     // 집게 끝: 내려가거나 오므릴 때 주변 인형을 밀어낸다
-    if (!held) { const px = c.x, py = tipY() + 0.3, pz = c.z, q = pusher.position, far = q.y > 20, k = dt > 0 ? 1 / dt : 0; pusher.velocity.set(far ? 0 : (px - q.x) * k, far ? 0 : (py - q.y) * k, far ? 0 : (pz - q.z) * k); q.set(px, py, pz); } /* 속도를 같이 넘겨야 부딪힌 인형이 밀려난다 */
+    if (!held && (c.st === 'idle' || c.st === 'back')) { const px = c.x, py = tipY() + 0.3, pz = c.z, q = pusher.position, far = q.y > 20, k = dt > 0 ? 1 / dt : 0; pusher.velocity.set(far ? 0 : (px - q.x) * k, far ? 0 : (py - q.y) * k, far ? 0 : (pz - q.z) * k); q.set(px, py, pz); } /* 속도를 같이 넘겨야 부딪힌 인형이 밀려난다 */
     else { pusher.position.set(0, 30, 0); pusher.velocity.set(0, 0, 0); }
   }
   function sync() {
@@ -189,7 +190,7 @@ export function mount(el, ctx) {
   }
   function frame(t) { if (!alive) return; raf = requestAnimationFrame(frame); if (!ready) return; const dt = Math.min(0.033, (t - (lastT || t)) / 1000); lastT = t;
     moveClaw(dt); world.step(1 / 60, dt, 3);
-    for (const d of dolls) { if (d === held) continue; if (d.body.type !== CANNON.Body.DYNAMIC) { d.body.type = CANNON.Body.DYNAMIC; d.body.mass = 1; d.body.updateMassProperties(); d.body.wakeUp(); } /* 놓친 인형이 공중에 굳어 있지 않게 */ const v = d.body.velocity, sp = v.length(); if (sp > 7) v.scale(7 / sp, v); if (v.y > 4) v.y = 4; } // 집게나 잡힌 인형에 밀린 인형이 튕겨 날아가지 않게 속도를 묶는다
+    for (const d of dolls) { if (d === held) continue; if (d.body.type !== CANNON.Body.DYNAMIC) { d.body.type = CANNON.Body.DYNAMIC; d.body.mass = 1; d.body.updateMassProperties(); d.body.wakeUp(); } /* 놓친 인형이 공중에 굳어 있지 않게 */ const v = d.body.velocity, q = d.body.position; if (q.y > WALL_H - 0.4 && q.y < WALL_H + 1.4 && v.length() < 1.2 && claw.st !== 'release') { if (Math.abs(q.x - HOLE_X) < 0.95 && q.z > HOLE_Z - 0.95) v.x = 2.4; else if (Math.abs(q.z - HOLE_Z) < 0.95 && q.x < HOLE_X + 0.95) v.z = -2.4; } /* 나오는 곳 유리 칸막이 위에 걸터앉지 않게 더미 쪽으로 밀어 떨어뜨린다 */ const _v = v, sp = v.length(); if (sp > 7) v.scale(7 / sp, v); if (v.y > 4) v.y = 4; } // 집게나 잡힌 인형에 밀린 인형이 튕겨 날아가지 않게 속도를 묶는다
     for (const d of [...dolls]) { const p = d.body.position; if (p.y < -2.6) { if (inOut(p.x, p.z, 0.2)) prize(d); else { p.set(rnd(HOLE_X + 1.4, BX - 1.2), 10, rnd(-BZ + 1.2, BZ - 1.2)); d.body.velocity.set(0, 0, 0); } } }
     sync(); renderer.render(scene, camera); }
 
