@@ -2619,3 +2619,6 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 /* 구매하기 창 · 퀘스트 현황의 상대 진행도 */
 .buy-ask { display: grid; gap: 6px; text-align: center; padding: 4px 0 2px; } .buy-ask b { font: 900 18px/1.35 var(--head); color: #5A3A22; word-break: keep-all; } .buy-price { margin: 0; font: 900 24px var(--head); color: #C47A00; } .buy-ask small { color: #8A6A4A; font-size: 12.5px; }
 .qs-pal { margin: 4px 0 0; text-align: center; font: 800 13px var(--head); color: #7A4E2D; background: #FFF3DC; border-radius: 10px; padding: 5px 8px; }
+
+/* 퀘스트 장면 배경(동굴·광장) */
+.vn.bg { background-size: cover; background-position: center 30%; background-repeat: no-repeat; } .vn.bg::before { content: ''; position: absolute; inset: 0; background: linear-gradient(rgba(20, 12, 30, 0) 40%, rgba(20, 12, 30, .35)); pointer-events: none; }

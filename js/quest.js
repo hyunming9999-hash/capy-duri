@@ -176,13 +176,14 @@ export function createQuest(d) {
   // 게임 화면 위 대화: 말하는 쪽이 크게 서고(동물 오른쪽 · 나 왼쪽), 반대편에 넓은 말풍선. 누를 때마다 다음 줄
   const parse = (t, def) => { let who = def, m = /^@/.test(t) ? 'me' : null; if (m) { who = 'me'; t = t.slice(1); } else { const k = /^#(\d+)/.exec(t); if (k) { who = +k[1]; t = t.slice(k[0].length); } }
     const md = /^\{([^}]*)\}/.exec(t), parts = md ? md[1].split('+') : ['']; return { who, mood: parts[0], props: parts.slice(1), text: md ? t.slice(md[0].length) : t }; };
+  let sceneBg = ''; // 장면 배경: 'cave' 동굴 · 'plaza' 광장 · '' 없음(게임 화면 그대로)
   function vn(lines, def, chapter, extra, buttons) { const host = d.host && d.host(); if (!host) { const L = lines.map(t => parse(t, def)).filter(l => l.who !== 'me').map(l => l.text); return new Promise(res => win(def, chapter, L.length ? L : [''], extra, (buttons || [{ label: '확인', primary: true }]).map(b => ({ ...b, onClick: c => { c(); res(b.value); } })))); }
     document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); host.querySelectorAll('.vn').forEach(e => e.remove());
-    return new Promise(res => { let k = 0, done = false; const el = h('div', { class: 'vn' }); host.append(el); d.pause && d.pause(true);
+    return new Promise(res => { let k = 0, done = false; const el = h('div', { class: 'vn' }); host.append(el); d.pause && d.pause(true); const bgNow = sceneBg;
       const end = v => { if (done) return; done = true; el.remove(); d.pause && d.pause(false); res(v); };
       function show() { const l = parse(lines[k], def), me = l.who === 'me', last = k === lines.length - 1;
         const face = me ? d.meSvg(l.mood || 'smile') : propSvg(d.svgFull(l.who, l.mood), l.who === 19 ? ['det', ...l.props] : l.props), name = me ? d.meName : d.names[l.who], text = me ? l.text : say(l.who, l.text);
-        el.className = 'vn ' + (me ? 'l' : 'r');
+        el.className = 'vn ' + (me ? 'l' : 'r') + (bgNow ? ' bg' : ''); el.style.backgroundImage = bgNow ? `url(img/quest/bg-${bgNow}.webp)` : '';
         const box = h('div', { class: 'vn-box' }, h('b', { class: 'vn-nm' }, name), h('button', { class: 'vn-x', 'aria-label': '닫기', onClick: e => { e.stopPropagation(); end(null); } }, '✕'), h('p', { class: 'vn-tx' }, text),
           ...(last ? (extra || []).filter(Boolean) : []), last && buttons && buttons.length ? h('div', { class: 'vn-bt' }, ...buttons.map(b => h('button', { class: 'btn' + (b.primary ? ' primary' : ''), onClick: e => { e.stopPropagation(); end(b.value); } }, b.label))) : h('span', { class: 'vn-nx' }, last ? '▼ 눌러서 닫기' : '▼ 눌러서 다음'));
         el.replaceChildren(h('i', { class: 'vn-ch' }, chapter), h('div', { class: 'vn-pf', html: face }), box); sfx('tock'); }
@@ -250,5 +251,15 @@ export function createQuest(d) {
       h('b', { class: 'qs-h' }, '📌 지금 할 일'), todo, clueBox(), h('b', { class: 'qs-h' }, '📁 사건 파일'), h('div', { class: 'qs-chs' }, ...chap))], actions: [{ label: '닫기', primary: true }] }); }
   // 위쪽 '퀘스트' 버튼에 보여 줄 진행도. mark: ! 새 이야기를 들을 차례 · ? 가져갈 준비 완료 · … 진행 중 · ✔ 모두 끝
   const progress = () => { const n = q.s || 0, total = FLAT.length, s = cur(); return { n, total, pct: Math.round(n / total * 100), mark: !ready ? '' : !s ? '✔' : markOf(q.on ? s.to : s.who) }; };
-  return { open, status, progress, markOf, cooks, cooked, chatter, gossip, fresh, pirateOn, pirateResult, dispose: () => off && off() };
+  // 시험판(?questtest): 처음부터 끝까지 눌러만 가며 본다. 조건(낚시·작물·요리·선물·해적)은 바로 통과하고 아무것도 저장하지 않는다
+  const NEED_T = { cucumber: '오이', potato: '감자', carrot: '당근', mattang: '고구마 맛탕', gaji: '가지 대파볶음', maeun: '매운탕', hobak: '단호박 생선찜', jjin: '감자옥수수찜' };
+  const needText = s => s.type === 'fish' ? '물고기 1마리' : s.type === 'crop' ? `${NEED_T[s.need.id] || s.need.id} ${s.need.n}개` : s.type === 'cook' ? `${NEED_T[s.need.rec] || s.need.rec} 요리` : s.type === 'gift' ? (s.need.k === 'flower' ? '꽃다발 선물' : '아무 선물 1개') : s.type === 'pirate' ? '갈매기 해적단 물리치기' : '';
+  const bgOf = (n, part) => (n === 23 || (n === 22 && part === 'done') || (n === 24 && part === 'say') ? 'cave' : n >= 31 || (n === 30 && part === 'done') ? 'plaza' : '');
+  async function demo(from) { const total = FLAT.length; toast('🧪 퀘스트 시험판 · 화면을 누르면 다음으로 넘어가요 (저장 안 됨)', 3200);
+    try { for (let n = Math.max(0, from || 0); n < total; n++) { const s = FLAT[n], title = `${STORY[s.ci].t} · ${n + 1}/${total}단계`; sceneBg = bgOf(n, 'say');
+        if (s.type === 'accuse') { for (;;) { const c = await vn(s.say, s.who, title, [], s.need.opts.map(([nm], k) => ({ label: `☝️ ${nm}`, value: k + 1 }))); if (!c) return; const [, good, why] = s.need.opts[c - 1]; if (good) break; if (!(await vn([why], s.who, title, [], [{ label: '다시 고르기', primary: true, value: 1 }]))) return; } }
+        else { const nt = needText(s); if (!(await vn(s.say, s.who, title, nt ? [h('p', { class: 'vn-sub' }, `조건: ${nt} · 시험판에서는 바로 통과`)] : []))) return; }
+        sceneBg = bgOf(n, 'done'); if (!(await vn(s.done, s.to, title + ' ✔', s.clue ? [h('p', { class: 'vn-sub' }, `📝 단서: ${s.clue}`)] : []))) return; }
+      toast('🧪 시험판 끝! 마지막 장면까지 봤어요', 2600); } finally { sceneBg = ''; } }
+  return { demo, open, status, progress, markOf, cooks, cooked, chatter, gossip, fresh, pirateOn, pirateResult, dispose: () => off && off() };
 }
