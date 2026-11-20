@@ -2602,3 +2602,8 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .so-xgo { width: 100%; box-sizing: border-box; height: auto; white-space: normal; line-height: 1.3; word-break: keep-all; overflow-wrap: anywhere; padding: 7px 10px; }
 .so-xgot { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 5px; } .so-xgot i { font-style: normal; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .so-xgrid { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); } .so-xit small { max-width: 100%; overflow-wrap: anywhere; }
+
+/* 작물 낱개 팔기 창 */
+.so-qty { display: grid; gap: 10px; } .so-qrow { display: flex; align-items: center; justify-content: center; gap: 16px; } .so-qb { width: 52px; height: 48px; font-size: 24px; font-weight: 900; padding: 0; }
+.so-qn { min-width: 86px; text-align: center; font: 900 28px var(--head); color: #5A3A22; } .so-qr { width: 100%; accent-color: #E6A817; height: 28px; }
+.so-qchips { display: flex; justify-content: center; gap: 8px; } .so-qt { margin: 0; text-align: center; font: 900 18px var(--head); color: #C47A00; }
