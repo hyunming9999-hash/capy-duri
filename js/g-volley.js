@@ -102,8 +102,7 @@ export function mount(el, ctx) {
     intro.replaceChildren(h('div', { class: 'vb-intro-c' }, h('img', { src, alt: '' }), h('b', null, t), h('p', null, ...body), h('small', null, sub),
       h('div', { class: 'vb-intro-dots' }, ...ipg.map((_, k) => h('i', { class: k === n ? 'on' : '' }))),
       h('button', { class: 'vb-intro-go', onClick: e => { e.stopPropagation(); last ? intro.remove() : showIntro(n + 1); } }, last ? '알겠어요! 시작하러 가기' : '다음 장: 대쉬 쓰는 법 👉'))); };
-  showIntro(0);
-  rot.append(intro); // 화면 전체(게임 카드 안에 넣으면 둥근 모서리에 잘린다)
+  // (스파이크·대쉬 안내 화면은 이제 띄우지 않는다) // 화면 전체(게임 카드 안에 넣으면 둥근 모서리에 잘린다)
   // 세로로 들고 있으면 화면을 90도 돌려 가로로 보여 준다. 조작 버튼은 코트를 가리지 않게 양옆에 둔다
   // 가로 풀화면: 화면 전체가 캔버스. 코트는 높이에 꽉 맞추고, 남는 양옆은 배경을 이어 그린다
   const fit = () => { const pw = innerWidth, ph = innerHeight, port = ph > pw, w = port ? ph : pw, hh = port ? pw : ph, dpr = Math.min(dprCap, devicePixelRatio || 1);
@@ -179,7 +178,7 @@ export function mount(el, ctx) {
     if (mode !== 'online') return;
     const opp = 1 - ctx.idx;
     offs.push(ctx.store.on('games/volley', setGame));
-    offs.push(ctx.store.on('rt/volley/p' + opp, v => { if (v && !p2pOn()) onP(v); }));
+    offs.push(ctx.store.on('rt/volley/p' + opp, v => { if (v && !p2pLive()) onP(v); }));
     // 상대가 공을 친 순간의 상태만 받는다. 그동안 늦게 도착한 만큼 앞으로 굴려서 맞추고, 화면에서는 어긋난 만큼을 몇 프레임에 걸쳐 부드럽게 메운다
     offs.push(ctx.store.on('rt/volley/hit', onHitMsg));
     p2pStart(); offs.push(p2pStop);
@@ -200,7 +199,9 @@ export function mount(el, ctx) {
   // 처음 서로를 찾을 때만 PeerJS 연결 서버를 쓰고, 연결이 안 되는 망이면 지금처럼 Firebase로 계속 한다
   const ICE = { iceServers: [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }, { urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turn:openrelay.metered.ca:443?transport=tcp'], username: 'openrelayproject', credential: 'openrelayproject' }] };
   let peer = null, conn = null, oppPid = null, linkT = 0;
-  const p2pOn = () => !!(conn && conn.open);
+  const p2pOn = () => !!(conn && conn.open); let p2pRx = 0; // 직접 연결로 마지막으로 뭔가 받은 때
+  // 직접 연결이 '살아 있는지': 열려 있어도 상대가 나갔다 들어오면 끊긴 줄 모르고 남는 일이 있다(상대가 안 움직이던 원인). 1.2초 넘게 아무것도 안 오면 죽은 것으로 보고 서버(Firebase)로 받는다
+  const p2pLive = () => p2pOn() && Date.now() - p2pRx < 1200;
   const loadPeer = () => window.Peer ? Promise.resolve() : new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = 'js/vendor/peerjs.min.js'; sc.onload = ok; sc.onerror = no; document.head.append(sc); });
   let p2pAt = 0;
   function p2pStart() { p2pAt = Date.now();
@@ -218,7 +219,8 @@ export function mount(el, ctx) {
   }
   function wire(c) {
     if (conn && conn !== c) try { conn.close(); } catch {} conn = c;
-    c.on('data', d => { if (c !== conn || !d || typeof d !== 'object') return; if (d.t === 'p') onP(d); else if (d.t === 'h') onHitMsg(d); });
+    c.on('open', () => { if (c === conn) p2pRx = Date.now(); }); p2pRx = Date.now();
+    c.on('data', d => { if (c !== conn || !d || typeof d !== 'object') return; p2pRx = Date.now(); if (d.t === 'p') onP(d); else if (d.t === 'h') onHitMsg(d); });
     const bye = () => { if (c === conn) { conn = null; linkT = 0; } }; c.on('close', bye); c.on('error', bye);
   }
   // 공 동기화: 내가 친 순간의 공 상태(위치·속도·스파이크)만 한 번 보낸다
@@ -230,7 +232,9 @@ export function mount(el, ctx) {
     if (mode !== 'online' || t - sendT < (p2pOn() ? 30 : 40)) return; sendT = t;
     const p = ps[ctx.idx], r = n => Math.round(n * 10) / 10;
     const pv = { x: r(p.x), y: r(p.y), vx: r(p.vx), vy: r(p.vy), c: chg[ctx.idx], d: dsh[ctx.idx] }, key = JSON.stringify(pv);
-    if (p2pOn()) { const d = conn.dataChannel; if (!(d && d.bufferedAmount > 16384)) try { conn.send({ t: 'p', ...pv }); } catch {} if (t - lastPT > 1000) { lastPT = t; lastP = key; ctx.store.set('rt/volley/p' + ctx.idx, { ...pv, k: Math.round(t) }).catch(() => {}); } return; }
+    if (p2pOn() && Date.now() - p2pRx > 4000) { const c = conn; conn = null; linkT = 0; try { c.close(); } catch {} } // 4초 넘게 조용하면 끊고 다시 건다
+    if (p2pOn() && !p2pLive()) { try { conn.send({ t: 'p', ...pv }); } catch {} } // 죽은 것 같으면 직접 연결로도 보내 보되, 아래에서 서버로도 보낸다
+    else if (p2pOn()) { const d = conn.dataChannel; if (!(d && d.bufferedAmount > 16384)) try { conn.send({ t: 'p', ...pv }); } catch {} if (t - lastPT > 1000) { lastPT = t; lastP = key; ctx.store.set('rt/volley/p' + ctx.idx, { ...pv, k: Math.round(t) }).catch(() => {}); } return; }
     if (key !== lastP || t - lastPT > 1000) { lastP = key; lastPT = t; ctx.store.set('rt/volley/p' + ctx.idx, { ...pv, k: Math.round(t) }).catch(() => {}); }
   }
   // 컴퓨터 난이도: 하·중·상 [이동 속도, 판단 오차(px), 다시 판단하는 간격(ms), 받으러 뛰는 확률, 스파이크 쓰는 확률, 대쉬 쓰는 확률]
@@ -384,7 +388,7 @@ export function mount(el, ctx) {
     const txt = mode === 'cpu' ? '컴퓨터와 연습 중' : here ? `${josa(ctx.nameOf(ctx.order[1 - ctx.idx]), '와', '과')} 대결 · 나는 ${ctx.idx ? '오른쪽' : '왼쪽'}` : `${josa(ctx.nameOf(ctx.order[1 - ctx.idx]), '가', '이')} 들어오길 기다리는 중…`;
     if (info.textContent !== txt) info.textContent = txt;
     // 연결 상태 표시(둘이 하기에서만): ⚡직접 연결 / 연결 중 / 서버 연결(직접 연결이 안 되는 망이면 지금처럼 Firebase로)
-    const ns = mode !== 'online' ? '' : p2pOn() ? 'on' : Date.now() - p2pAt < 15000 ? 'try' : 'srv';
+    const ns = mode !== 'online' ? '' : p2pLive() ? 'on' : Date.now() - p2pAt < 15000 ? 'try' : 'srv';
     if (netEl.dataset.s !== ns) { netEl.dataset.s = ns; netEl.hidden = !ns; netEl.textContent = ns === 'on' ? '⚡ 직접 연결' : ns === 'try' ? '🔄 직접 연결 시도 중' : '🌐 서버 연결'; }
   }
   function setMode(m) {
