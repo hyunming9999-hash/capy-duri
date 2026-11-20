@@ -2633,3 +2633,4 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .qf-top { position: relative; } .qf-top::before { content: ''; position: absolute; left: 50%; top: 50%; width: 230px; height: 230px; margin: -115px; border-radius: 50%; background: repeating-conic-gradient(rgba(255, 210, 63, .5) 0 12deg, transparent 12deg 24deg); animation: spin 9s linear infinite; -webkit-mask: radial-gradient(circle, #000 30%, transparent 70%); mask: radial-gradient(circle, #000 30%, transparent 70%); }
 .qf-top .rw-sc { position: relative; animation: scPop .6s ease-out, bob 1.8s ease-in-out .6s infinite; }
 .qf-msg { font-weight: 800; font-size: 16px; line-height: 1.5; margin: 4px 0 10px; word-break: keep-all; } .qf-msg b { color: #D98A00; font-size: 18px; }
+.qf-how { margin: 10px 0 2px; padding: 9px 10px; border-radius: 12px; background: #FFF3C4; border: 2px dashed #F5C33B; font-weight: 800; word-break: keep-all; }

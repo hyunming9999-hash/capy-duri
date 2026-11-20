@@ -235,7 +235,7 @@ export function createQuest(d) {
     modal({ title: '🎉 사건 해결! 전설의 보상', onClose: end, body: [h('div', { class: 'qf-top' }, h('img', { class: 'rw-sc', src: 'img/scooter-b.webp', alt: '황금 퀵보드' })),
       h('p', { class: 'center qf-msg' }, '마을 주민들이 소란을 잠재워 줘서 고맙대요!', h('br'), h('b', null, '황금 퀵보드를 선물로 드려요!')),
       h('div', { class: 'rw-pop' }, ...items.map(([ic, t, sub], k) => h('div', { class: 'rw-it', style: { animationDelay: 0.5 + k * 0.22 + 's' } }, h('span', null, ic), h('div', null, h('b', null, t), sub && h('small', null, sub))))),
-      h('p', { class: 'center dim' }, nextT)], actions: [{ label: '고마워요!', primary: true }] }); }
+      h('p', { class: 'center qf-how' }, '🎒 황금 스쿠터는 가방에서 꺼내 탈 수 있어요!'), h('p', { class: 'center dim' }, nextT)], actions: [{ label: '고마워요!', primary: true }] }); }
   async function accuse(i, s, title) {
     const c = await vn(s.say, i, title, [clueBox()], s.need.opts.map(([nm], k) => ({ label: `☝️ ${nm}`, value: k + 1 }))); if (!c) return;
     const [, ok, why] = s.need.opts[c - 1]; if (ok) { await save({ on: 1 }); return finish(i, s, title); }
