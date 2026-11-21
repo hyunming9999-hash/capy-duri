@@ -3010,7 +3010,7 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 @keyframes newTag { from { scale: 0; } } @keyframes newRing { from { scale: .6; opacity: .9; } to { scale: 6; opacity: 0; } }
 /* 🎰 카피도박 */
 .sl-top { display: flex; justify-content: space-between; align-items: center; max-width: 380px; margin: 0 auto 6px; } .sl-have { font: 900 16px var(--head); color: #7A4A12; }
-.sl-cab { position: relative; max-width: 380px; margin: 0 auto; aspect-ratio: 880 / 1168; background: url(../img/slot/cab.webp) center / 100% 100% no-repeat; border-radius: 18px; overflow: hidden; container-type: inline-size; user-select: none; -webkit-user-select: none; }
+.sl-cab { position: relative; max-width: 380px; margin: 0 auto; aspect-ratio: 880 / 1168; background: url(../img/slot/cab.webp?v=2) center / 100% 100% no-repeat; border-radius: 18px; overflow: hidden; container-type: inline-size; user-select: none; -webkit-user-select: none; }
 .sl-sign { position: absolute; left: 32%; width: 42%; top: 8%; height: 9.5%; display: grid; place-items: center; align-content: center; text-align: center; }
 .sl-sign b { font: 900 6.4cqw/1 var(--head); color: #C2410C; letter-spacing: .02em; } .sl-sign small { font: 900 2.8cqw/1.2 var(--head); color: #E08A1E; letter-spacing: .15em; }
 .sl-win { position: absolute; left: 27%; width: 52.4%; top: 37.4%; height: 19.2%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2%; }
@@ -3031,3 +3031,10 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 /* 카피도박 안내 글: 기계 아래 러그 위의 펠트 이름표로 */
 .sl-msg { left: 13%; right: 13%; top: 86.5%; padding: 2cqw 3cqw; border-radius: 6cqw; background: linear-gradient(#FFFBEF, #FFEBC2); border: .8cqw solid #B5651D; box-shadow: 0 1cqw 0 #8A4A12, 0 0 0 .6cqw #FFF6DC inset; outline: .5cqw dashed #E7B36A; outline-offset: -1.6cqw; color: #7A3E0A; text-shadow: none; font-size: 4.6cqw; }
 .sl-msg.ok { color: #C2410C; font-size: 5.2cqw; background: linear-gradient(#FFF7B8, #FFD23F); border-color: #C97A0A; box-shadow: 0 1cqw 0 #A8650A, 0 0 5cqw 1cqw rgba(255,220,90,.9); }
+/* 카피도박 레버: 공과 막대를 따로 올려 실제로 당겨진다 */
+.sl-stick { position: absolute; left: 86.4%; top: 42.5%; width: 5.8%; height: 11.8%; transform-origin: 50% 100%; pointer-events: none; }
+.sl-ball { position: absolute; left: 84.1%; top: 35.3%; width: 12.5%; pointer-events: none; filter: drop-shadow(0 .6cqw .6cqw rgba(0,0,0,.25)); }
+.sl-cab.pull .sl-stick { animation: slStick .7s cubic-bezier(.3,.1,.3,1); } .sl-cab.pull .sl-ball { animation: slBall .7s cubic-bezier(.3,.1,.3,1); }
+@keyframes slStick { 30%, 45% { transform: scaleY(.3); } 75% { transform: scaleY(1.06); } }
+@keyframes slBall { 30%, 45% { transform: translateY(11cqw) scale(1.08); } 75% { transform: translateY(-1cqw); } }
+.sl-lever.pull { animation: none; }

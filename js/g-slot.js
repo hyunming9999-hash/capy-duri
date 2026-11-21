@@ -18,7 +18,7 @@ export function mount(el, ctx) {
   const betBtns = BETS.map(n => h('button', { class: 'sl-bet' + (n === bet ? ' on' : ''), onClick: () => { if (busy) return; bet = n; betBtns.forEach((b, i) => b.classList.toggle('on', BETS[i] === n)); sfx('tock'); } }, String(n)));
   const spinBtn = h('button', { class: 'sl-spin', onClick: () => spin() }, 'SPIN');
   const msg = h('div', { class: 'sl-msg' }, '레버를 당겨요!'), have = h('b', { class: 'sl-have' });
-  const cab = h('div', { class: 'sl-cab' }, sign, h('div', { class: 'sl-win' }, ...reels), lever, h('div', { class: 'sl-btns' }, betBtns[0], spinBtn, betBtns[1]), msg);
+  const cab = h('div', { class: 'sl-cab' }, sign, h('div', { class: 'sl-win' }, ...reels), h('img', { class: 'sl-stick', src: 'img/slot/stick.webp', alt: '' }), h('img', { class: 'sl-ball', src: 'img/slot/ball.webp', alt: '' }), lever, h('div', { class: 'sl-btns' }, betBtns[0], spinBtn, betBtns[1]), msg);
   const drawHave = () => { have.textContent = `🪙 ${ctx.coins().toLocaleString('ko-KR')}코인`; }; drawHave(); const iv = setInterval(drawHave, 800);
   el.append(h('div', { class: 'sl-top' }, have, h('button', { class: 'btn sm', onClick: table }, '📋 배당표')), cab,
     h('p', { class: 'dim center sl-note' }, '가운데 한 줄에 같은 그림 3개! · 실제 카지노 슬롯머신의 방식과 비율을 근거로 만든 게임이에요'));
@@ -31,8 +31,8 @@ export function mount(el, ctx) {
     s.style.transition = `transform ${ms}ms cubic-bezier(.15,.6,.25,1.04)`; s.style.transform = 'translateY(0)';
     setTimeout(() => { if (!alive) return res(); s.style.transition = 'none'; s.replaceChildren(h('img', { src: img(k), alt: '' })); reels[i].classList.add('stop'); setTimeout(() => reels[i].classList.remove('stop'), 260); sfx('tock'); res(); }, ms); });
   async function spin() { if (busy || !alive) return; if (ctx.coins() < bet) return toast(`돈이 모자라요 · ${bet}코인이 필요해요`, 1800);
-    busy = true; cab.classList.remove('win', 'big'); lever.classList.add('pull'); setTimeout(() => lever.classList.remove('pull'), 500);
-    if (!(await ctx.spend(bet))) { busy = false; return; } drawHave(); msg.textContent = '두근두근…'; msg.className = 'sl-msg';
+    busy = true; cab.classList.remove('win', 'big'); cab.classList.remove('pull'); void cab.offsetWidth; cab.classList.add('pull'); setTimeout(() => cab.classList.remove('pull'), 700);
+    if (!(await ctx.spend(bet))) { busy = false; return; } sfx('swing'); drawHave(); msg.textContent = '두근두근…'; msg.className = 'sl-msg';
     const ks = [roll(), roll(), roll()], x = payOf(ks), win = bet * x;
     await Promise.all(ks.map((k, i) => run(i, k, 14 + i * 8, 1100 + i * 650))); if (!alive) return;
     if (win) { await ctx.store.tx('money/' + ctx.uid, c => ({ ...(c || {}), c: ((c && c.c) || 0) + win, total: ((c && c.total) || 0) + win })).catch(() => {}); drawHave();
