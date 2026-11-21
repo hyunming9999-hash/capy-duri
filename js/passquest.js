@@ -2,12 +2,14 @@
 // 저장·보상 없이 처음부터 끝까지 이야기와 미니게임을 그대로 해 본다. 물고기·유자·요리처럼 시간이 걸리는 단계는 "했다고 치고" 넘어간다.
 import { h, toast } from './ui.js';
 import { sfx } from './sound.js';
+import { slingGame } from './farmcrow.js';
 
 const LION = 10, OWL = 19, OCTO = 25, DOG = 0, PIG = 12, COW = 11, RACC = 29, BEAR = 6, TURTLE = 24;
 export const TAIL_N = 30, TAIL_SEC = 5; // 꼬리땐스: 좌우 번갈아 30번을 5초 안에
 
 export async function passDemo(q, d) {
   const host = d.host(); if (!host) return;
+  ['bg-lot', 'bg-wrap', 'bg-wrap2', 'bg-class', 'bg-plaza-happy', 'letter', 'dog-bark', 'bottle', 'throw', 'current', 'gull-idle', 'gull-look', 'ship-q', 'badge', 'passport'].forEach(n => { new Image().src = `img/quest/${n}.webp`; }); new Image().src = 'img/fl/a0-back.webp'; // 장면이 바뀔 때 그림이 늦게 뜨지 않게 미리 받아 둔다
   let n = 0; const TOTAL = 39;
   const S = (lines, who, ch, bg, extra, buttons, deco) => { n++; return q.scene(lines, who, `🛂 ${ch} · ${Math.min(n, TOTAL)}/${TOTAL}`, extra, buttons, bg, deco); };
   const card = (src, cls) => { const el = h('img', { class: 'pq-deco ' + cls, src, alt: '' }); return () => el; }; // 대사 내내 화면 가운데에 그림 한 장
@@ -26,9 +28,9 @@ export async function passDemo(q, d) {
     const C1 = '1장 · 형제의 꼬리땐스';
     await go(['{smile}핫똑랜드랑 친해지려면 땐스를 배워야 해.', '{happy}강아지한테는 형제애를 느끼는 아주 중요한 땐스거든.', '{shy}근데… 이건 아무한테나 보여 주는 게 아닌데.'], DOG, C1);
     await go(['{think}(두리번두리번)', '{shy}…따라와.'], DOG, C1);
-    await go(['{shy}여기라면 아무도 없겠지.', '(휘이잉… 바람에 덤불 하나가 굴러간다)', '{think}…', '{happy}(갑자기 꼬리를 미친 듯이 좌우로 흔든다! 엉덩이까지 같이 흔들린다!)', '{smug}…봤지? 이게 꼬리 땐스야.'], DOG, C1, 'lot');
+    await go(['{shy}여기라면 아무도 없겠지.', '(휘이잉… 바람에 덤불 하나가 굴러간다)', '{think}…', '{happy}(갑자기 꼬리를 미친 듯이 좌우로 흔든다! 엉덩이까지 같이 흔들린다!)', '{smug}…봤지? 이게 꼬리 땐스야.'], DOG, C1, 'lot', [], undefined, (() => { const dd = h('div', { class: 'pq-deco dogdance' }, h('img', { src: 'img/fl/a0-back.webp', alt: '' }), h('i', { class: 'pq-wh' })); return k => (k >= 3 ? dd : null); })());
     if (!(await tailDance(host, d))) throw 0; n++;
-    { const bark = h('img', { class: 'pq-deco bark', src: 'img/quest/dog-bark.webp', alt: '' }); await go(['{cry}멍멍 멍멍!! (강아지 방언)', '{shy}할아버지랑 해 보고서… 오랜만에 해 봐.'], DOG, C1, 'lot', [], undefined, k => (k === 0 ? bark : null)); }
+    { const bark = h('img', { class: 'pq-deco bark', src: 'img/quest/dog-bark.webp', alt: '', 'data-nopf': '1' }); await go(['{cry}멍멍 멍멍!! (강아지 방언)', '{shy}할아버지랑 해 보고서… 오랜만에 해 봐.'], DOG, C1, 'lot', [], undefined, k => (k === 0 ? bark : null)); }
     // ── 2장 · 고급 입맛
     const C2 = '2장 · 고급 입맛';
     await go(['{smug}핫똑랜드 녀석들 입이 아주 고급이야.', '{think}평범한 생선 들고 가면 코웃음 친다고.'], PIG, C2);
@@ -42,9 +44,9 @@ export async function passDemo(q, d) {
     const C3 = '3장 · 외교선물 황금유자';
     await go(['{smile}외교선물엔 뭐니 뭐니 해도 황금유자지. 300년 전에도 장터에서 제일 귀했던 과일이야.', '{think}근데 키우기도 힘들고… 까마귀 악당을 조심해야 해.'], COW, C3);
     await goF(['{happy}황금유자가 주렁주렁 열렸어!'], COW, C3, '농장 밭 3줄에 황금유자를 길러 다 익으면');
-    if (!(await crowShoot(host))) throw 0; n++;
+    if (!(await crowShoot())) throw 0; n++;
     await go(['{happy}자, 내가 보자기로 예쁘게 싸 줄게!', '(끙차끙차 열심히 묶는다)'], RACC, C3, 'wrap');
-    await go(['{wow}어이쿠… 내 꼬리까지 같이 묶었네. 이것 좀 잠시 풀어 줄래?', '@{smile}…완전 허당이네.'], RACC, C3, 'wrap2');
+    { const mk = h('i', { class: 'pq-deco', 'data-nopf': '1', 'data-top': '1' }); await go(['{wow}어이쿠… 내 꼬리까지 같이 묶었네. 이것 좀 잠시 풀어 줄래?', '@{smile}…완전 허당이네.'], RACC, C3, 'wrap2', [], undefined, () => mk); }
     await go(['{happy}이 정도면 바다 건너에서도 향기가 나겠어. 고생했어 황금 폐하!', '{shy}근데… 혹시 우유 필요해?', '@{smile}아니, 괜찮을 거 같아…', '{happy}음메~~~ 외교선물 상자 완성!'], COW, C3);
     // ── 4장 · 감동의 요리 3종
     const C4 = '4장 · 감동의 요리 3종';
@@ -76,7 +78,7 @@ export async function passDemo(q, d) {
 function stage(host, bg, title, hint) { host.querySelectorAll('.pq').forEach(e => e.remove());
   const el = h('div', { class: 'pq', style: bg ? { backgroundImage: `url(${bg})` } : {} }, h('i', { class: 'vn-ch' }, title), hint && h('p', { class: 'pq-hint' }, hint)); host.append(el); return el; }
 const close = (el, res) => v => { el.remove(); res(v); };
-const xBtn = done => h('button', { class: 'vn-x pq-x', 'aria-label': '닫기', onClick: e => { e.stopPropagation(); done(false); } }, '✕');
+const xBtn = done => h('button', { class: 'vn-x vn-quit pq-x', 'aria-label': '퀘스트 취소', onClick: e => { e.stopPropagation(); done(false); } }, '퀘스트 취소');
 
 // 해변 물병 찾기
 function findBottle(host) { return new Promise(res => { const el = stage(host, 'img/fl/bg/beach.webp', '🛂 프롤로그 · 해변에서 물병 찾기', '모래사장 어딘가에 반짝이는 게 있어요. 찾아서 눌러요!'), done = close(el, res);
@@ -86,8 +88,8 @@ function findBottle(host) { return new Promise(res => { const el = stage(host, '
 
 // 꼬리땐스: 뒷모습으로 서서 ◀ ▶ 를 번갈아 빠르게. 누를 때마다 엉덩이(아래쪽 절반)가 그쪽으로 씰룩. 같은 쪽을 연달아 누르면 세지 않는다
 function tailDance(host, d) { return new Promise(res => { const el = stage(host, 'img/quest/bg-lot.webp', '🛂 1장 · 꼬리땐스 미션', `◀ ▶ 를 번갈아 빠르게! ${TAIL_SEC}초 안에 ${TAIL_N}번`), done = close(el, res);
-  const svg = d.meBack ? d.meBack() : d.meSvg('happy'), top = h('div', { class: 'pq-bt', html: svg }), butt = h('div', { class: 'pq-bb', html: svg }), whoosh = h('i', { class: 'pq-wh' });
-  const me = h('div', { class: 'pq-me pq-rear' }, top, butt, whoosh), bar = h('u'), cnt = h('b', { class: 'pq-cnt' }), tm = h('em', { class: 'pq-tm' });
+  const svg = d.meBack ? d.meBack() : d.meSvg('happy'), body = h('div', { class: 'pq-body', html: svg }), whoosh = h('i', { class: 'pq-wh' });
+  const me = h('div', { class: 'pq-me pq-rear' }, body, whoosh), bar = h('u'), cnt = h('b', { class: 'pq-cnt' }), tm = h('em', { class: 'pq-tm' });
   let k = 0, last = '', t0 = 0, raf = 0, over = false, lastHit = 0;
   const draw = () => { bar.style.width = Math.min(100, k / TAIL_N * 100) + '%'; cnt.textContent = `${k} / ${TAIL_N}`; };
   const tick = now => { if (over) return; const left = TAIL_SEC - (performance.now() - t0) / 1000; tm.textContent = t0 ? Math.max(0, left).toFixed(1) + '초' : `${TAIL_SEC}.0초`; me.classList.toggle('hot', performance.now() - lastHit < 260); if (t0 && left <= 0) return end(false); raf = requestAnimationFrame(tick); };
@@ -100,25 +102,10 @@ function tailDance(host, d) { return new Promise(res => { const el = stage(host,
   el.append(me, h('div', { class: 'pq-gauge' }, bar), h('div', { class: 'pq-row' }, cnt, tm), h('div', { class: 'pq-pads' }, pad('l', '◀'), pad('r', '▶')), xBtn(v => { over = true; window.removeEventListener('keydown', kd); done(v); }));
   draw(); tick(); }); }
 
-// 까마귀 새총: 화면 아래 새총을 들고, 누른 곳으로 돌멩이가 날아간다. 까마귀를 3번 맞히면 끝
-function crowShoot(host) { return new Promise(res => { const el = stage(host, 'img/fl/bg/farm.webp', '🛂 3장 · 까마귀를 쫓아라', '까마귀를 눌러요! 누른 곳으로 새총 돌멩이가 날아가요 (3번)'), done = close(el, res);
-  const crow = h('img', { class: 'pq-crow', src: 'img/fl/o/crow-fly.webp', alt: '까마귀' }), cnt = h('b', { class: 'pq-cnt' }, '🎯 0 / 3'), sling = h('img', { class: 'pq-sling', src: 'img/quest/sling.webp', alt: '새총' });
-  let hits = 0, over = false, x = 20, y = 30, vx = 0.5, vy = 0.3, raf = 0, busy = false;
-  const move = () => { if (over) return; x += vx * (1 + hits * 0.5); y += vy * (1 + hits * 0.5); if (x < 4 || x > 72) vx = -vx; if (y < 16 || y > 50) vy = -vy; if (Math.random() < 0.02) vy = -vy;
-    crow.style.left = x + '%'; crow.style.top = y + '%'; crow.style.transform = vx < 0 ? 'scaleX(-1)' : ''; raf = requestAnimationFrame(move); };
-  el.addEventListener('pointerdown', e => { if (over || busy || e.target.closest('.vn-x')) return; e.stopPropagation(); busy = true;
-    const R = el.getBoundingClientRect(), tx = e.clientX - R.left, ty = e.clientY - R.top, sR = sling.getBoundingClientRect(), sx = sR.left - R.left + sR.width / 2, sy = sR.top - R.top + sR.height * 0.3;
-    const cR = crow.getBoundingClientRect(), onCrow = e.clientX > cR.left - 14 && e.clientX < cR.right + 14 && e.clientY > cR.top - 14 && e.clientY < cR.bottom + 14;
-    sling.style.transform = `rotate(${Math.max(-25, Math.min(25, (tx - sx) / 8))}deg)`; sling.classList.remove('fire'); void sling.offsetWidth; sling.classList.add('fire'); sfx('tock');
-    const rock = h('i', { class: 'pq-rock', style: { left: sx + 'px', top: sy + 'px' } }); el.append(rock);
-    requestAnimationFrame(() => { rock.style.transform = `translate(${tx - sx}px, ${ty - sy}px) scale(.55)`; });
-    setTimeout(() => { rock.remove(); busy = false; if (over) return;
-      if (!onCrow) { el.append(Object.assign(h('b', { class: 'pq-miss', style: { left: tx + 'px', top: ty + 'px' } }, '빗나감!'), {})); setTimeout(() => el.querySelectorAll('.pq-miss').forEach(m => m.remove()), 600); return; }
-      hits++; sfx('hit'); cnt.textContent = `🎯 ${hits} / 3`; crow.classList.remove('hit'); void crow.offsetWidth; crow.classList.add('hit'); el.append(h('b', { class: 'pq-pow', style: { left: tx + 'px', top: ty + 'px' } }, '퍽!')); setTimeout(() => el.querySelectorAll('.pq-pow').forEach(m => m.remove()), 600);
-      vx = (Math.random() < 0.5 ? -1 : 1) * (0.5 + Math.random() * 0.4); vy = (Math.random() < 0.5 ? -1 : 1) * 0.35;
-      if (hits >= 3) { over = true; cancelAnimationFrame(raf); crow.classList.add('away'); el.append(h('div', { class: 'pq-msg ok' }, '🍊 까마귀가 도망갔다! 황금유자 수확 완료')); sfx('bigfish'); setTimeout(() => done(true), 1500); } }, 230); });
-  el.append(crow, sling, h('div', { class: 'pq-row top' }, cnt), xBtn(v => { over = true; cancelAnimationFrame(raf); done(v); })); move(); }); }
-
+// 까마귀 새총: 농장 까마귀 쫓기와 똑같은 새총 놀이(초급). 놓치면 다시
+function crowShoot() { return new Promise(res => { const run = () => slingGame(1, { tag: ' · 황금유자를 지켜라', end: (win, { el, crowEl, msg }) => {
+    if (win) { crowEl.classList.add('flee'); msg.textContent = '까마귀가 도망갔어요! 황금유자 수확 완료 🍊'; sfx('bigfish'); setTimeout(() => { el.remove(); res(true); }, 1700); }
+    else { crowEl.classList.add('grab'); msg.textContent = '놓쳤어요… 다시 해 봐요!'; sfx('bad'); setTimeout(() => { el.remove(); run(); }, 1500); } } }); run(); }); }
 
 // 역사 퀴즈: 거북이 수업에서 들은 내용. 틀리면 다시
 const QUIZ = [
@@ -139,8 +126,8 @@ async function quiz(S, ch) { let k = 0;
 // 딴청(하품) → "흠…?"(고개 갸웃·느낌표 조짐) → 홱 돌아서 망원경으로 이쪽을 본다(빨간 경보·탐조등). 보는 동안 누르고 있으면 들킨다
 function gullThrow(host) { return new Promise(res => { const el = stage(host, 'img/fl/bg/sea.webp', '🛂 6장 · 갈매기 몰래 투척', '망루의 갈매기가 딴 데를 볼 때 [병 투척]을 꾹! "흠…?" 하면 바로 손을 떼요'), done = close(el, res);
   const gull = h('img', { class: 'pq-gull', src: 'img/quest/gull-idle.webp', alt: '갈매기 정찰병' }), beam = h('i', { class: 'pq-beam' }), alarm = h('i', { class: 'pq-alarm' });
-  const shipW = h('div', { class: 'pq-shipw' }, h('img', { class: 'pq-ship2', src: 'img/fl/o/ship.webp', alt: '해적선' }), gull, beam);
-  const say = h('b', { class: 'pq-say' }), bar = h('u'), btn = h('button', { class: 'btn primary pq-hold' }, '🍾 병 투척 (꾹)');
+  const shipW = h('div', { class: 'pq-shipw' }, h('img', { class: 'pq-ship2', src: 'img/quest/ship-q.webp', alt: '해적선' }), gull, beam);
+  const say = h('b', { class: 'pq-say' }); shipW.append(say); const bar = h('u'), btn = h('button', { class: 'btn primary pq-hold' }, '🍾 병 투척 (꾹)');
   new Image().src = 'img/quest/gull-look.webp';
   let st = 'back', tSt = performance.now(), dur = 1600, held = false, prog = 0, last = performance.now(), over = false, raf = 0;
   const setSt = s => { st = s; tSt = performance.now(); dur = s === 'back' ? 1400 + Math.random() * 1800 : s === 'hmm' ? 750 : 1400;
@@ -156,7 +143,7 @@ function gullThrow(host) { return new Promise(res => { const el = stage(host, 'i
   const down = e => { e.preventDefault(); e.stopPropagation(); if (over) return; if (st === 'look') { sfx('bad'); toast('지금은 보고 있어요!', 900); return; } held = true; btn.classList.add('on'); };
   const up = () => { held = false; btn.classList.remove('on'); };
   btn.addEventListener('pointerdown', down); btn.addEventListener('pointerup', up); btn.addEventListener('pointerleave', up); btn.addEventListener('pointercancel', up);
-  el.append(alarm, shipW, say, h('div', { class: 'pq-gauge low' }, bar), btn, xBtn(v => { over = true; cancelAnimationFrame(raf); done(v); })); setSt('back'); raf = requestAnimationFrame(loop); }); }
+  el.append(alarm, shipW, h('div', { class: 'pq-gauge low' }, bar), btn, xBtn(v => { over = true; cancelAnimationFrame(raf); done(v); })); setSt('back'); raf = requestAnimationFrame(loop); }); }
 
 // 컷신: 그림을 한 장씩 천천히 다가가며 보여 준다(누르면 다음)
 function cutins(host, list) { return list.reduce((p, [src, cap]) => p.then(() => new Promise(res => {

@@ -180,17 +180,18 @@ export function createQuest(d) {
   // 게임 화면 위 대화: 말하는 쪽이 크게 서고(동물 오른쪽 · 나 왼쪽), 반대편에 넓은 말풍선. 누를 때마다 다음 줄
   const parse = (t, def) => { let who = def, m = /^@/.test(t) ? 'me' : null; if (m) { who = 'me'; t = t.slice(1); } else { const k = /^#(\d+)/.exec(t); if (k) { who = +k[1]; t = t.slice(k[0].length); } }
     const md = /^\{([^}]*)\}/.exec(t), parts = md ? md[1].split('+') : ['']; return { who, mood: parts[0], props: parts.slice(1), text: md ? t.slice(md[0].length) : t }; };
-  let sceneBg = '', sceneDeco = null; // 장면 배경: 'cave' 동굴 · 'plaza' 광장 · '' 없음(게임 화면 그대로)
+  let sceneBg = '', sceneDeco = null, sceneQuit = false; // 장면 배경: 'cave' 동굴 · 'plaza' 광장 · '' 없음(게임 화면 그대로)
   function vn(lines, def, chapter, extra, buttons) { const host = d.host && d.host(); if (!host) { const L = lines.map(t => parse(t, def)).filter(l => l.who !== 'me').map(l => l.text); return new Promise(res => win(def, chapter, L.length ? L : [''], extra, (buttons || [{ label: '확인', primary: true }]).map(b => ({ ...b, onClick: c => { c(); res(b.value); } })))); }
     document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); host.querySelectorAll('.vn').forEach(e => e.remove());
-    return new Promise(res => { let k = 0, done = false; const el = h('div', { class: 'vn' }); host.append(el); d.pause && d.pause(true); const bgNow = sceneBg, decoNow = sceneDeco;
+    return new Promise(res => { let k = 0, done = false; const el = h('div', { class: 'vn' }); host.append(el); d.pause && d.pause(true); const bgNow = sceneBg, decoNow = sceneDeco, quitNow = sceneQuit;
       const end = v => { if (done) return; done = true; el.remove(); d.pause && d.pause(false); res(v); };
       function show() { const l = parse(lines[k], def), me = l.who === 'me', last = k === lines.length - 1;
         const face = me ? d.meSvg(l.mood || 'smile') : propSvg(d.svgFull(l.who, l.mood), l.who === 19 ? ['det', ...l.props] : l.props), name = me ? d.meName : d.names[l.who], text = me ? l.text : say(l.who, l.text);
         el.className = 'vn ' + (me ? 'l' : 'r') + (bgNow ? ' bg' : ''); el.style.backgroundImage = bgNow ? `url(img/quest/bg-${bgNow === 'plaza' ? 'plaza-worry' : bgNow}.webp)` : '';
-        const box = h('div', { class: 'vn-box' }, h('b', { class: 'vn-nm' }, name), h('button', { class: 'vn-x', 'aria-label': '닫기', onClick: e => { e.stopPropagation(); end(null); } }, '✕'), h('p', { class: 'vn-tx' }, text),
+        const box = h('div', { class: 'vn-box' }, h('b', { class: 'vn-nm' }, name), h('button', { class: 'vn-x' + (quitNow ? ' vn-quit' : ''), 'aria-label': quitNow ? '퀘스트 취소' : '닫기', onClick: e => { e.stopPropagation(); end(null); } }, quitNow ? '퀘스트 취소' : '✕'), h('p', { class: 'vn-tx' }, text),
           ...(last ? (extra || []).filter(Boolean) : []), last && buttons && buttons.length ? h('div', { class: 'vn-bt' }, ...buttons.map(b => h('button', { class: 'btn' + (b.primary ? ' primary' : ''), onClick: e => { e.stopPropagation(); end(b.value); } }, b.label))) : h('span', { class: 'vn-nx' }, last ? '▼ 눌러서 닫기' : '▼ 눌러서 다음'));
-        el.replaceChildren(h('i', { class: 'vn-ch' }, chapter), ...(decoNow ? [decoNow(k)].filter(Boolean) : []), h('div', { class: 'vn-pf', html: face }), box); sfx('tock'); }
+        const dn = decoNow ? decoNow(k) : null; if (dn && dn.dataset) { if (dn.dataset.nopf) el.classList.add('vn-nopf'); if (dn.dataset.top) el.classList.add('vn-top'); }
+        el.replaceChildren(h('i', { class: 'vn-ch' }, chapter), ...(dn ? [dn] : []), h('div', { class: 'vn-pf', html: face }), box); sfx('tock'); }
       el.addEventListener('click', () => { if (k < lines.length - 1) { k++; show(); } else if (!(buttons && buttons.length)) end(true); });
       show(); }); }
   const goalRow = (s, prog) => h('div', { class: 'qw-goal' }, h('b', null, '목표'), h('span', null, goalText(s)), prog && h('em', null, prog));
@@ -284,6 +285,6 @@ export function createQuest(d) {
         else { const nt = needText(s); if (!(await vn(s.say, s.who, title, nt ? [h('p', { class: 'vn-sub' }, `조건: ${nt} · 시험판에서는 바로 통과`)] : []))) return; }
         sceneBg = bgOf(n, 'done'); if (!(await vn(s.done, s.to, title + ' ✔', s.clue ? [h('p', { class: 'vn-sub' }, `📝 단서: ${s.clue}`)] : []))) return; }
       { const L = FLAT[total - 1], [c, a2] = rewardOf(L); finale([['🛴', '황금 퀵보드 (전설의 황금사자 스쿠터)', '가방에서 타기 · 육지와 농장에서 빠르게 달려요'], ['🪙', `${c.toLocaleString('ko-KR')}코인`, ''], ['🦁', '사자 친밀도 100', '단짝이 됐어요!'], ['💗', `다른 동물 친밀도 +${a2}`, '']], '🧪 시험판이라 실제로 지급되지는 않아요'); } } finally { sceneBg = ''; } }
-  const scene = (lines, def, title, extra, buttons, bg, deco) => { sceneBg = bg || ''; sceneDeco = deco || null; return vn(lines, def, title, extra, buttons).finally(() => { sceneBg = ''; sceneDeco = null; }); }; // 다른 퀘스트(여권)가 같은 대화 화면을 쓴다
+  const scene = (lines, def, title, extra, buttons, bg, deco) => { sceneBg = bg || ''; sceneDeco = deco || null; sceneQuit = true; return vn(lines, def, title, extra, buttons).finally(() => { sceneBg = ''; sceneDeco = null; sceneQuit = false; }); }; // 다른 퀘스트(여권)가 같은 대화 화면을 쓴다
   return { scene, demo, replay, open, status, progress, markOf, cooks, cooked, chatter, gossip, fresh, pirateOn, pirateResult, dispose: () => off && off() };
 }

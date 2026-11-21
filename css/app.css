@@ -2925,17 +2925,25 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 @keyframes pqLetter { from { scale: .2; rotate: -40deg; opacity: 0; } }
 .pq-deco.bark { left: 50%; top: 40px; width: 64%; max-width: 300px; translate: -50% 0; filter: drop-shadow(0 6px 10px rgba(0,0,0,.3)); animation: pqBarkIn .35s ease-out, pqBark .18s .35s ease-in-out infinite alternate; }
 @keyframes pqBarkIn { from { scale: .3; opacity: 0; } } @keyframes pqBark { from { rotate: -3deg; scale: 1; } to { rotate: 3deg; scale: 1.05; } }
-/* 꼬리땐스: 뒷모습을 위·아래로 나눠 아래(엉덩이)만 씰룩 */
-.pq-me.pq-rear { height: auto; aspect-ratio: 120 / 158; }
-.pq-me.pq-rear > div { position: absolute; inset: 0; } .pq-me.pq-rear > div svg { width: 100%; height: 100%; display: block; }
-.pq-bt { clip-path: inset(0 0 40% 0); } .pq-bb { clip-path: inset(58% 0 0 0); transform-origin: 50% 62%; }
+/* 꼬리땐스: 뒷모습 한 장을 발밑 기준으로 통째로 씰룩(머리·몸이 같이 움직인다) */
+.pq-me.pq-rear { transform-origin: 50% 100%; }
+.pq-body { transform-origin: 50% 96%; } .pq-body svg { width: 100%; height: auto; display: block; }
 .pq-me.pq-rear.wl, .pq-me.pq-rear.wr { animation: none; }
-.pq-me.pq-rear.wl .pq-bb { animation: pqBl .16s ease-out; } .pq-me.pq-rear.wr .pq-bb { animation: pqBr .16s ease-out; }
-@keyframes pqBl { 50% { transform: translateX(-9px) rotate(-11deg); } } @keyframes pqBr { 50% { transform: translateX(9px) rotate(11deg); } }
-.pq-me.pq-rear.hot .pq-bt { animation: pqBob .12s ease-in-out infinite alternate; } @keyframes pqBob { to { transform: translateY(2px); } }
-.pq-wh { position: absolute; left: 50%; top: 66%; width: 70%; height: 26%; translate: -50% 0; opacity: 0; pointer-events: none; background: radial-gradient(closest-side, transparent 55%, rgba(255,255,255,.75) 57%, transparent 64%), radial-gradient(closest-side, transparent 72%, rgba(255,255,255,.55) 74%, transparent 80%); transition: opacity .15s; }
+.pq-me.pq-rear.wl .pq-body { animation: pqSwL .16s ease-out; } .pq-me.pq-rear.wr .pq-body { animation: pqSwR .16s ease-out; }
+@keyframes pqSwL { 50% { transform: translateX(-6px) rotate(-7deg) scaleY(.97); } } @keyframes pqSwR { 50% { transform: translateX(6px) rotate(7deg) scaleY(.97); } }
+.pq-wh { position: absolute; left: 50%; top: 64%; width: 74%; height: 24%; translate: -50% 0; opacity: 0; pointer-events: none; border-radius: 50%; background: radial-gradient(closest-side, transparent 60%, rgba(255,255,255,.7) 63%, transparent 70%), radial-gradient(closest-side, transparent 78%, rgba(255,255,255,.5) 81%, transparent 88%); transition: opacity .15s; }
 .pq-me.pq-rear.hot .pq-wh { opacity: 1; animation: pqWh .14s linear infinite alternate; } @keyframes pqWh { from { scale: .9 1; } to { scale: 1.1 1; } }
-.pq-me.pq-rear.party .pq-bb { animation: pqBl .14s ease-in-out infinite alternate; }
+.pq-me.pq-rear.party .pq-body { animation: pqSwL .14s ease-in-out infinite alternate; }
+.pq-me.pq-rear.party .pq-body { animation-name: pqParty; } @keyframes pqParty { from { transform: rotate(-7deg) translateX(-5px); } to { transform: rotate(7deg) translateX(5px); } }
+/* 강아지 시범: 꼬리땐스 미션과 같은 구도(가운데·뒷모습)로 저절로 흔든다 */
+.pq-deco.dogdance { left: 50%; bottom: 150px; width: 40%; max-width: 200px; translate: -50% 0; }
+.pq-deco.dogdance img { width: 100%; display: block; transform-origin: 50% 96%; animation: pqParty .13s ease-in-out infinite alternate; filter: drop-shadow(0 6px 6px rgba(0,0,0,.25)); }
+.pq-deco.dogdance .pq-wh { opacity: 1; animation: pqWh .13s linear infinite alternate; }
+/* 대사 상자: 그림을 크게 보여 줄 때 초상 없이 넓게 · 위쪽으로 */
+.vn.vn-nopf .vn-pf { display: none; } .vn.vn-nopf .vn-box { left: 8px; right: 8px; width: auto; }
+.vn.vn-top .vn-box { bottom: auto; top: 40px; }
+.vn-quit { width: auto; height: 26px; padding: 0 10px; border-radius: 13px; font-size: 12px; font-weight: 800; white-space: nowrap; }
+.pq-x.vn-quit { top: 8px; right: 8px; z-index: 5; }
 /* 새총 */
 .pq-sling { position: absolute; left: 50%; bottom: -6px; width: 44%; max-width: 200px; margin-left: -22%; z-index: 3; transform-origin: 50% 100%; pointer-events: none; filter: drop-shadow(0 -2px 6px rgba(0,0,0,.25)); }
 @media (min-width: 455px) { .pq-sling { margin-left: -100px; } }
@@ -2945,7 +2953,7 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .pq-pow { font-size: 26px; color: #FF5A3C; text-shadow: 0 2px 0 #fff, 0 0 6px #fff; } .pq-miss { font-size: 15px; color: #6B5A4A; text-shadow: 0 1px 0 #fff; }
 @keyframes pqPopUp { from { scale: .5; } 30% { scale: 1.2; } to { scale: 1; opacity: 0; translate: -50% -190%; } }
 /* 망루 갈매기 */
-.pq-shipw { position: absolute; right: 2%; top: 24%; width: 56%; max-width: 270px; z-index: 2; animation: pqSea 2.4s ease-in-out infinite; }
+.pq-shipw { position: absolute; right: 3%; top: 42%; width: 50%; max-width: 240px; z-index: 2; animation: pqSea 2.4s ease-in-out infinite; }
 @keyframes pqSea { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(7px) rotate(1.5deg); } }
 .pq-ship2 { width: 100%; display: block; }
 .pq-gull { position: absolute; left: 24%; top: -44%; width: 46%; transform-origin: 50% 100%; transition: transform .14s ease-in, filter .2s; filter: drop-shadow(0 3px 4px rgba(0,0,0,.3)); }
@@ -2956,7 +2964,7 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .pq[data-st="look"] .pq-beam { opacity: 1; animation: pqBeam 1.4s ease-in-out infinite alternate; } @keyframes pqBeam { from { rotate: 30deg; } to { rotate: 8deg; } }
 .pq-alarm { position: absolute; inset: 0; z-index: 1; pointer-events: none; box-shadow: inset 0 0 60px 20px rgba(230,30,30,.55); opacity: 0; transition: opacity .15s; }
 .pq[data-st="look"] .pq-alarm { opacity: 1; animation: pqAl .4s ease-in-out infinite alternate; } @keyframes pqAl { to { opacity: .45; } }
-.pq-say { right: 20%; top: 14%; }
+.pq-shipw .pq-say { right: auto; left: 2%; top: -62%; white-space: nowrap; }
 /* 컷신 */
 .pq-cut { background: #0E1A2A; z-index: 63; animation: pqFadeIn .3s; } .pq-cut.out { animation: pqFadeOut .28s forwards; }
 @keyframes pqFadeIn { from { opacity: 0; } } @keyframes pqFadeOut { to { opacity: 0; } }
