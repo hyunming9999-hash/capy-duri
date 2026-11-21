@@ -239,7 +239,7 @@ export function mount(el, ctx) {
   const tryOn = id => h('span', { class: 'so-try', html: capy({ color: ctx.me.color, acc: 'none', face: 'happy', [SLOT[id[0]]]: id }) });
   // 대왕 체험: 1분 동안 황금 장신구 여섯 개를 걸친 것처럼 보이고, 동물들이 지나갈 때마다 절을 한다(저장하지 않고, 세금도 없다)
   let kingTrial = 0; const KING_SET = [10, 7, 9, 13, 25, 19];
-  const myRares = () => (kingTrial ? KING_SET : rareList((ctx.members[ctx.uid] || {}).rare)), myRare = () => (myRares().length ? myRares()[0] : -1);
+  const myRares = () => (kingTrial ? KING_SET : ctx.goldTest ? ctx.goldTest : rareList((ctx.members[ctx.uid] || {}).rare)) /* ?goldtest=10,7,9,13 → 4개 걸친 반응 시험 */, myRare = () => (myRares().length ? myRares()[0] : -1);
   // 황금사자 스쿠터: 메인 퀘스트 최종 보상. 가방에서 타고 내린다(육지·농장). 뒤에 동물 하나를 태울 수 있다
   let scoot = false, scPas = -1, scAskAt = performance.now() + 120000, scFwAt = 0, scGainT = 0, scGain = 0;
   try { scoot = localStorage.getItem('capy-scoot') === '1'; scFwAt = +localStorage.getItem('capy-scfw') || 0; } catch {}
