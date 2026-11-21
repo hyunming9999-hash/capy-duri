@@ -853,9 +853,12 @@ export function mount(el, ctx) {
   // 동물 머리 위 친밀도: 내 점수(크게)와 상대 점수(작게). 사이가 나쁘면 찌푸리고, 좋으면 하트가 떠오른다
   // 표정 그림을 바꿀 때 새 그림이 다 받아진 뒤에 갈아 끼운다(빈 칸이 한 번 깜빡이지 않게)
   const imgReady = new Set();
-  function swapBody(el, html) { el.dataset.want = html; const m = /href="([^"]+)"/.exec(html), src = m && m[1];
-    if (!src || imgReady.has(src)) { el.innerHTML = html; return; }
-    const I = new Image(); I.src = src; (I.decode ? I.decode() : Promise.resolve()).catch(() => {}).then(() => { imgReady.add(src); if (el.dataset.want === html) el.innerHTML = html; }); }
+  function swapBody(el, html) { el.dataset.want = html;
+    if (!el.firstChild) { el.innerHTML = html; return; }
+    const nb = document.createElement('span'); nb.style.cssText = 'position:absolute;left:0;top:0;width:100%;opacity:0;pointer-events:none'; nb.innerHTML = html; if (getComputedStyle(el).position === 'static') el.style.position = 'relative'; el.append(nb); // 새 그림을 안 보이게 먼저 붙여 다 받은 뒤 바꾼다(깜빡임 없게)
+    const ims = [...nb.querySelectorAll('image')]; let left = ims.length, done = false;
+    const fin = () => { if (done) return; done = true; if (el.dataset.want !== html || !nb.isConnected) { nb.remove(); return; } el.replaceChildren(...nb.childNodes); };
+    if (!left) return fin(); ims.forEach(im => { const ok = () => { if (--left <= 0) fin(); }; im.addEventListener('load', ok, { once: true }); im.addEventListener('error', ok, { once: true }); }); setTimeout(fin, 2500); }
   setTimeout(() => ANIMALS.forEach((_, i) => { const m = /href="([^"]+)"/.exec(animalSvg(i, true, 'cry')); if (m) { const I = new Image(); I.src = m[1]; I.decode && I.decode().then(() => imgReady.add(m[1])).catch(() => {}); } }), 4000); // 우는 얼굴은 미리 받아 둔다
   function scores() {
     if (!scroller) return;
