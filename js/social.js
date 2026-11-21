@@ -687,10 +687,13 @@ export function mount(el, ctx) {
       askAI(ctx.room, { name: a.name, trait: p.trait, likes: p.likes.join(', '), hates: p.hates.join(', '), user: ctx.me.name, a: A(i), mem: `(말투 규칙: ${TONE[i][1]}. 대답은 반드시 이 말투로 한다)`, text: SITU[kind](n) }).then(r => { if (r && r.by === 'claude' && r.reply && r.reply.length <= 80) bank.push(r.reply); }).catch(() => {}).finally(() => { aiBusy[key] = 0; }); }
     return out; }
   // 화는 친목회 안에서 흐른 시간(ms)으로 5분에 1점씩 풀리고, 친한 동물은 하루 넘게 교류가 없으면 8시간마다 1점 식는다(식을 때는 귀엽게 서운해한다)
+  // 한 번만(2026-11-22): 케이크 표시(cake)가 생기기 전에 케이크로 단짝이 된 유니콘(23)·병아리(17)는 표시가 없어 99로 취급되며 식어 내려갔다 → 밍땅꾸리 계정에서 100 단짝으로 되돌리고 표시를 붙인다
+  let cakeFixed = false; function cakeFix() { if (cakeFixed || ctx.me.name !== '밍땅꾸리' || !(ctx.ours && ctx.ours())) return; cakeFixed = true;
+    [23, 17].forEach(i => { const r = mine[i] || {}; if (r.ckfix) return; setRel(i, { a: 100, ckfix: 1, fedAt: ctx.store.now() }, true); }); }
   const acc = {}; // 동물별로 화가 풀리는 데 쌓인 시간 { calm } — 중간중간 저장해 두고 다음에 이어서 센다
   const accOf = k => acc[k] || (acc[k] = { calm: (mine[k] || {}).calmT || 0 });
   function calm(ms) { let ch = false; Object.keys(mine).forEach(k => { const r = mine[k]; if (!r || !ANIMALS[k]) return; const t = accOf(k), was = { ...t };
-      if (r.a >= 100 && r.cake) { t.calm = 0; return; } // 케이크로 된 단짝(100)은 저절로 식지 않는다(까마귀 이간질·욕·때리기로만 내려간다)
+      if (r.a >= 100) { t.calm = 0; return; } // 100에 닿은 동물은 저절로 식지 않는다(까마귀 이간질·욕·때리기로만 내려간다). 케이크 표시가 없는 옛 100도 더는 깎지 않는다
       if (r.a > 0) { t.calm = 0; const wall = ctx.store.now(); if (!r.fedAt) return void setRel(k, { fedAt: wall, dropN: 0 });
         let v = r.a, patch = null;
         // 50 초과: 하루 거르면 8시간마다 -1, 50에서 멈춘다
@@ -1341,7 +1344,7 @@ export function mount(el, ctx) {
   }
 
   const offs = [
-    ctx.store.on('social', v => { v = v || {}; mine = v[ctx.uid] || {}; theirs = (pid() && v[pid()]) || {}; scores(); }),
+    ctx.store.on('social', v => { v = v || {}; mine = v[ctx.uid] || {}; theirs = (pid() && v[pid()]) || {}; cakeFix(); scores(); }),
     ctx.store.on('bag/' + ctx.uid, v => { rawBag = v || {}; bag = mergeBag(); drawHp(); if (xOpen) xDraw(); }),
     ctx.store.on('socialchat', onChat, { limit: 20 }),
     ctx.store.on('fishdex/' + ctx.uid, v => { dex = v || {}; }),
