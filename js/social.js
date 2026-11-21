@@ -141,7 +141,7 @@ const SULK = ['요즘 나랑 안 놀아 줘서 서운해… 🥺', '나 잊은 �
 // 되팔 때 값: 게임 3~5판 번 것쯤(150~250코인). 물건마다 값이 정해져 있다
 const DOLL_SELL = 250; // 뽑은 인형을 상점에 파는 값(개당)
 const sellPin = i => 150 + (i * 37) % 101, sellHat = i => 150 + (i * 53 + 20) % 101;
-const MY_BOAT = 99, BOAT_PRICE = 1000, MAKE_FEE = 1000, HALL_FEE = 10; // 내 카피보트: 카피수퍼에서 1000코인
+const MY_BOAT = 99, BOAT_PRICE = 1000, MAKE_FEE = 1000, HALL_FEE = 50; // 내 카피보트: 카피수퍼에서 1000코인
 const CARE = ['너무 깊은 곳은 조심해.', '넌 소중한 존재야. 다치면 안 돼.', '멀리 나가면 꼭 돌아와야 해.', '물 차갑지 않아? 감기 조심해.', '파도가 세면 무리하지 마.', '힘들면 언제든 쉬었다 가.', '해적 만나면 다치지 말고 도망쳐도 돼.', '밥은 챙겨 먹고 다니는 거지?', '네가 무사하면 그걸로 충분해.', '낚시 잘 안 돼도 괜찮아. 넌 잘하고 있어.'];
 const PASS = 95, SEAT = FLUFFY ? 41 : 19; // 상대 카피바라의 배에 같이 탄 손님(SEAT: 운전석 바로 뒤, 배 안쪽에 앉는다). PASS는 배 번호(96~99)와 겹치면 안 된다: 96이던 때는 별빛포 단 배와 같은 번호라 손님 자리에 배가 하나 더 그려졌다
 const MY_WBOAT = 98, MY_WBOAT_GUN = 97, MY_WBOAT_GUN2 = 96; // 흰 배(더 빠르다), 대포를 단 흰 배, 신형 대포(카피 별빛포)를 단 흰 배
@@ -446,7 +446,8 @@ export function mount(el, ctx) {
   const bagFish = () => Object.entries(bag.fish || {}).filter(([, v]) => v && v.id && !v.pearl).map(([key, v]) => ({ key, ...v }));
   const aqRareName = () => { const r = aqFish().map(d => ({ d, f: fishOf(d.id) })).filter(x => x.f && (x.d.g === 'S' || x.f.tier >= 4 || x.d.shiny)).sort((a, b) => (b.f.tier || 0) - (a.f.tier || 0) || (b.d.shiny ? 1 : 0) - (a.d.shiny ? 1 : 0))[0]; return r ? (r.d.shiny ? '이로치 ' : '') + r.f.name : ''; };
   async function goHall(id, name) { if (fishOpen || battle || aquaOpen) return; if (me.boat) return toast('배에서 내린 뒤에 들어갈 수 있어요'); if (trial) return toast(`체험 중에는 ${name}에 못 들어가요`);
-    if (!(await ctx.spend(HALL_FEE))) return; toast(`🎟️ ${name} 입장료 ${HALL_FEE}코인`, 1400); ctx.backTo = 'social'; ctx.go(id); }
+    sfx('pop'); modal({ title: `🎟️ ${name}`, body: h('p', { class: 'center' }, `입장료 ${HALL_FEE}원 지불하시겠습니까?`), noX: true,
+      actions: [{ label: '아니오' }, { label: '네', primary: true, onClick: async c => { c(); if (!(await ctx.spend(HALL_FEE))) return; ctx.backTo = 'social'; ctx.go(id); } }] }); }
   function goClo() { if (fishOpen || battle || aquaOpen) return; if (me.boat) return toast('배에서 내린 뒤에 들어갈 수 있어요'); if (trial) return toast('체험 중에는 카피클로에 못 들어가요'); sfx('pop'); ctx.backTo = 'social'; ctx.go('dress'); }
   async function goAqua() { if (fishOpen || battle || aquaOpen) return; if (me.boat) return toast('배에서 내린 뒤에 들어갈 수 있어요'); if (trial) return toast('체험 중에는 수족관에 못 들어가요');
     const loadPal = async () => { if (!pid()) return null; const v = await ctx.store.get('aqua/' + pid()).catch(() => null); if (!v || !v.t) return null; return { tank: v.t, fish: Object.values(v.fish || {}).filter(Boolean), deco: Object.values(v.deco || {}).filter(Boolean) }; };
