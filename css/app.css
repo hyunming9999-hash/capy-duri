@@ -3063,3 +3063,5 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 /* 보송 그림체에서도 밥상 그림은 그대로(위의 .fluffy .kb-tray 가 배경을 지우지 않게) */
 .fluffy .kb-tray.kb-table { background: #7A1C14 url(../img/cook/bapsang.webp) center 55% / cover no-repeat; border: 3px solid #E8D3AE; border-radius: 16px; outline: 0; box-shadow: none; }
 .fluffy .kb-tray.kb-table.on { box-shadow: 0 0 0 3px #3E9A50; }
+/* 밥상 위 요리 이름표: 상 끝이 아니라 상 위 왼쪽에 */
+.kb-tlb { left: 9%; bottom: auto; top: 12px; transform: none; font-size: 12px; padding: 3px 10px; border-radius: 10px; background: rgba(40,12,8,.78); border: 1.5px solid rgba(255,225,180,.55); }
