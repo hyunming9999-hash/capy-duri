@@ -70,7 +70,15 @@ export function setupMoney(ctx, onChange) {
     return ctx.earn(base, why, lines, { bonus, res }); };
   // 돈이 모자라면 false. 쓴 뒤에 무엇을 얻는지는 부르는 쪽에서 적는다
   // 구매하기 창: 물건을 살 때는 꼭 이 창에서 [구매하기]를 눌러야 거래된다
-  ctx.askBuy = function (name, price) { const me = this && this.coins ? this : ctx; return new Promise(res => { let done = false; const have = me.coins(), won = n => Math.round(n).toLocaleString('ko-KR'), short = price > have;
+  // 구매 확인 창. opt.qty 가 있으면 수량을 고르는 창이 되고, 고른 수량(숫자)을 돌려준다(취소면 false). 수량이 없으면 예전처럼 true/false
+  ctx.askBuy = function (name, price, opt) { const me = this && this.coins ? this : ctx; if (opt && opt.qty) return new Promise(res => { let done = false, n = 1; const have = me.coins(), won = v => Math.round(v).toLocaleString('ko-KR'), cap = Math.max(1, Math.min(opt.max || 999, Math.floor(have / price) || 1));
+      const nEl = h('b', { class: 'qty-n' }), pEl = h('p', { class: 'buy-price' }), mEl = h('small'), okB = h('button', { class: 'btn primary' });
+      const set = v => { n = Math.max(1, Math.min(cap, v)); const t = price * n, short = t > have; nEl.textContent = n + (opt.unit || '개'); pEl.textContent = `🪙 ${won(t)}코인`; mEl.textContent = short ? `돈이 모자라요 · 내 돈 ${won(have)}코인` : `내 돈 ${won(have)}코인 → 사고 나면 ${won(have - t)}코인`; okB.textContent = short ? '돈이 모자라요' : `${n}${opt.unit || '개'} 구매하기`; okB.disabled = short; };
+      const st = d => h('button', { class: 'btn sm', onClick: () => set(n + d) }, (d > 0 ? '+' : '−') + Math.abs(d));
+      const close = modal({ title: '🛒 구매하기', onClose: () => { if (!done) res(false); }, body: [h('div', { class: 'buy-ask' }, h('b', null, name), h('div', { class: 'qty-row' }, st(-10), st(-1), nEl, st(1), st(10)), h('div', { class: 'qty-row sm' }, h('button', { class: 'btn sm', onClick: () => set(1) }, '1개'), h('button', { class: 'btn sm', onClick: () => set(5) }, '5개'), h('button', { class: 'btn sm', onClick: () => set(cap) }, `최대 ${cap}${opt.unit || '개'}`)), pEl, mEl)],
+        actions: [{ label: '취소' }] });
+      okB.onclick = () => { if (okB.disabled) return; done = true; close(); res(n); }; const W = [...document.querySelectorAll('.modal-wrap')].pop(); W && W.querySelector('.modal-actions').append(okB); set(1); });
+    return new Promise(res => { let done = false; const have = me.coins(), won = n => Math.round(n).toLocaleString('ko-KR'), short = price > have;
     modal({ title: '🛒 구매하기', onClose: () => { if (!done) res(false); }, body: [h('div', { class: 'buy-ask' }, h('b', null, name), h('p', { class: 'buy-price' }, `🪙 ${won(price)}코인`), h('small', null, short ? `돈이 모자라요 · 내 돈 ${won(have)}코인 (${won(price - have)}코인 부족)` : `내 돈 ${won(have)}코인 → 사고 나면 ${won(have - price)}코인`))],
       actions: [{ label: '취소' }, { label: short ? '돈이 모자라요' : '구매하기', primary: true, onClick: c => { if (short) return; done = true; c(); res(true); } }] }); }); };
   ctx.spend = async n => { n = Math.round(n); if (n <= 0) return true; let ok = false;
