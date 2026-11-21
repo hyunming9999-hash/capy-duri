@@ -688,13 +688,9 @@ export function mount(el, ctx) {
     return out; }
   // 화는 친목회 안에서 흐른 시간(ms)으로 5분에 1점씩 풀리고, 친한 동물은 하루 넘게 교류가 없으면 8시간마다 1점 식는다(식을 때는 귀엽게 서운해한다)
   // 한 번만(2026-11-22): 케이크 표시(cake)가 생기기 전에 케이크로 단짝이 된 유니콘(23)·병아리(17)는 표시가 없어 99로 취급되며 식어 내려갔다 → 밍땅꾸리 계정에서 100 단짝으로 되돌리고 표시를 붙인다
-  // 점검 창(?relcheck): 100에 닿은 적이 있는데(hit100) 케이크 표시가 없는 동물을 나·상대 모두 보여 준다. 보기만 하고 아무것도 바꾸지 않는다
-  let relShown = false; function relCheck() { if (relShown || !new URLSearchParams(location.search).has('relcheck')) return; relShown = true;
-    const rows = (who, data) => { const L = Object.keys(data || {}).filter(k => ANIMALS[k] && data[k] && (data[k].hit100 || (data[k].a || 0) >= 100)).map(k => { const r = data[k]; return `${ANIMALS[k].name}: 저장 ${r.a || 0}점 · 케이크표시 ${r.cake ? '있음' : '없음'}${r.crowed ? ' · 까마귀 당함' : ''}`; });
-      return [h('b', null, `${who} (${L.length}마리)`), ...(L.length ? L.map(t => h('p', { style: { margin: '2px 0', fontSize: '13px' } }, t)) : [h('p', { class: 'dim' }, '해당 없음')])]; };
-    setTimeout(() => modal({ title: '🔎 단짝 점검 (보기 전용)', body: h('div', null, ...rows(ctx.me.name, mine), h('hr'), ...rows(pid() ? ctx.nameOf(pid()) : '상대', theirs)), actions: [{ label: '닫기', primary: true }] }), 3500); }
-  let cakeFixed = false; function cakeFix() { if (cakeFixed || ctx.me.name !== '밍땅꾸리' || !(ctx.ours && ctx.ours())) return; cakeFixed = true;
-    [23, 17].forEach(i => { const r = mine[i] || {}; if (r.ckfix) return; setRel(i, { a: 100, ckfix: 1, fedAt: ctx.store.now() }, true); }); }
+  const CAKE_FIX = { '밍땅꾸리': [23, 17], '두두': [1, 3, 13, 26, 28] }; // 두두: 고양이·햄스터·개구리·물개·다람쥐(2026-11-22 점검 창으로 확인)
+  let cakeFixed = false; function cakeFix() { const L = CAKE_FIX[ctx.me.name]; if (cakeFixed || !L || !(ctx.ours && ctx.ours())) return; cakeFixed = true;
+    L.forEach(i => { const r = mine[i] || {}; if (r.ckfix) return; setRel(i, { a: 100, ckfix: 1, fedAt: ctx.store.now() }, true); }); }
   const acc = {}; // 동물별로 화가 풀리는 데 쌓인 시간 { calm } — 중간중간 저장해 두고 다음에 이어서 센다
   const accOf = k => acc[k] || (acc[k] = { calm: (mine[k] || {}).calmT || 0 });
   function calm(ms) { let ch = false; Object.keys(mine).forEach(k => { const r = mine[k]; if (!r || !ANIMALS[k]) return; const t = accOf(k), was = { ...t };
@@ -1349,7 +1345,7 @@ export function mount(el, ctx) {
   }
 
   const offs = [
-    ctx.store.on('social', v => { v = v || {}; mine = v[ctx.uid] || {}; theirs = (pid() && v[pid()]) || {}; cakeFix(); relCheck(); scores(); }),
+    ctx.store.on('social', v => { v = v || {}; mine = v[ctx.uid] || {}; theirs = (pid() && v[pid()]) || {}; cakeFix(); scores(); }),
     ctx.store.on('bag/' + ctx.uid, v => { rawBag = v || {}; bag = mergeBag(); drawHp(); if (xOpen) xDraw(); }),
     ctx.store.on('socialchat', onChat, { limit: 20 }),
     ctx.store.on('fishdex/' + ctx.uid, v => { dex = v || {}; }),
