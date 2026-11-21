@@ -9,7 +9,7 @@ import { sfx, animalVoice, bgm } from './sound.js';
 import { makeVoice } from './walk.js';
 import { PUSH_URL } from './push.js';
 import { isMock } from './store.js';
-import { openFarm, cropOf, cropImg, cropPrice, farmMail } from './farm.js';
+import { openFarm, cropOf, cropImg, cropPrice, farmMail, CROPS } from './farm.js';
 import { openCook, SAUCES, SAUCE_PACK, SAUCE_IMG } from './cook.js';
 import { farmCrow } from './farmcrow.js';
 import { createQuest, propSvg } from './quest.js';
@@ -18,7 +18,7 @@ import { dollImg } from './g-claw.js';
 import { recOf } from './cook.js';
 import { TANKS as AQT, DECO as AQD } from './aquarium.js';
 const AQACT = { peck: '콕콕 쪼기', hide: '숨바꼭질', circle: '빙글빙글', bubble: '거품 타기', glow: '반짝반짝', heart: '하트 뿅', startle: '깜짝 놀라기', slide: '미끄럼 타기' };
-import { openFishing, seaBattle, PIRATE_LOOT, FLEE_FEE, CBOAT_FIX, FISH, TIERS, RODS, ZONES, BAIT, BAIT2, BAIT3, baitIc, BALL, CANNON, CANNON2, WBOAT, BOAT_FIX, PIRATE_HIT, fishSvg, SHINY_LIST } from './fishing.js';
+import { openFishing, seaBattle, PIRATE_LOOT, FLEE_FEE, CBOAT_FIX, FISH, TIERS, RODS, ZONES, BAIT, BAIT2, BAIT3, baitIc, BALL, CANNON, CANNON2, WBOAT, BOAT_FIX, PIRATE_HIT, fishSvg, SHINY_LIST, PEARL_PRICE } from './fishing.js';
 const CROW_IMG = FLUFFY ? 'img/fl/o/crow.webp' : 'img/crow/crow.webp';
 const FL_GUN = '<svg viewBox="110 30 64 48"><image href="img/fl/o/gun.webp" x="114" y="36" width="56" height="24"/><image href="img/fl/o/wheel.webp" x="117" y="48" width="26" height="26"/></svg>', FL_GUN2 = '<svg viewBox="108 28 66 50"><image href="img/fl/o/gun2.webp" x="112" y="33" width="58" height="31"/><image href="img/fl/o/wheel2.webp" x="113" y="48" width="26" height="26"/></svg>'; // 상점 그림: 배에 달린 대포와 같은 그림
 
@@ -561,6 +561,13 @@ export function mount(el, ctx) {
   function dropPas() { if (scPas < 0) return; const o = actors[scPas]; if (o) { o.e.style.visibility = ''; o.st = 'idle'; o.x = me.x - 50; o.until = performance.now() + 1500; pop(o.e, toned(scPas, pick(['재밌었다! 또 태워 줘!', '고마워, 최고야!', '바람이 시원했어!'])), 'say'); } scPas = -1; refreshMe(); }
   function takePas(i) { if (!scoot || scPas >= 0) return; const o = actors[i]; if (!o) return; scPas = i; o.wantRide = 0; leave(o); o.st = 'scoot'; scGainT = 0; scGain = 0; refreshMe(); sfx('jump'); pop(mePop, toned(i, '출발!'), 'say'); }
   // 지나가면 칭찬, 30분에 한 번 한두 마리가 폭죽, 가끔 "태워 줘!", 부딪히면 밀려나기만(친밀도 그대로)
+  // 진주 축하: 진주를 낚은 뒤 가까이 마주친 동물이 축하한다. 모두 합쳐 3번까지(bag.pcheer가 남은 횟수)
+  let cheerAt = 0; const CHEER = ['바다 진주를 낚았다며?! 축하해!! 🎉', '우와아 진주다! 마을의 자랑이야! ✨', '평생 한 번 볼까 말까 한 진주래! 대단해!', '진주 낚은 주인공이다! 축하축하~ 🦪', '소문 다 났어! 바다 진주 축하해! 💖'];
+  function pearlCheer(now, paused, wet) { if (!(bag.pcheer > 0) || paused || wet || me.boat || trial || now < cheerAt) return;
+    const i = actors.findIndex((o, k) => o && ['idle', 'walk'].includes(o.st) && Math.abs(o.x - me.x) < 130 && A(k) > -30 && !o.cheered); if (i < 0) return;
+    const o = actors[i]; o.cheered = 1; cheerAt = now + 6000; pop(o.e, toned(i, CHEER[(3 - bag.pcheer) % CHEER.length]), 'say long'); sfx('fanfare');
+    for (let k = 0; k < 10; k++) { const c = h('i', { class: 'so-cheer', style: { left: o.x + (Math.random() - 0.5) * 90 + 'px', bottom: 40 + Math.random() * 30 + '%', animationDelay: k * 0.06 + 's' } }, ['🎉', '✨', '🦪', '💖', '🎊'][k % 5]); o.e.parentElement && o.e.parentElement.append(c); setTimeout(() => c.remove(), 1800); }
+    saveBag({ pcheer: bag.pcheer - 1 }); }
   function scootTick(now, paused, wet, mx) { if (!scoot || !meEl) return; meEl.classList.add('scoot');
     if (wet || me.boat || me.ride) return setScoot(false, '물가에서는 스쿠터에서 내려요');
     if (paused) return;
@@ -826,7 +833,7 @@ export function mount(el, ctx) {
         else { const sh = shiny && goldOk && (A(i) < 30 || Math.random() < 0.6); if (sh) pop(o.e, gold('shine', RAREGREET.map(f => toned(i, f(ctx.me.name)))), 'say long'); else if (A(i) >= 30) pop(o.e, line(i, 'greet', toned(i, pick(GREET)(ctx.me.name))), 'say long'); } }
       const k = Math.min(1, dt * 5); o.y += (ty - o.y) * k; o.s += (ts - o.s) * k;
       o.e.style.left = o.x + 'px'; o.e.style.bottom = (o.y * 100).toFixed(2) + '%'; o.e.style.transform = `scale(${o.s.toFixed(3)})`; });
-    fcrow.tick(now, farmOpen ? 'farm' : !trial && !paused && !wet && !me.boat ? 'land' : null); if (now > qmAt) { qmAt = now + 1500; drawQMarks(); } chatTick(now, paused, wet); nudgeTick(now); loanTick(now); scootTick(now, paused, wet, mx);
+    fcrow.tick(now, farmOpen ? 'farm' : !trial && !paused && !wet && !me.boat ? 'land' : null); if (now > qmAt) { qmAt = now + 1500; drawQMarks(); } chatTick(now, paused, wet); nudgeTick(now); loanTick(now); scootTick(now, paused, wet, mx); pearlCheer(now, paused, wet);
     crowTick(now, paused, wet); charmTick(now, paused, wet); sRumorTick(now, paused, wet); loveTick(now, paused, wet);
     raf = requestAnimationFrame(step);
   }
@@ -1070,7 +1077,8 @@ export function mount(el, ctx) {
   }
 
   // ----- 카피마켓: 잡은 물고기는 가방에 담았다가 할아버지 주인장에게 판다 -----
-  function keepFish(x) { const k = Date.now().toString(36) + Math.random().toString(36).slice(2, 5), v = { ...x, t: ctx.store.now() };
+  function keepFish(x) { if (x && x.id === 'pearl') { x = { ...x, p: PEARL_PRICE }; saveBag({ pcheer: 3 }); } // 진주를 낚으면 마주치는 동물들이 축하해 준다(총 3번)
+    const k = Date.now().toString(36) + Math.random().toString(36).slice(2, 5), v = { ...x, t: ctx.store.now() };
     const sf = FISH.find(q => q.id === x.id); if (sf && (x.g === 'S' || sf.tier === 4)) { const f = sf, lab = f.tier === 4 && x.g === 'S' ? '초희귀 S등급' : f.tier === 4 ? '초희귀' : 'S등급'; bag = { ...bag, sRumor: { at: v.t, name: f.name, cm: x.cm, lab } }; ctx.store.update('bag/' + ctx.uid, { sRumor: bag.sRumor }).catch(() => {}); }
     bag = { ...bag, fish: { ...(bag.fish || {}), [k]: v } }; ctx.store.update('bag/' + ctx.uid + '/fish', { [k]: v }).catch(() => {}); }
   const fishOf = id => (id === 'pearl' ? { name: '바다 진주', pearl: true } : FISH.find(f => f.id === id));
@@ -1124,8 +1132,18 @@ export function mount(el, ctx) {
     const sell = async (price, go, earned) => { if (trial) { say('체험 중에는 거래 못 하네. 체험 끝나고 오게.'); return false; } await go(); await (earned ? addCoins(price) : gain(price)); sfx('coin'); toast(`팔았어요 +${price.toLocaleString('ko-KR')} 🪙`, 2000); scores(); return true; };
     const onBoat = () => { if (!me.boat) return false; say('배에 탄 채로는 배를 못 팔지! 뭍에 내려서 오게.'); return true; };
     const fishGo = items => async () => { const patch = {}, left = { ...(bag.fish || {}) }; items.forEach(([k]) => { patch[k] = null; delete left[k]; }); bag = { ...bag, fish: left }; await ctx.store.update('bag/' + ctx.uid + '/fish', patch).catch(() => {}); };
+    // 오늘의 농작물: 초급·중급 작물을 하루에 3종씩(날짜로 정해져서 두 사람이 같은 걸 본다). 값은 원가의 3.5배(운송비·톨비 포함). 등급은 사고 나서 알 수 있다
+    const MART_X = 3.5, MART_GR = [['S', 0.1], ['A', 0.25], ['B', 0.35], ['C', 0.3]];
+    const martToday = () => { const d = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10); let x = [...d].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7); const rnd = () => { x = (x * 1103515245 + 12345) >>> 0; return x / 4294967296; };
+      return [1, 2].flatMap(t => { const L = CROPS.filter(c => c.t === t).slice(); for (let i = L.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [L[i], L[j]] = [L[j], L[i]]; } return L.slice(0, 3); }); };
+    const martGrade = () => { let r = Math.random(); for (const [g, p] of MART_GR) { if ((r -= p) < 0) return g; } return 'C'; };
     function buyItems() { const R = R0();
-      return [['sec', '🎁 선물·회복'],
+      return [['sec', '🥕 오늘의 농작물'], ['note', '초급·중급 작물이 매일 3종씩 들어와요. 뭐가 들어올지는 그날 가 봐야 알아요. 운송비·톨비가 붙어 원가의 3.5배 · 등급은 사고 나서 확인!'],
+        ...martToday().map(c => { const price = Math.round(c.base * MART_X); return { ic: `<img src="${cropImg(c.id)}" alt="" style="width:100%;height:100%;object-fit:contain">`, name: `${c.name} 1개`, sub: `${won(price)} · ${c.t === 1 ? '초급' : '중급'} 작물 · 등급은 산 다음에 알 수 있어요 · 헛간에 ${Object.entries(farmBarn).filter(([k, n]) => n > 0 && k.split('|')[0] === c.id).reduce((a, [, n]) => a + n, 0)}개`, price,
+          line: `${c.name}이라… 멀리서 실어 오느라 운송비에 톨비까지 붙었네. 등급은 까 봐야 알지, 허허.`,
+          act: async () => { if (trial) { say('체험 중에는 거래 못 하네. 체험 끝나고 오게.'); return false; } if (!(await ctx.spend(price))) { say(pick(GP.poor)); return false; } const g = martGrade(), k = `${c.id}|${g}`, n = (farmBarn[k] || 0) + 1; farmBarn = { ...farmBarn, [k]: n }; await ctx.store.update('farm/' + ctx.uid + '/barn', { [k]: n }).catch(() => {});
+            modal({ title: g === 'S' ? '🌟 대박! S급이에요' : `📦 ${c.name} 상자를 열어 보니…`, body: [h('div', { class: 'mart-open g' + g }, h('img', { src: cropImg(c.id), alt: '' }), h('b', null, `${g}급`)), h('p', { class: 'center' }, `${c.name} ${g}급 1개를 헛간에 넣었어요.`)], actions: [{ label: '확인', primary: true }] }); if (g === 'S') sfx('fanfare'); return true; } }; }),
+        ['sec', '🎁 선물·회복'],
         ...Object.entries(GIFTS).map(([k, [ic, nm, price, up]]) => ({ ic, name: nm, sub: `${won(price)} · 친밀도 +${up} · 가진 것 ${bag[k] || 0}개`, price, line: GP[k], act: () => buy(price, { [k]: (bag[k] || 0) + 1 }) })),
         { ic: '🧪', name: '회복 포션', sub: `${won(POTION[0])} · 체력 +${POTION[1]} · 가진 것 ${bag.potion || 0}개`, price: POTION[0], line: hpNow() < HP_MAX ? GP.potion : '지금은 쌩쌩하구먼. 그래도 하나쯤 챙겨 두면 든든하지.', act: () => buy(POTION[0], { potion: (bag.potion || 0) + 1 }) },
         ['sec', '🧂 카피백반 양념'],
@@ -1154,10 +1172,10 @@ export function mount(el, ctx) {
         { ic: baitI(2), name: '중급 미끼 10개 (중급 바다)', sub: `${won(BAIT2 * 10)} · 중급 바다에서만 써요 · 가진 것 ${bag.bait2 || 0}`, price: BAIT2 * 10, line: '중급 바다 물고기는 입맛이 까다롭지. 파란 미끼여야 문다네.', act: () => buy(BAIT2 * 10, { bait2: (bag.bait2 || 0) + 10 }) },
         { ic: baitI(3), name: '고급 미끼 10개 (고급 바다)', sub: `${won(BAIT3 * 10)} · 고급 바다에서만 써요 · 가진 것 ${bag.bait3 || 0}`, price: BAIT3 * 10, line: '금빛 미끼라네. 깊은 바다 녀석들도 이건 못 참지.', act: () => buy(BAIT3 * 10, { bait3: (bag.bait3 || 0) + 10 }) }].filter(Boolean); }
     function sellItems() { const out = [], uidOwned = ctx.owned[ctx.uid] || {};
-      const L = Object.entries(bag.fish || {}).filter(([, v]) => v).sort((a, b) => (b[1].t || 0) - (a[1].t || 0)), total = L.reduce((n, [, v]) => n + v.p, 0);
+      const L = Object.entries(bag.fish || {}).filter(([, v]) => v).sort((a, b) => (b[1].t || 0) - (a[1].t || 0)), total = L.reduce((n, [, v]) => n + (v.id === 'pearl' ? PEARL_PRICE : v.p), 0);
       out.push(['sec', `🐟 물고기 ${L.length}마리`]);
       if (L.length) { out.push(h('button', { class: 'btn primary mk-all', onClick: async () => { if (await sell(total, fishGo(L), true)) { say(`허허, 몽땅 합쳐서 ${won(total)}이여. 다음에도 싱싱한 놈으로 부탁하네!`); draw(); } } }, `물고기 전부 팔기 · ${won(total)}`));
-        L.forEach(([k, v]) => { const f = fishOf(v.id) || { name: '?' }; out.push({ big: 1, gold: f.pearl || f.king || f.rare || v.shiny, ic: h('span', { class: 'so-try', html: f.pearl ? fishSvg({ pearl: true }) : f.id ? fishSvg(f, false, v.shiny) : '' }), name: (v.shiny ? '✨ ' : '') + (f.king ? '👑 ' + f.name : f.name) + (v.g ? ` · ${v.g}등급` : ''), sub: f.pearl ? '반짝반짝 진주 · 눌러서 값 물어보기' : `${v.cm}cm · 눌러서 값 물어보기`, price: v.p, line: () => appraise(v), done: `거래 고맙구먼! ${won(v.p)} 여기 있네.`, act: () => sell(v.p, fishGo([[k, v]]), true) }); }); }
+        L.forEach(([k, v]) => { const f = fishOf(v.id) || { name: '?' }; out.push({ big: 1, gold: f.pearl || f.king || f.rare || v.shiny, ic: h('span', { class: 'so-try', html: f.pearl ? fishSvg({ pearl: true }) : f.id ? fishSvg(f, false, v.shiny) : '' }), name: (v.shiny ? '✨ ' : '') + (f.king ? '👑 ' + f.name : f.name) + (v.g ? ` · ${v.g}등급` : ''), sub: f.pearl ? '반짝반짝 진주 · 눌러서 값 물어보기' : `${v.cm}cm · 눌러서 값 물어보기`, price: f.pearl ? PEARL_PRICE : v.p, line: () => appraise(v), done: `거래 고맙구먼! ${won(v.p)} 여기 있네.`, act: () => sell(v.p, fishGo([[k, v]]), true) }); }); }
       else out.push(['note', '가방에 물고기가 없어요. 낚시터에서 잡아 오세요.']);
       const crops = Object.entries(farmBarn).filter(([, n]) => n > 0).sort(), cropSum = crops.reduce((t, [k, n]) => t + cropPrice(k.split('|')[0], k.split('|')[1]) * n, 0);
       if (crops.length) { out.push(['sec', `🥕 작물 ${crops.reduce((t, [, n]) => t + n, 0)}개`]);

@@ -13,7 +13,7 @@ export const RODS = [null, { t: 1, name: '초급 낚싯대', price: 500, dur: 50
 export const BAIT2 = 30, BAIT3 = 60, BAIT_KEY = ['', 'bait', 'bait2', 'bait3'], BAIT_NAME = ['', '미끼', '중급 미끼', '고급 미끼'];
 const BAIT_COL = [null, ['#F28BA8', '#B4466A'], ['#5EB8FF', '#1E5E92'], ['#FFD24A', '#B07A00']];
 export const baitIc = t => { const [f, d] = BAIT_COL[t] || BAIT_COL[1]; return `<svg viewBox="0 0 48 48"><path d="M10 34 C4 26 12 18 20 22 C28 26 32 14 40 18 C46 21 44 30 38 30" fill="none" stroke="${d}" stroke-width="11" stroke-linecap="round"/><path d="M10 34 C4 26 12 18 20 22 C28 26 32 14 40 18 C46 21 44 30 38 30" fill="none" stroke="${f}" stroke-width="7.5" stroke-linecap="round"/><path d="M15 22 v6 M22 22.5 v6 M29 19 v6 M35 16.5 v6" stroke="${d}" stroke-width="1.6" stroke-linecap="round" opacity=".6"/><circle cx="38.5" cy="29" r="1.6" fill="#3A2210"/>${t === 3 ? '<path d="M41 8 l1.4 3 3 1.4 -3 1.4 -1.4 3 -1.4 -3 -3 -1.4 3 -1.4z" fill="#FFF3B0"/>' : ''}</svg>`; };
-export const BAIT = 10, BALL = 50, CANNON = 1500, CANNON2 = 3500, WBOAT = 3000, PEARL_PRICE = 20000, PEARL_P = 0.002; // 진주: 고급 바다에서 던질 때마다 0.2% · 진주부적(3장)을 쓰면 10번 안에 한 번 걸리고 90%로 낚는다
+export const BAIT = 10, BALL = 50, CANNON = 1500, CANNON2 = 3500, WBOAT = 3000, PEARL_PRICE = 50000, PEARL_P = 0.002; // 진주: 고급 바다에서 던질 때마다 0.2% · 진주부적(3장)을 쓰면 10번 안에 한 번 걸리고 90%로 낚는다
 
 // 물고기 80종: [이름, 최소cm, 최대cm, 최소값, 최대값, 표시(r=귀한 것, k=대장)]
 // 값은 가게 시세에 맞췄다(옷 한 벌 200~310, 게임 한 판 50쯤, 한 번 던지는 데 미끼·낚싯대 값 13쯤): 초급 평균 85, 중급 165, 고급 300쯤
@@ -236,13 +236,23 @@ export function openFishing(o) {
       cur.g && g !== 'F' && h('button', { class: 'btn sm fs-gbtn', onClick: () => { if (gEl.classList.contains('hide')) { gEl.className = 'fs-grade pop g' + g; gEl.textContent = `${g}등급` + (f.tier ? ` · ${TIERS[f.tier].n}` : ''); sfx(g === 'S' || g === 'A' ? 'bigfish' : 'point'); setTimeout(() => gradeInfo(f, cm, g), 650); } else gradeInfo(f, cm, g); } }, h('i', { class: 'fs-gico', html: '<svg viewBox="0 0 20 20"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12.6 12.6 L17 17" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>' }), '등급 확인하기'),
       h('div', { class: 'fs-acts' }, h('button', { class: 'btn primary', onClick: () => { if (safe()) { card.remove(); ready(); } } }, '또 던지기'), h('button', { class: 'btn', onClick: () => { if (safe()) { card.remove(); close(); } } }, '그만하기')));
     wrap.append(card); say(''); btn.textContent = '…'; btn.onclick = null; card.classList.add('wait'); setTimeout(() => card.classList.remove('wait'), 1200);
+    // 바다 진주: 역대급 연출 — 화면 전체가 하얗게 번쩍, 금빛 햇살이 돌고, 진주가 솟아오르며 폭죽·꽃가루·반짝이가 쏟아진다
+    if (f.pearl) { card.classList.add('wait'); setTimeout(() => card.classList.remove('wait'), 4200); const fx = h('div', { class: 'pfx' }, h('div', { class: 'pfx-flash' }), h('div', { class: 'pfx-rays' }), h('div', { class: 'pfx-ring' }), h('div', { class: 'pfx-ring r2' }),
+        h('div', { class: 'pfx-pearl', html: fishSvg(f) }), h('div', { class: 'pfx-title' }, h('b', null, '바다 진주'), h('small', null, '✦ LEGENDARY ✦ 평생 한 번 볼까 말까!')));
+      const C = ['#FFE066', '#FF9AC7', '#B8F3FF', '#FFFFFF', '#C9A2FF', '#FFC94D'];
+      for (let k = 0; k < 60; k++) fx.append(h('i', { class: 'pfx-conf', style: { left: Math.random() * 100 + '%', background: C[k % C.length], animationDelay: (0.6 + Math.random() * 2.4).toFixed(2) + 's', animationDuration: (2.4 + Math.random() * 2).toFixed(2) + 's', '--r': (Math.random() * 720 - 360).toFixed(0) + 'deg', width: 6 + Math.random() * 6 + 'px', height: 10 + Math.random() * 8 + 'px' } }));
+      for (let k = 0; k < 36; k++) fx.append(h('i', { class: 'pfx-spark', style: { '--a': (k / 36 * 360) + 'deg', '--d': (120 + Math.random() * 170).toFixed(0) + 'px', animationDelay: (0.5 + (k % 3) * 0.25).toFixed(2) + 's', color: C[k % C.length] } }, k % 3 ? '✦' : '✨'));
+      for (let k = 0; k < 6; k++) fx.append(h('b', { class: 'pfx-boom', style: { left: 10 + Math.random() * 80 + '%', top: 8 + Math.random() * 50 + '%', animationDelay: (0.8 + k * 0.45).toFixed(2) + 's', color: C[k % C.length] } }));
+      document.body.append(fx); sfx('fanfare'); setTimeout(() => sfx('bigfish'), 500); [900, 1500, 2100, 2700].forEach(t => setTimeout(() => alive && sfx('coin'), t));
+      try { navigator.vibrate && navigator.vibrate([80, 60, 80, 60, 200]); } catch {}
+      const end = () => { fx.classList.add('out'); setTimeout(() => fx.remove(), 700); }; fx.onclick = end; setTimeout(end, 5200); }
     // 와! ○○○을 잡았다! — 화면 가득 터지는 글자, 그 아래 등급
     if (!f.icon && shiny) { // 이로치: 화면이 무지갯빛으로 번쩍이고 반짝이가 터진다
       const fl = h('div', { class: 'fs-shyflash' }); (wrap.querySelector('.fs-view') || wrap).append(fl); setTimeout(() => fl.remove(), 1600);
       const wow = h('div', { class: 'fs-wow shy' }, h('b', null, '✨ 이로치다! ✨'), h('small', null, `색이 다른 ${f.name} · 📖 이로치 도감에 기록`));
       for (let k = 0; k < 20; k++) wow.append(h('i', { class: 'fs-spark', style: { '--a': (k / 20 * 360) + 'deg', '--d': (70 + Math.random() * 90).toFixed(0) + 'px', color: ['#FF7EB6', '#8F7CFF', '#5ED3F3', '#FFE066'][k % 4] } }, k % 2 ? '✦' : '✨'));
       (wrap.querySelector('.fs-view') || wrap).append(wow); setTimeout(() => wow.classList.add('out'), 2600); setTimeout(() => wow.remove(), 3100); }
-    else if (!f.icon) { const wow = h('div', { class: 'fs-wow' + (isNew ? ' new' : f.pearl || f.king ? ' gold' : '') }, h('b', null, isNew ? '와! 새로운 물고기다!' : `와! ${josaUl(f.pearl ? '바다 진주' : f.name)} 잡았다!`), isNew ? h('small', null, `📖 ${f.name} · 도감에 새로 올렸어요`) : cur.g && h('small', null, '몇 등급일까? 등급 확인하기를 눌러 보세요'));
+    else if (!f.icon && !f.pearl) { const wow = h('div', { class: 'fs-wow' + (isNew ? ' new' : f.pearl || f.king ? ' gold' : '') }, h('b', null, isNew ? '와! 새로운 물고기다!' : `와! ${josaUl(f.pearl ? '바다 진주' : f.name)} 잡았다!`), isNew ? h('small', null, `📖 ${f.name} · 도감에 새로 올렸어요`) : cur.g && h('small', null, '몇 등급일까? 등급 확인하기를 눌러 보세요'));
       if (isNew) { sfx('bigfish'); for (let k = 0; k < 14; k++) wow.append(h('i', { class: 'fs-spark', style: { '--a': (k / 14 * 360) + 'deg', '--d': (60 + Math.random() * 70).toFixed(0) + 'px' } }, '✨')); }
       (wrap.querySelector('.fs-view') || wrap).append(wow); setTimeout(() => wow.classList.add('out'), 1900); setTimeout(() => wow.remove(), 2400); }
   }
