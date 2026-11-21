@@ -849,11 +849,17 @@ export function mount(el, ctx) {
     raf = requestAnimationFrame(step);
   }
   // 동물 머리 위 친밀도: 내 점수(크게)와 상대 점수(작게). 사이가 나쁘면 찌푸리고, 좋으면 하트가 떠오른다
+  // 표정 그림을 바꿀 때 새 그림이 다 받아진 뒤에 갈아 끼운다(빈 칸이 한 번 깜빡이지 않게)
+  const imgReady = new Set();
+  function swapBody(el, html) { el.dataset.want = html; const m = /href="([^"]+)"/.exec(html), src = m && m[1];
+    if (!src || imgReady.has(src)) { el.innerHTML = html; return; }
+    const I = new Image(); I.src = src; (I.decode ? I.decode() : Promise.resolve()).catch(() => {}).then(() => { imgReady.add(src); if (el.dataset.want === html) el.innerHTML = html; }); }
+  setTimeout(() => ANIMALS.forEach((_, i) => { const m = /href="([^"]+)"/.exec(animalSvg(i, true, 'cry')); if (m) { const I = new Image(); I.src = m[1]; I.decode && I.decode().then(() => imgReady.add(m[1])).catch(() => {}); } }), 4000); // 우는 얼굴은 미리 받아 둔다
   function scores() {
     if (!scroller) return;
     scroller.querySelectorAll('.so-an').forEach(e => { const i = +e.dataset.i, a = A(i), lv = levelOf(a), t = pid() && theirs[i] ? (theirs[i].a >= 100 && !theirs[i].cake ? 99 : theirs[i].a || 0) : null, s = e.querySelector('.so-score'), mood = moodOf(a), hearts = a >= 80 ? 3 : a >= 50 ? 2 : a >= 30 ? 1 : 0;
       s.className = 'so-score' + (a < 0 ? ' neg' : a >= PIN_AT ? ' hi' : ''); s.replaceChildren(h('b', null, `${lv[2]} ${a}`), t != null && h('i', null, `${ctx.nameOf(pid()).slice(0, 3)} ${t}`) || '');
-      { const md = e.classList.contains('cry') ? 'cry' : mood, mk = md + (i === 10 && questDone() ? '+f' : ''); if (e.dataset.mood !== mk) { e.dataset.mood = mk; e.querySelector('.so-body').innerHTML = crowned(i, animalSvg(i, true, md)); } } // 영웅 반응 중에는 우는 얼굴 그림
+      { const md = e.classList.contains('cry') ? 'cry' : mood, mk = md + (i === 10 && questDone() ? '+f' : ''); if (e.dataset.mood !== mk) { e.dataset.mood = mk; swapBody(e.querySelector('.so-body'), crowned(i, animalSvg(i, true, md))); } } // 영웅 반응 중에는 우는 얼굴 그림
       if (+e.dataset.hearts !== hearts) { e.dataset.hearts = hearts; e.querySelector('.so-hearts').replaceChildren(...Array.from({ length: hearts }, (_, k) => h('i', { style: { animationDelay: k * 0.7 + 's', left: [50, 22, 78][k] + '%' } }, '💗'))); } });
     refreshMe(); drawPal();
   }
