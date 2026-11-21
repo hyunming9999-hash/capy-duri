@@ -2994,3 +2994,10 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 @keyframes pqSpl { 0% { translate: 0 6px; opacity: 0; } 15% { opacity: 1; } 50% { translate: 0 -10px; opacity: .9; } 70%, 100% { translate: 0 4px; opacity: 0; } }
 .pq-lives { position: static; }
 .pq-msg-s { font-size: 14px; font-weight: 700; } .pq-msg-t { display: block; margin-bottom: 8px; color: #8A6A3A; font-size: 12px; }
+/* 여권 퀘스트 */
+.so-ppbtn i { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; border-radius: 9px; background: #FF4D4D; color: #fff; font-size: 12px; font-weight: 900; display: grid; place-items: center; font-style: normal; }
+.so-ppbtn { position: relative; }
+.pp-bag { display: flex; align-items: center; gap: 10px; margin: 8px auto; padding: 8px 12px; max-width: 320px; border-radius: 14px; background: #F3F6FF; border: 2px solid #C9D3F0; }
+.pp-bag img { width: 46px; } .pp-bag b { display: block; font-size: 14px; } .pp-bag small { color: #5A6A8A; font-size: 12px; }
+.eq-slot.dip img { width: 70%; height: auto; }
+.rw-it div small { display: block; }

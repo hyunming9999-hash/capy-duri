@@ -362,7 +362,7 @@ export function openFarm(o) {
     const got = [], patch = {}, add = {}; harvBusy = true;
     targets.forEach(i => { const r = rows[i], g = r.g || gradeOf(r, t), left = YIELD_ROW - (r.got || 0), take = g === 'F' ? 0 : T === 1 ? 1 : left, done = g === 'F' || (r.got || 0) + take >= YIELD_ROW;
       const bad = r.bad != null ? r.bad : BAD[T][0] + Math.floor(Math.random() * (BAD[T][1] - BAD[T][0] + 1)), badLeft = Math.max(0, bad - (r.badGot || 0)), badNow = !take ? 0 : T === 1 ? (Math.random() < badLeft / left ? 1 : 0) : Math.min(take, badLeft), good = take - badNow;
-      got.push([r.c, g, good, badNow]); if (good) { const key = `${r.c}|${g}`; add[key] = (add[key] || 0) + good; } rows[i] = done ? null : { ...r, g, got: (r.got || 0) + take, bad, badGot: (r.badGot || 0) + badNow }; });
+      got.push([r.c, g, good, badNow]); if (done && g !== 'F' && o.onRowDone) try { o.onRowDone(r.c, g); } catch {} /* 이랑 하나를 다 거뒀을 때(여권 퀘스트 황금유자) */ if (good) { const key = `${r.c}|${g}`; add[key] = (add[key] || 0) + good; } rows[i] = done ? null : { ...r, g, got: (r.got || 0) + take, bad, badGot: (r.badGot || 0) + badNow }; });
     Object.entries(add).forEach(([key, n]) => { patch[`barn/${key}`] = ((mine.barn || {})[key] || 0) + n; });
     try { if (Object.keys(patch).length) await ctx.store.update(myRef(), patch).catch(() => {}); await setRows(k, rows); } finally { harvBusy = false; }
     useHeld('hoe'); sfx(got.some(([, g]) => g === 'S') ? 'bigfish' : got.every(([, g]) => g === 'F') ? 'bad' : 'coin');

@@ -62,14 +62,16 @@ export function capy(o = {}) {
   const ears = `<ellipse cx="22" cy="21" rx="8" ry="7.5" fill="${c.dark}"/><ellipse cx="98" cy="21" rx="8" ry="7.5" fill="${c.dark}"/>${back ? '' : `<ellipse cx="22.5" cy="22" rx="3.8" ry="3.4" fill="${c.light}"/><ellipse cx="97.5" cy="22" rx="3.8" ry="3.4" fill="${c.light}"/>`}`;
   const head = `${ears}<rect x="9" y="15" width="102" height="69" rx="25" fill="${c.body}"/>${back ? `<path d="M40 30 q20 -7 40 0" fill="none" stroke="${c.dark}" stroke-width="2" opacity=".35" stroke-linecap="round"/>` : face(o.face, c)}${(o.hat && hatSvg(o.hat)) || acc(o.acc)}`;
   // 친목회 상징: 배지 같은 것은 가슴에 달고, 먹을 것·물건은 손에 든다. 얼굴에는 절대 붙이지 않는다(머리만 그릴 때는 안 보인다)
+  // 가슴 배지 자리: 상징 배지 → 인형 배지 → 외교관 배지 순서로 나란히. 두 개면 양쪽 가슴, 세 개면 세 칸
+  const chestL = back || o.head ? [] : [o.pin && PIN_CHEST.has(o.pin) ? 'pin' : null, o.doll != null ? 'doll' : null, o.dip ? 'dip' : null].filter(Boolean), chestX = k => (chestL.length === 3 ? [39, 60, 81] : [44, 76])[chestL.indexOf(k)];
   const pin = !o.pin || back || o.head ? ''
-    : PIN_CHEST.has(o.pin) ? `<circle cx="44" cy="93" r="9.5" fill="#fff" stroke="#E9C46A" stroke-width="2.2"/><text x="44" y="97.6" font-size="12.5" text-anchor="middle">${o.pin}</text>`
+    : PIN_CHEST.has(o.pin) ? `<circle cx="${chestX('pin')}" cy="93" r="9.5" fill="#fff" stroke="#E9C46A" stroke-width="2.2"/><text x="${chestX('pin')}" y="97.6" font-size="12.5" text-anchor="middle">${o.pin}</text>`
     : FLUFFY ? `<text x="91" y="112" font-size="17" text-anchor="middle" transform="rotate(-12 91 106)">${o.pin}</text>${capyPaw(o, 86.5, 108.5, true, 0.46)}` // 보송 그림체: 몸이 작아서 물건을 몸 가까이 들고, 손은 털 그림으로
     : `<text x="98" y="115" font-size="23" text-anchor="middle" transform="rotate(-12 98 108)">${o.pin}</text><ellipse cx="92" cy="109" rx="5.5" ry="4.5" fill="${c.body}"/>`;
   // 외교관 배지(여권 퀘스트 보상): 가슴 한가운데
-  const dipB = !o.dip || back || o.head ? '' : '<image href="img/quest/badge.webp" x="48.5" y="84" width="23" height="25"/>';
+  const dipB = !o.dip || back || o.head ? '' : `<image href="img/quest/badge.webp" x="${chestX('dip') - 10.5}" y="84" width="21" height="23"/>`;
   // 인형 배지(인형뽑기에서 뽑은 인형): 가슴에 단다. 상징 배지가 왼쪽 가슴에 있으면 오른쪽에
-  const dollB = o.doll == null || back || o.head ? '' : FLUFFY ? dollBadge(o.doll, o.pin && PIN_CHEST.has(o.pin) ? 76 : 44, 96, o.own) : `<circle cx="44" cy="93" r="9.5" fill="#fff" stroke="#FF7AD9" stroke-width="2.2"/><text x="44" y="97.6" font-size="12.5" text-anchor="middle">🧸</text>`;
+  const dollB = o.doll == null || back || o.head ? '' : FLUFFY ? dollBadge(o.doll, chestX('doll'), 96, o.own) : `<circle cx="44" cy="93" r="9.5" fill="#fff" stroke="#FF7AD9" stroke-width="2.2"/><text x="44" y="97.6" font-size="12.5" text-anchor="middle">🧸</text>`;
   const fl = FLUFFY ? capyBody(o.color, o.face, back, o.own) : null, flW = fl ? capyWear(o, o.own, back) : { shoe: '', body: '', hat: '' }, flTop = fl ? (flW.hat || (o.hat ? '' : acc(o.acc))) + (o.face === 'sleepy' && !back ? '<text x="102" y="20" font-size="15" font-weight="700" fill="#8FB8DE" font-family="sans-serif">z</text><text x="111" y="9" font-size="10" font-weight="700" fill="#8FB8DE" font-family="sans-serif">z</text>' : '') : ''; // 보송 그림체(시험판): 몸·얼굴은 그림 한 장, 옷·모자는 그 위에 겹친다
   if (o.head && fl) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 112">${fl.whole}${o.bare ? '' : flTop}</svg>`;
   if (o.head) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 112">${head}</svg>`;

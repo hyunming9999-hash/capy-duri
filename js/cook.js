@@ -365,11 +365,11 @@ export function openCook(o) {
     const price = fail ? 0 : Math.round(r.base * d.gx * d.tx * mul);
     if (d.gx !== 1) bill.unshift([`🥇 재료 등급`, Math.round(d.gx * 100) / 100]); if (d.tx !== 1) bill.unshift([`🐟 귀한 생선`, d.tx]);
     const aff = fail ? (A(od.a) >= 60 ? 0 : -1) : 5;
-    const quest = sess.quest, ok = !wrong && !ruined;
+    const quest = sess.quest, ppq = typeof od.quest === 'string' && od.quest.startsWith('pp-'), ok = !wrong && !ruined && (!ppq || !why.length); // 여권 퀘스트 요리는 요청까지 다 맞춰야(완벽) 통과
     if (quest) { if (ok) { await o.questDone(od.quest); sfx('bigfish'); } else sfx('bad');
       modal({ title: ok ? `${r.n} 완성! 🔍` : '다시 만들어야 해요', body: [h('div', { class: 'ck-res' + (ok ? '' : ' bad') }, h('img', { src: d.img, alt: '' }), h('span', { class: 'ck-an', html: a.svg })),
-        h('p', { class: 'center' }, h('b', null, `${a.name}: "${o.toned(od.a, ok ? `고마워! ${r.n} 잘 받았어. 이따 나한테 와 줘!` : wrong ? `이건 ${r.n}이(가) 아닌데…?` : '앗, 제대로 익지 않았어…')}"`)),
-        h('p', { class: 'center dim' }, ok ? '퀘스트 요리를 완성했어요. 동물에게 가서 퀘스트를 완료하세요.' : '맞는 요리를, 날것이나 타지 않게 다시 만들어 주세요.')], actions: [{ label: '다음', primary: true }], onClose: () => nextCust(!ok) }); return; }
+        h('p', { class: 'center' }, h('b', null, `${a.name}: "${o.toned(od.a, ok ? `고마워! ${r.n} 잘 받았어. 이따 나한테 와 줘!` : wrong ? `이건 ${r.n}이(가) 아닌데…?` : ruined ? '앗, 제대로 익지 않았어…' : `음… ${why[0] || '조금 아쉬워'}. 외교 요리는 완벽해야 해!`)}"`)),
+        h('p', { class: 'center dim' }, ok ? (ppq ? '여권 퀘스트 요리를 완벽하게 완성했어요!' : '퀘스트 요리를 완성했어요. 동물에게 가서 퀘스트를 완료하세요.') : ppq ? '익힘·양념·불, 손님 요청까지 모두 완벽하게 다시 만들어 주세요.' : '맞는 요리를, 날것이나 타지 않게 다시 만들어 주세요.')], actions: [{ label: '다음', primary: true }], onClose: () => nextCust(!ok) }); return; }
     const dv = fail ? -RATE_MISS2 : why.length ? -RATE_MISS : RATE_GOOD, ban = await rateBy(dv);
     if (aff) o.affinity(od.a, aff);
     const rateLine = h('p', { class: 'center kb-rd' + (dv < 0 ? ' down' : '') }, dv < 0 ? `${fail ? (why.length >= 2 ? `요청을 ${why.length}개 못 맞췄어요` : '요리를 망쳤어요') : '요청을 1개 못 맞췄어요'} · 가게 평점 ${dv} → ★ ${rateV().toFixed(1)}` : `요청을 다 맞췄어요 · 가게 평점 +${RATE_GOOD} → ★ ${rateV().toFixed(1)}`);

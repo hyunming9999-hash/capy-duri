@@ -36,7 +36,7 @@ export function mount(el, ctx) {
     stage.replaceChildren(...[
       ctx.order.length > 1 && h('div', { class: 'chips' }, ctx.order.map(u => h('button', { class: 'chip' + (who === u ? ' on' : ''), onClick: () => pickWho(u) }, u === ctx.uid ? '내 카피바라' : ctx.nameOf(u) + ' 카피바라 구경'))),
       // 장비창: 가운데 카피바라(고른 옷 + 걸친 황금 장비), 양옆에 황금 장비 자리 칸
-      eqBoard(ctx, { worn: rareList(m.rare), readOnly: who !== ctx.uid, wear: wearG, cloth: sel, unCloth: k => pickCloth(k, ''),
+      eqBoard(ctx, { worn: rareList(m.rare), dip: !!(ctx.capyOf && ctx.capyOf(who).dip), readOnly: who !== ctx.uid, wear: wearG, cloth: sel, unCloth: k => pickCloth(k, ''),
         center: capy({ ...(ctx.capyOf ? ctx.capyOf(who) : { color: m.color, acc: m.acc }), face: ctx.faceOf(who), ...(b => ({ top: b.has('top') ? '' : sel.top, bottom: b.has('bottom') ? '' : sel.bottom, hat: b.has('hat') ? '' : sel.hat, shoe: b.has('shoe') ? '' : sel.shoe }))(goldBlocks(rareList(m.rare))), rare: rareOf(m.rare) }) }),
       h('p', { class: 'dress-name' }, h('b', null, nameOf(sel.top) || '상의 없음'), ' + ', h('b', null, nameOf(sel.bottom) || '하의 없음'), ' + ', h('b', null, nameOf(sel.hat) || '모자 없음'), ' + ', h('b', null, nameOf(sel.shoe) || '신발 없음')),
       s.by && s.by !== who && (s.top || s.bottom || s.hat || s.shoe) && h('small', { class: 'dim' }, `지금 입은 옷은 ${josa(ctx.nameOf(s.by), '가', '이')} 입혀 준 옷이에요`)].filter(Boolean));
