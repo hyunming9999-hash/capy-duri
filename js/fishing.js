@@ -173,6 +173,7 @@ export function openFishing(o) {
     // 진주는 고급 바다에서만: 평소엔 던질 때마다 0.2%, 진주부적을 썼으면 10번 안의 정해진 한 번에 문다
     // 선물(2026-11-21 하루, 한 사람에 한 번): 그날 고급 바다 첫 낚시에 진주가 문다. 싸움은 보통 고급 물고기와 같은 난이도(놓칠 수 있다)
     gift = deep && !o.trial && b.pgift !== '20261121' && new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10) === '2026-11-21';
+    if (deep && o.trial && !b.pgift && new URLSearchParams(location.search).has('pearltest')) { gift = true; b.pgift = 1; } // 진주 연습 링크(?fishtest=3&pearltest): 첫 낚시에 진주
     const isPearl = deep && (gift || (boost ? bk >= boost.at : Math.random() < PEARL_P)); o.save({ [BAIT_KEY[zone]]: b[BAIT_KEY[zone]] - 1, rodD: b.rodD - 1, casts: (b.casts || 0) + 1, ...(deep ? { casts3: n, ...(boost ? { pboost: isPearl ? null : { k: bk, at: boost.at } } : {}) } : {}) }); pboosted = !!(boost && isPearl && !gift); if (gift) o.save({ pgift: '20261121', ...(boost ? { pboost: { k: boost.k || 0, at: boost.at } } : {}) }); // 선물 진주: 기회는 이 한 번(던질 때 표시) · 부적 차례는 쓰지 않는다
     cur = rollCatch(zone, rodT(), isPearl, power / 100, o.shinyTest);
     if (gift) { for (let k = 0; k < 8; k++) { const n = rollCatch(zone, rodT(), false, 1, false); if (n.f && !n.f.king && !n.f.icon) { cur.d = n.d; break; } } } // 선물 진주는 보통 고급 물고기와 같은 힘으로 버틴다
