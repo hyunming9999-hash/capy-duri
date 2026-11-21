@@ -153,7 +153,7 @@ export function mount(el, ctx) {
   sync(true);
 
   hall.append(pad, emo); // 방향키·이모티콘은 객석 위에 겹쳐 둔다
-  el.append(h('div', { class: 'theater' }, h('div', { class: 'curtain' }, screen), hall), log, // 최근 톡은 맨 아래, 입력칸 바로 위
+  el.append(h('div', { class: 'theater' }, h('div', { class: 'curtain' }, h('div', { class: 'scr-frame' }, screen, h('i', { class: 'scr-cur' }))), hall), log, // 최근 톡은 맨 아래, 입력칸 바로 위
     h('div', { class: 'w-composer' }, h('button', { class: 'ic', 'aria-label': '영상 고르기', title: '영상 고르기', onClick: pickVideo }, '🎬'), msgInp, h('button', { class: 'btn primary', onClick: sendMsg }, '보내기')));
 
   return () => {

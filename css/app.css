@@ -2792,3 +2792,31 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .so-cqn{min-width:26px;text-align:center;font-size:17px!important}
 .so-cqall{padding:6px 10px}.so-cqgo{margin-left:auto;padding:7px 12px;white-space:nowrap}
 .aq.edit .aq-f.pearl{opacity:1;pointer-events:auto;cursor:grab;touch-action:none;outline:2px dashed rgba(255,255,255,.7);outline-offset:2px;border-radius:12px}
+
+/* ===== 영화관·목욕탕·전시회 리모델링(보송 그림) ===== */
+/* 영화관: 빨간 벨벳 커튼 무대 + 자줏빛 카펫 계단 + 푹신한 벨벳 의자 */
+.page-watch { background: linear-gradient(#3A1E33, #241629); }
+.page-watch .bar h2 { color: #FFE3A6; } .page-watch .bar .back { background: #FFF6E6; }
+.page-watch .theater { background: #2A1626; border: 3px solid #E7B45A; box-shadow: 0 0 0 3px #6E2238, 0 6px 18px rgba(0,0,0,.35); border-radius: 24px; }
+.page-watch .curtain { background: radial-gradient(ellipse at 50% 40%, #7A2436, #4A1424 70%); padding: 7% 0 5% !important; overflow: hidden; }
+.page-watch .scr-frame { position: relative; width: min(78%, calc(var(--vvh,100vh) * .4 * 16 / 9)); margin: 0 auto; }
+.page-watch .scr-frame .screen { width: 100% !important; border-radius: 6px; box-shadow: 0 0 30px rgba(255, 226, 160, .45); }
+.scr-cur { position: absolute; left: -28.1%; right: -28.1%; top: -23.9%; bottom: -16.9%; background: url(../img/fl/room/curtain.webp) center / 100% 100% no-repeat; pointer-events: none; z-index: 3; }
+.page-watch .hall { background: url(../img/fl/room/hall.webp) center top / cover no-repeat, #3A1830; }
+.page-watch .seat { height: auto; aspect-ratio: 1 / .98; background: url(../img/fl/room/seat.webp) center bottom / contain no-repeat; box-shadow: none; border-radius: 0; filter: drop-shadow(0 3px 2px rgba(0,0,0,.35)); }
+.page-watch .w-composer .inp { background: #FFF8F0; }
+/* 목욕탕: 보송 히노끼탕 그림 + 따뜻한 나무 틀 */
+.page-walk { background: linear-gradient(#FFF4E4, #F3E2C6); }
+.page-walk .bar h2 { color: #8A5A2B; }
+.page-walk .park-wrap { border: 4px solid #C98F55; border-radius: 26px; box-shadow: 0 0 0 3px #FFF3DD, 0 6px 0 #B07A45; background: #F2DDB4; }
+.page-walk .voice-bar { background: #FFF8EC; border-color: #E6C99A; }
+/* 전시회: 크림색 벽·세이지 징두리·금빛 레일 + 꿀색 헤링본 마루 + 보송 화분·벤치 */
+.page-gallery { background: linear-gradient(#FFF9EF, #F4ECDD); }
+.page-gallery .bar h2 { color: #6E7F4F; }
+.page-gallery .g-room { border: 4px solid #D9B77A; border-radius: 24px; box-shadow: 0 0 0 3px #FFF6E2; background: #F6EAD2; }
+.page-gallery .g-wall { background: url(../img/fl/room/gwall.webp) 0 0 / auto 100% repeat-x; border-bottom: 5px solid #C9A46A; }
+.page-gallery .g-rail { opacity: 0; }
+.page-gallery .g-floor { background: url(../img/fl/room/gfloor.webp) 0 0 / auto 100% repeat-x; }
+.page-gallery .g-tiles { display: none; }
+.page-gallery .g-bench { width: 150px; height: 52px; top: 70px; background: url(../img/fl/room/bench.webp) center / contain no-repeat; border: 0; box-shadow: none; border-radius: 0; filter: drop-shadow(0 6px 4px rgba(0,0,0,.18)); }
+.page-gallery .g-plant { width: 58px; height: 74px; top: -40px; font-size: 0; color: transparent; background: url(../img/fl/room/plant.webp) center bottom / contain no-repeat; }

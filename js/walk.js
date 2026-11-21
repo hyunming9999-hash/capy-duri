@@ -105,7 +105,8 @@ export function makeVoice(ctx, ui) {
 export function mount(el, ctx) {
   let alive = true, raf = 0, last = 0, sendT = 0, dirty = true, S = 2;
   const canvas = h('canvas', { class: 'park' }), g = canvas.getContext('2d');
-  const bg = drawBath(), tags = h('div', { class: 'park-tags' }), wrap = h('div', { class: 'park-wrap' }, canvas, tags);
+  const bg = drawBath(); let bgImg = null; loadImg('img/fl/bg/bath.webp').then(i => { bgImg = i; dirty = true; }).catch(() => {}); // 보송 그림 탕(소품까지 그려져 있다). 못 받으면 도트 탕
+  const tags = h('div', { class: 'park-tags' }), wrap = h('div', { class: 'park-wrap' }, canvas, tags);
   // 탕에 떠 있는 유자들
   const yuzus = Array.from({ length: 6 }, (_, i) => ({ x: WATER.x0 + 12 + i * 18 + (i % 2) * 5, y: WATER.y0 + 14 + (i * 29) % 76, ph: i * 1.7, vx: (i % 2 ? 1 : -1) * 2.2 }));
   const steam = Array.from({ length: 14 }, () => ({ x: WATER.x0 + rnd() * (WATER.x1 - WATER.x0), y: WATER.y1 - rnd() * 90, r: 3 + rnd() * 4, v: 5 + rnd() * 5 }));
@@ -193,8 +194,8 @@ export function mount(el, ctx) {
     { const w = inWater(me.x, me.y); if (w !== me.wet) { if (me.wet !== undefined) sfx('splash'); me.wet = w; } } // 탕에 들어가고 나올 때 첨벙
     send(t);
     // 그리기: 도트 배경 → y 순서대로 소품·유자·카피바라 → 김
-    g.imageSmoothingEnabled = false; g.drawImage(bg, 0, 0, canvas.width, canvas.height);
-    const list = PROPS.map(p => ({ y: p.y, d: () => { g.imageSmoothingEnabled = false; g.drawImage(p.c, Math.round((p.x - p.c.width / 2) * S), Math.round((p.y - p.c.height + 2) * S), Math.round(p.c.width * S), Math.round(p.c.height * S)); } }));
+    g.imageSmoothingEnabled = !!bgImg; g.imageSmoothingQuality = 'high'; g.drawImage(bgImg || bg, 0, 0, canvas.width, canvas.height);
+    const list = bgImg ? [] : PROPS.map(p => ({ y: p.y, d: () => { g.imageSmoothingEnabled = false; g.drawImage(p.c, Math.round((p.x - p.c.width / 2) * S), Math.round((p.y - p.c.height + 2) * S), Math.round(p.c.width * S), Math.round(p.c.height * S)); } }));
     for (const z of yuzus) {
       z.x += z.vx * dt; if (z.x < WATER.x0 + 6 || z.x > WATER.x1 - 6) z.vx *= -1;
       const zy = z.y + Math.sin(t / 700 + z.ph) * 0.8;
