@@ -20,11 +20,12 @@ export function mount(el, ctx) {
   const msg = h('div', { class: 'sl-msg' }, '레버를 당겨요!'), have = h('b', { class: 'sl-have' });
   const cab = h('div', { class: 'sl-cab' }, sign, h('div', { class: 'sl-win' }, ...reels), h('img', { class: 'sl-stick', src: 'img/slot/stick.webp', alt: '' }), h('img', { class: 'sl-ball', src: 'img/slot/ball.webp', alt: '' }), lever, h('div', { class: 'sl-btns' }, betBtns[0], spinBtn, betBtns[1]), msg);
   const drawHave = () => { have.textContent = `🪙 ${ctx.coins().toLocaleString('ko-KR')}코인`; }; drawHave(); const iv = setInterval(drawHave, 800);
-  el.append(h('div', { class: 'sl-top' }, have, h('button', { class: 'btn sm', onClick: table }, '📋 배당표')), cab,
+  const row = (ks, x, note) => h('div', { class: 'sl-row' }, h('span', null, ...ks.map(k => (k ? h('img', { src: img(k), alt: '' }) : h('i', null, '?')))), note && h('small', null, note), h('b', null, `×${x}`), h('em', null, `50 → ${(50 * x).toLocaleString('ko-KR')} · 100 → ${(100 * x).toLocaleString('ko-KR')}`));
+  const tablePane = h('div', { class: 'sl-table', hidden: true }, h('p', { class: 'sl-th' }, '가운데 한 줄에 아래 그림이 나오면, 건 돈 × 배당만큼 받아요'),
+    ...SYM.map(([k, , x, n]) => row([k, k, k], x, `${n} 3개`)), row(['seven', 'seven', null], TWO.seven, '세븐 딱 2개 (자리 무관)'), row(['cherry', 'cherry', null], TWO.cherry, '체리 딱 2개 (자리 무관)'));
+  const tabs = [['play', '🎰 게임'], ['table', '📋 배당표']].map(([k, l]) => h('button', { class: 'so-tab' + (k === 'play' ? ' on' : ''), onClick: () => { tabs.forEach(t => t.classList.toggle('on', t === tb[k])); cab.hidden = k !== 'play'; tablePane.hidden = k !== 'table'; sfx('tock'); } }, l)), tb = { play: tabs[0], table: tabs[1] };
+  el.append(h('div', { class: 'sl-top' }, have, h('div', { class: 'sl-tabs' }, ...tabs)), cab, tablePane,
     h('p', { class: 'dim center sl-note' }, '가운데 한 줄에 같은 그림 3개! · 실제 카지노 슬롯머신의 방식과 비율을 근거로 만든 게임이에요'));
-  function table() { modal({ title: '📋 카피도박 배당표', body: h('div', { class: 'sl-table' }, ...SYM.map(([k, , x, n]) => h('div', null, h('span', null, ...[0, 1, 2].map(() => h('img', { src: img(k), alt: n }))), h('b', null, `×${x}`))),
-      h('div', null, h('span', null, h('img', { src: img('seven'), alt: '' }), h('img', { src: img('seven'), alt: '' }), h('i', null, '?')), h('b', null, `×${TWO.seven}`)), h('div', null, h('span', null, h('img', { src: img('cherry'), alt: '' }), h('img', { src: img('cherry'), alt: '' }), h('i', null, '?')), h('b', null, `×${TWO.cherry}`)),
-      h('p', { class: 'dim center' }, '건 돈 × 배당만큼 받아요 · 두 개짜리는 자리와 상관없이 딱 2개일 때')), actions: [{ label: '닫기', primary: true }] }); }
   // 릴 하나 돌리기: 아무 그림 n장 뒤에 결과 그림을 붙여 아래로 흘려보낸다
   const run = (i, k, n, ms) => new Promise(res => { const s = strips[i], cur = s.lastChild.src, list = [k, ...Array.from({ length: n }, roll)];
     s.style.transition = 'none'; s.replaceChildren(...list.map(x => h('img', { src: img(x), alt: '' })), h('img', { src: cur, alt: '' })); s.style.transform = `translateY(-${(list.length) * CELL / (list.length + 1) * 3}%)`; void s.offsetWidth;
