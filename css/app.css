@@ -3076,3 +3076,5 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fluffy .sc-rig.b .sc-pas { width: 96px; left: -20px; bottom: 26px; }
 /* 상대가 퀵보드를 탔을 때: 이름표를 머리 바로 위로 */
 .so-pal.scoot em { top: 40px; }
+/* 퀵보드 뒷자리 동물: 발판 안쪽으로 당겨 카피바라 바로 뒤에 겹쳐 앉힌다(조금 가려져도 됨) */
+.fluffy .sc-rig.b .sc-pas { width: 90px; left: 14px; bottom: 28px; z-index: 2; } .fluffy .sc-rig.b .sc-me { z-index: 3; }
