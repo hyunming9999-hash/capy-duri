@@ -3078,3 +3078,6 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .so-pal.scoot em { top: 40px; }
 /* 퀵보드 뒷자리 동물: 발판 안쪽으로 당겨 카피바라 바로 뒤에 겹쳐 앉힌다(조금 가려져도 됨) */
 .fluffy .sc-rig.b .sc-pas { width: 90px; left: 14px; bottom: 28px; z-index: 2; } .fluffy .sc-rig.b .sc-me { z-index: 3; }
+/* 퀵보드 뒷자리 동물: 누를 수 있게 + 걸어다닐 때와 같은 크기(74px ÷ 0.79 = 94px) */
+.so-me.scoot .sc-pas { pointer-events: auto; cursor: pointer; }
+.fluffy .sc-rig.b .sc-pas { width: 94px; left: 10px; bottom: 28px; }
