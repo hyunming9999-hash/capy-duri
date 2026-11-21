@@ -3072,3 +3072,5 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 /* 🛂 여권 퀘스트 버튼: 게임 화면 오른쪽 위에 따로(퀘스트 버튼과 겹치지 않게) */
 .so-xbtn.pp-float { left: auto; right: 8px; top: 40px; border-color: #9DB3E8; background: rgba(240,245,255,.96); color: #2B4A9A; }
 .so-xbtn.pp-float i { position: absolute; right: -5px; top: -7px; width: 18px; height: 18px; border-radius: 50%; background: #FF4D6D; border: 2px solid #fff; color: #fff; font: 900 11px/14px var(--head, sans-serif); font-style: normal; text-align: center; } .so-xbtn.pp-float i[hidden] { display: none; }
+/* 퀵보드 뒤에 탄 동물: 걸어다닐 때와 같은 크기로(작아지지 않게) */
+.fluffy .sc-rig.b .sc-pas { width: 96px; left: -20px; bottom: 26px; }
