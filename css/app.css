@@ -2820,3 +2820,8 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .page-gallery .g-tiles { display: none; }
 .page-gallery .g-bench { width: 150px; height: 52px; top: 70px; background: url(../img/fl/room/bench.webp) center / contain no-repeat; border: 0; box-shadow: none; border-radius: 0; filter: drop-shadow(0 6px 4px rgba(0,0,0,.18)); }
 .page-gallery .g-plant { width: 58px; height: 74px; top: -40px; font-size: 0; color: transparent; background: url(../img/fl/room/plant.webp) center bottom / contain no-repeat; }
+/* 친목회 새 건물: 카피영화관·카피온센·카피박람회 간판(글씨 크게) */
+.so-hall b { font-size: 13.5cqw; letter-spacing: 0; }
+.so-h-watch { aspect-ratio: 598 / 600; } .so-h-watch b { left: 11%; right: 11%; top: 25.5%; height: 14%; color: #7A1E35; text-shadow: 0 0 0 transparent, 1.5px 0 #FFF7E6, -1.5px 0 #FFF7E6, 0 1.5px #FFF7E6, 0 -1.5px #FFF7E6, 0 3px 3px rgba(122,30,53,.3); }
+.so-h-walk { aspect-ratio: 600 / 514; } .so-h-walk b { left: 20%; right: 20%; top: 2%; height: 17%; border-radius: 10px; background: linear-gradient(#A8743C, #7E4E22); border: 2.5px solid #FFE3A6; box-shadow: 0 3px 0 #5A3214; color: #FFF7E6; text-shadow: 0 2px 0 #4A2A10; }
+.so-h-gallery { aspect-ratio: 600 / 593; } .so-h-gallery b { left: 13%; right: 13%; top: 33%; height: 12%; border-radius: 10px; background: #FFFBEE; border: 2.5px solid #7FB069; box-shadow: 0 3px 0 #5E8E4A; color: #4F7A3A; text-shadow: none; }

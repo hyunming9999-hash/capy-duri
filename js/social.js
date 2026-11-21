@@ -141,7 +141,7 @@ const SULK = ['요즘 나랑 안 놀아 줘서 서운해… 🥺', '나 잊은 �
 // 되팔 때 값: 게임 3~5판 번 것쯤(150~250코인). 물건마다 값이 정해져 있다
 const DOLL_SELL = 250; // 뽑은 인형을 상점에 파는 값(개당)
 const sellPin = i => 150 + (i * 37) % 101, sellHat = i => 150 + (i * 53 + 20) % 101;
-const MY_BOAT = 99, BOAT_PRICE = 1000, MAKE_FEE = 1000; // 내 카피보트: 카피수퍼에서 1000코인
+const MY_BOAT = 99, BOAT_PRICE = 1000, MAKE_FEE = 1000, HALL_FEE = 10; // 내 카피보트: 카피수퍼에서 1000코인
 const CARE = ['너무 깊은 곳은 조심해.', '넌 소중한 존재야. 다치면 안 돼.', '멀리 나가면 꼭 돌아와야 해.', '물 차갑지 않아? 감기 조심해.', '파도가 세면 무리하지 마.', '힘들면 언제든 쉬었다 가.', '해적 만나면 다치지 말고 도망쳐도 돼.', '밥은 챙겨 먹고 다니는 거지?', '네가 무사하면 그걸로 충분해.', '낚시 잘 안 돼도 괜찮아. 넌 잘하고 있어.'];
 const PASS = 95, SEAT = FLUFFY ? 41 : 19; // 상대 카피바라의 배에 같이 탄 손님(SEAT: 운전석 바로 뒤, 배 안쪽에 앉는다). PASS는 배 번호(96~99)와 겹치면 안 된다: 96이던 때는 별빛포 단 배와 같은 번호라 손님 자리에 배가 하나 더 그려졌다
 const MY_WBOAT = 98, MY_WBOAT_GUN = 97, MY_WBOAT_GUN2 = 96; // 흰 배(더 빠르다), 대포를 단 흰 배, 신형 대포(카피 별빛포)를 단 흰 배
@@ -192,6 +192,7 @@ export function mount(el, ctx) {
     zoneOf = x => (x < FISH_X ? 0 : Math.min(3, 1 + Math.floor((x - FISH_X) / TILE))), WATER_X = PW + TILE * 0.275, // 놀이터 3장 + 오른쪽 바닷가 1장 + 넓은 바다 1장, WATER_X부터 끝까지 물
      IW = 1344, IH = 576;
   // 놀이기구 자리: [종류, 그림 속 가로 위치(0~1), 바닥에서 높이(0~1), 그네 번호]
+  const GONE = { 1: ['sand', 'gym'], 2: ['slide', 'swing', 'sand', 'gym'] }; // 영화관·온센·박람회가 들어선 자리의 놀이기구(동물이 더는 안 간다)
   const SPOT_DEFS = [['slide', 0.243, 0.385], ['slide', 0.243, 0.385, 0, 'late'], ['swing', 0.2943, 0.43, 0], ['swing', 0.3286, 0.43, 1], ['seeL', 0.3964, 0.45], ['seeR', 0.4947, 0.45], ['sand', 0.538, 0.41], ['sand', 0.574, 0.41], ['gym', 0.661, 0.4], ['gym', 0.691, 0.4, 0, 'late'], ['bench', 0.753, 0.435], ['bench', 0.784, 0.435]];
   const SEE_X = 598.8 / IW, ROPE = (323 - 243) / IH * H;
   const LANES = [[0.07, 1], [0.13, 0.94], [0.19, 0.88], [0.25, 0.82]], RIDE_S = 0.62, ME_SP = 150, CHASE_SP = 118;
@@ -273,7 +274,8 @@ export function mount(el, ctx) {
         ...[1, 2, 3].map(z => h('i', { class: `so-bg so-sea2${z % 2 ? ' flip' : ''}`, style: { left: FISH_X + (z - 1) * TILE - 1 + 'px', width: TILE + 2 + 'px' } })),
         ...[1, 2, 3].map(z => h('i', { class: 'so-swell z' + z, style: { left: FISH_X + (z - 1) * TILE + 'px', width: TILE + 'px' } })),
         ...[1, 2, 3].map(z => h('div', { class: 'so-sign z' + z, style: { left: FISH_X + (z - 1) * TILE + 34 + 'px' } }, h('b', null, `🎣 ${ZONES[z]}`), h('small', null, z === 1 ? '배를 타야 들어갈 수 있어요' : '흰 배 + 대포 필요 · 해적 주의'))));
-      tiles.push(t); SPOT_DEFS.forEach(([type, f, b, n, late]) => spots.push({ type, late: late ? ' late' : '', grp: k + type.slice(0, 3), x: fx(f), b, dir: t.dir, by: -1, eq: type === 'swing' ? t.sw[n] : type[0] === 's' && type[1] === 'e' ? t.see : null, t })); }
+      if (FLUFFY && k === 2) bg.querySelectorAll('.eq-sw').forEach(g => { g.style.display = 'none'; }); // 목욕탕 자리: 그네 없음
+      tiles.push(t); SPOT_DEFS.forEach(([type, f, b, n, late]) => FLUFFY && (GONE[k] || []).includes(type) ? null : spots.push({ type, late: late ? ' late' : '', grp: k + type.slice(0, 3), x: fx(f), b, dir: t.dir, by: -1, eq: type === 'swing' ? t.sw[n] : type[0] === 's' && type[1] === 'e' ? t.see : null, t })); }
     actors = ANIMALS.map((a, i) => { const lane = i % LANES.length, x = 90 + (i + 0.5) * (FISH_X - 180) / ANIMALS.length;
       const e = h('button', { class: 'so-an', 'data-i': i, style: { left: x + 'px', zIndex: 10 - lane }, onClick: () => openAnimal(i) }, h('span', { class: 'so-score' }), h('span', { class: 'so-hearts' }), h('span', { class: 'so-tube back', html: tubeSvg(a.body, 'back') }), h('span', { class: 'so-body', html: animalSvg(i, true) }), h('small', null, a.name), h('span', { class: 'so-tube', html: tubeSvg(a.body) }));
       world.append(e); return { greetAt: 0, offerAt: 0, e, body: e.querySelector('.so-body'), x, lane, y: LANES[lane][0], s: LANES[lane][1], st: 'idle', until: performance.now() + 400 + Math.random() * 3500, tx: x, spot: null, sp: 24 + Math.random() * 16, cool: 0, nextHit: 0, wait: 0 }; });
@@ -288,6 +290,9 @@ export function mount(el, ctx) {
     // 카피클로(옷 가게): 두 번째·세 번째 칸이 만나는 자리(나무 두 그루 사이). 누르면 옷입히기 놀이로 간다
     if (FLUFFY) { const kw = 214 / 1213 * TILE;
       world.append(h('button', { class: 'so-aqua so-clo', 'aria-label': '카피클로 들어가기', style: { left: 2 * TILE - kw / 2 + 'px', width: kw + 'px', bottom: (1 - 326 / 520) * 100 + '%' }, onClick: () => goClo() }, h('img', { src: 'img/fl/bg/house-clo.webp', alt: '' }), h('b', null, '카피클로'))); }
+    // 카피영화관(수족관 오른쪽 모래놀이터·정글짐 자리) · 카피온센(카피클로 오른쪽 미끄럼틀·그네 자리) · 카피박람회(그 오른쪽 모래놀이터·정글짐 자리). 입장료 10코인
+    if (FLUFFY) [['watch', '카피영화관', TILE * 1.39, 0.21], ['walk', '카피온센', TILE * 2.235, 0.25], ['gallery', '카피박람회', TILE * 2.61, 0.22]].forEach(([id, name, cx, wf]) => { const w = wf * TILE;
+      world.append(h('button', { class: 'so-aqua so-hall so-h-' + id, 'aria-label': name + ' 들어가기', style: { left: cx - w / 2 + 'px', width: w + 'px', bottom: (1 - 330 / 520) * 100 + '%' }, onClick: () => goHall(id, name) }, h('img', { src: `img/fl/bg/house-${id}.webp`, alt: '' }), h('b', null, name))); });
     // 카피수족관: 놀이터 두 번째 칸(뒤집힌 칸) 왼쪽 가게 자리. 누르면 바로 내 수족관
     { const ax0 = TILE + 2 / 1213 * TILE, aw = 220 / 1213 * TILE;
       world.append(h('button', { class: 'so-aqua', 'aria-label': '카피수족관 들어가기', style: { left: ax0 + 'px', width: aw + 'px', bottom: (1 - 326 / 520) * 100 + '%' }, onClick: () => goAqua() }, h('img', { src: (FLUFFY ? 'img/fl/bg/house-aqua.webp' : 'img/aqua/house.webp'), alt: '' }), h('b', null, '카피수족관'))); }
@@ -440,6 +445,8 @@ export function mount(el, ctx) {
   const aqFish = () => Object.entries(aqua.fish || {}).filter(([, v]) => v).map(([key, v]) => ({ key, ...v }));
   const bagFish = () => Object.entries(bag.fish || {}).filter(([, v]) => v && v.id && !v.pearl).map(([key, v]) => ({ key, ...v }));
   const aqRareName = () => { const r = aqFish().map(d => ({ d, f: fishOf(d.id) })).filter(x => x.f && (x.d.g === 'S' || x.f.tier >= 4 || x.d.shiny)).sort((a, b) => (b.f.tier || 0) - (a.f.tier || 0) || (b.d.shiny ? 1 : 0) - (a.d.shiny ? 1 : 0))[0]; return r ? (r.d.shiny ? '이로치 ' : '') + r.f.name : ''; };
+  async function goHall(id, name) { if (fishOpen || battle || aquaOpen) return; if (me.boat) return toast('배에서 내린 뒤에 들어갈 수 있어요'); if (trial) return toast(`체험 중에는 ${name}에 못 들어가요`);
+    if (!(await ctx.spend(HALL_FEE))) return; toast(`🎟️ ${name} 입장료 ${HALL_FEE}코인`, 1400); ctx.backTo = 'social'; ctx.go(id); }
   function goClo() { if (fishOpen || battle || aquaOpen) return; if (me.boat) return toast('배에서 내린 뒤에 들어갈 수 있어요'); if (trial) return toast('체험 중에는 카피클로에 못 들어가요'); sfx('pop'); ctx.backTo = 'social'; ctx.go('dress'); }
   async function goAqua() { if (fishOpen || battle || aquaOpen) return; if (me.boat) return toast('배에서 내린 뒤에 들어갈 수 있어요'); if (trial) return toast('체험 중에는 수족관에 못 들어가요');
     const loadPal = async () => { if (!pid()) return null; const v = await ctx.store.get('aqua/' + pid()).catch(() => null); if (!v || !v.t) return null; return { tank: v.t, fish: Object.values(v.fish || {}).filter(Boolean), deco: Object.values(v.deco || {}).filter(Boolean) }; };

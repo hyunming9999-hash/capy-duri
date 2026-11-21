@@ -35,9 +35,9 @@ const MENU = [
   { id: 'eat', mod: eat, title: '오늘 뭐 먹지?', short: '맛집', sub: '맛집 찾기 · 룰렛', face: 'wow', acc: 'yuzu', tint: '#CDEBB5' },
   { id: 'game', hide: true, mod: game, title: '오늘 무슨 게임하지?', short: '게임', sub: '카피바라 게임 8종', face: 'happy', acc: 'none', tint: '#C9E4F7' },
   { id: 'where', mod: where, title: '오늘 어디야?', short: '어디야', sub: '위치 핑 찍기', face: 'wow', acc: 'leaf', tint: '#BFE8E0' },
-  { id: 'watch', mod: watch, title: '오늘 뭐 보실?', short: '영화관', sub: '카피바라 영화관', face: 'sleepy', acc: 'towel', tint: '#D9D2F5' },
-  { id: 'walk', mod: walk, title: '카피바라 목욕하실?', short: '목욕탕', sub: '히노끼탕 · 음성 대화', face: 'sleepy', acc: 'towel', tint: '#F3DDB8' },
-  { id: 'gallery', mod: gallery, title: '오늘 전시회가실?', short: '전시회', sub: '둘만의 전시실', face: 'wow', acc: 'flower', tint: '#ECECF4' },
+  { id: 'watch', hide: true, mod: watch, title: '🎬 카피영화관', short: '영화관', sub: '카피바라 영화관', face: 'sleepy', acc: 'towel', tint: '#D9D2F5' },
+  { id: 'walk', hide: true, mod: walk, title: '♨️ 카피온센', short: '목욕탕', sub: '히노끼탕 · 음성 대화', face: 'sleepy', acc: 'towel', tint: '#F3DDB8' },
+  { id: 'gallery', hide: true, mod: gallery, title: '🖼️ 카피박람회', short: '전시회', sub: '둘만의 전시실', face: 'wow', acc: 'flower', tint: '#ECECF4' },
   { id: 'social', mod: social, title: '동물 친목회 가실?', short: '친목회', sub: '동물 30마리와 친구 되기', face: 'love', acc: 'leaf', tint: '#D6F0C2' },
 ];
 
@@ -328,7 +328,7 @@ function render() {
   const body = h('div', { class: 'page-body' });
   const title = h('h2', null, item.title);
   root.replaceChildren(h('div', { class: 'page page-' + name },
-    h('header', { class: 'bar' }, h('button', { class: 'back', 'aria-label': '뒤로', onClick: () => { const bt = !sub && name === 'dress' && ctx.backTo; ctx.backTo = null; ctx.go(sub ? name : bt || 'home'); } }, '‹'), title, // 친목회 카피클로에서 들어온 옷놀이는 뒤로 가면 친목회로
+    h('header', { class: 'bar' }, h('button', { class: 'back', 'aria-label': '뒤로', onClick: () => { const bt = !sub && ['dress', 'watch', 'walk', 'gallery'].includes(name) && ctx.backTo; ctx.backTo = null; ctx.go(sub ? name : bt || 'home'); } }, '‹'), title, // 친목회 카피클로에서 들어온 옷놀이는 뒤로 가면 친목회로
       SCENE[name] && sndBtn(),
       name === 'chat' && h('button', { class: 'call tel srch-btn', 'aria-label': '대화 검색', title: '대화 검색', onClick: () => ctx.chatSearch && ctx.chatSearch() }, '🔍'),
       name === 'chat' && ctx.partnerId && h('button', { class: 'call tel', 'aria-label': '전화 걸기', title: '전화 걸기', onClick: () => ctx.phone() }, '📞'),
