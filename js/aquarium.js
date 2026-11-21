@@ -96,8 +96,12 @@ export function openAquarium(o) {
     f.base = 0.12 + 0.3 * Math.sqrt(len); f.ty = f.y; f.near = Math.min(3, Math.max(1.25, 0.9 / Math.sqrt(len))); f.z = f.tz = drop ? 0.1 : rnd(-0.8, 1); f.dq = -1; f.zT = rnd(1, 8);
     f.body = h('div', { class: 'aq-fb', html: fishSvg(f0, false, d.shiny), style: { animationDuration: rnd(0.45, 0.7) + 's' } });
     f.zz = h('span', { class: 'aq-zz' }, 'Z z'); f.tag = h('span', { class: 'aq-name', hidden: !d.name }, d.name || ''); f.el = h('div', { class: 'aq-f ' + glowOf(f) }, f.body, f.zz, f.tag);
-    if (f0.pearl) { f.still = true; f.z = f.tz = 0.3; f.dir = 1; f.el.classList.add('pearl'); f.body.style.animation = 'none'; f.zz.hidden = true; f.el.prepend(h('i', { class: 'aq-prays' }), h('i', { class: 'aq-pglow' })); for (let k = 0; k < 7; k++) f.el.append(h('i', { class: 'aq-ptw', style: { left: 8 + (k * 41) % 84 + '%', top: 4 + (k * 29) % 70 + '%', animationDelay: (k * 0.37).toFixed(2) + 's' } }, k % 2 ? '✦' : '✧')); } // 진주: 크게, 제자리에서 빛난다
-    f.el.onclick = e => { e.stopPropagation(); showTip(f); }; layer.append(f.el);
+    if (f0.pearl) { f.still = true; f.z = f.tz = 0.3; f.dir = 1; f.x = Math.max(len / 2, Math.min(W - len / 2, d.px != null ? d.px : W * 0.5)); f.y = H * 0.9 - hOf(f) / 2; f.vy = 0; /* 진주: 처음부터 바닥에 놓여 있다(내려오지 않음) · 자리는 꾸미기에서 옮긴다 */ f.el.classList.add('pearl'); f.body.style.animation = 'none'; f.zz.hidden = true; f.el.prepend(h('i', { class: 'aq-prays' }), h('i', { class: 'aq-pglow' })); for (let k = 0; k < 7; k++) f.el.append(h('i', { class: 'aq-ptw', style: { left: 8 + (k * 41) % 84 + '%', top: 4 + (k * 29) % 70 + '%', animationDelay: (k * 0.37).toFixed(2) + 's' } }, k % 2 ? '✦' : '✧')); } // 진주: 크게, 제자리에서 빛난다
+    f.el.onclick = e => { e.stopPropagation(); if (!editing) showTip(f); }; layer.append(f.el);
+    if (f0.pearl && !o.guest) f.el.addEventListener('pointerdown', e => { if (!editing || mode === 'pal') return; e.stopPropagation(); e.preventDefault(); const sx = e.clientX, sy = e.clientY, x0 = f.x, rot = root.classList.contains('rot'); f.el.setPointerCapture(e.pointerId); root.classList.add('ddrag');
+      const mv = ev => { const lx = rot ? ev.clientY - sy : ev.clientX - sx; f.x = Math.max(f.len / 2, Math.min(W - f.len / 2, x0 + lx / ppm)); };
+      const up = () => { root.classList.remove('ddrag'); f.el.removeEventListener('pointermove', mv); f.el.removeEventListener('pointerup', up); f.el.removeEventListener('pointercancel', up); f.d.px = Math.round(f.x * 100) / 100; if (o.movePearl) o.movePearl(f.d, f.d.px); };
+      f.el.addEventListener('pointermove', mv); f.el.addEventListener('pointerup', up); f.el.addEventListener('pointercancel', up); }); // 꾸미기 중에는 진주만 바닥을 따라 좌우로 옮길 수 있다
     if (drop) { const vx = (view.scrollLeft + view.clientWidth / 2) / ppm, vy = view.scrollTop / ppm; f.x = Math.max(len / 2, Math.min(W - len / 2, vx + rnd(-1, 1))); f.y = Math.max(0, vy) + 0.1; f.ty = f.y + rnd(1, 2.5); f.vy = 1.5;
       const sp = h('div', { class: 'aq-splash', style: { left: f.x * ppm + 'px', top: Math.max(0, vy) * ppm + 'px' } }); layer.append(sp); setTimeout(() => sp.remove(), 1200); sfx('splash');
       const here = h('span', { style: { position: 'absolute', left: '50%', bottom: '100%', transform: 'translateX(-50%)', font: '800 13px/1.2 var(--head, sans-serif)', color: '#fff', background: 'rgba(255,120,60,.92)', borderRadius: '10px', padding: '2px 8px', whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 5 } }, '👇 여기!'); f.el.append(here); setTimeout(() => here.remove(), 3500); }
@@ -144,7 +148,7 @@ export function openAquarium(o) {
   // ----- 물고기 움직임: 헤엄 → 가끔 방향 틀기·돌진·잠 · 벽에서 돌아서고 · 서로 겹치면 작은 쪽이 비켜 간다 -----
   function step(dt) {
     for (const f of fish) {
-      if (f.still) { const hg = hOf(f), fl = H * 0.9 - hg / 2; if (f.y < fl) { f.vy = Math.min(1.2, (f.vy || 0) + dt * 1.5); f.y = Math.min(fl, f.y + f.vy * dt); } else f.y = fl; f.x = Math.max(f.len / 2, Math.min(W - f.len / 2, f.x)); continue; } // 진주는 가라앉아 바닥에 가만히
+      if (f.still) { f.y = H * 0.9 - hOf(f) / 2; f.x = Math.max(f.len / 2, Math.min(W - f.len / 2, f.x)); continue; } // 진주는 가라앉아 바닥에 가만히
       f.stT -= dt; f.turnT = Math.max(0, f.turnT - dt);
       if (f.stT <= 0) { const r = Math.random();
         if (f.st !== 'swim') setSt(f, 'swim', rnd(3, 8));

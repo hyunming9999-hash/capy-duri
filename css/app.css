@@ -2786,3 +2786,9 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .mk-top .so-tabs{grid-template-columns:1fr 1fr 1fr}
 .fs-today{left:auto;right:8px;top:6px;transform:none;max-width:56%;padding:4px 10px}
 .fs-today b,.fs-today span{font-size:11px}
+.so-croprow{cursor:default}.so-croprow.gold{border-color:#E9C46A;background:#FFFBEA}
+.so-cq{grid-column:2;display:flex;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap}
+.so-cqb{width:34px;height:34px;padding:0;font-size:20px;font-weight:900;border-radius:10px}
+.so-cqn{min-width:26px;text-align:center;font-size:17px!important}
+.so-cqall{padding:6px 10px}.so-cqgo{margin-left:auto;padding:7px 12px;white-space:nowrap}
+.aq.edit .aq-f.pearl{opacity:1;pointer-events:auto;cursor:grab;touch-action:none;outline:2px dashed rgba(255,255,255,.7);outline-offset:2px;border-radius:12px}
