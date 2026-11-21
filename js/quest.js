@@ -209,7 +209,9 @@ export function createQuest(d) {
         if (!(await vn(st.say, st.who, title, [h('p', { class: 'vn-sub' }, '📢 다시 보기 · 누르기만 하면 넘어가요')]))) return false;
         if (!(await vn(st.done, st.to, title + ' ✔', [h('p', { class: 'vn-sub' }, '📢 다시 보기 · 누르기만 하면 넘어가요')]))) return false; }
       toast(`📢 다시 보기 끝! 이제 ${to + 1}단계를 이어서 해요`, 3000); return true; } finally { replaying = false; } }
-  async function open(i) { if (ready && !q.rp1 && d.ctx.ours() && d.meName === '두두' && (q.s || 0) >= 16 && cur()) { if (!(await replay(15, q.s))) return; await save({ rp1: 1 }); }
+  // 실제 진행에서도 장면 배경(동굴·광장)을 깐다. 예전에는 시험판(demo)에서만 깔려서 실제 플레이에는 배경이 안 떴다
+  async function open(i) { sceneBg = bgOf(q.s || 0, 'say'); try { return await open0(i); } finally { sceneBg = ''; } }
+  async function open0(i) { if (ready && !q.rp1 && d.ctx.ours() && d.meName === '두두' && (q.s || 0) >= 16 && cur()) { if (!(await replay(15, q.s))) return; await save({ rp1: 1 }); }
     const s = cur(), ch = s && STORY[s.ci];
     if (!s) return vn(['{happy}고마워. 너 덕분에 섬이 다시 하나가 됐어.'], i, '👑 사건 해결!', [h('p', { class: 'vn-sub' }, '메인 이야기 「누가 왕관을 훔쳤나」를 모두 마쳤어요.')]);
     const title = `🔍 ${ch.t}`;
@@ -226,7 +228,7 @@ export function createQuest(d) {
   const hint = s => s.type === 'pirate' ? h('p', { class: 'dim' }, triesLeft() > 0 ? `친목회 바다에서 가방의 "내 보트"(빌린 흰 배)를 타고 중급 바다로 나가면 해적단이 나타나요. 오늘 남은 기회 ${triesLeft()}번.` : '오늘 기회를 다 썼어요. 배와 대포는 돌려줬어요. 내일 다시 도전해요.') : s.type === 'cook' ? h('p', { class: 'dim' }, '카피백반 첫 화면의 "🔍 퀘스트 요리"에서 만들 수 있어요. 임대료는 안 내도 돼요.') : s.type === 'crop' ? h('p', { class: 'dim' }, '작물은 카피 농장에서 길러요.') : s.type === 'fish' ? h('p', { class: 'dim' }, '물고기는 바다 낚시로 잡아요.') : s.type === 'gift' ? h('p', { class: 'dim' }, '선물은 카피수퍼에서 사요.') : null;
   const clueBox = () => { const L = (q.clues || []); return L.length ? h('div', { class: 'qw-clue' }, h('b', null, '🔎 수사 수첩'), ...L.map(t => h('small', null, '· ' + t))) : null; };
   function accept(s) { save({ on: 1, ok: 0 }); sfx('point'); toast(s.type === 'pirate' ? `⛵ 흰 배와 대포(포탄 20발)를 빌렸어요! 퀘스트 동안만 쓸 수 있어요` : `🔍 수사 시작 · ${goalText(s)}`, 3200); }
-  async function finish(i, s, title) {
+  async function finish(i, s, title) { const n0 = q.s || 0;
     if (s.type !== 'talk' && s.type !== 'accuse' && !have(s)) return toast('아직 목표를 다 채우지 못했어요');
     if (s.type === 'fish') { const L = d.fish().filter(([, , f]) => f && (f.z || 1) >= s.need.z).sort((a, b) => (a[1].p || 0) - (b[1].p || 0)); d.useFish(L[0][0]); }
     if (s.type === 'crop') { let left = s.need.n; const use = {}; Object.entries(d.barn() || {}).filter(([k, c]) => k.split('|')[0] === s.need.id && c > 0).sort(([a], [b]) => 'FCBAS'.indexOf(a.split('|')[1]) - 'FCBAS'.indexOf(b.split('|')[1])).forEach(([k, c]) => { const t = Math.min(c, left); if (t > 0) { use[k] = t; left -= t; } }); await d.useCrops(use); }
@@ -236,7 +238,7 @@ export function createQuest(d) {
     const clues = s.clue ? [...(q.clues || []), s.clue] : q.clues || [];
     await save({ s: (q.s || 0) + 1, on: 0, ok: 0, clues, day: ymd(), dn: doneToday() + 1 }); sfx(s.end ? 'bigfish' : 'coin');
     const next = FLAT[(q.s || 0)], nextT = next && capped() ? `오늘 ${DAY_MAX}단계를 모두 했어요. 내일 ${d.names[next.who]}에게서 이어져요!` : next ? (next.ci !== s.ci ? `다음: ${STORY[next.ci].t} — ${d.names[next.who]}에게 가 보세요` : `다음: ${d.names[next.who]}에게 가 보세요`) : '메인 이야기 끝! 👑';
-    await vn(s.done, i, title + (s.end ? ' · 장 완료!' : ' · 완료'), [s.clue && h('p', { class: 'qw-new' }, `🔎 수첩에 적었어요: ${s.clue}`)], [{ label: '🏅 보상 받기', primary: true, value: 1 }]);
+    sceneBg = bgOf(n0, 'done'); await vn(s.done, i, title + (s.end ? ' · 장 완료!' : ' · 완료'), [s.clue && h('p', { class: 'qw-new' }, `🔎 수첩에 적었어요: ${s.clue}`)], [{ label: '🏅 보상 받기', primary: true, value: 1 }]);
     // 보상 알림 창: (보상 내용)을 받았습니다
     const items = s.final ? [['🛴', '황금 퀵보드 (전설의 황금사자 스쿠터)', '가방에서 타기 · 육지와 농장에서 빠르게 달려요'], ['🪙', `${(c + bonus).toLocaleString('ko-KR')}코인`, ''], ['🦁', '사자 친밀도 100', '단짝이 됐어요!'], ['💗', `다른 동물 친밀도 +${a}`, '']]
       : [['🪙', `${(c + bonus).toLocaleString('ko-KR')}코인`, bonus ? `(장 보너스 ${bonus} 포함)` : ''], ['💗', `${d.names[i]} 친밀도 +${a}`, ''], ...(s.who !== i ? [['💗', `${d.names[s.who]} 친밀도 +2`, '']] : [])];
