@@ -18,7 +18,7 @@ import { dollImg } from './g-claw.js';
 import { recOf } from './cook.js';
 import { TANKS as AQT, DECO as AQD } from './aquarium.js';
 const AQACT = { peck: '콕콕 쪼기', hide: '숨바꼭질', circle: '빙글빙글', bubble: '거품 타기', glow: '반짝반짝', heart: '하트 뿅', startle: '깜짝 놀라기', slide: '미끄럼 타기' };
-import { openFishing, seaBattle, PIRATE_LOOT, FLEE_FEE, CBOAT_FIX, FISH, TIERS, RODS, ZONES, BAIT, BAIT2, BAIT3, baitIc, BALL, CANNON, CANNON2, WBOAT, BOAT_FIX, PIRATE_HIT, fishSvg, SHINY_LIST, PEARL_PRICE } from './fishing.js';
+import { openFishing, seaBattle, PIRATE_LOOT, FLEE_FEE, CBOAT_FIX, FISH, TIERS, RODS, ZONES, BAIT, BAIT2, BAIT3, baitIc, BALL, CANNON, CANNON2, WBOAT, BOAT_FIX, PIRATE_HIT, fishSvg, SHINY_LIST, PEARL_PRICE, PRICE_V, priceUp } from './fishing.js';
 const CROW_IMG = FLUFFY ? 'img/fl/o/crow.webp' : 'img/crow/crow.webp';
 const FL_GUN = '<svg viewBox="110 30 64 48"><image href="img/fl/o/gun.webp" x="114" y="36" width="56" height="24"/><image href="img/fl/o/wheel.webp" x="117" y="48" width="26" height="26"/></svg>', FL_GUN2 = '<svg viewBox="108 28 66 50"><image href="img/fl/o/gun2.webp" x="112" y="33" width="58" height="31"/><image href="img/fl/o/wheel2.webp" x="113" y="48" width="26" height="26"/></svg>'; // 상점 그림: 배에 달린 대포와 같은 그림
 
@@ -1082,7 +1082,9 @@ export function mount(el, ctx) {
     const sf = FISH.find(q => q.id === x.id); if (sf && (x.g === 'S' || sf.tier === 4)) { const f = sf, lab = f.tier === 4 && x.g === 'S' ? '초희귀 S등급' : f.tier === 4 ? '초희귀' : 'S등급'; bag = { ...bag, sRumor: { at: v.t, name: f.name, cm: x.cm, lab } }; ctx.store.update('bag/' + ctx.uid, { sRumor: bag.sRumor }).catch(() => {}); }
     bag = { ...bag, fish: { ...(bag.fish || {}), [k]: v } }; ctx.store.update('bag/' + ctx.uid + '/fish', { [k]: v }).catch(() => {}); }
   const fishOf = id => (id === 'pearl' ? { name: '바다 진주', pearl: true } : FISH.find(f => f.id === id));
-  function appraise(x) { const f = fishOf(x.id), p = won(x.p);
+  // 물고기 파는 값: 값이 오르기 전에 잡은 물고기(pv 없음)도 오른 값으로 쳐 준다
+  const fishP = v => (v.id === 'pearl' ? PEARL_PRICE : (v.pv || 0) >= PRICE_V ? v.p : Math.round(v.p * priceUp(fishOf(v.id))));
+  function appraise(x) { const f = fishOf(x.id), p = won(fishP(x));
     const gl = x.g ? ` ${x.g}등급이여!${x.g === 'S' ? ' 이런 대물은 처음 보는구먼!' : x.g === 'A' ? ' 아주 귀한 크기여.' : ''}` : '';
     if (!f) return `허허, 이건 뭔지 모르겠구먼. ${p} 쳐 주지.`;
     if (f.pearl) return `이, 이건… 바다 진주 아닌가! 평생 몇 번 못 보는 물건이여. 군말 없이 ${p} 쳐 주지!`;
@@ -1172,10 +1174,10 @@ export function mount(el, ctx) {
         { ic: baitI(2), name: '중급 미끼 10개 (중급 바다)', sub: `${won(BAIT2 * 10)} · 중급 바다에서만 써요 · 가진 것 ${bag.bait2 || 0}`, price: BAIT2 * 10, line: '중급 바다 물고기는 입맛이 까다롭지. 파란 미끼여야 문다네.', act: () => buy(BAIT2 * 10, { bait2: (bag.bait2 || 0) + 10 }) },
         { ic: baitI(3), name: '고급 미끼 10개 (고급 바다)', sub: `${won(BAIT3 * 10)} · 고급 바다에서만 써요 · 가진 것 ${bag.bait3 || 0}`, price: BAIT3 * 10, line: '금빛 미끼라네. 깊은 바다 녀석들도 이건 못 참지.', act: () => buy(BAIT3 * 10, { bait3: (bag.bait3 || 0) + 10 }) }].filter(Boolean); }
     function sellItems() { const out = [], uidOwned = ctx.owned[ctx.uid] || {};
-      const L = Object.entries(bag.fish || {}).filter(([, v]) => v).sort((a, b) => (b[1].t || 0) - (a[1].t || 0)), total = L.reduce((n, [, v]) => n + (v.id === 'pearl' ? PEARL_PRICE : v.p), 0);
+      const L = Object.entries(bag.fish || {}).filter(([, v]) => v).sort((a, b) => (b[1].t || 0) - (a[1].t || 0)), total = L.reduce((n, [, v]) => n + fishP(v), 0);
       out.push(['sec', `🐟 물고기 ${L.length}마리`]);
       if (L.length) { out.push(h('button', { class: 'btn primary mk-all', onClick: async () => { if (await sell(total, fishGo(L), true)) { say(`허허, 몽땅 합쳐서 ${won(total)}이여. 다음에도 싱싱한 놈으로 부탁하네!`); draw(); } } }, `물고기 전부 팔기 · ${won(total)}`));
-        L.forEach(([k, v]) => { const f = fishOf(v.id) || { name: '?' }; out.push({ big: 1, gold: f.pearl || f.king || f.rare || v.shiny, ic: h('span', { class: 'so-try', html: f.pearl ? fishSvg({ pearl: true }) : f.id ? fishSvg(f, false, v.shiny) : '' }), name: (v.shiny ? '✨ ' : '') + (f.king ? '👑 ' + f.name : f.name) + (v.g ? ` · ${v.g}등급` : ''), sub: f.pearl ? '반짝반짝 진주 · 눌러서 값 물어보기' : `${v.cm}cm · 눌러서 값 물어보기`, price: f.pearl ? PEARL_PRICE : v.p, line: () => appraise(v), done: `거래 고맙구먼! ${won(v.p)} 여기 있네.`, act: () => sell(v.p, fishGo([[k, v]]), true) }); }); }
+        L.forEach(([k, v]) => { const f = fishOf(v.id) || { name: '?' }; out.push({ big: 1, gold: f.pearl || f.king || f.rare || v.shiny, ic: h('span', { class: 'so-try', html: f.pearl ? fishSvg({ pearl: true }) : f.id ? fishSvg(f, false, v.shiny) : '' }), name: (v.shiny ? '✨ ' : '') + (f.king ? '👑 ' + f.name : f.name) + (v.g ? ` · ${v.g}등급` : ''), sub: f.pearl ? '반짝반짝 진주 · 눌러서 값 물어보기' : `${v.cm}cm · 눌러서 값 물어보기`, price: fishP(v), line: () => appraise(v), done: `거래 고맙구먼! ${won(fishP(v))} 여기 있네.`, act: () => sell(fishP(v), fishGo([[k, v]]), true) }); }); }
       else out.push(['note', '가방에 물고기가 없어요. 낚시터에서 잡아 오세요.']);
       const crops = Object.entries(farmBarn).filter(([, n]) => n > 0).sort(), cropSum = crops.reduce((t, [k, n]) => t + cropPrice(k.split('|')[0], k.split('|')[1]) * n, 0);
       if (crops.length) { out.push(['sec', `🥕 작물 ${crops.reduce((t, [, n]) => t + n, 0)}개`]);

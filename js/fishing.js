@@ -26,7 +26,7 @@ const Z2 = [['줄무늬방어', 30, 60, 85, 220], ['얼음연어', 35, 70, 105, 
 const Z3 = [['심해등불아귀', 70, 140, 190, 400], ['용비늘장어', 110, 220, 210, 450], ['천둥청새치', 130, 260, 230, 500], ['유령가오리', 120, 240, 210, 475], ['강철참치', 120, 230, 230, 500], ['화산돔', 80, 150, 190, 400], ['얼음이빨상어', 140, 280, 250, 500], ['왕관개복치', 150, 300, 230, 500], ['그림자곰치', 100, 200, 190, 425], ['별똥철갑상어', 130, 270, 230, 500],
   ['은빛리본갈치', 140, 300, 210, 450], ['폭풍돛새치', 150, 290, 250, 500], ['망치머리대왕', 140, 270, 230, 490], ['크리스탈해룡', 90, 180, 210, 475], ['흑진주농어', 80, 160, 190, 410], ['불가사리왕도미', 75, 150, 190, 400], ['번개뱀장어', 120, 250, 210, 450], ['해골복어', 60, 120, 190, 390], ['무쇠턱바라쿠다', 110, 210, 210, 460], ['달그림자만새기', 100, 200, 200, 440],
   ['거대산갈치', 200, 400, 250, 500], ['용암쏠배감펭', 70, 140, 195, 410], ['톱날상어', 150, 300, 250, 500], ['안개고래치', 180, 340, 250, 500], ['황금비늘피라루쿠', 160, 320, 250, 500], ['심연먹물치', 90, 190, 195, 430], ['천년잉어', 100, 200, 210, 475], ['오로라만타', 180, 360, 250, 500],
-  ['고래킹', 500, 900, 1800, 2000, 'k'], ['상어킹', 380, 650, 900, 1000, 'k']];
+  ['고래킹', 500, 900, 900, 1000, 'k'], ['상어킹', 380, 650, 900, 1000, 'k']];
 // 상상의 물고기 추가분(구역마다 30종). 뒤에 붙여서 원래 물고기 번호(도감)는 그대로다
 Z1.push(...[['마카롱복어', 5, 11, 50, 110], ['푸딩망둥어', 6, 13, 50, 115], ['감귤송사리', 3, 8, 45, 80], ['체리피라미', 4, 9, 45, 85], ['솜방망이빙어', 5, 12, 50, 105], ['카라멜쥐치', 9, 19, 60, 135], ['팝콘멸치', 3, 7, 45, 75], ['바닐라가자미', 11, 22, 70, 150], ['쿠키돔', 10, 21, 65, 145], ['민트초코붕어', 7, 15, 55, 120], ['구슬전갱이', 8, 17, 55, 125], ['리본해마', 4, 10, 65, 145], ['비눗방울복어', 6, 12, 60, 130], ['포도알청어', 8, 16, 55, 120], ['무지개젤리고기', 5, 11, 50, 115], ['꽃잎놀래기', 7, 14, 55, 120], ['보리차가자미', 12, 24, 75, 160], ['꼬마고래고기', 14, 28, 80, 175], ['토끼귀쏨뱅이', 8, 17, 60, 130], ['딸기우유정어리', 9, 18, 55, 125], ['연두콩멸치', 3, 8, 45, 75], ['구름마시멜로돔', 11, 23, 70, 155], ['별가루송사리', 3, 7, 45, 80], ['호박엿고등어', 13, 27, 80, 170], ['몽글몽글개복치', 12, 25, 75, 165], ['단팥붕어빵고기', 10, 20, 65, 145], ['하늘색우럭', 9, 19, 60, 135], ['솔잎갈치', 15, 30, 80, 175], ['방긋자리돔', 6, 13, 55, 115], ['조개껍질빙어', 5, 11, 50, 105]]);
 Z2.push(...[['파란불꽃방어', 30, 62, 85, 230], ['은방울연어', 34, 70, 100, 255], ['해바라기농어', 28, 56, 80, 210], ['청록비늘민어', 32, 66, 95, 240], ['갈대넙치', 26, 52, 70, 190], ['회오리삼치', 34, 74, 105, 275], ['밤하늘고등어', 25, 50, 70, 180], ['자개장어', 40, 92, 115, 295], ['바위솔쏨뱅이', 22, 46, 65, 180], ['단풍도미', 28, 58, 95, 255], ['물보라숭어', 30, 64, 80, 210], ['새벽대구', 36, 78, 110, 295], ['해초메기', 30, 68, 85, 230], ['비단날치', 24, 48, 75, 200], ['밤송이복어', 20, 42, 85, 240], ['노랑우럭', 26, 54, 85, 220], ['꽃게놀래기', 22, 46, 90, 250], ['피리고기', 30, 62, 75, 210], ['구름무늬가오리', 44, 94, 130, 320], ['장구민어', 34, 70, 100, 275], ['석양방어', 32, 66, 90, 235], ['진주빛연어', 36, 72, 105, 260], ['소용돌이참돔', 30, 60, 95, 250], ['은행잎넙치', 26, 50, 70, 195], ['파도소리고등어', 26, 52, 70, 185], ['초승달갈치', 40, 88, 110, 285], ['얼룩말쥐치', 24, 48, 75, 205], ['물안개숭어', 30, 62, 80, 215], ['청자빛도미', 28, 58, 100, 265], ['반딧불이장어', 38, 86, 115, 300]]);
@@ -39,6 +39,9 @@ for (const z of [1, 2, 3]) { const list = FISH.filter(f => f.z === z), n = list.
   const n4 = Math.max(1, kings, Math.round(n * 0.02)), n3 = Math.round(n * 0.08), n2 = Math.round(n * 0.4);
   [...list].sort((a, b) => (b.king - a.king) || (b.rare - a.rare) || (b.price[1] - a.price[1]) || (a.k - b.k)).forEach((f, i) => {
     f.tier = i < n4 ? 4 : i < n4 + n3 ? 3 : i < n4 + n3 + n2 ? 2 : 1; const x = TIERS[f.tier].x; f.price = [Math.round(f.price[0] * x), Math.round(f.price[1] * x)]; if (f.tier >= 3 && !f.king) f.rare = true; }); }
+// 2026-11-21: 물고기 값 전부 2배, 고래킹은 2.5배(대장 중의 대장). 예전 값으로 가방에 담긴 물고기는 팔 때 같은 배수로 쳐 준다(PRICE_V)
+export const PRICE_V = 2, priceUp = f => (f && f.name === '고래킹' ? 2.5 : 2);
+FISH.forEach(f => { const m = priceUp(f); f.price = [Math.round(f.price[0] * m), Math.round(f.price[1] * m)]; });
 // 바다 쓰레기(F등급): 어느 바다에서나 10~20% 확률. 클수록 처리 비용이 커진다(50~250코인)
 export const TRASH = [['스티로폼 박스', '📦', 30, 90], ['페트병', '🧴', 12, 35], ['헌 옷', '👕', 40, 110], ['타이어', '🛞', 50, 120], ['축구공', '⚽', 18, 30]].map(([name, icon, c0, c1], k) => ({ id: 't' + k, name, icon, img: `img/fish/trash${k}.webp`, cm: [c0, c1] }));
 const PEARL = { id: 'pearl', name: '바다 진주', pearl: true };
@@ -228,7 +231,7 @@ export function openFishing(o) {
   function landed() {
     const { f, cm, price, shiny } = cur; sfx(price <= 0 ? 'bad' : f.king || f.rare || f.pearl ? 'bigfish' : shiny ? 'fanfare' : 'coin'); if (price > 0) splash(34, true); phase = 'done'; patEl.hidden = true; pearlTxt.hidden = true; if (!f.pearl) wrap.classList.remove('pearl'); wrap.classList.remove('fight', 'reel'); float.style.display = rl.style.display = hook.style.display = 'none'; fishEl.className = 'fs-fish';
     const isNew = !f.icon && !f.pearl && !!o.seen && !o.seen(f.id);
-    const keep = price > 0 && o.keep; if (keep) o.keep({ id: f.id, cm, p: price, ...(cur.g ? { g: cur.g } : {}), ...(shiny ? { shiny: 1 } : {}) }); else o.coins(price); if (!f.icon) o.dex(f.id, cm, shiny); // 물고기는 바로 돈이 아니라 가방에 담아 카피마켓에 판다
+    const keep = price > 0 && o.keep; if (keep) o.keep({ id: f.id, cm, p: price, pv: PRICE_V, ...(cur.g ? { g: cur.g } : {}), ...(shiny ? { shiny: 1 } : {}) }); else o.coins(price); if (!f.icon) o.dex(f.id, cm, shiny); // 물고기는 바로 돈이 아니라 가방에 담아 카피마켓에 판다
     // 릴을 연타하다가 결과 창 버튼이 눌려 바로 닫히지 않게: 창이 뜨고 1.2초 동안은 버튼이 안 먹는다. 창은 버튼을 누르기 전까지 그대로 있다
     const shownAt = performance.now(), safe = () => performance.now() - shownAt > 1200;
     const g = cur.g; let gEl = null; // 등급은 '등급 확인하기'를 누르기 전까지 ?로 가려 둔다
@@ -269,7 +272,7 @@ export function openFishing(o) {
       if (isNew) { sfx('bigfish'); for (let k = 0; k < 14; k++) wow.append(h('i', { class: 'fs-spark', style: { '--a': (k / 14 * 360) + 'deg', '--d': (60 + Math.random() * 70).toFixed(0) + 'px' } }, '✨')); }
       (wrap.querySelector('.fs-view') || wrap).append(wow); setTimeout(() => wow.classList.add('out'), 1900); setTimeout(() => wow.remove(), 2400); }
   }
-  if (o.trial && new URLSearchParams(location.search).has('whaletest')) { const W = FISH.find(x => x.name === '고래킹'), mk = () => ({ f: W, cm: 880, g: 'S', price: 15900, d: 8, p: 1, shiny: false }); let used = false; window.__fsWhale = () => { cur = mk(); landed(); }; window.__whaleNext = () => { if (used) return null; used = true; return mk(); }; } // 고래킹 연습 링크(?fishtest=3&whaletest): 첫 낚시에 고래킹
+  if (o.trial && new URLSearchParams(location.search).has('whaletest')) { const W = FISH.find(x => x.name === '고래킹'), mk = () => ({ f: W, cm: 880, g: 'S', price: 39750, d: 8, p: 1, shiny: false }); let used = false; window.__fsWhale = () => { cur = mk(); landed(); }; window.__whaleNext = () => { if (used) return null; used = true; return mk(); }; } // 고래킹 연습 링크(?fishtest=3&whaletest): 첫 낚시에 고래킹
   if (o.trial && new URLSearchParams(location.search).has('pearltest')) window.__fsPearl = () => { cur = rollCatch(zone, rodT(), true, 0.5, false); landed(); }; // 진주 연출 확인용
   if (o.shinyTest) window.__fsLand = () => { cur = rollCatch(zone, rodT(), false, 0.5, true); landed(); }; // 이로치 결과 화면 확인용(?fishtest=1&shiny)
   // 찔끔찔끔 누르기: 0.3초도 안 되게 눌렀다 떼면 물고기가 눈치채고 인내심이 깎인다(깊은 바다일수록 많이)
