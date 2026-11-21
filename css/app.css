@@ -2722,3 +2722,11 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .pfx-boom { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: 0; animation: qfBoom 1.3s ease-out both; box-shadow: 0 -52px, 37px -37px, 52px 0, 37px 37px, 0 52px, -37px 37px, -52px 0, -37px -37px, 0 -28px #fff, 20px -20px #fff, 28px 0 #fff, 20px 20px #fff, 0 28px #fff, -20px 20px #fff, -28px 0 #fff, -20px -20px #fff; }
 .so-cheer { position: absolute; z-index: 30; font-style: normal; font-size: 22px; pointer-events: none; animation: soCheer 1.6s ease-out both; } @keyframes soCheer { from { transform: translateY(0) scale(.4); opacity: 0; } 20% { opacity: 1; transform: translateY(-20px) scale(1.2); } to { transform: translateY(-110px) scale(.9); opacity: 0; } }
 .patch .red3 { display: inline; color: #E0243A; font-weight: 900; }
+
+/* 수족관 바다 진주: 제자리에서 가장 예쁘게 빛나기 */
+.aq-f.pearl { overflow: visible; } .aq-f.pearl .aq-fb { position: relative; z-index: 2; animation: aqPearl 3s ease-in-out infinite !important; filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 16px rgba(255, 214, 120, .9)) drop-shadow(0 0 30px rgba(255, 160, 215, .75)); }
+@keyframes aqPearl { 50% { filter: drop-shadow(0 0 10px #fff) drop-shadow(0 0 26px rgba(255, 226, 140, 1)) drop-shadow(0 0 48px rgba(190, 160, 255, .9)); } }
+.aq-pglow { position: absolute; left: -25%; top: -23%; width: 150%; height: 150%; border-radius: 50%; z-index: 1; background: radial-gradient(circle, rgba(255, 255, 255, .85) 0, rgba(255, 228, 150, .55) 22%, rgba(255, 170, 220, .3) 45%, rgba(170, 210, 255, .12) 62%, transparent 72%); animation: aqPglow 3s ease-in-out infinite; pointer-events: none; }
+@keyframes aqPglow { 50% { transform: scale(1.18); opacity: .75; } }
+.aq-prays { position: absolute; left: -80%; top: -78%; width: 260%; height: 260%; z-index: 0; border-radius: 50%; background: repeating-conic-gradient(rgba(255, 244, 200, .32) 0 6deg, transparent 6deg 20deg); -webkit-mask: radial-gradient(circle, #000 8%, transparent 62%); mask: radial-gradient(circle, #000 8%, transparent 62%); animation: spin 18s linear infinite; pointer-events: none; }
+.aq-ptw { position: absolute; z-index: 3; font-style: normal; font-size: 14px; color: #FFF6CC; text-shadow: 0 0 6px #FFD86B, 0 0 12px #FF9AC7; animation: fsTwinkle 2.2s ease-in-out infinite; pointer-events: none; }

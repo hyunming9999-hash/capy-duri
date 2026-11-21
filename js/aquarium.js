@@ -92,11 +92,11 @@ export function openAquarium(o) {
     fish = list.map(d => makeFish(d)).filter(Boolean);
     W = T.w; H = T.h; (dlist || []).forEach(d => makeDeco(d));
         layout(false); drawRoom(); drawInfo(); bag = o.test ? demoBag(tank) : o.bag ? o.bag() : []; drawBag(); bookRows = []; drawBook(); loadBook(); }
-  function makeFish(d, drop) { const f0 = F0(d.id); if (!f0) return null; const len = f0.pearl ? 0.9 : d.cm / 100, f = { d, f0, len, hgt: len * 0.45, tier: f0.tier || 1, g: d.g, shiny: d.shiny, x: rnd(len / 2, Math.max(len / 2 + 0.01, W - len / 2)), y: rnd(H * 0.15, H * 0.7), dir: Math.random() < 0.5 ? -1 : 1, vy: 0, ty: 0, st: 'swim', stT: rnd(2, 6), sp: 1, turnT: 0 };
+  function makeFish(d, drop) { const f0 = F0(d.id); if (!f0) return null; const len = f0.pearl ? 1.8 : d.cm / 100, f = { d, f0, len, hgt: len * 0.45, tier: f0.tier || 1, g: d.g, shiny: d.shiny, x: rnd(len / 2, Math.max(len / 2 + 0.01, W - len / 2)), y: rnd(H * 0.15, H * 0.7), dir: Math.random() < 0.5 ? -1 : 1, vy: 0, ty: 0, st: 'swim', stT: rnd(2, 6), sp: 1, turnT: 0 };
     f.base = 0.12 + 0.3 * Math.sqrt(len); f.ty = f.y; f.near = Math.min(3, Math.max(1.25, 0.9 / Math.sqrt(len))); f.z = f.tz = drop ? 0.1 : rnd(-0.8, 1); f.dq = -1; f.zT = rnd(1, 8);
     f.body = h('div', { class: 'aq-fb', html: fishSvg(f0, false, d.shiny), style: { animationDuration: rnd(0.45, 0.7) + 's' } });
     f.zz = h('span', { class: 'aq-zz' }, 'Z z'); f.tag = h('span', { class: 'aq-name', hidden: !d.name }, d.name || ''); f.el = h('div', { class: 'aq-f ' + glowOf(f) }, f.body, f.zz, f.tag);
-    if (f0.pearl) { f.still = true; f.z = f.tz = 0.3; f.el.classList.add('pearl'); f.body.style.animation = 'none'; f.zz.hidden = true; }
+    if (f0.pearl) { f.still = true; f.z = f.tz = 0.3; f.dir = 1; f.el.classList.add('pearl'); f.body.style.animation = 'none'; f.zz.hidden = true; f.el.prepend(h('i', { class: 'aq-prays' }), h('i', { class: 'aq-pglow' })); for (let k = 0; k < 7; k++) f.el.append(h('i', { class: 'aq-ptw', style: { left: 8 + (k * 41) % 84 + '%', top: 4 + (k * 29) % 70 + '%', animationDelay: (k * 0.37).toFixed(2) + 's' } }, k % 2 ? '✦' : '✧')); } // 진주: 크게, 제자리에서 빛난다
     f.el.onclick = e => { e.stopPropagation(); showTip(f); }; layer.append(f.el);
     if (drop) { const vx = (view.scrollLeft + view.clientWidth / 2) / ppm, vy = view.scrollTop / ppm; f.x = Math.max(len / 2, Math.min(W - len / 2, vx + rnd(-1, 1))); f.y = Math.max(0, vy) + 0.1; f.ty = f.y + rnd(1, 2.5); f.vy = 1.5;
       const sp = h('div', { class: 'aq-splash', style: { left: f.x * ppm + 'px', top: Math.max(0, vy) * ppm + 'px' } }); layer.append(sp); setTimeout(() => sp.remove(), 1200); sfx('splash');
