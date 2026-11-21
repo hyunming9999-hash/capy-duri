@@ -3001,3 +3001,10 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .pp-bag img { width: 46px; } .pp-bag b { display: block; font-size: 14px; } .pp-bag small { color: #5A6A8A; font-size: 12px; }
 .eq-slot.dip img { width: 70%; height: auto; }
 .rw-it div small { display: block; }
+/* 처음 보는 물고기 알림: 바다색(파랑)과 겹치지 않게 따뜻한 노랑 + NEW 딱지 + 은은한 빛 번짐 */
+.fs-wow.new b { position: relative; font-size: 24px; color: #6B3A00; background: linear-gradient(135deg, #FFF3A6, #FFD23F 55%, #FFA928); border-color: #fff; text-shadow: 0 1px 0 rgba(255,255,255,.7); box-shadow: 0 4px 0 #C97A0A, 0 0 0 0 rgba(255,220,90,.9); animation: newPulse 1.1s ease-in-out infinite; }
+.fs-wow.new b::before { content: 'NEW'; position: absolute; left: -10px; top: -13px; padding: 2px 8px; border-radius: 10px; background: #FF4D6D; color: #fff; font: 900 12px/1.3 var(--head); border: 2px solid #fff; rotate: -10deg; text-shadow: none; animation: newTag .5s .3s cubic-bezier(.2,1.8,.4,1) both; }
+.fs-wow.new::after { content: ''; position: absolute; left: 50%; top: 24px; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; border: 3px solid rgba(255,235,140,.9); z-index: -1; animation: newRing 1.1s ease-out infinite; }
+.fs-wow.new small { background: #FFFBEA; border: 2px solid #FFD23F; color: #6B3A00; }
+@keyframes newPulse { 0%, 100% { box-shadow: 0 4px 0 #C97A0A, 0 0 10px 2px rgba(255,220,90,.7); } 50% { box-shadow: 0 4px 0 #C97A0A, 0 0 26px 8px rgba(255,220,90,.95); } }
+@keyframes newTag { from { scale: 0; } } @keyframes newRing { from { scale: .6; opacity: .9; } to { scale: 6; opacity: 0; } }
