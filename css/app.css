@@ -2697,3 +2697,4 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fm-ui3 .fm-pc.lock .fm-pmid b { font-size: 11px; }
 .fm-ui3 .fm-pst, .fm-ui3 .fm-pmid small, .fm-ui3 .fm-pmid b { white-space: nowrap; overflow: hidden; text-overflow: clip; font-size: 10.5px; line-height: 1.2; } .fm-ui3 .fm-pn { width: 20px; height: 20px; font-size: 11.5px; } .fm-ui3 .fm-pc { overflow: hidden; }
 .fm-ui3 .fm-plist { align-items: start; } .fm-ui3 .fm-pc { max-height: 72px; height: 100%; }
+.aq-f.pearl .aq-fb { filter: drop-shadow(0 0 6px rgba(255, 240, 250, .95)) drop-shadow(0 0 14px rgba(255, 190, 225, .7)); animation: aqPearl 2.4s ease-in-out infinite !important; } @keyframes aqPearl { 50% { filter: drop-shadow(0 0 10px #fff) drop-shadow(0 0 22px rgba(255, 170, 215, .95)); } }
