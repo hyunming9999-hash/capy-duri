@@ -119,11 +119,14 @@ export function mount(el, ctx) {
   const ro = 'ResizeObserver' in window ? new ResizeObserver(resize) : null; ro && ro.observe(wrap);
 
   // 옷 입은 카피바라 그림(메인 화면과 같은 그림)
+  // 그림은 앞·뒤 모습을 미리 만들어 두고, 새 그림이 준비될 때까지는 있던 그림을 계속 쓴다(깜빡임 없게)
+  const lastIm = {};
+  function build(uid, view, o) { svgUrl(capy(ctx.capyOf(uid, { view, face: 'happy', noShadow: true })).replace('<svg ', '<svg width="480" height="632" ')).then(loadImg).then(im => (im.decode ? im.decode().catch(() => {}) : 0, im)).then(im => { o.im = im; o.stale = false; dirty = true; }).catch(() => {}); }
   function sprite(uid, view) {
-    const k = uid + view; if (sprites[k]) return sprites[k].im;
-    const o = sprites[k] = { im: null };
-    svgUrl(capy(ctx.capyOf(uid, { view, face: 'happy', noShadow: true })).replace('<svg ', '<svg width="480" height="632" ')).then(loadImg).then(im => { o.im = im; }).catch(() => {});
-    return null;
+    const k = uid + view; let o = sprites[k];
+    if (!o) { o = sprites[k] = { im: null }; build(uid, view, o); build(uid, view === 'back' ? 'front' : 'back', sprites[uid + (view === 'back' ? 'front' : 'back')] || (sprites[uid + (view === 'back' ? 'front' : 'back')] = { im: null })); }
+    else if (o.stale && !o.busy) { o.busy = true; build(uid, view, o); setTimeout(() => { o.busy = false; }, 3000); }
+    if (o.im) lastIm[uid] = o.im; return o.im || lastIm[uid] || null;
   }
   const tag = uid => { if (!tagEls[uid]) { tagEls[uid] = h('span', { class: 'park-tag' + (uid === ctx.uid ? ' me' : '') }, h('i', { class: 'mic' }), ctx.nameOf(uid)); tags.append(tagEls[uid]); } return tagEls[uid]; };
 
@@ -245,7 +248,7 @@ export function mount(el, ctx) {
       if (v.to === ctx.uid) { me.kx = (v.ux || 0) * 200; me.ky = (v.uy || 0) * 200; if (navigator.vibrate) try { navigator.vibrate(60); } catch {} }
     }, 110);
   }));
-  offs.push(ctx.store.on('dress', () => { for (const k of Object.keys(sprites)) delete sprites[k]; })); // 옷을 갈아입으면 그림을 다시 만든다
+  offs.push(ctx.store.on('dress', () => { for (const k of Object.keys(sprites)) sprites[k].stale = true; })); // 옷을 갈아입으면 그림을 다시 만든다
   me.mu = mode !== 'on';
   ctx.store.ephemeral('rt/park/' + ctx.uid, { x: me.x, y: me.y, v: me.v, f: false, m: false, mu: me.mu }).catch(() => {});
 

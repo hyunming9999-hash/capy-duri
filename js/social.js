@@ -246,7 +246,8 @@ export function mount(el, ctx) {
   try { scoot = localStorage.getItem('capy-scoot') === '1'; scFwAt = +localStorage.getItem('capy-scfw') || 0; } catch {}
   const meCapy = () => capy(ctx.capyOf(ctx.uid, ctx.goldTest ? { face: 'happy' } : { face: 'happy', rare: rareOf(myRares()) })); // ?goldtest 링크면 빌려 입은 황금 장비 그대로
   const scootHtml = () => `<div class="sc-rig b"><img class="sc-img" src="${FLUFFY ? 'img/fl/o/scooter-b.webp' : 'img/scooter-b.webp'}" alt="">${FLUFFY ? '<img class="sc-img sc-front" src="img/fl/o/scooter-b-front3.webp" alt="">' : ''}${scPas >= 0 ? `<div class="sc-pas">${animalSvg(scPas, true, 'happy')}</div>` : ''}<div class="sc-me">${meCapy()}</div></div>`;
-  const refreshMe = () => { if (meEl) meEl.innerHTML = scoot ? scootHtml() : meCapy(); };
+  const svgKey = v => v.replace(/(id="|url\(#|href="#)([A-Za-z_-]+)\d+/g, '$1$2'); // 그림마다 새로 붙는 번호는 빼고 비교
+  const refreshMe = () => { if (!meEl) return; const v = scoot ? scootHtml() : meCapy(), k = svgKey(v); if (meEl._v !== k) { meEl._v = k; meEl.innerHTML = v; } }; // 같은 그림이면 다시 그리지 않는다(깜빡임 방지)
   function startKing() { if (kingTrial) return; kingTrial = performance.now() + 60000; refreshMe(); toast('👑 대왕 체험 1분 시작! 동물들 곁을 지나가 보세요', 3200); }
   function endKing() { if (!kingTrial) return; kingTrial = 0; refreshMe(); toast('대왕 체험이 끝났어요', 2600); }
   async function saveRares(list) { const v = list.length ? list : null; await ctx.store.update('members/' + ctx.uid, { rare: v }).catch(() => {}); ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), rare: v }; refreshMe(); scores(); }
@@ -327,7 +328,7 @@ export function mount(el, ctx) {
   const saveVit = patch => { vit = { ...(vit || {}), ...patch }; return ctx.store.update('socialme/' + ctx.uid, patch).catch(() => {}); };
   function drawHp() { if (!hpEl || !playing) return; const v = hpNow(); hpEl.style.width = v / HP_MAX * 100 + '%'; hpEl.style.background = v > 50 ? '#57C26B' : v > 25 ? '#F5A524' : '#E5484D'; hpEl.parentNode.nextSibling.textContent = FLUFFY ? `${v}` : `${v} / ${HP_MAX}`; potEl.textContent = `🧪 ${bag.potion || 0}`; potEl.disabled = !(bag.potion > 0) || v >= HP_MAX; }
   async function drink() { if (!(bag.potion > 0) || hpNow() >= HP_MAX) return; bag = { ...bag, potion: bag.potion - 1 }; ctx.store.update('bag/' + ctx.uid, { potion: bag.potion }).catch(() => {}); await saveVit({ hp: Math.min(HP_MAX, hpNow() + POTION[1]) }); sfx('point'); pop(mePop, `+${POTION[1]} ❤️`, 'up'); drawHp(); }
-  const drawPal = () => { if (palEl && pid()) palEl.replaceChildren(h('span', { html: capy(ctx.capyOf(pid(), { face: 'happy' })) }), h('em', null, ctx.nameOf(pid()))); };
+  const drawPal = () => { if (!palEl || !pid()) return; const v = capy(ctx.capyOf(pid(), { face: 'happy' })), nm = ctx.nameOf(pid()); if (palEl._v === svgKey(v) + nm) return; palEl._v = svgKey(v) + nm; palEl.replaceChildren(h('span', { html: v }), h('em', null, nm)); };
   const palSpot = q => { if (pal.spot === q) return; const o = pal.spot; if (o) { if (o.eq) o.eq.on = Math.max(0, o.eq.on - 1); if (o.by === 98) o.by = -1; } pal.spot = q; if (q) { if (q.eq) q.eq.on++; if (q.by < 0) q.by = 98; } palEl.className = 'so-me so-pal' + (q ? ' r-' + q.type + (q.dir < 0 ? ' rev' : '') + q.late : ''); };
   const leavePos = () => ctx.store.set('socialpos/' + ctx.uid, null).catch(() => {});
   function lock() {
