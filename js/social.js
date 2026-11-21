@@ -661,6 +661,7 @@ export function mount(el, ctx) {
   const acc = {}; // 동물별로 화가 풀리는 데 쌓인 시간 { calm } — 중간중간 저장해 두고 다음에 이어서 센다
   const accOf = k => acc[k] || (acc[k] = { calm: (mine[k] || {}).calmT || 0 });
   function calm(ms) { let ch = false; Object.keys(mine).forEach(k => { const r = mine[k]; if (!r || !ANIMALS[k]) return; const t = accOf(k), was = { ...t };
+      if (r.a >= 100 && r.cake) { t.calm = 0; return; } // 케이크로 된 단짝(100)은 저절로 식지 않는다(까마귀 이간질·욕·때리기로만 내려간다)
       if (r.a > 0) { t.calm = 0; const wall = ctx.store.now(); if (!r.fedAt) return void setRel(k, { fedAt: wall, dropN: 0 });
         let v = r.a, patch = null;
         // 50 초과: 하루 거르면 8시간마다 -1, 50에서 멈춘다
