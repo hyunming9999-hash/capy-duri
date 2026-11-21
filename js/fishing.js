@@ -172,7 +172,7 @@ export function openFishing(o) {
     if (zone >= 2 && o.onPirate) { const pn = (b.pcasts || 0) + 1, blk = Math.floor((pn - 1) / PIRATE_EVERY), fresh = b.pirBlk !== blk, at = fresh ? (Math.random() < 0.5 ? blk * PIRATE_EVERY + 1 + Math.floor(Math.random() * PIRATE_EVERY) : -1) : b.pirNext, hit = pn === at; o.save({ pcasts: pn, pirBlk: blk, pirNext: hit ? -1 : at }); if (hit) { close(); return o.onPirate(); } }
     // 진주는 고급 바다에서만: 평소엔 던질 때마다 0.2%, 진주부적을 썼으면 10번 안의 정해진 한 번에 문다
     // 선물(2026-11-21 하루, 한 사람에 한 번): 그날 고급 바다 첫 낚시에 진주가 문다. 싸움은 보통 고급 물고기와 같은 난이도(놓칠 수 있다)
-    gift = deep && !o.trial && b.pgift !== '20261121' && new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10) === '2026-11-21';
+    gift = deep && !o.trial && !!(o.ctx && o.ctx.ours && o.ctx.ours()) && b.pgift !== '20261121' && new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10) === '2026-11-21';
     if (deep && o.trial && !b.pgift && new URLSearchParams(location.search).has('pearltest')) { gift = true; b.pgift = 1; } // 진주 연습 링크(?fishtest=3&pearltest): 첫 낚시에 진주
     const isPearl = deep && (gift || (boost ? bk >= boost.at : Math.random() < PEARL_P)); o.save({ [BAIT_KEY[zone]]: b[BAIT_KEY[zone]] - 1, rodD: b.rodD - 1, casts: (b.casts || 0) + 1, ...(deep ? { casts3: n, ...(boost ? { pboost: isPearl ? null : { k: bk, at: boost.at } } : {}) } : {}) }); pboosted = !!(boost && isPearl && !gift); if (gift) o.save({ pgift: '20261121', ...(boost ? { pboost: { k: boost.k || 0, at: boost.at } } : {}) }); // 선물 진주: 기회는 이 한 번(던질 때 표시) · 부적 차례는 쓰지 않는다
     cur = rollCatch(zone, rodT(), isPearl, power / 100, o.shinyTest);
@@ -241,12 +241,18 @@ export function openFishing(o) {
     if (f.pearl) { card.classList.add('wait'); setTimeout(() => card.classList.remove('wait'), 4200); const fx = h('div', { class: 'pfx' }, h('div', { class: 'pfx-flash' }), h('div', { class: 'pfx-rays' }), h('div', { class: 'pfx-ring' }), h('div', { class: 'pfx-ring r2' }),
         h('div', { class: 'pfx-pearl', html: fishSvg(f) }), h('div', { class: 'pfx-title' }, h('b', null, '바다 진주'), h('small', null, '✦ LEGENDARY ✦ 평생 한 번 볼까 말까!')));
       const C = ['#FFE066', '#FF9AC7', '#B8F3FF', '#FFFFFF', '#C9A2FF', '#FFC94D'];
-      for (let k = 0; k < 60; k++) fx.append(h('i', { class: 'pfx-conf', style: { left: Math.random() * 100 + '%', background: C[k % C.length], animationDelay: (0.6 + Math.random() * 2.4).toFixed(2) + 's', animationDuration: (2.4 + Math.random() * 2).toFixed(2) + 's', '--r': (Math.random() * 720 - 360).toFixed(0) + 'deg', width: 6 + Math.random() * 6 + 'px', height: 10 + Math.random() * 8 + 'px' } }));
-      for (let k = 0; k < 36; k++) fx.append(h('i', { class: 'pfx-spark', style: { '--a': (k / 36 * 360) + 'deg', '--d': (120 + Math.random() * 170).toFixed(0) + 'px', animationDelay: (0.5 + (k % 3) * 0.25).toFixed(2) + 's', color: C[k % C.length] } }, k % 3 ? '✦' : '✨'));
-      for (let k = 0; k < 6; k++) fx.append(h('b', { class: 'pfx-boom', style: { left: 10 + Math.random() * 80 + '%', top: 8 + Math.random() * 50 + '%', animationDelay: (0.8 + k * 0.45).toFixed(2) + 's', color: C[k % C.length] } }));
+      for (let k = 0; k < 140; k++) fx.append(h('i', { class: 'pfx-conf', style: { left: Math.random() * 100 + '%', background: C[k % C.length], animationDelay: (0.4 + Math.random() * 4.2).toFixed(2) + 's', animationDuration: (2.4 + Math.random() * 2).toFixed(2) + 's', '--r': (Math.random() * 720 - 360).toFixed(0) + 'deg', width: 6 + Math.random() * 6 + 'px', height: 10 + Math.random() * 8 + 'px' } }));
+      for (let k = 0; k < 60; k++) fx.append(h('i', { class: 'pfx-spark', style: { '--a': (k / 36 * 360) + 'deg', '--d': (140 + Math.random() * 260).toFixed(0) + 'px', animationDelay: (0.5 + (k % 4) * 0.35).toFixed(2) + 's', color: C[k % C.length] } }, k % 3 ? '✦' : '✨'));
+      for (let k = 0; k < 24; k++) fx.append(h('b', { class: 'pfx-boom', style: { left: 4 + Math.random() * 92 + '%', top: 4 + Math.random() * 80 + '%', animationDelay: (0.6 + k * 0.22).toFixed(2) + 's', color: C[k % C.length], transform: `scale(${(0.8 + Math.random() * 1.4).toFixed(2)})` } }));
+      fx.prepend(h('div', { class: 'pfx-aurora' }), h('div', { class: 'pfx-beam b1' }), h('div', { class: 'pfx-beam b2' }), h('div', { class: 'pfx-beam b3' }), h('div', { class: 'pfx-beam b4' }));
+      fx.append(h('div', { class: 'pfx-frame' }));
+      for (let k = 0; k < 40; k++) fx.append(h('i', { class: 'pfx-rain', style: { left: Math.random() * 100 + '%', animationDelay: (0.4 + Math.random() * 3.6).toFixed(2) + 's', animationDuration: (1.8 + Math.random() * 1.6).toFixed(2) + 's', fontSize: 14 + Math.random() * 18 + 'px' } }, ['🦪', '✨', '💎', '🌟', '🪙', '💖'][k % 6]));
+      for (let k = 0; k < 30; k++) fx.append(h('i', { class: 'pfx-twk', style: { left: Math.random() * 100 + '%', top: Math.random() * 100 + '%', animationDelay: (Math.random() * 3).toFixed(2) + 's', color: C[k % C.length] } }, '✦'));
+      const app = document.getElementById('app') || document.body.firstElementChild; app && app.classList.add('pfx-shake'); setTimeout(() => app && app.classList.remove('pfx-shake'), 900);
       document.body.append(fx); sfx('fanfare'); setTimeout(() => sfx('bigfish'), 500); [900, 1500, 2100, 2700].forEach(t => setTimeout(() => alive && sfx('coin'), t));
       try { navigator.vibrate && navigator.vibrate([80, 60, 80, 60, 200]); } catch {}
-      const end = () => { fx.classList.add('out'); setTimeout(() => fx.remove(), 700); }; fx.onclick = end; setTimeout(end, 5200); }
+      [3000, 3400, 3800].forEach(t => setTimeout(() => alive && sfx('fanfare'), t));
+      const end = () => { fx.classList.add('out'); setTimeout(() => fx.remove(), 700); }; fx.onclick = end; setTimeout(end, 6800); }
     // 와! ○○○을 잡았다! — 화면 가득 터지는 글자, 그 아래 등급
     if (!f.icon && shiny) { // 이로치: 화면이 무지갯빛으로 번쩍이고 반짝이가 터진다
       const fl = h('div', { class: 'fs-shyflash' }); (wrap.querySelector('.fs-view') || wrap).append(fl); setTimeout(() => fl.remove(), 1600);

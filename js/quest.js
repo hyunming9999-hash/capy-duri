@@ -205,7 +205,7 @@ export function createQuest(d) {
         if (!(await vn(st.say, st.who, title, [h('p', { class: 'vn-sub' }, '📢 다시 보기 · 누르기만 하면 넘어가요')]))) return false;
         if (!(await vn(st.done, st.to, title + ' ✔', [h('p', { class: 'vn-sub' }, '📢 다시 보기 · 누르기만 하면 넘어가요')]))) return false; }
       toast(`📢 다시 보기 끝! 이제 ${to + 1}단계를 이어서 해요`, 3000); return true; } finally { replaying = false; } }
-  async function open(i) { if (ready && !q.rp1 && d.meName === '두두' && (q.s || 0) >= 16 && cur()) { if (!(await replay(15, q.s))) return; await save({ rp1: 1 }); }
+  async function open(i) { if (ready && !q.rp1 && d.ctx.ours() && d.meName === '두두' && (q.s || 0) >= 16 && cur()) { if (!(await replay(15, q.s))) return; await save({ rp1: 1 }); }
     const s = cur(), ch = s && STORY[s.ci];
     if (!s) return vn(['{happy}고마워. 너 덕분에 섬이 다시 하나가 됐어.'], i, '👑 사건 해결!', [h('p', { class: 'vn-sub' }, '메인 이야기 「누가 왕관을 훔쳤나」를 모두 마쳤어요.')]);
     const title = `🔍 ${ch.t}`;

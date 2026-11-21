@@ -43,6 +43,8 @@ const MENU = [
 
 const root = $('#app');
 const ctx = { uid: null, room: null, store: null, members: {}, presence: {}, order: [], idx: 0, dress: {}, partnerWhere: null, battery: {} };
+// 우리 방(밍땅꾸리·두두)인지: 두 사람만을 위해 넣은 지급·이벤트는 이 방에서만 돈다(다른 사람이 같은 닉네임을 써도 안 받게)
+ctx.ours = () => { const n = Object.values(ctx.members || {}).map(m => m && m.name); return n.includes('밍땅꾸리') && n.includes('두두'); };
 Object.defineProperties(ctx, {
   me: { get() { return ctx.members[ctx.uid] || {}; } },
   partnerId: { get() { return ctx.order.find(u => u !== ctx.uid) || null; } },

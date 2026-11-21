@@ -49,7 +49,7 @@ export function openAquarium(o) {
       h('div', { class: 'aq-zoom' }, h('button', { onClick: () => setZoom(zoom / 1.5) }, '－'), zoomL, h('button', { onClick: () => setZoom(zoom * 1.5) }, '＋'))),
     h('div', { class: 'aq-frame' }, view, tip), room);
   // 놀러가기: 내 수족관 ↔ 상대 수족관. 상대 수족관은 구경만(풀어넣기·이름 붙이기 없음)
-  let mode = 'me'; const meName = o.me || '나', palName = o.partner || '두두', titleB = root.querySelector('.aq-title b');
+  let mode = 'me'; const meName = o.me || '나', palName = o.partner || '상대', titleB = root.querySelector('.aq-title b');
   const visit = h('div', { class: 'aq-visit' }, ...[['me', `🏠 내 수족관`], ['pal', `🐾 ${palName}네 놀러가기`]].map(([k, l]) => h('button', { class: 'aq-vt' + (k === 'me' ? ' on' : ''), 'data-k': k, onClick: () => goMode(k) }, l)));
   root.querySelector('.aq-top').append(visit); if (!o.partner && !o.test) visit.hidden = true;
   async function goMode(k) { if (k === mode) return; mode = k; [...visit.children].forEach(b => b.classList.toggle('on', b.dataset.k === k)); panel.hidden = true; tip.hidden = true;

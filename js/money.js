@@ -79,12 +79,12 @@ export function setupMoney(ctx, onChange) {
   ctx.buy = async id => { if (ctx.owns(id)) return true; if (!(await ctx.spend(priceOf(id)))) return false; await ctx.store.set(`owned/${ctx.uid}/${id}`, true).catch(() => {}); ctx.owned[ctx.uid] = { ...(ctx.owned[ctx.uid] || {}), [id]: true }; return true; };
   // 한 번만 주는 지급: 밍땅꾸리에게 10,000코인(2026-11-20). 표시(g1120)가 있으면 다시 주지 않는다
   // 오류 보상(한 번만): 두두에게 350코인(2026-11-21, 카피배구 서버 오류). 표시(g1121)가 있으면 다시 주지 않는다. 지급되면 사과 창을 띄운다
-  let sorrying = false; const sorryOnce = () => { const me = ctx.members[ctx.uid] || {}; if (sorrying || me.name !== '두두' || (ctx.money[ctx.uid] || {}).g1121) return; sorrying = true;
+  let sorrying = false; const sorryOnce = () => { const me = ctx.members[ctx.uid] || {}; if (!(ctx.ours && ctx.ours()) || sorrying || me.name !== '두두' || (ctx.money[ctx.uid] || {}).g1121) return; sorrying = true;
     ctx.store.tx('money/' + ctx.uid, c => ((c && c.g1121) ? undefined : { ...(c || {}), c: ((c && c.c) || 0) + 350, g1121: true })).then(r => { if (r && r.committed === false) return; try { modal({ title: '🙇 오류 보상금', body: [h('p', { class: 'center', style: { fontWeight: 800, wordBreak: 'keep-all' } }, '서버 오류로 불편을 드려 죄송합니다.'), h('p', { class: 'center' }, '보상금 ', h('b', null, '🪙 350코인'), '을 지급해 드렸어요.')], actions: [{ label: '확인', primary: true }] }); } catch {} }).catch(() => { sorrying = false; }); };
   // 한 번만 주는 지급 ②: 밍땅꾸리에게 8,000코인(2026-11-21). 표시(g1121m)
-  let granting2 = false; const grantOnce2 = () => { const me = ctx.members[ctx.uid] || {}; if (granting2 || me.name !== '밍땅꾸리' || (ctx.money[ctx.uid] || {}).g1121m) return; granting2 = true;
+  let granting2 = false; const grantOnce2 = () => { const me = ctx.members[ctx.uid] || {}; if (!(ctx.ours && ctx.ours()) || granting2 || me.name !== '밍땅꾸리' || (ctx.money[ctx.uid] || {}).g1121m) return; granting2 = true;
     ctx.store.tx('money/' + ctx.uid, c => ((c && c.g1121m) ? undefined : { ...(c || {}), c: ((c && c.c) || 0) + 8000, g1121m: true })).catch(() => { granting2 = false; }); };
-  let granting = false; const grantOnce = () => { const me = ctx.members[ctx.uid] || {}; if (granting || me.name !== '밍땅꾸리' || (ctx.money[ctx.uid] || {}).g1120) return; granting = true;
+  let granting = false; const grantOnce = () => { const me = ctx.members[ctx.uid] || {}; if (!(ctx.ours && ctx.ours()) || granting || me.name !== '밍땅꾸리' || (ctx.money[ctx.uid] || {}).g1120) return; granting = true;
     ctx.store.tx('money/' + ctx.uid, c => ((c && c.g1120) ? undefined : { ...(c || {}), c: ((c && c.c) || 0) + 10000, g1120: true })).catch(() => { granting = false; }); };
   const offs = [
     ctx.store.on('streak/' + ctx.uid, v => { ctx.streak = v || {}; }),

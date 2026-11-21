@@ -856,7 +856,7 @@ export function mount(el, ctx) {
   const crowBig = () => [2, 5].includes(new Date().getDay()), crowMax = () => 2, crowWho = () => 1, crowFirst = Math.random() < 0.5 ? 10000 : 30000; // 매일 2번. 첫 번째는 친목회에 10초 또는 30초(들어올 때마다 둘 중 하나) 머문 뒤
   const crowUsed = () => (bag.crowDay === ymd() ? bag.crowN || 0 : 0);
   // 2026-11-20 하루만: 두두가 친목회에 들어와 육지에 30초 있으면 까마귀가 한 번 꼭 나온다(오늘 이미 나왔어도, 한 번만)
-  const crowSpecial = () => ymd() === '2026-11-20' && String(ctx.me.name || '').includes('두두') && !rawBag.crow1120 && !ctest;
+  const crowSpecial = () => ymd() === '2026-11-20' && ctx.ours() && String(ctx.me.name || '').includes('두두') && !rawBag.crow1120 && !ctest;
   let loveNext = performance.now() + 60000 + Math.random() * 60000;
   function loveTick(now, paused, wet) {
     if (trial || paused || wet || me.boat || fishOpen || battle || crow || now < loveNext || !ctx.partnerId) return;
