@@ -119,7 +119,7 @@ const CAKE_HINT = ['우리 거의 단짝이야! 케이크를 선물해 주면 �
 // 오랜만에 접속(10시간 넘게): 동물마다 처음 마주칠 때 한 번만 걱정했다·보고 싶었다고 말한다. 그 뒤로는 평소 인사
 const AWAY_MS = 10 * 3600000, MISS_KEEP = 6 * 3600000;
 const MISS = [n => `${n}! 왜 이렇게 오래 안 왔어? 걱정했잖아`, n => `${n}, 보고 싶었어! 무슨 일 있었던 건 아니지?`, n => `드디어 왔다! ${n} 안 와서 하루 종일 기다렸어`, n => `${n}, 어디 아팠던 거 아니지? 너무 보고 싶었어`, n => `${n} 안 보여서 얼마나 걱정했는데! 와 줘서 고마워`];
-const HERO = [n => `흑흑… ${n}, 너는 우리 세상의 영웅이야`, n => `훌쩍… ${n} 덕분에 우리가 웃어. 진짜 영웅이야`, n => `눈물 나… ${n}처럼 멋진 영웅은 처음 봐`, n => `${n}… 넌 뭐든 해낼 수 있어. 우리의 영웅이니까 (훌쩍)`]; // 4~5개: 울면서 영웅이라고(일반 칭찬 말은 섞지 않는다)
+const HERO = [n => `흑흑… ${n}, 너는 우리 세상의 영웅이야`, n => `훌쩍… ${n} 덕분에 우리가 웃어. 진짜 영웅이야`, n => `눈물 나… ${n}처럼 멋진 영웅은 처음 봐`, n => `훌쩍… ${n}, 넌 뭐든 해낼 수 있어. 우리의 영웅이니까`]; // 4~5개: 울면서 영웅이라고(일반 칭찬 말은 섞지 않는다)
 const RAREGREET = [n => `우와, ${n} 몸에서 빛이 나!`, n => `${n}, 그 반짝이는 거 진짜 예쁘다`, n => `눈부셔! ${n} 오늘 주인공이네`, n => `그 보물 어디서 났어? 너무 멋져`, n => `${n} 지나가니까 놀이터가 환해졌어`, n => `반짝반짝! ${n}한테 딱 어울려`, n => `와… 나도 그런 거 갖고 싶다`, n => `${n}, 별이 걸어 다니는 줄 알았어`];
 // 사이 유지: 50점 이상으로 친해진 동물은 하루에 한 번만 말을 걸면(선물·같이 놀기도 된다) 그날은 식지 않는다
 // 하루(24시간) 넘게 교류가 없으면 그때부터 8시간마다 1점씩 자연스럽게 식는다(하루에 많아야 3점, 50점 밑으로 내려가면 멈춘다)
@@ -839,7 +839,7 @@ export function mount(el, ctx) {
           const r = mine[i] || {}, due = !kingTrial && taxDue(r, wall), bow = kingTrial ? now > (o.tbow || 0) : wall - (r.bowAt || 0) >= BOW_MS; if (kingTrial) o.tbow = now + 12000; pop(o.e, due ? '대왕 폐하! 세금 20코인 바치옵니다 🪙' : gold('king', KING), 'say long');
           if (bow) { o.e.style.setProperty('--bd', me.x < o.x ? -1 : 1); o.e.classList.add('bow'); setTimeout(() => o.e.classList.remove('bow'), 2400); } // 선 채로 내 쪽을 향해 허리를 깊이 숙였다 일어난다
           if (!kingTrial && (due || bow)) setRel(i, { ...(due ? { taxAt: wall } : {}), ...(bow ? { bowAt: wall } : {}) }); if (due) { addCoins(20); sfx('coin'); } }
-        else if (shineN >= 4 && goldOk) { pop(o.e, gold('hero', [AWE2[i], ...HERO.map(f => toned(i, f(ctx.me.name)))]), 'say long'); o.e.classList.add('cry'); setTimeout(() => o.e.classList.remove("cry"), 4200); } // 눈물을 흘리며 영웅이라고(4초 넘게 운다)
+        else if (shineN >= 4 && goldOk) { pop(o.e, gold('hero', [AWE2[i], ...HERO.map(f => toned(i, f(ctx.me.name)))]), 'say long'); o.e.classList.add('cry'); scores(); setTimeout(() => { o.e.classList.remove('cry'); scores(); }, 4200); } // 눈물을 흘리며 영웅이라고(4초 넘게 운다)
         else if (shineN >= 2 && goldOk) pop(o.e, gold('awe', goldPool(AWE1[i])), 'say long');
         else { const sh = shiny && goldOk && (A(i) < 30 || Math.random() < 0.6); if (sh) pop(o.e, gold('shine', RAREGREET.map(f => toned(i, f(ctx.me.name)))), 'say long'); else if (A(i) >= 30) pop(o.e, line(i, 'greet', toned(i, pick(GREET)(ctx.me.name))), 'say long'); } }
       const k = Math.min(1, dt * 5); o.y += (ty - o.y) * k; o.s += (ts - o.s) * k;
@@ -853,7 +853,7 @@ export function mount(el, ctx) {
     if (!scroller) return;
     scroller.querySelectorAll('.so-an').forEach(e => { const i = +e.dataset.i, a = A(i), lv = levelOf(a), t = pid() && theirs[i] ? (theirs[i].a >= 100 && !theirs[i].cake ? 99 : theirs[i].a || 0) : null, s = e.querySelector('.so-score'), mood = moodOf(a), hearts = a >= 80 ? 3 : a >= 50 ? 2 : a >= 30 ? 1 : 0;
       s.className = 'so-score' + (a < 0 ? ' neg' : a >= PIN_AT ? ' hi' : ''); s.replaceChildren(h('b', null, `${lv[2]} ${a}`), t != null && h('i', null, `${ctx.nameOf(pid()).slice(0, 3)} ${t}`) || '');
-      { const mk = mood + (i === 10 && questDone() ? '+f' : ''); if (e.dataset.mood !== mk) { e.dataset.mood = mk; e.querySelector('.so-body').innerHTML = crowned(i, animalSvg(i, true, mood)); } }
+      { const md = e.classList.contains('cry') ? 'cry' : mood, mk = md + (i === 10 && questDone() ? '+f' : ''); if (e.dataset.mood !== mk) { e.dataset.mood = mk; e.querySelector('.so-body').innerHTML = crowned(i, animalSvg(i, true, md)); } } // 영웅 반응 중에는 우는 얼굴 그림
       if (+e.dataset.hearts !== hearts) { e.dataset.hearts = hearts; e.querySelector('.so-hearts').replaceChildren(...Array.from({ length: hearts }, (_, k) => h('i', { style: { animationDelay: k * 0.7 + 's', left: [50, 22, 78][k] + '%' } }, '💗'))); } });
     refreshMe(); drawPal();
   }

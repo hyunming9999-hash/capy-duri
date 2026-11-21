@@ -2842,3 +2842,4 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .so-an.cry .so-body::before { left: 36%; } .so-an.cry .so-body::after { right: 36%; animation-delay: .55s; }
 .so-an.cry .so-body { position: relative; }
 .so-an.cry .so-body::before, .so-an.cry .so-body::after { top: 44%; } .so-an.cry .so-body::before { left: 37%; } .so-an.cry .so-body::after { right: 33%; }
+.so-an.cry .so-body::before, .so-an.cry .so-body::after { content: none; } /* 눈물 방울 대신 우는 얼굴 그림으로 */
