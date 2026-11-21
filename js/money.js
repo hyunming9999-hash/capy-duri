@@ -94,10 +94,14 @@ export function setupMoney(ctx, onChange) {
     ctx.store.tx('money/' + ctx.uid, c => ((c && c.g1121m) ? undefined : { ...(c || {}), c: ((c && c.c) || 0) + 8000, g1121m: true })).catch(() => { granting2 = false; }); };
   let granting = false; const grantOnce = () => { const me = ctx.members[ctx.uid] || {}; if (!(ctx.ours && ctx.ours()) || granting || me.name !== '밍땅꾸리' || (ctx.money[ctx.uid] || {}).g1120) return; granting = true;
     ctx.store.tx('money/' + ctx.uid, c => ((c && c.g1120) ? undefined : { ...(c || {}), c: ((c && c.c) || 0) + 10000, g1120: true })).catch(() => { granting = false; }); };
+  // 한 번만 주는 지급 ③: 밍땅꾸리에게 고추·무 1개씩(2026-11-22, B급, 헛간으로). 표시(g1122v)
+  let granting3 = false; const grantOnce3 = () => { const me = ctx.members[ctx.uid] || {}; if (!(ctx.ours && ctx.ours()) || granting3 || me.name !== '밍땅꾸리' || (ctx.money[ctx.uid] || {}).g1122v) return; granting3 = true;
+    ctx.store.tx('money/' + ctx.uid, c => ((c && c.g1122v) ? undefined : { ...(c || {}), g1122v: true })).then(r => { if (r && r.committed === false) return;
+      ['chili|B', 'radish|B'].forEach(k => ctx.store.tx(`farm/${ctx.uid}/barn/${k}`, n => (n || 0) + 1).catch(() => {})); toast('🎁 고추·무 1개씩 헛간에 넣었어요', 3000); }).catch(() => { granting3 = false; }); };
   const offs = [
     ctx.store.on('streak/' + ctx.uid, v => { ctx.streak = v || {}; }),
     ctx.store.on('bets', v => { ctx.bets = v || {}; refundCheck(); (ctx.betWatch || []).forEach(f => f()); }),
-    ctx.store.on('money', v => { ctx.money = v || {}; grantOnce(); grantOnce2(); sorryOnce(); document.querySelectorAll('[data-coins]').forEach(e => { e.textContent = won(ctx.coins()); }); onChange && onChange(); }),
+    ctx.store.on('money', v => { ctx.money = v || {}; grantOnce(); grantOnce2(); grantOnce3(); sorryOnce(); document.querySelectorAll('[data-coins]').forEach(e => { e.textContent = won(ctx.coins()); }); onChange && onChange(); }),
     ctx.store.on('owned', v => { ctx.owned = v || {};
       const me = ctx.owned[ctx.uid] || {}; if (!me._init) { const d = ctx.dress[ctx.uid] || {}, keep = { _init: true }; [d.top, d.bottom, d.hat, d.shoe].forEach(id => { if (id) keep[id] = true; }); ctx.store.update('owned/' + ctx.uid, keep).catch(() => {}); } // 돈이 생기기 전에 입고 있던 옷은 그대로 내 것
       onChange && onChange(); }),
