@@ -2829,3 +2829,7 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .so-h-watch b { left: 24%; right: 23.5%; top: 40.3%; height: 8%; font-size: 8.4cqw; }
 .so-h-walk { aspect-ratio: 600 / 559; } .so-h-walk b { left: 26%; right: 26%; top: 26.8%; height: 9%; font-size: 8.4cqw; border: 0; border-radius: 0; background: none; box-shadow: none; color: #6B3A16; text-shadow: 1.5px 0 #FFF1D6, -1.5px 0 #FFF1D6, 0 1.5px #FFF1D6, 0 -1.5px #FFF1D6; }
 .so-h-gallery b { left: 28.5%; right: 28.5%; top: 20.4%; height: 8.2%; font-size: 7.6cqw; border: 0; border-radius: 0; background: none; box-shadow: none; color: #4F7A3A; }
+/* 4~5개 영웅 반응: 눈물이 더 크고 또렷하게, 볼을 타고 흐른다 */
+.so-an.cry::before, .so-an.cry::after { font-size: 19px; top: 30%; filter: drop-shadow(0 1px 1px rgba(0,60,120,.35)); animation: soTear2 .9s ease-in infinite; }
+.so-an.cry::after { animation-delay: .45s; }
+@keyframes soTear2 { 0% { translate: 0 0; opacity: 0; scale: .6; } 15% { opacity: 1; scale: 1; } 80% { opacity: 1; } 100% { translate: 0 30px; opacity: 0; scale: .8; } }
