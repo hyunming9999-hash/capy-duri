@@ -155,9 +155,9 @@ export function openFarm(o) {
   document.body.append(wrap);
 
   // ===== 농장 관리인(카피철물 관리인) — 지금은 시험판(o.keeper)에서만 나온다 =====
-  // 내 농장: 내가 선 밭을 끝에서 끝까지 오가며 가끔 한마디. 남의 농장: 서리 감시. 등지고 있을 때만 서리 버튼을 누를 수 있고(모두 4초, 떼어도 쌓인다),
+  // 내 농장: 내가 선 밭을 끝에서 끝까지 오가며 가끔 한마디. 남의 농장: 서리 감시. 등지고 있을 때만 서리 버튼을 누를 수 있고(모두 3초, 떼어도 쌓인다),
   // '흠…' 하고는 휙 돌아보거나(걸리면 적발) '배고파..' 하고 그냥 간다. 게이지가 찰수록 더 자주, 더 짧은 예고로 돌아본다
-  const STEAL_SEC = 4, FINE = STEAL_FINE, KP_SAY = ['내가 책임지고 손님 농작물 관리합니다!', '하지만 저는 까마귀 공포증이 있어서 까마귀는 못 막아요ㅠ', '잡초 하나까지 제가 다 지켜봅니다!', '까마귀만 아니면… 뭐든 막아 드려요!'];
+  const STEAL_SEC = 3, FINE = STEAL_FINE, KP_SAY = ['내가 책임지고 손님 농작물 관리합니다!', '하지만 저는 까마귀 공포증이 있어서 까마귀는 못 막아요ㅠ', '잡초 하나까지 제가 다 지켜봅니다!', '까마귀만 아니면… 뭐든 막아 드려요!'];
   const KP = o.keeper ? (() => {
     const img = h('img', { src: 'img/farm/kp-walk.webp', alt: '관리인', draggable: false }), bub = h('b', { class: 'fm-kpb', hidden: true }), el = h('div', { class: 'fm-kp' }, h('i', { class: 'fm-kps' }), img, bub); world.append(el);
     const gates = plotEls.map((_, k) => { const g = h('i', { class: 'fm-gate', hidden: true, style: { left: plotX(k) + PW / 2 + 'px' } }, '🚪 출입구'); world.append(g); return g; }), GATE = PW * 0.1; // 서리는 밭 출입구(가운데 문 앞)에서만
