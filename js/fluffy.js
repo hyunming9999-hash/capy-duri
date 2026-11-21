@@ -74,8 +74,10 @@ const R_HEAD = new Set([1, 6, 10, 11, 15, 21, 23]), R_SHOE = new Set([12, 13]), 
 // 황금 장비도 새 체형에 맞춘다: 눈에 쓰는 것은 내려 쓰고, 옷·갑옷은 작은 몸에 맞게 줄이고, 손에 든 것·등에 단 것은 몸 쪽으로 붙인다
 const BODY_FIT = [60, 128.5, 0.8, 0.78, 0, 0], EYE_FIT = [60, 50, 1, 1, 0, 7.6], HANDL = [28, 105, 0.8, 0.8, -2, 6], HANDR = [92, 105, 0.86, 0.86, -8, 3], WING = [60, 100, 0.95, 0.9, 0, 8];
 const R_FIT = { 3: EYE_FIT, 7: EYE_FIT, 16: EYE_FIT, 29: EYE_FIT, 5: BODY_FIT, 8: BODY_FIT, 9: BODY_FIT, 20: BODY_FIT, 22: BODY_FIT, 24: [60, 128.5, 0.7, 0.62, 0, -5], 26: BODY_FIT, 18: [60, 128.5, 0.84, 0.84, 0, 0],
-  0: HANDL, 4: HANDL, 14: HANDL, 25: HANDL, 2: HANDR, 17: [60, 100, 0.8, 1, 0, 15], 19: WING, 27: BODY_FIT, 28: [92, 120, 0.86, 0.86, -8, 2] };
+  0: [28, 105, 0.8, 0.8, 7, 8], 4: [28, 105, 0.8, 0.8, 6.5, 6], 14: [28, 105, 0.8, 0.8, 6.5, 10], 25: [28, 105, 0.8, 0.8, 7.5, 10], // 무기: 손잡이가 왼손(36,108)에 오게
+  2: HANDR, 17: [60, 100, 0.8, 1, 0, 15], 19: WING, 27: BODY_FIT, 28: [92, 120, 0.86, 0.86, -8, 2] };
 // 몸통 황금 장비를 입으면 팔이 가려지므로, 옷 소매처럼 손을 장비 위에 다시 그린다([왼손 x, 오른손 x, y])
+const R_HANDL = new Set([0, 4, 14, 25]);
 const R_CUFF = { 5: [22, 98, 107], 8: [22, 98, 109], 9: [26, 94, 109], 20: [27, 93, 110], 22: [25, 95, 109], 24: [29, 91, 106], 26: [24, 96, 108], 18: [30, 90, 104] };
 export function capyRare(list, own, o) {
   let over = '', shoe = '', back = ''; // back: 날개·망토·꼬리는 몸과 얼굴 뒤에 그린다(큰 머리를 가리지 않게)
@@ -83,7 +85,8 @@ export function capyRare(list, own, o) {
     if (R_BACK.has(k)) { back += fitG(R_FIT[k], wide(f, own)); return; }
     if (R_SHOE.has(k)) shoe = `<g class="cf-l">${fitG(FIT.s, crop(f, own, -20, FOOT - 14, 80, 54))}</g><g class="cf-r">${fitG(FIT.s, crop(f, own, 60, FOOT - 14, 80, 54))}</g>`;
     else over += R_HEAD.has(k) ? `<g transform="translate(0 ${HAT_UP + (k === 21 ? 9 : 0)})">${wide(f, own)}</g>` : fitG(R_FIT[k], wide(f, own)); });
-  const bk = o && list.find(k => R_CUFF[k]); if (bk != null && bk !== undefined && R_CUFF[bk]) { const c = R_CUFF[bk], L = list.some(k => R_FIT[k] === HANDL), R = list.some(k => R_FIT[k] === HANDR || k === 28); const f = capyFile(o.color, o.face, false), hand = (x0, cx) => `<g transform="translate(${(cx - x0 - 7).toFixed(2)} ${(c[2] - 108).toFixed(2)})">${round(f, own, x0 + 7, 108, 6.2, 6.6)}</g>`; over += (L ? '' : hand(29, c[0])) + (R ? '' : hand(77, c[1])); } // 맨몸 그림의 손(팔 끝)을 그대로 오려 소매 끝에 붙인다 // 무기·방패를 든 손은 그 그림에 손이 있으니 빼고
+  if (o && list.some(k => R_HANDL.has(k))) over += round(capyFile(o.color, o.face, false), own, 36, 108, 6.2, 6.6); // 무기를 쥔 왼손을 무기 위에 그린다
+  const bk = o && list.find(k => R_CUFF[k]); if (bk != null && bk !== undefined && R_CUFF[bk]) { const c = R_CUFF[bk], L = list.some(k => R_HANDL.has(k)), R = list.some(k => R_FIT[k] === HANDR || k === 28); const f = capyFile(o.color, o.face, false), hand = (x0, cx) => `<g transform="translate(${(cx - x0 - 7).toFixed(2)} ${(c[2] - 108).toFixed(2)})">${round(f, own, x0 + 7, 108, 6.2, 6.6)}</g>`; over += (L ? '' : hand(29, c[0])) + (R ? '' : hand(77, c[1])); } // 맨몸 그림의 손(팔 끝)을 그대로 오려 소매 끝에 붙인다 // 무기·방패를 든 손은 그 그림에 손이 있으니 빼고
   return { over, shoe, back };
 }
 // 인형 배지: 뽑은 동물 인형의 얼굴을 가슴에 동그란 배지로 단다
