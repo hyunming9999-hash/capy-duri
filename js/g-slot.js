@@ -25,6 +25,7 @@ export function mount(el, ctx) {
     ...SYM.map(([k, , x, n]) => row([k, k, k], x, `${n} 3개`)), row(['seven', 'seven', null], TWO.seven, '세븐 딱 2개 (자리 무관)'), row(['cherry', 'cherry', null], TWO.cherry, '체리 딱 2개 (자리 무관)'));
   const tabs = [['play', '🎰 게임'], ['table', '📋 배당표']].map(([k, l]) => h('button', { class: 'so-tab' + (k === 'play' ? ' on' : ''), onClick: () => { tabs.forEach(t => t.classList.toggle('on', t === tb[k])); cab.hidden = k !== 'play'; tablePane.hidden = k !== 'table'; sfx('tock'); } }, l)), tb = { play: tabs[0], table: tabs[1] };
   el.append(h('div', { class: 'sl-top' }, have, h('div', { class: 'sl-tabs' }, ...tabs)), cab, tablePane,
+    h('div', { class: 'sl-how' }, h('b', null, '🎰 게임 방법'), h('ol', null, h('li', null, '50 또는 100 버튼으로 걸 돈을 골라요'), h('li', null, 'SPIN이나 빨간 레버를 눌러 돌려요 (누를 때마다 건 돈이 빠져요)'), h('li', null, '가운데 한 줄에 같은 그림 3개면 당첨! 건 돈 × 배당을 받아요'), h('li', null, '세븐·체리는 2개만 나와도 당첨 · 자세한 건 배당표 탭에서'))),
     h('p', { class: 'dim center sl-note' }, '가운데 한 줄에 같은 그림 3개! · 실제 카지노 슬롯머신의 방식과 비율을 근거로 만든 게임이에요'));
   // 릴 하나 돌리기: 아무 그림 n장 뒤에 결과 그림을 붙여 아래로 흘려보낸다
   const run = (i, k, n, ms) => new Promise(res => { const s = strips[i], cur = s.lastChild.src, list = [k, ...Array.from({ length: n }, roll)];

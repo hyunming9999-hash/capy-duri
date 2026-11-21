@@ -3053,3 +3053,5 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 /* 카피도박 배당표 탭: 금색으로 따로 튀게 + 은은한 반짝임 */
 .sl-tabs .so-tab:nth-child(2) { background: linear-gradient(#FFE066, #FFB703); border: 2.5px solid #C97A0A; color: #6B3A00; font-weight: 900; box-shadow: 0 3px 0 #A8650A; animation: slTb 1.6s ease-in-out infinite; }
 .sl-tabs .so-tab:nth-child(2).on { background: linear-gradient(#FF9F1C, #F26B0F); border-color: #9A3F06; color: #fff; box-shadow: 0 3px 0 #7A3206; animation: none; }
+.sl-how { max-width: 380px; margin: 10px auto 0; padding: 10px 14px; border-radius: 16px; border: 2.5px solid #E7C989; background: #FFFBEF; } .sl-how b { display: block; margin-bottom: 4px; font: 900 15px var(--head); color: #7A3E0A; }
+.sl-how ol { margin: 0; padding-left: 20px; font-size: 13.5px; line-height: 1.55; color: #5B4636; word-break: keep-all; }
