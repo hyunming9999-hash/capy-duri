@@ -279,7 +279,7 @@ export function openFishing(o) {
       const wow = h('div', { class: 'fs-wow shy' }, h('b', null, '✨ 이로치다! ✨'), h('small', null, `색이 다른 ${f.name} · 📖 이로치 도감에 기록`));
       for (let k = 0; k < 20; k++) wow.append(h('i', { class: 'fs-spark', style: { '--a': (k / 20 * 360) + 'deg', '--d': (70 + Math.random() * 90).toFixed(0) + 'px', color: ['#FF7EB6', '#8F7CFF', '#5ED3F3', '#FFE066'][k % 4] } }, k % 2 ? '✦' : '✨'));
       (wrap.querySelector('.fs-view') || wrap).append(wow); setTimeout(() => wow.classList.add('out'), 2600); setTimeout(() => wow.remove(), 3100); }
-    else if (!f.icon && !f.pearl && !whale) { const wow = h('div', { class: 'fs-wow' + (isNew ? ' new' : f.pearl || f.king ? ' gold' : '') }, h('b', null, isNew ? '와! 새로운 물고기다!' : `와! ${josaUl(f.pearl ? '바다 진주' : f.name)} 잡았다!`), isNew ? h('small', null, `📖 ${f.name} · 도감에 새로 올렸어요`) : cur.g && h('small', null, '몇 등급일까? 등급 확인하기를 눌러 보세요'));
+    else if (!f.icon && !f.pearl && !whale) { const wow = h('div', { class: 'fs-wow' + (isNew ? ' new' : f.pearl || f.king ? ' gold' : '') }, h('b', null, isNew ? '앗! 처음 보는 물고기다!' : `와! ${josaUl(f.pearl ? '바다 진주' : f.name)} 잡았다!`), isNew ? h('small', null, `📖 ${f.name} · 도감에 등록해야지!`) : cur.g && h('small', null, '몇 등급일까? 등급 확인하기를 눌러 보세요'));
       if (isNew) { sfx('bigfish'); for (let k = 0; k < 14; k++) wow.append(h('i', { class: 'fs-spark', style: { '--a': (k / 14 * 360) + 'deg', '--d': (60 + Math.random() * 70).toFixed(0) + 'px' } }, '✨')); }
       (wrap.querySelector('.fs-view') || wrap).append(wow); setTimeout(() => wow.classList.add('out'), 1900); setTimeout(() => wow.remove(), 2400); }
   }
