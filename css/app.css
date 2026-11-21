@@ -3060,3 +3060,6 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .sl-touch::after { content: ''; position: absolute; left: 50%; bottom: -2cqw; margin-left: -1.2cqw; border: 1.2cqw solid transparent; border-top-color: #FF4D6D; border-bottom: 0; }
 @keyframes slTouch { 50% { translate: 0 -1.2cqw; } }
 .sl-btns button { font-size: 3.9cqw; }
+/* 보송 그림체에서도 밥상 그림은 그대로(위의 .fluffy .kb-tray 가 배경을 지우지 않게) */
+.fluffy .kb-tray.kb-table { background: #7A1C14 url(../img/cook/bapsang.webp) center 55% / cover no-repeat; border: 3px solid #E8D3AE; border-radius: 16px; outline: 0; box-shadow: none; }
+.fluffy .kb-tray.kb-table.on { box-shadow: 0 0 0 3px #3E9A50; }
