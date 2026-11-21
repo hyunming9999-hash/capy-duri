@@ -187,18 +187,16 @@ export function createPassQuest(q, d) {
   const goal = () => s() === 1 ? `🎣 중급 바다 희귀 물고기 ${Math.min(3, st.fish || 0)} / 3마리` : s() === 2 ? `🍊 농장에서 황금유자 이랑 ${Math.min(3, st.yuzu || 0)} / 3줄 수확` : s() === 3 ? `🍳 카피백반에서 요리 완벽하게 ${cookDone()} / 3 (${PP_COOK.map(([k, n]) => ((st.ck || {})[k] ? '✔' : '·') + n).join(' ')})` : s() === 4 ? (gTries() >= 3 ? '🌙 오늘은 세 번 들켰어요 · 내일 고급 바다에서 다시' : '⛵ 배를 타고 고급 바다에서 낚시를 시작하면 갈매기 몰래 답장 던지기') : '';
   function preload() { ['bg-lot', 'bg-wrap', 'bg-wrap2', 'bg-class', 'bg-plaza-happy', 'letter', 'dog-bark', 'bottle', 'throw', 'current', 'gull-idle', 'gull-look', 'ship-q', 'badge', 'passport'].forEach(n => { new Image().src = `img/quest/${n}.webp`; }); new Image().src = 'img/fl/a0-back.webp'; }
   async function run(fn) { if (busy) return; const host = d.host(); if (!host) return; busy = true; preload(); try { await fn(host); } catch (e) { if (e !== 0) throw e; toast('퀘스트를 멈췄어요 · 🛂 버튼으로 이어서 할 수 있어요', 2400); } finally { busy = false; d.changed && d.changed(); } }
-  // 시험판(?passtest)에서는 미션을 버튼 하나로 "한 걸로" 넘길 수 있다
-  const statusLine = async (who, ch, line, skip) => { const v = await S([line], who, ch, '', [h('div', { class: 'qw-goal' }, h('b', null, '목표'), h('span', null, goal())), d.test && skip && sub('🧪 시험판: 버튼을 누르면 한 걸로 쳐요')], d.test && skip ? [{ label: '닫기', value: 0 }, { label: '✔ 한 걸로 치기', value: 1, primary: true }] : undefined);
-    if (d.test && skip && v === 1) return skip(); };
+  const statusLine = (who, ch, line) => S([line], who, ch, '', [h('div', { class: 'qw-goal' }, h('b', null, '목표'), h('span', null, goal()))]);
   // 🛂 버튼·자동 시작
   function open() { if (!ready) return; if (!started() && !eligible()) return toast('황금 장비 여섯 개를 모두 두르면 시작돼요', 2200);
     if (done()) return run(() => S(['{happy}폐하의 여권은 준비 완료! 카피공항이 열리면 바로 떠나시지요.'], LION, '여권 발급 완료', '', [sub('🛫 카피공항은 보수 중이에요 · 빠른 시일 안에 열려요')]));
     return run(async host => { const k = s();
       if (k === 0) return seg0(host);
-      if (k === 1) return (st.fish || 0) >= 3 ? seg1() : statusLine(PIG, '2장 · 고급 입맛', '{think}중급 바다에서 희귀한 녀석으로 세 마리! 잡은 물고기는 그대로 가져도 돼, 확인만 할게.', async () => { await save({ fish: 3 }); return seg1(); });
-      if (k === 2) return (st.yuzu || 0) >= 3 ? seg2() : statusLine(COW, '3장 · 외교선물 황금유자', '{smile}농장에 황금유자를 심어서 이랑 세 줄을 다 거둬 와. 까마귀 조심하고!', async () => { await save({ yuzu: 3 }); return seg2(); });
-      if (k === 3) return cookDone() >= 3 ? seg3() : statusLine(BEAR, '4장 · 감동의 요리 3종', '{smug}카피백반 로비에 🔍 퀘스트 요리가 떠 있을 거야. 익힘·양념·불까지 완벽하게!', async () => { await save({ ck: { mulhoe: 1, maeun: 1, gui: 1 } }); return seg3(); });
-      if (k === 4) return statusLine(OCTO, '6장 · 갈매기 몰래 답장', gTries() >= 3 ? '{sad}오늘은 갈매기들 눈이 시뻘게. 내일 다시 가자.' : '{think}배를 타고 고급 바다로 나가서 낚싯대를 드리우면, 그때 몰래 던지는 거야.', gTries() < 3 ? () => gullNow(host) : null); }); }
+      if (k === 1) return (st.fish || 0) >= 3 ? seg1() : statusLine(PIG, '2장 · 고급 입맛', '{think}중급 바다에서 희귀한 녀석으로 세 마리! 잡은 물고기는 그대로 가져도 돼, 확인만 할게.');
+      if (k === 2) return (st.yuzu || 0) >= 3 ? seg2() : statusLine(COW, '3장 · 외교선물 황금유자', '{smile}농장에 황금유자를 심어서 이랑 세 줄을 다 거둬 와. 까마귀 조심하고!');
+      if (k === 3) return cookDone() >= 3 ? seg3() : statusLine(BEAR, '4장 · 감동의 요리 3종', '{smug}카피백반 로비에 🔍 퀘스트 요리가 떠 있을 거야. 익힘·양념·불까지 완벽하게!');
+      if (k === 4) return statusLine(OCTO, '6장 · 갈매기 몰래 답장', gTries() >= 3 ? '{sad}오늘은 갈매기들 눈이 시뻘게. 내일 다시 가자.' : '{think}배를 타고 고급 바다로 나가서 낚싯대를 드리우면, 그때 몰래 던지는 거야.'); }); }
   function auto() { if (!ready || started() || !eligible() || busy) return false; open(); return true; }
   // 프롤로그 ~ 1장 꼬리땐스 ~ 2장 부탁
   async function seg0(host) { const P = '프롤로그 · 바다에서 온 편지';

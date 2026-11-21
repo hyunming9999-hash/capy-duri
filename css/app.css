@@ -3069,3 +3069,6 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .kb-table .kb-set { inset: 0 0 36px; } .kb-table .kb-tdish { height: 70px; } .kb-table .kb-tsujeo { height: 66px; } .kb-table .kb-trice { height: 50px; margin-top: 8px; }
 .kb-tlb { top: 9px; left: 8.5%; font-size: 11px; padding: 2px 8px; }
 .kb-tlb { top: 62px; left: 9.5%; }
+/* 🛂 여권 퀘스트 버튼: 게임 화면 오른쪽 위에 따로(퀘스트 버튼과 겹치지 않게) */
+.so-xbtn.pp-float { left: auto; right: 8px; top: 40px; border-color: #9DB3E8; background: rgba(240,245,255,.96); color: #2B4A9A; }
+.so-xbtn.pp-float i { position: absolute; right: -5px; top: -7px; width: 18px; height: 18px; border-radius: 50%; background: #FF4D6D; border: 2px solid #fff; color: #fff; font: 900 11px/14px var(--head, sans-serif); font-style: normal; text-align: center; } .so-xbtn.pp-float i[hidden] { display: none; }

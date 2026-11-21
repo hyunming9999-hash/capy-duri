@@ -263,7 +263,7 @@ export function mount(el, ctx) {
 
   function scene() {
     const top = h('div', { class: 'so-top' }, h('span', { class: 'coin-chip', 'data-coins': 1 }, won(ctx.coins())), h('span', { class: 'so-sp' }),
-      (qsBtn = h('button', { class: 'btn sm so-qsbtn', 'aria-label': '퀘스트 진행 현황', onClick: () => quest.status() }, h('span', null, '📜 퀘스트'), h('em'), h('i', { hidden: true }))), (ppBtn = h('button', { class: 'btn sm so-qsbtn so-ppbtn', hidden: true, 'aria-label': '여권 퀘스트', onClick: () => pq && pq.open() }, h('span', null, '🛂 여권'), h('i', { hidden: true }))), h('button', { class: 'btn sm', onClick: openBag }, '🎒 가방'));
+      (qsBtn = h('button', { class: 'btn sm so-qsbtn', 'aria-label': '퀘스트 진행 현황', onClick: () => quest.status() }, h('span', null, '📜 퀘스트'), h('em'), h('i', { hidden: true }))), h('button', { class: 'btn sm', onClick: openBag }, '🎒 가방')); ppBtn = h('button', { class: 'so-xbtn pp-float', hidden: true, 'aria-label': '여권 퀘스트', onClick: () => pq && pq.open() }, h('span', null, '🛂 여권'), h('i', { hidden: true })); // 퀘스트 버튼을 가리지 않게 게임 화면 오른쪽 위에 따로 띄운다
     if (vit && vit.px > 0) { me.x = Math.max(40, Math.min(FISH_X - 40, vit.px * WIDTH)); me.y = me.dy = Math.max(0, Math.min(Y_MAX, vit.py || 0)); me.ds = 1 - me.y * 0.7; } // 다시 들어오면 마지막에 있던 자리에서 시작
     endSorry(); tiles.length = 0; spots.length = 0; me.ride = null; me.kb = 0; keys.clear(); rideState = ''; playing = true;
     hpEl = h('u'); potEl = h('button', { class: 'btn sm so-pot', onClick: drink }, '🧪 0');
@@ -609,16 +609,11 @@ export function mount(el, ctx) {
     if (!c) { const who = actors.map((o, i) => i).filter(i => near(i, 520) && A(i) > -30), g = quest.gossip(); if (!who.length) return; c = [[who[Math.floor(Math.random() * who.length)], g[Math.floor(Math.random() * g.length)]]]; }
     c.forEach(([i, t], k) => setTimeout(() => { if (alive && actors[i]) pop(actors[i].e, toned(i, t), 'say long'); }, k * 2800)); }
   // 🛂 여권 퀘스트(황금 장비 여섯 개를 두르면 시작)
-  // 여권 퀘스트 시험판(?passtest): 황금 장비가 없어도 시작되고, 진행은 이 기기에만 적어 둔다(진짜 진행·보상과 무관). ?passtest=reset 처음부터 · ?passtest=1~4 그 단계부터
-  const PT = (() => { try { return new URLSearchParams(location.search).get('passtest'); } catch { return null; } })(), ptOn = PT != null && ctx.me.name === '밍땅꾸리' && !!(ctx.ours && ctx.ours()); // 밍땅꾸리 계정에서만 열린다(다른 계정은 링크를 알아도 아무 일 없음)
-  const ptStore = { on: (k, f) => { let v = {}; try { v = JSON.parse(localStorage.getItem('capy-passtest') || '{}') || {}; } catch {} if (PT === 'reset') v = {}; else if (/^[1-4]$/.test(PT)) v = { s: +PT, fish: 0, yuzu: 0, ck: {} }; ptStore.v = v; try { localStorage.setItem('capy-passtest', JSON.stringify(v)); } catch {} setTimeout(() => f(ptStore.v)); return () => {}; },
-    update: (k, patch) => { ptStore.v = { ...(ptStore.v || {}), ...patch }; try { localStorage.setItem('capy-passtest', JSON.stringify(ptStore.v)); } catch {} return Promise.resolve(); } };
-  if (ptOn) setTimeout(() => toast('🧪 여권 퀘스트 시험판 · 진짜 진행·보상과는 무관해요 (낚시·농사·요리는 진짜로 해요)', 4200), 1500);
-  pq = createPassQuest(quest, { test: ptOn, uid: ctx.uid, store: ptOn ? ptStore : ctx.store, ymd, golds: () => (ptOn ? 6 : myRares().length), meName: ctx.me.name, meSvg: face => capy(ctx.capyOf(ctx.uid, { face })), meBack: () => capy(ctx.capyOf(ctx.uid, { view: 'back' })),
+  pq = createPassQuest(quest, { uid: ctx.uid, store: ctx.store, ymd, golds: () => myRares().length, meName: ctx.me.name, meSvg: face => capy(ctx.capyOf(ctx.uid, { face })), meBack: () => capy(ctx.capyOf(ctx.uid, { view: 'back' })),
     host: () => (worldEl && worldEl.parentElement && worldEl.isConnected ? worldEl.parentElement : null),
-    reward: async () => { if (ptOn) { window.__capyDip = true; refreshMe(); return; } await saveBag({ passport: 1, flight: 1 }); await ctx.store.update('members/' + ctx.uid, { dip: 1 }).catch(() => {}); ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), dip: 1 }; refreshMe(); },
-    changed: () => { if (!ppBtn || !pq) return; const v = pq.visible(), m = pq.mark(), dot = ppBtn.querySelector('i'); ppBtn.hidden = !v; dot.hidden = m !== '!'; dot.textContent = m; dot.dataset.m = m;
-      if (!ppAuto && v && m === '!' && !kingTrial && (ptOn || !ctx.goldTest) && !new URLSearchParams(location.search).has('passdemo')) { ppAuto = true; setTimeout(() => { if (alive && !fishOpen && !battle && !document.querySelector('.modal-wrap, .vn')) pq.auto(); }, 2500); } } });
+    reward: async () => { await saveBag({ passport: 1, flight: 1 }); await ctx.store.update('members/' + ctx.uid, { dip: 1 }).catch(() => {}); ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), dip: 1 }; refreshMe(); },
+    changed: () => { if (!ppBtn || !pq) return; if (stageEl && ppBtn.parentElement !== stageEl) stageEl.append(ppBtn); const v = pq.visible(), m = pq.mark(), dot = ppBtn.querySelector('i'); ppBtn.hidden = !v; dot.hidden = m !== '!'; dot.textContent = m; dot.dataset.m = m;
+      if (!ppAuto && v && m === '!' && !kingTrial && !ctx.goldTest && !new URLSearchParams(location.search).has('passdemo')) { ppAuto = true; setTimeout(() => { if (alive && !fishOpen && !battle && !document.querySelector('.modal-wrap, .vn')) pq.auto(); }, 2500); } } });
   function drawQMarks() { pq && pq.ping(); if (qsBtn) { const pr = quest.progress(), em = qsBtn.querySelector('em'), dot = qsBtn.querySelector('i'); em.textContent = pr.mark === '✔' ? '완료' : pr.pct + '%'; dot.hidden = pr.mark !== '!' && pr.mark !== '?'; dot.textContent = pr.mark; dot.dataset.m = pr.mark; }
     actors.forEach((o, i) => { if (!o || !o.e) return; const m = quest.markOf(i); let el = o.e.querySelector('.so-qm'); if (!m) { if (el) el.remove(); return; } if (!el) { el = h('i', { class: 'so-qm' }); o.e.prepend(el); } el.textContent = m; el.dataset.m = m; }); }
   // 낚시: 낚시터에서 내 배를 탄 채 🎣. 중급부터는 가끔 갈매기 해적단이 먼저 덤빈다
