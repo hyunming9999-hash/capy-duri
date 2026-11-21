@@ -165,11 +165,11 @@ export function openFarm(o) {
     // 아래 가운데 조작부: [🤫 서리하기] → 이랑 고르기(1·2·3번) → 고른 이랑의 게이지 버튼(꾹 누르기)
     let meB = null, chosen = null, pressing = false, mode = 'idle', sig = '', gaugeEl = null, holdEl = null, tipEl = null; const ctl = h('div', { class: 'fm-stctl', hidden: true });
     const heldKeyOf = () => (pressing ? chosen : null);
-    // 감귤 던지기: 관리인이 3.5초 동안 등 돌리고 감귤을 먹는다. 다 먹으면 그냥 순찰로 돌아간다. 먹는 3.5초가 끝나야 다음 감귤을 던질 수 있다
+    // 감귤 던지기: 관리인이 3초 동안 등 돌리고 감귤을 먹는다. 다 먹으면 그냥 순찰로 돌아간다. 먹는 3초가 끝나야 다음 감귤을 던질 수 있다
     const tangN = h('small'), tangB = h('button', { class: 'fm-tang', hidden: true, onClick: throwTang }, h('b', null, '🍊'), tangN);
     async function throwTang() { if (busy || kp.mode === 'bust' || kp.mode === 'eat' || kp.fly) return; if (!o.keeper.tang || o.keeper.tang() <= 0) return toast('감귤이 없어요. 친목회의 토끼에게서 살 수 있어요 (개당 100코인 · 하루 3개)', 2600);
       kp.fly = true; await o.keeper.useTang(); sfx('pop'); const f = h('i', { class: 'fm-tfly', style: { left: me.x + 'px' } }, '🍊'); world.append(f); void f.offsetWidth; f.style.left = kp.x + 'px'; f.classList.add('go');
-      setTimeout(() => { f.remove(); kp.fly = false; if (!alive || kp.mode === 'bust') return; kp.mode = 'eat'; kp.t = 3.5; kp.face = -(Math.sign(me.x - kp.x) || 1); pose('walk'); say('🍊 오! 감귤이다~ 냠냠…', 3300); }, 420); }
+      setTimeout(() => { f.remove(); kp.fly = false; if (!alive || kp.mode === 'bust') return; kp.mode = 'eat'; kp.t = 3; kp.face = -(Math.sign(me.x - kp.x) || 1); pose('walk'); say('🍊 오! 감귤이다~ 냠냠…', 2800); }, 420); }
     function drawCtl(k, here) { const t = now(), rows = k >= 0 ? rowsOf(k) : []; gaugeEl = holdEl = tipEl = null;
       if (mode === 'pick') return rc(ctl, h('div', { class: 'fm-stpick' }, ...[0, 1, 2].map(i => { const ok = here.includes(i), r = rows[i], c = r && r.c ? cropOf(r.c) : null; // 이랑은 가운데 자리에서 바로 고른다(스크롤 없이)
         return h('button', { class: 'fm-stp' + (ok ? '' : ' off'), disabled: !ok, onClick: () => { chosen = k + '|' + i; mode = 'hold'; sfx('pop'); } }, c && live(r) ? h('img', { src: cropImg(c.id), alt: '' }) : h('span', null, '–'), h('b', null, `${i + 1}번`)); })),
