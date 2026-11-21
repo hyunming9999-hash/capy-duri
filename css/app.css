@@ -2855,3 +2855,7 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .so-body.bowing > :not(.so-bowtop) { clip-path: inset(72% -50% -50% -50%); }
 .so-bowtop { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; pointer-events: none; clip-path: inset(-60% -60% 20% -60%); transform-origin: 50% 78%; animation: soNod 2.4s ease-in-out; }
 @keyframes soNod { 0%, 8% { rotate: 0deg; } 35%, 70% { rotate: calc(var(--bd, -1) * 20deg); } 100% { rotate: 0deg; } }
+/* 절: 발만 땅에 붙이고 몸 전체를 곧게 기울인다(발목을 축으로) */
+.so-body.bowing > :not(.so-bowtop) { clip-path: inset(83% -50% -50% -50%); }
+.so-bowtop { clip-path: inset(-60% -60% 12% -60%); transform-origin: 50% 87%; animation: soNod2 2.4s ease-in-out; }
+@keyframes soNod2 { 0%, 8% { rotate: 0deg; } 35%, 70% { rotate: calc(var(--bd, -1) * 15deg); } 100% { rotate: 0deg; } }
