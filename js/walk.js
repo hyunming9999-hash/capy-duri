@@ -206,7 +206,7 @@ export function mount(el, ctx) {
       if (!ctx.members[u]) continue;
       if (u !== ctx.uid) { p.x += (p.tx - p.x) * Math.min(1, dt * 12); p.y += (p.ty - p.y) * Math.min(1, dt * 12); }
       const bob = p.m ? Math.abs(Math.sin(t / 110)) * 1.6 : 0;
-      const wet = inWater(p.x, p.y), sink = wet ? 5 : 0, line = p.y - 6; // 탕 안이면 몸을 살짝 내리고 턱 아래부터 물에 잠기게
+      const wet = inWater(p.x, p.y), sink = wet ? 2 : 0, line = p.y - 3; // 물은 어깨까지만: 얼굴 전체가 보이게 // 탕 안이면 몸을 살짝 내리고 턱 아래부터 물에 잠기게
       list.push({ y: p.y, d: () => {
         if (!wet) { g.fillStyle = 'rgba(0,0,0,.18)'; g.beginPath(); g.ellipse(p.x * S, (p.y - 0.5) * S, 9 * S, 2.6 * S, 0, 0, 7); g.fill(); }
         const im = sprite(u, p.v); if (!im) return;
@@ -222,12 +222,12 @@ export function mount(el, ctx) {
       const el = tag(u), talking = (level[u] || 0) > 0.045 && !p.mu; el.style.left = (p.x / W * 100) + '%'; el.style.top = ((p.y - SH - 0.5 + sink) / H * 100) + '%';
       el.classList.toggle('talk', talking); el.firstChild.textContent = talking ? '🔊' : p.mu && (u === ctx.uid ? voice.on : peerOn) ? '🔇' : '';
     }
+    for (const st of steam) { st.y -= st.v * dt; st.x += Math.sin(t / 900 + st.r) * 0.08; if (st.y < 8) { st.y = WATER.y1 - 4; st.x = WATER.x0 + rnd() * (WATER.x1 - WATER.x0); } const a = Math.max(0, Math.min(0.32, (st.y - 8) / 120)); g.fillStyle = `rgba(255,255,255,${a})`; g.beginPath(); g.arc(st.x * S, st.y * S, st.r * S * (1.6 - st.y / H), 0, 7); g.fill(); } // 김은 캐릭터 뒤에서 피어오른다(얼굴을 가리지 않게)
     list.sort((a, b) => a.y - b.y).forEach(o => o.d());
     for (let i = fx.length - 1; i >= 0; i--) { const e = fx[i], k = (t - e.t0) / 450; if (k >= 1 || k < 0) { if (k >= 1) fx.splice(i, 1); continue; }
       g.save(); g.globalAlpha = 1 - k * k; g.font = `900 ${Math.round((e.s === '휙' ? 9 : 12 + k * 6) * S)}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
       g.lineWidth = 2.2 * S; g.strokeStyle = '#fff'; g.fillStyle = e.s === '휙' ? '#7A6A58' : '#E8412F'; g.strokeText(e.s, e.x * S, (e.y - k * 8) * S); g.fillText(e.s, e.x * S, (e.y - k * 8) * S); g.restore(); }
     // 김이 모락모락
-    for (const st of steam) { st.y -= st.v * dt; st.x += Math.sin(t / 900 + st.r) * 0.08; if (st.y < 8) { st.y = WATER.y1 - 4; st.x = WATER.x0 + rnd() * (WATER.x1 - WATER.x0); } const a = Math.max(0, Math.min(0.32, (st.y - 8) / 120)); g.fillStyle = `rgba(255,255,255,${a})`; g.beginPath(); g.arc(st.x * S, st.y * S, st.r * S * (1.6 - st.y / H), 0, 7); g.fill(); }
   }
 
   const offs = [];
