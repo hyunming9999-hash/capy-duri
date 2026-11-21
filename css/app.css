@@ -2771,3 +2771,18 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .qty-row { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 10px 0 4px; } .qty-row.sm { margin: 0 0 8px; } .qty-row .btn.sm { min-width: 44px; padding: 6px 8px; }
 .qty-n { min-width: 64px; text-align: center; font: 900 22px/1 var(--head); color: #5A3A1A; }
 .mart-opens { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; } .mart-opens .mart-open { width: 84px; height: 84px; margin: 6px 4px 8px; } .mart-opens .mart-open img { width: 58px; height: 58px; } .mart-open em { position: absolute; left: 50%; bottom: -10px; transform: translateX(-50%); font: 900 14px/1 var(--head); font-style: normal; color: #5A3A1A; background: #fff; border-radius: 999px; padding: 3px 8px; box-shadow: 0 2px 0 rgba(0, 0, 0, .15); }
+/* 오늘의 어종(중급 바다) 띠 · 결과 카드 표시 */
+.fs-today{position:absolute;left:50%;top:8px;transform:translateX(-50%);z-index:6;display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 12px;border-radius:14px;background:rgba(255,248,220,.94);border:2px solid #F2B705;box-shadow:0 2px 6px rgba(0,0,0,.18);pointer-events:none;max-width:92%;text-align:center}
+.fs-today b{font-size:12px;color:#B7791F}.fs-today span{font-size:12px;font-weight:800;color:#5A3A22}
+.fs.fight .fs-today{opacity:.35}
+.fs-todayb{display:inline-block;margin:2px auto 4px;padding:2px 10px;border-radius:10px;background:#FFF1B8;color:#B7791F;font-style:normal;font-weight:900;font-size:12px}
+.mk-today{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:2px 0 6px}
+.mk-today span{display:flex;flex-direction:column;align-items:center;width:84px;padding:4px;border-radius:12px;background:#FFF8DC;border:1.5px solid #F2B705;font-size:11px;font-weight:800;color:#5A3A22}
+.mk-today span i{width:72px;height:48px;display:block}.mk-today span i svg{width:100%;height:100%}
+.mk-make{display:flex;align-items:center;justify-content:center;gap:10px;margin:4px 0}
+.mk-make img{width:72px;height:56px;object-fit:contain}.mk-make b{font-size:18px;color:#5A3A22}.mk-make i{font-style:normal;font-size:20px;color:#B7791F}
+.mk-makebar{height:10px;margin:2px 24px 4px;border-radius:6px;background:#EADFCB;overflow:hidden}.mk-makebar u{display:block;height:100%;background:linear-gradient(90deg,#FF8FA3,#FFC94D)}
+.so-charmuse{display:block;margin:4px auto 8px}.so-charmon{color:#7B4FD6;font-weight:800}
+.mk-top .so-tabs{grid-template-columns:1fr 1fr 1fr}
+.fs-today{left:auto;right:8px;top:6px;transform:none;max-width:56%;padding:4px 10px}
+.fs-today b,.fs-today span{font-size:11px}

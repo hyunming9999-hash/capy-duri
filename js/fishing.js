@@ -45,6 +45,12 @@ FISH.forEach(f => { const m = priceUp(f); f.price = [Math.round(f.price[0] * m),
 // 바다 쓰레기(F등급): 어느 바다에서나 10~20% 확률. 클수록 처리 비용이 커진다(50~250코인)
 export const TRASH = [['스티로폼 박스', '📦', 30, 90], ['페트병', '🧴', 12, 35], ['헌 옷', '👕', 40, 110], ['타이어', '🛞', 50, 120], ['축구공', '⚽', 18, 30]].map(([name, icon, c0, c1], k) => ({ id: 't' + k, name, icon, img: `img/fish/trash${k}.webp`, cm: [c0, c1] }));
 const PEARL = { id: 'pearl', name: '바다 진주', pearl: true };
+// 산호 조각: 중급 바다에서만 낚이는 보물(초희귀 한 종만큼 드물게). 15개 모으면 카피수퍼에서 진주부적 1장
+export const CORAL = { id: 'coral', name: '산호 조각', coral: true }, CORAL_PER = 15, KING_DEX = 40;
+// 오늘의 어종: 매일(한국 날짜) 중급 바다 물고기 3종. 그날 잡은 것만 값 2배
+export const kstDay = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+export function todayFish(day = kstDay()) { let x = [...('fish' + day)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 11); const rnd = () => { x = (x * 1103515245 + 12345) >>> 0; return x / 4294967296; };
+  const l = FISH.filter(f => f.z === 2 && !f.king).slice(); for (let i = l.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [l[i], l[j]] = [l[j], l[i]]; } return l.slice(0, 3); }
 
 // 상상의 물고기 그림: 이름마다 몸 모양·색·무늬가 정해진다
 const PAL = [['#FF8FA3', '#FFD6DE'], ['#7FD1F5', '#D9F2FF'], ['#FFD166', '#FFF1C2'], ['#9BE28A', '#DFF7D6'], ['#C5A3FF', '#EADFFF'], ['#FFA56B', '#FFE0C8'], ['#6FE0C8', '#D2F7EE'], ['#F5C2E7', '#FFE9F7'], ['#8FA8FF', '#DCE4FF'], ['#F2E36B', '#FFF8C4'], ['#FF7B6B', '#FFD2CB'], ['#58C7B5', '#C9F0E9']];
@@ -92,11 +98,12 @@ function fishSvg0(f, big) {
 }
 const pick = a => a[Math.floor(Math.random() * a.length)], rnd = (a, b) => a + Math.random() * (b - a);
 // 무엇이 물었나: 진주 차례면 진주, 가끔 쓰레기, 아니면 그 구역 물고기(귀한 것은 드물게). 한 단계 낮은 낚싯대로는 귀한 것·대장은 안 문다
-export function rollCatch(zone, rodT, isPearl, power, forceShiny) {
+export function rollCatch(zone, rodT, isPearl, power, forceShiny, kingOk = true) {
   if (isPearl) return { f: PEARL, cm: 0, price: PEARL_PRICE, d: 9.5, p: power };
   if (!forceShiny && power < TRASH_FAR && Math.random() < trashP(power)) { const t = pick(TRASH), k = Math.random(), cm = Math.round((t.cm[0] + (t.cm[1] - t.cm[0]) * k) * 10) / 10; return { f: t, cm, g: 'F', price: -Math.round(50 + 200 * k), d: 1, p: power }; }
-  const under = rodT < zone, pool = forceShiny ? SHINY_LIST[zone].map(id => FISH.find(f => f.id === id)) : FISH.filter(f => f.z === zone && !(under && (f.rare || f.king)));
-  const w = pool.map(f => TIERS[f.tier || 1].w * (f.tier >= 3 ? 1 + power * 1.2 : 1)), tot = w.reduce((a, b) => a + b, 0); let r = Math.random() * tot, f = pool[0]; for (let i = 0; i < pool.length; i++) { r -= w[i]; if (r <= 0) { f = pool[i]; break; } }
+  const under = rodT < zone, pool = forceShiny ? SHINY_LIST[zone].map(id => FISH.find(f => f.id === id)) : FISH.filter(f => f.z === zone && !(under && (f.rare || f.king)) && !(f.king && !kingOk)); // 대장(고래킹·상어킹)은 중급 도감 40종을 채워야 만난다
+  const w = pool.map(f => TIERS[f.tier || 1].w * (f.tier >= 3 ? 1 + power * 1.2 : 1)), tot = w.reduce((a, b) => a + b, 0); if (zone === 2 && !forceShiny && !under) { const cw = TIERS[4].w * (1 + power * 1.2); if (Math.random() < cw / (tot + cw)) return { f: CORAL, cm: 0, price: 0, d: 4 + Math.random() * 2 + 1, p: power }; } // 산호 조각 = 초희귀 한 종만큼
+  let r = Math.random() * tot, f = pool[0]; for (let i = 0; i < pool.length; i++) { r -= w[i]; if (r <= 0) { f = pool[i]; break; } }
   // 등급(크기): 같은 물고기라도 D~S. S일수록 드물고 크고 비싸다. 멀리 던질수록 높은 등급이 조금 더 잘 문다
   const g = rollGrade(power), [b0, b1] = GRADE[g].band, t = b0 + (b1 - b0) * Math.random(), cm = Math.round((f.cm[0] + (f.cm[1] - f.cm[0]) * t) * 10) / 10;
   const price = Math.round((f.price[0] + (f.price[1] - f.price[0]) * Math.pow(t, 1.3)) * GRADE[g].x);
@@ -142,14 +149,14 @@ const kg = w => (w >= 1000 ? (w / 1000).toFixed(2) + 't' : w >= 1 ? w.toFixed(1)
 export function openFishing(o) {
   let c0 = 0, castTo = 60, flew = false, clickAt = 0, creakAt = 0, pressAt = 0, eyeAt = 0, taps = 0, pat = 0, pat0 = 1, nextSpike = 0, tele = 0;
   let gift = false, pboosted = false, stormAt = 0, stormIn = false, armed = true, ptrDown = false, alive = true, raf = 0, last = 0, phase = 'ready', power = 0, pdir = 1, t0 = 0, biteAt = 0, biteEnd = 0, nibAt = 0, cur = null, dist = 100, ten = 30, hold = false, burst = 0, nextBurst = 0, slack = 0, shown = false;
-  const zone = o.zone, rodT = () => o.bag().rod || 0, rod = () => RODS[rodT()];
+  const zone = o.zone, rodT = () => o.bag().rod || 0, rod = () => RODS[rodT()], kingOk = () => !o.midDex || o.midDex() >= KING_DEX, tdIds = zone === 2 ? new Set(todayFish().map(f => f.id)) : null;
   const float = h('i', { class: 'fs-float' }), hook = h('i', { class: 'fs-hook' }), rl = h('div', { class: 'fs-rl', html: '<svg viewBox="0 0 100 100" preserveAspectRatio="none"><path d="" fill="none" stroke="#fff" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>' }), fishEl = h('div', { class: 'fs-fish' }), mark = h('b', { class: 'fs-mark' });
   const me = h('div', { class: 'fs-me', html: capy(o.ctx.capyOf(o.ctx.uid, { face: 'happy' })) }), rodTip = h('b', { class: 'fs-tip' }), rodEl = h('i', { class: 'fs-rod' }, rodTip);
   // 위: 타고 온 배가 그대로 물 위에 떠 있다. 아래: 물속(구역마다 그림이 다르다)
   const surf = h('div', { class: 'fs-surf' }, rl, h('div', { class: 'fs-boat' }, me, h('div', { class: 'fs-hull', html: o.boat || '' }), rodEl), float, mark), under = h('div', { class: 'fs-under z' + zone }, hook, fishEl), msg = h('p', { class: 'fs-msg' }), bar = h('div', { class: 'fs-bar' }, h('u'), h('i')), info = h('div', { class: 'fs-info' });
   const pearlTxt = h('b', { class: 'fs-pearltxt', hidden: true }), sparks = h('div', { class: 'fs-sparks' }, ...Array.from({ length: 14 }, (_, k) => h('i', { style: { left: (6 + (k * 37) % 88) + '%', top: (8 + (k * 53) % 80) + '%', animationDelay: (k % 7) * 0.17 + 's' } }, '✦'))), patEl = h('div', { class: 'fs-pat', hidden: true }, h('u'), h('span', null, '🐟 물고기 인내심')), pipsEl = h('span', { class: 'fs-pips' }), gl = h('div', { class: 'fs-gl' }, h('b'), h('span')), btn = h('button', { class: 'fs-btn' }), quit = h('button', { class: 'top-x fs-quit', 'aria-label': '그만하기', onClick: () => close() }, '✕');
   const charmB = h('button', { class: 'fs-charmb', hidden: true, onClick: () => useCharm() }, h('img', { src: 'img/crow/pearl-win.webp', alt: '' }), '진주부적 쓰기');
-  const wrap = h('div', { class: 'fs' }, h('div', { class: 'fs-top' }, h('b', null, `🎣 ${ZONES[zone]}`), info, quit), h('div', { class: 'fs-view z' + zone }, surf, under, sparks, pearlTxt, patEl, charmB), msg, h('div', { class: 'fs-deck' }, h('div', { class: 'fs-gauge' }, gl, bar, h('div', { class: 'fs-ticks' }, h('small'), pipsEl, h('small'))), btn));
+  const wrap = h('div', { class: 'fs' }, h('div', { class: 'fs-top' }, h('b', null, `🎣 ${ZONES[zone]}`), info, quit), h('div', { class: 'fs-view z' + zone }, surf, under, sparks, pearlTxt, patEl, charmB, tdIds && h('div', { class: 'fs-today' }, h('b', null, '⭐ 오늘의 어종 · 값 2배'), h('span', null, todayFish().map(f => f.name).join(' · ')))), msg, h('div', { class: 'fs-deck' }, h('div', { class: 'fs-gauge' }, gl, bar, h('div', { class: 'fs-ticks' }, h('small'), pipsEl, h('small'))), btn));
   // 낚싯줄은 매 프레임 낚싯대 끝(배가 흔들리고 낚싯대가 휘둘려도 그 끝)에서 찌까지 이어 그린다 → 낚싯대와 줄이 한 몸처럼 움직인다
   const tipAt = () => { const r = rl.getBoundingClientRect(), t = rodTip.getBoundingClientRect(); return r.width ? [(t.left - r.left) / r.width * 100, (t.top - r.top) / r.height * 100] : [34, 34]; };
   let fx = 60, fb = 10, ftaut = false; const drawLine = () => { if (rl.style.display === 'none') return; const [sx, sy] = tipAt(), x = fx, y = 92 - fb, sag = ftaut ? 2 : 10 + Math.abs(x - sx) * 0.22; rl.firstChild.firstChild.setAttribute('d', `M${sx.toFixed(2)} ${sy.toFixed(2)} Q${((sx + x) / 2).toFixed(2)} ${((sy + y) / 2 + sag).toFixed(2)} ${x} ${y}`); };
@@ -158,7 +165,7 @@ export function openFishing(o) {
     return `<svg viewBox="0 0 120 80" style="overflow:visible"><ellipse cx="60" cy="40" rx="${rx}" ry="${ry}" fill="${fill}"/>${cur.f.pearl ? '' : `<path class="fs-tail" style="transform-origin:${tx}px 40px" d="M${tx} 40 q${rx * 0.25} -${ry * 0.2} ${rx * 0.55} -${ry * 1.05} q-${rx * 0.12} ${ry * 1.05} 0 ${ry * 2.1} q-${rx * 0.3} -${ry * 0.85} -${rx * 0.55} -${ry * 1.05}z" fill="${fill}"/>`}</svg>`; };
   const K = () => Math.max(0, Math.min(4, rodT() - zone + 2)), BRK = () => D_BRK[K()]; let strikes = 0; const lim = () => strikesOf(rodT(), zone), drawPips = on => { pipsEl.replaceChildren(...(on ? Array.from({ length: lim() }, (_, k) => h('i', { class: k < lim() - strikes ? '' : 'off' })) : [])); };
   const say = (t, cls = '') => { msg.className = 'fs-msg ' + cls; msg.textContent = t; };
-  const drawInfo = () => { const b = o.bag(), r = rod(), pb = zone === 3 && b.pboost && b.pboost.at ? b.pboost : null; info.textContent = r ? `${r.name.slice(0, 2)} ${b.rodD || 0}/${r.dur} · ${BAIT_NAME[zone]} ${b[BAIT_KEY[zone]] || 0}${pb ? ` · 🦪 ${10 - (pb.k || 0)}번 안에 진주` : ''}` : '낚싯대 없음'; if (charmB) charmB.hidden = !(zone === 3 && !o.trial && (b.pcharm || 0) >= 3 && !pb); };
+  const drawInfo = () => { const b = o.bag(), r = rod(), pb = zone === 3 && b.pboost && b.pboost.at ? b.pboost : null; info.textContent = r ? `${r.name.slice(0, 2)} ${b.rodD || 0}/${r.dur} · ${BAIT_NAME[zone]} ${b[BAIT_KEY[zone]] || 0}${pb ? ` · 🦪 ${pb.at - (pb.k || 0) <= 1 ? '다음에 진주' : `${pb.at - (pb.k || 0)}번 안에 진주`}` : ''}${zone === 3 && !kingOk() ? ` · 👑 대장은 중급 도감 ${KING_DEX}종부터(${o.midDex()}종)` : ''}` : '낚싯대 없음'; if (charmB) charmB.hidden = true; /* 진주부적은 고급 바다에서 가방을 열어 쓴다 */ };
   const setBar = (v, cls = '') => { v = Math.max(0, Math.min(100, v)); const pow = cls.startsWith('pow'), ten = cls.startsWith('ten'); bar.className = 'fs-bar ' + cls; bar.firstChild.style.width = v + '%'; bar.lastChild.style.left = v + '%'; gl.firstChild.textContent = pow ? '던지는 힘' : ten ? '줄 팽팽함' : '낚싯대'; gl.lastChild.textContent = pow || ten ? Math.round(v) : ''; const tk = bar.nextSibling; tk.firstChild.textContent = pow ? '가까이' : ten ? '느슨(안 끌려옴)' : ''; tk.lastChild.textContent = pow ? '멀리 ★' : ten ? '끊어짐!' : ''; };
   function close() { if (!alive) return; if (phase === 'fight' && cur && cur.f.icon && cur.price < 0) o.coins(cur.price); alive = false; cancelAnimationFrame(raf); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); window.removeEventListener('pointerup', pu); window.removeEventListener('pointercancel', pu); wrap.remove(); o.onClose && o.onClose(); }
   function ready(text) {
@@ -178,7 +185,7 @@ export function openFishing(o) {
     gift = deep && !o.trial && !!(o.ctx && o.ctx.ours && o.ctx.ours()) && b.pgift !== '20261121' && new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10) === '2026-11-21';
     if (deep && o.trial && !b.pgift && new URLSearchParams(location.search).has('pearltest')) { gift = true; b.pgift = 1; } // 진주 연습 링크(?fishtest=3&pearltest): 첫 낚시에 진주
     const isPearl = deep && (gift || (boost ? bk >= boost.at : Math.random() < PEARL_P)); o.save({ [BAIT_KEY[zone]]: b[BAIT_KEY[zone]] - 1, rodD: b.rodD - 1, casts: (b.casts || 0) + 1, ...(deep ? { casts3: n, ...(boost ? { pboost: isPearl ? null : { k: bk, at: boost.at } } : {}) } : {}) }); pboosted = !!(boost && isPearl && !gift); if (gift) o.save({ pgift: '20261121', ...(boost ? { pboost: { k: boost.k || 0, at: boost.at } } : {}) }); // 선물 진주: 기회는 이 한 번(던질 때 표시) · 부적 차례는 쓰지 않는다
-    cur = rollCatch(zone, rodT(), isPearl, power / 100, o.shinyTest); if (window.__whaleNext && o.trial) { const wn = window.__whaleNext(); if (wn) cur = wn; }
+    cur = rollCatch(zone, rodT(), isPearl, power / 100, o.shinyTest, kingOk()); if (window.__whaleNext && o.trial) { const wn = window.__whaleNext(); if (wn) cur = wn; }
     if (gift) { for (let k = 0; k < 8; k++) { const n = rollCatch(zone, rodT(), false, 1, false); if (n.f && !n.f.king && !n.f.icon) { cur.d = n.d; break; } } } // 선물 진주는 보통 고급 물고기와 같은 힘으로 버틴다
     { const key = 'sp' + zone, sp = (o.bag()[key]) || {}, n = (sp.n || 0) % STORM_EVERY + 1, at = n === 1 || !Array.isArray(sp.at) || sp.at.length !== 1 ? stormPlan() : sp.at, due = !!sp.due || at.includes(n); stormIn = due && !cur.f.pearl; o.save({ [key]: { n, at, due } }); }
     stormAt = 0; phase = 'cast'; c0 = performance.now(); castTo = 48 + power * 0.44; flew = false; shown = false; setBar(power, 'pow'); drawInfo();
@@ -197,10 +204,10 @@ export function openFishing(o) {
     if (cur.f.name === '고래킹') { say('심상치 않다… 설마? 고래킹?'); wrap.classList.add('whale'); sfx('bigfish'); pearlTxt.hidden = false; pearlTxt.textContent = '🌊 거대한 그림자가… 🌊'; } // 대장 중의 대장
     if (cur.f.pearl) { say(gift ? '엇? 진주 아니야?' : '앗, 진주 같아!'); if (pboosted) { phase = 'ask'; btn.textContent = '…'; btn.onclick = null; setTimeout(() => alive && usePearlSet(), 700); } } // 부적으로 불러낸 진주는 바로 부적이 끌어올린다(90%)
   }
-  // 진주부적 쓰기(고급 바다, 3장): 앞으로 10번 던지는 동안 진주가 꼭 한 번 걸린다
+  // 진주부적 쓰기(고급 바다, 3장): 다음에 던지면 진주가 나타나고, 부적이 끌어올린다(90%)
   async function useCharm() { const b = o.bag(); if (zone !== 3 || o.trial || (b.pcharm || 0) < 3 || (b.pboost && b.pboost.at) || phase !== 'ready') return;
-    const yes = await ask('🦪 진주부적 3장을 쓸까요? 앞으로 10번 던지는 동안 진주가 꼭 한 번 걸리고, 걸리면 90% 확률로 낚아요.', '쓰기', '안 쓸래'); if (!yes || !alive) return;
-    o.save({ pcharm: Math.max(0, (o.bag().pcharm || 0) - 3), pboost: { k: 0, at: 1 + Math.floor(Math.random() * 10) } }); sfx('point'); pearlTxt.hidden = false; pearlTxt.textContent = '🦪 진주부적 발동! 🦪'; setTimeout(() => { if (alive) pearlTxt.hidden = true; }, 1600); say('부적이 빛나요… 10번 안에 진주가 찾아와요!'); drawInfo(); }
+    const yes = await ask('🦪 진주부적 3장을 쓸까요? 다음에 던지면 진주가 나타나요. 부적이 끌어올리지만 100%는 아니에요(90%).', '쓰기', '안 쓸래'); if (!yes || !alive) return;
+    o.save({ pcharm: Math.max(0, (o.bag().pcharm || 0) - 3), pboost: { k: 0, at: 1 } }); sfx('point'); pearlTxt.hidden = false; pearlTxt.textContent = '🦪 진주부적 발동! 🦪'; setTimeout(() => { if (alive) pearlTxt.hidden = true; }, 1600); say('부적이 빛나요… 다음에 던지면 진주가 찾아와요!'); drawInfo(); }
   async function usePearlSet() {
     if (!alive || phase !== 'ask') return; sfx('point'); pearlTxt.hidden = false; pearlTxt.textContent = '🦪 진주부적 발동! 🦪'; say('부적이 빛나요… 진주를 끌어올리는 중!');
     phase = 'charm'; wrap.classList.add('fight', 'reel'); fishEl.className = 'fs-fish on'; fishEl.innerHTML = shadow();
@@ -213,7 +220,7 @@ export function openFishing(o) {
     if (shown && now > biteEnd) return;
     pat0 = pat = cur.f.icon ? 99 : PATIENCE[zone] + (cur.f.king || (cur.f.pearl && !gift) ? 4 : 0) + D_PAT[K()]; bar.style.setProperty('--lo', (BAND_LO[zone] - D_BAND[K()]) + '%'); bar.style.setProperty('--hi', BRK() + '%'); tele = 0; nextSpike = cur.f.icon ? Infinity : now + rnd(...SPIKE_GAP[zone]) * 1000; taps = 0; patEl.hidden = !!cur.f.icon;
     if (cur.f.pearl) { pearlTxt.textContent = '✨ 바다 진주다! ✨'; sfx('bigfish'); }
-    sfx('hookset'); strikes = 0; drawPips(true); phase = 'fight'; dist = 100; ten = 35; burst = 0; slack = 0; nextBurst = now + rnd(900, 1800); wrap.classList.add('fight'); const ultra = (cur.f.tier || 1) === 4 && !cur.f.pearl && !cur.f.icon; fishEl.className = 'fs-fish on' + (ultra ? ' ultra' : ''); fishEl.innerHTML = shadow(); // 초희귀는 그림자부터 빛난다
+    sfx('hookset'); strikes = 0; drawPips(true); phase = 'fight'; dist = 100; ten = 35; burst = 0; slack = 0; nextBurst = now + rnd(900, 1800); wrap.classList.add('fight'); const ultra = ((cur.f.tier || 1) === 4 || cur.f.coral) && !cur.f.pearl && !cur.f.icon; fishEl.className = 'fs-fish on' + (ultra ? ' ultra' : ''); fishEl.innerHTML = shadow(); // 초희귀는 그림자부터 빛난다
     const tip = cur.f.icon ? '누르고 있으면 감아요.' : `줄을 주황 칸에 맞춰야 끌려와요! 빨간 칸은 ${lim()}번 닿으면 끝이에요.`; if (ultra) { say('어? 심상치 않은데?? ✨', 'warn'); sfx('bigfish'); setTimeout(() => { if (alive && phase === 'fight') say(tip); }, 1800); } else say(tip); btn.textContent = '꾹 눌러\n감기'; btn.onclick = null;
   }
   // 풍랑: 하늘이 어두워지고 비바람이 치며 배가 크게 흔들리다가 줄이 풀려 물고기가 달아난다
@@ -229,14 +236,14 @@ export function openFishing(o) {
       wrap.append(card); setTimeout(() => card.classList.remove('wait'), 1200); }, 3200); } // 3.2초 동안 비바람이 친 뒤 카드
   function fail(text) { sfx(/끊어/.test(text) ? 'snap' : 'bad'); ready(text); }
   function landed() {
-    const { f, cm, price, shiny } = cur; sfx(price <= 0 ? 'bad' : f.king || f.rare || f.pearl ? 'bigfish' : shiny ? 'fanfare' : 'coin'); if (price > 0) splash(34, true); phase = 'done'; patEl.hidden = true; pearlTxt.hidden = true; if (!f.pearl) wrap.classList.remove('pearl'); wrap.classList.remove('fight', 'reel'); float.style.display = rl.style.display = hook.style.display = 'none'; fishEl.className = 'fs-fish';
-    const isNew = !f.icon && !f.pearl && !!o.seen && !o.seen(f.id);
-    const keep = price > 0 && o.keep; if (keep) o.keep({ id: f.id, cm, p: price, pv: PRICE_V, ...(cur.g ? { g: cur.g } : {}), ...(shiny ? { shiny: 1 } : {}) }); else o.coins(price); if (!f.icon) o.dex(f.id, cm, shiny); // 물고기는 바로 돈이 아니라 가방에 담아 카피마켓에 판다
+    const { f, cm, shiny } = cur, today = !!(tdIds && tdIds.has(f.id)), price = today ? cur.price * 2 : cur.price; sfx(f.coral ? 'bigfish' : price <= 0 ? 'bad' : f.king || f.rare || f.pearl ? 'bigfish' : shiny ? 'fanfare' : 'coin'); if (price > 0) splash(34, true); phase = 'done'; patEl.hidden = true; pearlTxt.hidden = true; if (!f.pearl) wrap.classList.remove('pearl'); wrap.classList.remove('fight', 'reel'); float.style.display = rl.style.display = hook.style.display = 'none'; fishEl.className = 'fs-fish';
+    const isNew = !f.icon && !f.pearl && !f.coral && !!o.seen && !o.seen(f.id); if (f.coral && o.coral) o.coral(1);
+    const keep = price > 0 && o.keep; if (keep) o.keep({ id: f.id, cm, p: price, pv: PRICE_V, ...(cur.g ? { g: cur.g } : {}), ...(shiny ? { shiny: 1 } : {}), ...(today ? { td: kstDay() } : {}) }); else if (!f.coral) o.coins(price); if (!f.icon && !f.coral) o.dex(f.id, cm, shiny); // 물고기는 바로 돈이 아니라 가방에 담아 카피마켓에 판다
     // 릴을 연타하다가 결과 창 버튼이 눌려 바로 닫히지 않게: 창이 뜨고 1.2초 동안은 버튼이 안 먹는다. 창은 버튼을 누르기 전까지 그대로 있다
     const shownAt = performance.now(), safe = () => performance.now() - shownAt > 1200;
     const g = cur.g; let gEl = null; // 등급은 '등급 확인하기'를 누르기 전까지 ?로 가려 둔다
-    const w = weightOf(f, cm), card = h('div', { class: 'fs-card' + (f.pearl ? ' pearl' : f.king ? ' king' : f.rare || shiny ? ' rare' : f.icon ? ' trash' : '') + (shiny ? ' shiny' : '') }, h('div', { class: 'fs-pic' + (shiny ? ' shy' : ''), html: fishSvg(f, true, shiny) }), shiny && h('em', { class: 'fs-shiny' }, `✨ 이로치! 색이 다른 귀한 녀석 · 값 ${SHINY_X.toFixed(1)}배 ✨`),
-      h('b', null, f.pearl ? '✨ 바다 진주! ✨' : f.king ? `👑 ${f.name}` : f.name), cur.g && (gEl = h('span', { class: g === 'F' ? 'fs-grade gF' : 'fs-grade hide' }, g === 'F' ? 'F등급' : '?등급')), !f.pearl && cm > 0 && h('p', null, f.icon ? `${cm}cm` : `${cm}cm · ${kg(w)}`), keep ? h('p', { class: 'fs-won kept' }, '🧺 가방에 담았어요 · 카피수퍼 물고기 판매에서 팔아요') : h('p', { class: 'fs-won' }, price > 0 ? `+${price.toLocaleString('ko-KR')} 🪙` : `${price} 🪙`), o.trial && h('small', null, '체험 중이라 돈과 도감은 저장되지 않아요.'),
+    const w = weightOf(f, cm), card = h('div', { class: 'fs-card' + (f.pearl ? ' pearl' : f.king ? ' king' : f.rare || shiny || f.coral ? ' rare' : f.icon ? ' trash' : '') + (shiny ? ' shiny' : '') }, h('div', { class: 'fs-pic' + (shiny ? ' shy' : ''), html: fishSvg(f, true, shiny) }), shiny && h('em', { class: 'fs-shiny' }, `✨ 이로치! 색이 다른 귀한 녀석 · 값 ${SHINY_X.toFixed(1)}배 ✨`),
+      h('b', null, f.pearl ? '✨ 바다 진주! ✨' : f.coral ? '🪸 산호 조각!' : f.king ? `👑 ${f.name}` : f.name), today && h('em', { class: 'fs-todayb' }, '⭐ 오늘의 어종 · 값 2배'), f.coral && h('p', { class: 'fs-won kept' }, `🧺 가방에 담았어요 · ${CORAL_PER}개 모으면 카피수퍼에서 진주부적 1장`), cur.g && (gEl = h('span', { class: g === 'F' ? 'fs-grade gF' : 'fs-grade hide' }, g === 'F' ? 'F등급' : '?등급')), !f.pearl && cm > 0 && h('p', null, f.icon ? `${cm}cm` : `${cm}cm · ${kg(w)}`), f.coral ? '' : keep ? h('p', { class: 'fs-won kept' }, '🧺 가방에 담았어요 · 카피수퍼 물고기 판매에서 팔아요') : h('p', { class: 'fs-won' }, price > 0 ? `+${price.toLocaleString('ko-KR')} 🪙` : `${price} 🪙`), o.trial && h('small', null, '체험 중이라 돈과 도감은 저장되지 않아요.'),
       f.icon && h('small', null, '바다 쓰레기가 걸려서 수거했어요. 한번 걸리면 놓아줄 수 없고, 클수록 처리 비용이 커요(50~250코인).'),
       cur.g && g !== 'F' && h('button', { class: 'btn sm fs-gbtn', onClick: () => { if (gEl.classList.contains('hide')) { gEl.className = 'fs-grade pop g' + g; gEl.textContent = `${g}등급` + (f.tier ? ` · ${TIERS[f.tier].n}` : ''); sfx(g === 'S' || g === 'A' ? 'bigfish' : 'point'); setTimeout(() => gradeInfo(f, cm, g), 650); } else gradeInfo(f, cm, g); } }, h('i', { class: 'fs-gico', html: '<svg viewBox="0 0 20 20"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M12.6 12.6 L17 17" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>' }), '등급 확인하기'),
       h('div', { class: 'fs-acts' }, h('button', { class: 'btn primary', onClick: () => { if (safe()) { card.remove(); ready(); } } }, '또 던지기'), h('button', { class: 'btn', onClick: () => { if (safe()) { card.remove(); close(); } } }, '그만하기')));

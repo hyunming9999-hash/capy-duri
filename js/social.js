@@ -18,7 +18,7 @@ import { dollImg } from './g-claw.js';
 import { recOf } from './cook.js';
 import { TANKS as AQT, DECO as AQD } from './aquarium.js';
 const AQACT = { peck: '콕콕 쪼기', hide: '숨바꼭질', circle: '빙글빙글', bubble: '거품 타기', glow: '반짝반짝', heart: '하트 뿅', startle: '깜짝 놀라기', slide: '미끄럼 타기' };
-import { openFishing, seaBattle, PIRATE_LOOT, FLEE_FEE, CBOAT_FIX, FISH, TIERS, RODS, ZONES, BAIT, BAIT2, BAIT3, baitIc, BALL, CANNON, CANNON2, WBOAT, BOAT_FIX, PIRATE_HIT, fishSvg, SHINY_LIST, PEARL_PRICE, PRICE_V, priceUp } from './fishing.js';
+import { openFishing, seaBattle, PIRATE_LOOT, FLEE_FEE, CBOAT_FIX, FISH, TIERS, RODS, ZONES, BAIT, BAIT2, BAIT3, baitIc, BALL, CANNON, CANNON2, WBOAT, BOAT_FIX, PIRATE_HIT, fishSvg, SHINY_LIST, PEARL_PRICE, PRICE_V, priceUp, todayFish, CORAL_PER, KING_DEX } from './fishing.js';
 const CROW_IMG = FLUFFY ? 'img/fl/o/crow.webp' : 'img/crow/crow.webp';
 const FL_GUN = '<svg viewBox="110 30 64 48"><image href="img/fl/o/gun.webp" x="114" y="36" width="56" height="24"/><image href="img/fl/o/wheel.webp" x="117" y="48" width="26" height="26"/></svg>', FL_GUN2 = '<svg viewBox="108 28 66 50"><image href="img/fl/o/gun2.webp" x="112" y="33" width="58" height="31"/><image href="img/fl/o/wheel2.webp" x="113" y="48" width="26" height="26"/></svg>'; // 상점 그림: 배에 달린 대포와 같은 그림
 
@@ -141,7 +141,7 @@ const SULK = ['요즘 나랑 안 놀아 줘서 서운해… 🥺', '나 잊은 �
 // 되팔 때 값: 게임 3~5판 번 것쯤(150~250코인). 물건마다 값이 정해져 있다
 const DOLL_SELL = 250; // 뽑은 인형을 상점에 파는 값(개당)
 const sellPin = i => 150 + (i * 37) % 101, sellHat = i => 150 + (i * 53 + 20) % 101;
-const MY_BOAT = 99, BOAT_PRICE = 1000; // 내 카피보트: 카피수퍼에서 1000코인
+const MY_BOAT = 99, BOAT_PRICE = 1000, MAKE_FEE = 1000; // 내 카피보트: 카피수퍼에서 1000코인
 const CARE = ['너무 깊은 곳은 조심해.', '넌 소중한 존재야. 다치면 안 돼.', '멀리 나가면 꼭 돌아와야 해.', '물 차갑지 않아? 감기 조심해.', '파도가 세면 무리하지 마.', '힘들면 언제든 쉬었다 가.', '해적 만나면 다치지 말고 도망쳐도 돼.', '밥은 챙겨 먹고 다니는 거지?', '네가 무사하면 그걸로 충분해.', '낚시 잘 안 돼도 괜찮아. 넌 잘하고 있어.'];
 const PASS = 95, SEAT = FLUFFY ? 41 : 19; // 상대 카피바라의 배에 같이 탄 손님(SEAT: 운전석 바로 뒤, 배 안쪽에 앉는다). PASS는 배 번호(96~99)와 겹치면 안 된다: 96이던 때는 별빛포 단 배와 같은 번호라 손님 자리에 배가 하나 더 그려졌다
 const MY_WBOAT = 98, MY_WBOAT_GUN = 97, MY_WBOAT_GUN2 = 96; // 흰 배(더 빠르다), 대포를 단 흰 배, 신형 대포(카피 별빛포)를 단 흰 배
@@ -370,7 +370,7 @@ export function mount(el, ctx) {
   const xFresh = v => (v && v.k && v.t && ctx.store.now() - v.t < X_TTL ? v : {}), xMine = () => xFresh(gt[ctx.uid]), xPal = () => (pid() ? xFresh(gt[pid()]) : {}), xPair = (a, b) => a + '>' + b;
   const xAgreed = () => { const m = xMine(), p = xPal(); return !!(m.k && p.k && m.ok === xPair(m.k, p.k) && p.ok === xPair(p.k, m.k)); };
   // 교환할 수 있는 것 = 가방 안의 모든 품목. 품목 번호는 '종류:키' — b 가방 개수(선물·포션·부적·미끼·포탄) · s 양념 · e 씨앗 · k 스프링클러 · n 헛간 작물 · d 수족관 용품 (여기까지 개수) / f 물고기 · r 황금 장비 · p 상징 액세서리 · c 옷 · g 스쿠터 (하나뿐인 것)
-  const X_BAG = { candy: GIFTS.candy, flower: GIFTS.flower, cake: GIFTS.cake, potion: ['🧪', '포션'], pcharm: ['🔮', '진주부적'], bait: ['🪱', '미끼'], bait2: ['🪱', '중급 미끼'], bait3: ['🪱', '고급 미끼'], balls: ['⚫', '포탄'] };
+  const X_BAG = { candy: GIFTS.candy, flower: GIFTS.flower, cake: GIFTS.cake, potion: ['🧪', '포션'], pcharm: ['🔮', '진주부적'], coral: ['🪸', '산호 조각'], bait: ['🪱', '미끼'], bait2: ['🪱', '중급 미끼'], bait3: ['🪱', '고급 미끼'], balls: ['⚫', '포탄'] };
   const xPath = (u, id) => { id = String(id); if (id[1] !== ':' || /[.#$\[\]\/]/.test(id)) return null; const t = id[0], k = id.slice(2); return t === 'b' ? [`bag/${u}/${k}`, 0] : t === 's' ? [`bag/${u}/sauce/${k}`, 0] : t === 'e' ? [`farm/${u}/seeds/${k}`, 0] : t === 'k' ? [`farm/${u}/sprkInv`, 0] : t === 'n' ? [`farm/${u}/barn/${k}`, 0] : t === 'd' ? [`aqua/${u}/inv/${k}`, 0]
     : t === 'f' ? [`bag/${u}/fish/${k}`, 1] : t === 'r' ? [`bag/${u}/rares/${k}`, 1] : t === 'p' ? [`bag/${u}/pins/${k}`, 1] : t === 'c' ? [`owned/${u}/${k}`, 1] : t === 'g' ? [`bag/${u}/${k}`, 1] : null; };
   // 입고 있거나 타고 있는 것은 못 준다(벗은 뒤에)
@@ -594,7 +594,7 @@ export function mount(el, ctx) {
   // 낚시: 낚시터에서 내 배를 탄 채 🎣. 중급부터는 가끔 갈매기 해적단이 먼저 덤빈다
   function goFish() { const zone = zoneOf(me.x); if (!zone || fishOpen || battle || !(me.boat && (me.boat.own || me.boat.pass))) return; const guest = !!me.boat.pass; fishOpen = true; keys.clear();
     const done = () => { fishOpen = false; if (!voice.on) bgm.duck(false); lastT = performance.now(); };
-    openFishing({ ctx, zone, trial: !!trial, boatHit: n => (trial ? null : hitBoat(n)), sunk: why => sinkBoat(why), boat: boatSvg(me.boat.skin), bag: () => bag, save: saveBag, coins: addCoins, keep: trial ? null : keepFish, seen: trial ? null : id => !!dex[id], dex: (id, cm, shiny) => trial ? null : ctx.store.tx(`fishdex/${ctx.uid}/${id}`, c => ({ ...(c || {}), n: ((c && c.n) || 0) + 1, best: Math.max((c && c.best) || 0, cm), ...(shiny ? { s: ((c && c.s) || 0) + 1 } : {}) })).catch(() => {}), onClose: done, onPirate: guest || !hasGun() ? null : () => pirates(zone) }); } // 대포가 없으면 해적단도 안 나온다(중급 바다)
+    openFishing({ ctx, zone, trial: !!trial, boatHit: n => (trial ? null : hitBoat(n)), sunk: why => sinkBoat(why), boat: boatSvg(me.boat.skin), bag: () => bag, save: saveBag, coins: addCoins, keep: trial ? null : keepFish, coral: trial ? null : n => saveBag({ coral: (bag.coral || 0) + n }), midDex: trial ? null : () => Object.keys(dex).filter(k => k.startsWith('f2-') && dex[k]).length, seen: trial ? null : id => !!dex[id], dex: (id, cm, shiny) => trial ? null : ctx.store.tx(`fishdex/${ctx.uid}/${id}`, c => ({ ...(c || {}), n: ((c && c.n) || 0) + 1, best: Math.max((c && c.best) || 0, cm), ...(shiny ? { s: ((c && c.s) || 0) + 1 } : {}) })).catch(() => {}), onClose: done, onPirate: guest || !hasGun() ? null : () => pirates(zone) }); } // 대포가 없으면 해적단도 안 나온다(중급 바다)
   // 갈매기 해적단: 낚시하던 그 바다에서, 멀찍이 떨어져 포를 주고받는다. 포탄에 맞을 때마다 배 내구도 -10, 지면 500코인을 뺏긴다(이기면 내구도는 맞은 만큼만 준다)
   // 해적단 보물: 화면 가운데에서 보물 상자가 열리고 금화가 쏟아진다
   function lootFx(n) { const CHEST = '<svg viewBox="0 0 120 100"><path class="lid" d="M14 44 Q14 12 60 12 Q106 12 106 44z" fill="#B5741B" stroke="#5A3A12" stroke-width="4" stroke-linejoin="round"/><path class="lid" d="M36 14 V44M84 14 V44" stroke="#F2C230" stroke-width="7"/><ellipse cx="60" cy="46" rx="42" ry="9" fill="#FFE066"/><circle cx="44" cy="42" r="8" fill="#FFD43B" stroke="#C98A00" stroke-width="2"/><circle cx="62" cy="38" r="9" fill="#FFD43B" stroke="#C98A00" stroke-width="2"/><circle cx="79" cy="43" r="8" fill="#FFD43B" stroke="#C98A00" stroke-width="2"/><rect x="14" y="44" width="92" height="46" rx="6" fill="#9A5F16" stroke="#5A3A12" stroke-width="4"/><path d="M36 44 V90M84 44 V90" stroke="#F2C230" stroke-width="7"/><rect x="51" y="52" width="18" height="20" rx="4" fill="#F2C230" stroke="#8A5A00" stroke-width="3"/><circle cx="60" cy="61" r="3" fill="#5A3A12"/></svg>';
@@ -971,7 +971,7 @@ export function mount(el, ctx) {
     const fx = h('div', { class: 'charm-fx', onClick: () => fx.remove() }, h('i', { class: 'cf-rays' }), h('i', { class: 'cf-ring' }), h('i', { class: 'cf-ring r2' }),
       ...Array.from({ length: 22 }, (_, k) => h('em', { class: 'cf-sp', style: { left: (4 + (k * 41) % 92) + '%', top: (6 + (k * 59) % 86) + '%', animationDelay: (k % 8) * 0.12 + 's', fontSize: (14 + (k * 7) % 18) + 'px' } }, k % 3 ? '✦' : '🫧')),
       h('img', { class: 'cf-card', src: 'img/crow/pearl-win.webp', alt: '진주부적' }),
-      h('b', { class: 'cf-t' }, '앗…! 전설의 진주부적이다!'), h('small', { class: 'cf-s' }, n >= 3 ? `진주부적 ${n}장 · 고급 바다에서 쓰면 10번 안에 진주가 걸리고 90%로 낚아요!` : `진주부적 ${n} / 3 · 3장 모아 고급 바다에서 쓰면 10번 안에 진주!`));
+      h('b', { class: 'cf-t' }, '앗…! 전설의 진주부적이다!'), h('small', { class: 'cf-s' }, n >= 3 ? `진주부적 ${n}장 · 고급 바다에서 쓰면 다음에 던질 때 진주가 나타나요!` : `진주부적 ${n} / 3 · 3장 모아 고급 바다에서 쓰면 바로 진주!`));
     document.body.append(fx); setTimeout(() => fx.classList.add('out'), 4200); setTimeout(() => fx.remove(), 4800);
   }
 
@@ -1085,7 +1085,7 @@ export function mount(el, ctx) {
   // 물고기 파는 값: 값이 오르기 전에 잡은 물고기(pv 없음)도 오른 값으로 쳐 준다
   const fishP = v => (v.id === 'pearl' ? PEARL_PRICE : (v.pv || 0) >= PRICE_V ? v.p : Math.round(v.p * priceUp(fishOf(v.id))));
   function appraise(x) { const f = fishOf(x.id), p = won(fishP(x));
-    const gl = x.g ? ` ${x.g}등급이여!${x.g === 'S' ? ' 이런 대물은 처음 보는구먼!' : x.g === 'A' ? ' 아주 귀한 크기여.' : ''}` : '';
+    const gl = (x.g ? ` ${x.g}등급이여!${x.g === 'S' ? ' 이런 대물은 처음 보는구먼!' : x.g === 'A' ? ' 아주 귀한 크기여.' : ''}` : '') + (x.td ? ' 오늘의 어종이라 값은 두 배로 쳐 줬네!' : '');
     if (!f) return `허허, 이건 뭔지 모르겠구먼. ${p} 쳐 주지.`;
     if (f.pearl) return `이, 이건… 바다 진주 아닌가! 평생 몇 번 못 보는 물건이여. 군말 없이 ${p} 쳐 주지!`;
     const [c0, c1] = f.cm, t = Math.max(0, Math.min(1, (x.cm - c0) / (c1 - c0))), pct = Math.round(t * 100), big = t >= 0.8 ? '아주 실하네!' : t >= 0.5 ? '제법 큼직하구먼.' : t >= 0.2 ? '보통 크기여.' : '아직 어린 녀석이구먼.';
@@ -1143,7 +1143,9 @@ export function mount(el, ctx) {
       modal({ title: S ? `🌟 대박! S급이 ${S}개!` : `📦 ${c.name} 상자 ${n}개를 열어 보니…`, body: [h('div', { class: 'mart-opens' }, ...['S', 'A', 'B', 'C'].filter(g => got[g]).map(g => h('div', { class: 'mart-open g' + g }, h('img', { src: cropImg(c.id), alt: '' }), h('b', null, `${g}급`), h('em', null, `×${got[g]}`)))), h('p', { class: 'center' }, `${c.name} ${n}개를 헛간에 넣었어요.`)], actions: [{ label: '확인', primary: true }] }); if (S) sfx('fanfare'); return true; };
     const martGrade = () => { let r = Math.random(); for (const [g, p] of MART_GR) { if ((r -= p) < 0) return g; } return 'C'; };
     function buyItems() { const R = R0();
-      return [['sec', '🥕 오늘의 농작물'], ['note', '초급·중급 작물이 매일 3종씩 들어와요. 뭐가 들어올지는 그날 가 봐야 알아요. 운송비·톨비가 붙어 원가의 3.5배 · 등급은 사고 나서 확인!'],
+      const TF = todayFish();
+      return [['sec', '⭐ 오늘의 어종'], h('div', { class: 'mk-today' }, TF.map(f => h('span', null, h('i', { html: fishSvg(f) }), f.name))), ['note', '중급 바다 · 오늘 잡은 것만 값 2배! 내일은 또 바뀌어요.'],
+        ['sec', '🥕 오늘의 농작물'], ['note', '초급·중급 작물이 매일 3종씩 들어와요. 뭐가 들어올지는 그날 가 봐야 알아요. 운송비·톨비가 붙어 원가의 3.5배 · 등급은 사고 나서 확인!'],
         ...martToday().map(c => { const price = Math.round(c.base * MART_X); return { ic: `<img src="${cropImg(c.id)}" alt="" style="width:100%;height:100%;object-fit:contain">`, name: c.name, sub: `개당 ${won(price)} · ${c.t === 1 ? '초급' : '중급'} 작물 · 등급은 산 다음에 알 수 있어요 · 헛간에 ${Object.entries(farmBarn).filter(([k, n]) => n > 0 && k.split('|')[0] === c.id).reduce((a, [, n]) => a + n, 0)}개`, price,
           line: `${c.name}이라… 멀리서 실어 오느라 운송비에 톨비까지 붙었네. 등급은 까 봐야 알지, 허허.`,
           act: async () => { if (trial) { say('체험 중에는 거래 못 하네. 체험 끝나고 오게.'); return false; } if (!(await ctx.spend(price))) { say(pick(GP.poor)); return false; } const g = martGrade(), k = `${c.id}|${g}`, n = (farmBarn[k] || 0) + 1; farmBarn = { ...farmBarn, [k]: n }; await ctx.store.update('farm/' + ctx.uid + '/barn', { [k]: n }).catch(() => {});
@@ -1178,11 +1180,18 @@ export function mount(el, ctx) {
         { ic: baitI(1), name: '미끼 10개 (초급 바다)', sub: `${won(BAIT * 10)} · 한 번 던질 때 1개 · 가진 것 ${bag.bait || 0}`, price: BAIT * 10, line: (bag.bait || 0) < 3 ? '미끼가 다 떨어져 가는구먼. 싱싱한 놈으로 담아 주지.' : '싱싱한 지렁이여. 물고기들이 환장하지.', act: () => buy(BAIT * 10, { bait: (bag.bait || 0) + 10 }), multi: { name: '미끼 10개 묶음', unit: '묶음', go: n => buy(BAIT * 10 * n, { bait: (bag.bait || 0) + 10 * n }) } },
         { ic: baitI(2), name: '중급 미끼 10개 (중급 바다)', sub: `${won(BAIT2 * 10)} · 중급 바다에서만 써요 · 가진 것 ${bag.bait2 || 0}`, price: BAIT2 * 10, line: '중급 바다 물고기는 입맛이 까다롭지. 파란 미끼여야 문다네.', act: () => buy(BAIT2 * 10, { bait2: (bag.bait2 || 0) + 10 }), multi: { name: '중급 미끼 10개 묶음', unit: '묶음', go: n => buy(BAIT2 * 10 * n, { bait2: (bag.bait2 || 0) + 10 * n }) } },
         { ic: baitI(3), name: '고급 미끼 10개 (고급 바다)', sub: `${won(BAIT3 * 10)} · 고급 바다에서만 써요 · 가진 것 ${bag.bait3 || 0}`, price: BAIT3 * 10, line: '금빛 미끼라네. 깊은 바다 녀석들도 이건 못 참지.', act: () => buy(BAIT3 * 10, { bait3: (bag.bait3 || 0) + 10 }), multi: { name: '고급 미끼 10개 묶음', unit: '묶음', go: n => buy(BAIT3 * 10 * n, { bait3: (bag.bait3 || 0) + 10 * n }) } }].filter(Boolean); }
+    // 연성: 산호 조각 15개 + 수수료 1,000코인 → 진주부적 1장
+    function makeItems() { const c = bag.coral || 0, ok = c >= CORAL_PER;
+      return [['sec', '🔮 진주부적 연성'], h('div', { class: 'mk-make' }, h('img', { src: 'img/fish/coral.webp', alt: '' }), h('b', null, `${Math.min(c, CORAL_PER)} / ${CORAL_PER}`), h('i', null, '➜'), h('img', { src: 'img/crow/pearl-win.webp', alt: '' })), h('div', { class: 'mk-makebar' }, h('u', { style: { width: Math.min(100, c / CORAL_PER * 100) + '%' } })),
+        ['note', `가진 산호 조각 ${c}개 · 진주부적 ${bag.pcharm || 0}장`],
+        { ic: '<img src="img/crow/pearl-win.webp" alt="" style="width:100%;height:100%;object-fit:contain">', name: '진주부적 1장 연성', sub: `산호 조각 ${CORAL_PER}개 + 수수료 ${won(MAKE_FEE)}`, price: MAKE_FEE, swap: 1, off: !ok, btn: `${won(MAKE_FEE)} 내고 연성하기`,
+          line: ok ? '산호를 갈아 진주부적을 빚어 주지. 수수료는 조금 받겠네.' : `산호 조각은 중급 바다에서만 나온다네. ${CORAL_PER}개 모아 오게.`, done: '자, 진주부적이여! 고급 바다에서 3장 쓰면 진주가 찾아온다네.',
+          act: async () => { if (trial) { say('체험 중에는 거래 못 하네.'); return false; } if ((bag.coral || 0) < CORAL_PER) return false; if (!(await ctx.spend(MAKE_FEE))) { say(pick(GP.poor)); return false; } const n = (bag.pcharm || 0) + 1; saveBag({ coral: (bag.coral || 0) - CORAL_PER, pcharm: n }); charmFx(n); return true; } }]; }
     function sellItems() { const out = [], uidOwned = ctx.owned[ctx.uid] || {};
       const L = Object.entries(bag.fish || {}).filter(([, v]) => v).sort((a, b) => (b[1].t || 0) - (a[1].t || 0)), total = L.reduce((n, [, v]) => n + fishP(v), 0);
       out.push(['sec', `🐟 물고기 ${L.length}마리`]);
       if (L.length) { out.push(h('button', { class: 'btn primary mk-all', onClick: async () => { if (await sell(total, fishGo(L), true)) { say(`허허, 몽땅 합쳐서 ${won(total)}이여. 다음에도 싱싱한 놈으로 부탁하네!`); draw(); } } }, `물고기 전부 팔기 · ${won(total)}`));
-        L.forEach(([k, v]) => { const f = fishOf(v.id) || { name: '?' }; out.push({ big: 1, gold: f.pearl || f.king || f.rare || v.shiny, ic: h('span', { class: 'so-try', html: f.pearl ? fishSvg({ pearl: true }) : f.id ? fishSvg(f, false, v.shiny) : '' }), name: (v.shiny ? '✨ ' : '') + (f.king ? '👑 ' + f.name : f.name) + (v.g ? ` · ${v.g}등급` : ''), sub: f.pearl ? '반짝반짝 진주 · 눌러서 값 물어보기' : `${v.cm}cm · 눌러서 값 물어보기`, price: fishP(v), line: () => appraise(v), done: `거래 고맙구먼! ${won(fishP(v))} 여기 있네.`, act: () => sell(fishP(v), fishGo([[k, v]]), true) }); }); }
+        L.forEach(([k, v]) => { const f = fishOf(v.id) || { name: '?' }; out.push({ big: 1, gold: f.pearl || f.king || f.rare || v.shiny, ic: h('span', { class: 'so-try', html: f.pearl ? fishSvg({ pearl: true }) : f.id ? fishSvg(f, false, v.shiny) : '' }), name: (v.shiny ? '✨ ' : '') + (f.king ? '👑 ' + f.name : f.name) + (v.g ? ` · ${v.g}등급` : ''), sub: f.pearl ? '반짝반짝 진주 · 눌러서 값 물어보기' : `${v.td ? '⭐ 오늘의 어종 2배 · ' : ''}${v.cm}cm · 눌러서 값 물어보기`, price: fishP(v), line: () => appraise(v), done: `거래 고맙구먼! ${won(fishP(v))} 여기 있네.`, act: () => sell(fishP(v), fishGo([[k, v]]), true) }); }); }
       else out.push(['note', '가방에 물고기가 없어요. 낚시터에서 잡아 오세요.']);
       const crops = Object.entries(farmBarn).filter(([, n]) => n > 0).sort(), cropSum = crops.reduce((t, [k, n]) => t + cropPrice(k.split('|')[0], k.split('|')[1]) * n, 0);
       if (crops.length) { out.push(['sec', `🥕 작물 ${crops.reduce((t, [, n]) => t + n, 0)}개`]);
@@ -1234,15 +1243,15 @@ export function mount(el, ctx) {
       if (out.length === 2 && !L.length) out.push(['note', '팔 물건이 없어요. 물고기를 잡거나 물건을 사 오면 여기서 팔 수 있어요.']);
       return out; }
     const ico = x => (typeof x !== 'string' ? x : itemIcon(x) ? h('span', { class: 'so-rodic', html: itemIcon(x) }) : x.startsWith('<') ? h('span', { class: 'so-rodic', html: x }) : h('span', null, x));
-    function draw() { list.replaceChildren(h('p', { class: 'center' }, '내 돈 ', h('b', { 'data-coins': 1 }, won(ctx.coins()))), ...(tab === 'buy' ? buyItems() : sellItems()).map(it => {
+    function draw() { list.replaceChildren(h('p', { class: 'center' }, '내 돈 ', h('b', { 'data-coins': 1 }, won(ctx.coins()))), ...(tab === 'buy' ? buyItems() : tab === 'make' ? makeItems() : sellItems()).map(it => {
       if (it instanceof Node) return it; if (it[0] === 'sec') return h('b', { class: 'so-sellh' }, it[1]); if (it[0] === 'note') return h('p', { class: 'dim center' }, it[1]);
       const b = h('button', { class: 'so-row' + (it.big ? ' big' : '') + (it.gold ? ' gold' : '') + (it.off ? ' off' : '') + (it.cls ? ' ' + it.cls : '') }, ico(it.ic), h('b', null, it.name), h('small', null, it.sub));
       b.onclick = () => { say(typeof it.line === 'function' ? it.line() : it.line); list.querySelectorAll('.so-row.on').forEach(x => x.classList.remove('on')); const old = list.querySelector('.mk-deal'); if (old) old.remove(); if (it.off) return; b.classList.add('on');
         b.after(h('div', { class: 'mk-deal' }, h('button', { class: 'btn', onClick: () => { say(pick(tab === 'buy' ? GP.nobuy : GP.nosell)); draw(); } }, '그만둘래요'),
           h('button', { class: 'btn primary', onClick: async e => { const bt = e.currentTarget; bt.disabled = true; if (tab === 'sell' && it.multi && !trial && it.multi.max() > 1) { const mx = it.multi.max(), n = await ctx.askBuy(it.multi.name, it.price, { qty: true, max: mx, unit: it.multi.unit, sell: true }); if (!n) { bt.disabled = false; return; } if (await it.multi.go(n)) { say(`거래 고맙구먼! ${won(it.price * n)} 여기 있네.`); toast(`${it.multi.name} ${n}${it.multi.unit || '개'} 팔았어요`); } draw(); return; }
-          if (tab === 'buy' && it.multi && !trial) { const n = await ctx.askBuy(it.multi.name || it.name, it.price, { qty: true, max: it.multi.max, unit: it.multi.unit }); if (!n) { bt.disabled = false; return; } if (await it.multi.go(n)) { say(it.done || pick(GP.bought)); toast(`${it.multi.name || it.name} ${n}${it.multi.unit || '개'} 샀어요`); drawHp(); } draw(); return; } if (tab === 'buy' && !trial && !(await ctx.askBuy(it.name, it.price))) { bt.disabled = false; return; } if (await it.act()) { say(it.done || (tab === 'buy' ? pick(GP.bought) : `거래 고맙구먼! ${won(it.price)} 여기 있네.`)); if (tab === 'buy') toast(`${it.name} 샀어요`); drawHp(); } draw(); } }, `${won(it.price)}에 ${tab === 'buy' ? '사기' : '팔기'}`))); };
+          if (tab === 'buy' && it.multi && !trial) { const n = await ctx.askBuy(it.multi.name || it.name, it.price, { qty: true, max: it.multi.max, unit: it.multi.unit }); if (!n) { bt.disabled = false; return; } if (await it.multi.go(n)) { say(it.done || pick(GP.bought)); toast(`${it.multi.name || it.name} ${n}${it.multi.unit || '개'} 샀어요`); drawHp(); } draw(); return; } if (tab === 'buy' && !trial && !it.swap && !(await ctx.askBuy(it.name, it.price))) { bt.disabled = false; return; } if (await it.act()) { say(it.done || (tab === 'buy' ? pick(GP.bought) : `거래 고맙구먼! ${won(it.price)} 여기 있네.`)); if (tab === 'buy' && !it.swap) toast(`${it.name} 샀어요`); drawHp(); } draw(); } }, it.btn || `${won(it.price)}에 ${tab === 'buy' ? '사기' : '팔기'}`))); };
       return b; }));
-      tabs.replaceChildren(...[['buy', '🛒 구매'], ['sell', `💰 판매${nFish() ? ` · 🐟${nFish()}` : ''}`]].map(([k, l]) => h('button', { class: 'so-tab' + (tab === k ? ' on' : ''), onClick: () => { if (tab === k) return; tab = k; say(pick(k === 'buy' ? GP.hi : GP.sellHi)); draw(); } }, l))); }
+      tabs.replaceChildren(...[['buy', '🛒 구매'], ['sell', `💰 판매${nFish() ? ` · 🐟${nFish()}` : ''}`], ['make', `🔮 연성${(bag.coral || 0) >= CORAL_PER ? ' ✨' : ''}`]].map(([k, l]) => h('button', { class: 'so-tab' + (tab === k ? ' on' : ''), onClick: () => { if (tab === k) return; tab = k; say(k === 'make' ? '산호 조각을 가져왔나? 진주부적으로 빚어 주지.' : pick(k === 'buy' ? GP.hi : GP.sellHi)); draw(); } }, l))); }
     say(tab === 'buy' ? pick(GP.hi) : pick(GP.sellHi)); draw();
     modal({ title: '🏪 카피수퍼', body: h('div', { class: 'mk-shop' }, h('div', { class: 'mk-top' }, h('div', { class: 'mk-stall', html: STALL }), talk, tabs), list), actions: [{ label: '닫기', primary: true }] });
   }
@@ -1254,7 +1263,13 @@ export function mount(el, ctx) {
         (() => { const sd = Object.entries(farmSeeds).filter(([k, n]) => n > 0 && cropOf(k)); return h('div', { class: 'so-seeds' }, h('b', null, `🌱 가진 씨앗 ${sd.reduce((a, [, n]) => a + n, 0)}세트`), h('small', { class: 'dim' }, ' · 씨앗 1세트 = 이랑 1줄'), farmSprk > 0 && h('small', { class: 'so-sprk' }, ' · ', h('img', { src: 'img/farm/sprinkler.webp', alt: '' }), ` 스프링클러 ${farmSprk}개(밭 앞에서 설치)`),
           sd.length ? h('div', { class: 'so-seedl' }, sd.map(([k, n]) => h('span', { class: 'so-seed' }, h('img', { src: cropImg(k), alt: '' }), `${cropOf(k).name} ${n}`))) : h('p', { class: 'dim center' }, '씨앗이 없어요. 농장의 카피철물에서 사요.')); })(),
         h('p', { class: 'center' }, Object.entries(GIFTS).map(([k, [ic, nm]]) => `${ic} ${nm} ${bag[k] || 0}개`).join(' · ')),
-        h('p', { class: 'center so-charm' }, h('img', { src: 'img/crow/pearl-win.webp', alt: '' }), ` 진주부적 ${bag.pcharm || 0}장`, h('small', { class: 'dim' }, (bag.pcharm || 0) >= 3 ? ' · 고급 바다에서 3장 쓰면 10번 안에 진주(90%)' : ' · 3장 모으면 진주 성공률 90%')),
+        h('p', { class: 'center so-charm' }, h('img', { src: 'img/crow/pearl-win.webp', alt: '' }), ` 진주부적 ${bag.pcharm || 0}장`, h('small', { class: 'dim' }, (bag.pcharm || 0) >= 3 ? ' · 고급 바다에서 3장 쓰면 다음 한 번에 진주' : ' · 3장 모으면 진주를 불러요'), h('br'), `🪸 산호 조각 ${bag.coral || 0}개`, h('small', { class: 'dim' }, ` · ${CORAL_PER}개 = 진주부적 1장(카피수퍼 연성)`)),
+        (() => { const on = bag.pboost && bag.pboost.at, sea = zoneOf(me.x) === 3 && me.boat && (me.boat.own || me.boat.pass), n = bag.pcharm || 0;
+          if (on) return h('p', { class: 'center so-charmon' }, '🔮 부적 발동 중 · 다음에 던지면 진주가 나타나요');
+          if (n < 3) return '';
+          return sea ? h('button', { class: 'btn primary so-charmuse', onClick: () => modal({ title: '🔮 진주부적 쓰기', body: h('p', { class: 'center' }, '진주부적 3장을 쓸까요?', h('br'), '다음에 던지면 진주가 나타나요.', h('br'), h('small', { class: 'dim' }, '부적이 끌어올리지만 100%는 아니에요(90%).')),
+              actions: [{ label: '안 쓸래' }, { label: '쓰기', primary: true, onClick: c => { c(); if ((bag.pcharm || 0) < 3) return; saveBag({ pcharm: bag.pcharm - 3, pboost: { k: 0, at: 1 } }); sfx('bigfish'); toast('🔮 부적이 빛나요… 다음에 던지면 진주가 찾아와요!', 2600); draw(); } }] }) }, '🔮 진주부적 3장 쓰기')
+            : h('p', { class: 'center dim' }, '🔮 고급 바다에서 배를 탄 채 가방을 열면 부적을 쓸 수 있어요'); })(),
         (() => { const dl = Object.entries(bag.dolls || {}).filter(([k, n]) => n > 0 && ANIMALS[k]).map(([k, n]) => [+k, n]), on = (ctx.members[ctx.uid] || {}).doll;
           const wearDoll = async k => { ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), doll: k }; await ctx.store.update('members/' + ctx.uid, { doll: k }).catch(() => {}); refreshMe(); draw(); };
           return h('div', null, h('b', null, `🧸 뽑은 인형 ${dl.reduce((a, [, n]) => a + n, 0)}개`), dl.length ? h('div', { class: 'so-pins' }, dl.map(([k, n]) => h('button', { class: 'so-pin so-dollpin' + (on === k ? ' on' : ''), onClick: () => wearDoll(on === k ? null : k) }, h('span', { html: dollImg(k) }), h('small', null, on === k ? '착용 중' : `${ANIMALS[k].name} ×${n}`), h('small', { class: 'dim' }, '가슴 배지 · 선물')))) : h('p', { class: 'dim center' }, '카피오락의 인형뽑기에서 뽑아요. 동물에게 선물하거나 가슴에 달 수 있어요.')); })(),
