@@ -3065,3 +3065,7 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .fluffy .kb-tray.kb-table.on { box-shadow: 0 0 0 3px #3E9A50; }
 /* 밥상 위 요리 이름표: 상 끝이 아니라 상 위 왼쪽에 */
 .kb-tlb { left: 9%; bottom: auto; top: 12px; transform: none; font-size: 12px; padding: 3px 10px; border-radius: 10px; background: rgba(40,12,8,.78); border: 1.5px solid rgba(255,225,180,.55); }
+/* 밥상: 요리·수저를 상판 안쪽에 올려놓는다(앞 모서리에 걸치지 않게) */
+.kb-table .kb-set { inset: 0 0 36px; } .kb-table .kb-tdish { height: 70px; } .kb-table .kb-tsujeo { height: 66px; } .kb-table .kb-trice { height: 50px; margin-top: 8px; }
+.kb-tlb { top: 9px; left: 8.5%; font-size: 11px; padding: 2px 8px; }
+.kb-tlb { top: 62px; left: 9.5%; }
