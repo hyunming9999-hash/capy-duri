@@ -28,7 +28,7 @@ export async function passDemo(q, d) {
     const C1 = '1장 · 형제의 꼬리땐스';
     await go(['{smile}핫똑랜드랑 친해지려면 땐스를 배워야 해.', '{happy}강아지한테는 형제애를 느끼는 아주 중요한 땐스거든.', '{shy}근데… 이건 아무한테나 보여 주는 게 아닌데.'], DOG, C1);
     await go(['{think}(두리번두리번)', '{shy}…따라와.'], DOG, C1);
-    await go(['{shy}여기라면 아무도 없겠지.', '(휘이잉… 바람에 덤불 하나가 굴러간다)', '{think}…', '{happy}(갑자기 꼬리를 미친 듯이 좌우로 흔든다! 엉덩이까지 같이 흔들린다!)', '{smug}…봤지? 이게 꼬리 땐스야.'], DOG, C1, 'lot', [], undefined, (() => { const dd = h('div', { class: 'pq-deco dogdance' }, h('img', { src: 'img/fl/a0-back.webp', alt: '' }), h('i', { class: 'pq-wh' })); return k => (k >= 3 ? dd : null); })());
+    await go(['{shy}여기라면 아무도 없겠지.', '(휘이잉… 바람에 덤불 하나가 굴러간다)', '{think}…', '{happy}(갑자기 꼬리를 미친 듯이 좌우로 흔든다! 엉덩이까지 같이 흔들린다!)', '{smug}…봤지? 이게 꼬리 땐스야.'], DOG, C1, 'lot', [], undefined, (() => { const dd = h('div', { class: 'pq-deco dogdance', 'data-nopf': '1' }, h('img', { src: 'img/fl/a0-back.webp', alt: '' }), h('i', { class: 'pq-wh' })); return k => (k >= 3 ? dd : null); })());
     if (!(await tailDance(host, d))) throw 0; n++;
     { const bark = h('img', { class: 'pq-deco bark', src: 'img/quest/dog-bark.webp', alt: '', 'data-nopf': '1' }); await go(['{cry}멍멍 멍멍!! (강아지 방언)', '{shy}할아버지랑 해 보고서… 오랜만에 해 봐.'], DOG, C1, 'lot', [], undefined, k => (k === 0 ? bark : null)); }
     // ── 2장 · 고급 입맛
@@ -70,7 +70,7 @@ export async function passDemo(q, d) {
     await passportFx(d);
     await go(['{cry}300년 만에 바다를 건널 여권이 나왔습니다, 폐하…!'], LION, '피날레 · 여권 발급', 'plaza-happy');
     await go(['{think}(혼잣말) …그 일은 바다 건너에서 듣게 되실 겁니다.'], TURTLE, '피날레 · 여권 발급', '', [sub('🛫 카피공항은 보수 중이에요 · 빠른 시일 안에 열려요')]);
-    toast('🧪 여권 퀘스트 예시판 끝! (저장·보상 없음)', 3200);
+    d.showDip && d.showDip(); toast('🎖 가슴에 외교관 배지를 달았어요! (예시판이라 새로고침하면 사라져요)', 4200);
   } catch (e) { if (e !== 0) throw e; toast('예시판을 닫았어요', 1600); }
 }
 
@@ -82,7 +82,7 @@ const xBtn = done => h('button', { class: 'vn-x vn-quit pq-x', 'aria-label': '�
 
 // 해변 물병 찾기
 function findBottle(host) { return new Promise(res => { const el = stage(host, 'img/fl/bg/beach.webp', '🛂 프롤로그 · 해변에서 물병 찾기', '모래사장 어딘가에 반짝이는 게 있어요. 찾아서 눌러요!'), done = close(el, res);
-  const b = h('button', { class: 'pq-bottle', style: { left: 12 + Math.random() * 66 + '%', top: 58 + Math.random() * 26 + '%' }, 'aria-label': '물병', html: '<img src="img/quest/bottle.webp" alt="">',
+  const b = h('button', { class: 'pq-bottle float', style: { left: 30 + Math.random() * 44 + '%', top: 66 + Math.random() * 16 + '%' }, 'aria-label': '물병', html: '<i class="pq-rip"></i><i class="pq-rip r2"></i><i class="pq-spl"></i><img src="img/quest/bottle.webp" alt="">',
     onClick: e => { e.stopPropagation(); sfx('bigfish'); b.classList.add('got'); setTimeout(() => done(true), 900); } });
   el.append(b, xBtn(done)); }); }
 
@@ -95,7 +95,7 @@ function tailDance(host, d) { return new Promise(res => { const el = stage(host,
   const tick = now => { if (over) return; const left = TAIL_SEC - (performance.now() - t0) / 1000; tm.textContent = t0 ? Math.max(0, left).toFixed(1) + '초' : `${TAIL_SEC}.0초`; me.classList.toggle('hot', performance.now() - lastHit < 260); if (t0 && left <= 0) return end(false); raf = requestAnimationFrame(tick); };
   const hit = dir => { if (over) return; if (!t0) t0 = performance.now(); if (dir === last) return; last = dir; k++; lastHit = performance.now(); me.classList.remove('wl', 'wr'); void me.offsetWidth; me.classList.add(dir === 'l' ? 'wl' : 'wr'); sfx('tock'); draw(); if (k >= TAIL_N) end(true); };
   const end = ok => { over = true; cancelAnimationFrame(raf); window.removeEventListener('keydown', kd); me.classList.remove('hot');
-    if (ok) { sfx('bigfish'); me.classList.add('party'); el.append(h('div', { class: 'pq-msg ok' }, '🐕 형제여!!')); setTimeout(() => done(true), 1500); }
+    if (ok) { sfx('bigfish'); me.classList.add('party'); el.append(h('div', { class: 'pq-msg ok' }, '🐕 폐하!!')); setTimeout(() => done(true), 1500); }
     else { sfx('bad'); el.append(h('div', { class: 'pq-msg' }, h('p', null, '🐶 "다시! 형제는 포기하지 않아!"'), h('button', { class: 'btn primary', onClick: e => { e.stopPropagation(); el.remove(); tailDance(host, d).then(res); } }, '다시 하기'))); } };
   const kd = e => { if (e.key === 'ArrowLeft') hit('l'); else if (e.key === 'ArrowRight') hit('r'); }; window.addEventListener('keydown', kd);
   const pad = (dir, t) => h('button', { class: 'pq-pad', onPointerDown: e => { e.preventDefault(); e.stopPropagation(); hit(dir); } }, t);
@@ -129,21 +129,23 @@ function gullThrow(host) { return new Promise(res => { const el = stage(host, 'i
   const shipW = h('div', { class: 'pq-shipw' }, h('img', { class: 'pq-ship2', src: 'img/quest/ship-q.webp', alt: '해적선' }), gull, beam);
   const say = h('b', { class: 'pq-say' }); shipW.append(say); const bar = h('u'), btn = h('button', { class: 'btn primary pq-hold' }, '🍾 병 투척 (꾹)');
   new Image().src = 'img/quest/gull-look.webp';
-  let st = 'back', tSt = performance.now(), dur = 1600, held = false, prog = 0, last = performance.now(), over = false, raf = 0;
+  let st = 'back', tSt = performance.now(), dur = 1600, held = false, prog = 0, last = performance.now(), over = false, raf = 0, caught = 0; const lives = h('b', { class: 'pq-cnt pq-lives' }, '🚨 0 / 3');
   const setSt = s => { st = s; tSt = performance.now(); dur = s === 'back' ? 1400 + Math.random() * 1800 : s === 'hmm' ? 750 : 1400;
     el.dataset.st = s; say.textContent = s === 'hmm' ? '흠…?' : s === 'look' ? '‼ 거기 누구냐!' : ''; say.className = 'pq-say ' + s;
-    if (s === 'look') { gull.classList.add('turn'); setTimeout(() => { if (st === 'look') { gull.src = 'img/quest/gull-look.webp'; gull.classList.remove('turn'); gull.classList.add('spot'); } }, 140); sfx('bad'); }
-    else if (s === 'back') { gull.classList.remove('spot'); gull.classList.add('turn'); setTimeout(() => { gull.src = 'img/quest/gull-idle.webp'; gull.classList.remove('turn'); }, 140); } };
+    if (s === 'look') { gull.classList.add('turn'); setTimeout(() => { if (st === 'look') { gull.src = 'img/quest/gull-look.webp'; gull.classList.remove('turn'); gull.classList.add('spot'); } }, 170); sfx('bad'); }
+    else if (s === 'back') { gull.classList.remove('spot'); gull.classList.add('turn'); setTimeout(() => { gull.src = 'img/quest/gull-idle.webp'; gull.classList.remove('turn'); }, 170); } };
   const loop = now => { if (over) return; const dt = (now - last) / 1000; last = now;
     if (now - tSt > dur) setSt(st === 'back' ? 'hmm' : st === 'hmm' ? 'look' : 'back');
-    if (held) { if (st === 'look') { held = false; prog = 0; btn.classList.remove('on'); toast('🚨 들켰다! 처음부터', 1200); } else prog += dt / 3; }
+    if (held) { if (st === 'look') { held = false; prog = 0; btn.classList.remove('on'); caught++; lives.textContent = `🚨 ${caught} / 3`; sfx('bad');
+        if (caught >= 3) { over = true; el.append(h('div', { class: 'pq-msg' }, h('p', null, '🚨 세 번이나 들켰다!'), h('p', { class: 'pq-msg-s' }, '갈매기 경계가 삼엄해졌어요. 내일 다시 도전해요'), h('small', { class: 'pq-msg-t' }, '🧪 예시판이라 바로 다시 해 볼 수 있어요'), h('button', { class: 'btn primary', onClick: e => { e.stopPropagation(); el.remove(); gullThrow(host).then(res); } }, '다시 하기'))); return; }
+        toast(`🚨 들켰다! 처음부터 (${caught}/3)`, 1200); } else prog += dt / 3; }
     bar.style.width = Math.min(100, prog * 100) + '%';
     if (prog >= 1) { over = true; sfx('bigfish'); return setTimeout(() => done(true), 300); }
     raf = requestAnimationFrame(loop); };
   const down = e => { e.preventDefault(); e.stopPropagation(); if (over) return; if (st === 'look') { sfx('bad'); toast('지금은 보고 있어요!', 900); return; } held = true; btn.classList.add('on'); };
   const up = () => { held = false; btn.classList.remove('on'); };
   btn.addEventListener('pointerdown', down); btn.addEventListener('pointerup', up); btn.addEventListener('pointerleave', up); btn.addEventListener('pointercancel', up);
-  el.append(alarm, shipW, h('div', { class: 'pq-gauge low' }, bar), btn, xBtn(v => { over = true; cancelAnimationFrame(raf); done(v); })); setSt('back'); raf = requestAnimationFrame(loop); }); }
+  el.append(alarm, shipW, h('div', { class: 'pq-row top' }, lives), h('div', { class: 'pq-gauge low' }, bar), btn, xBtn(v => { over = true; cancelAnimationFrame(raf); done(v); })); setSt('back'); raf = requestAnimationFrame(loop); }); }
 
 // 컷신: 그림을 한 장씩 천천히 다가가며 보여 준다(누르면 다음)
 function cutins(host, list) { return list.reduce((p, [src, cap]) => p.then(() => new Promise(res => {

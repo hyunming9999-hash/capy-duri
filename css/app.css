@@ -2953,12 +2953,12 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .pq-pow { font-size: 26px; color: #FF5A3C; text-shadow: 0 2px 0 #fff, 0 0 6px #fff; } .pq-miss { font-size: 15px; color: #6B5A4A; text-shadow: 0 1px 0 #fff; }
 @keyframes pqPopUp { from { scale: .5; } 30% { scale: 1.2; } to { scale: 1; opacity: 0; translate: -50% -190%; } }
 /* 망루 갈매기 */
-.pq-shipw { position: absolute; right: 3%; top: 42%; width: 50%; max-width: 240px; z-index: 2; animation: pqSea 2.4s ease-in-out infinite; }
-@keyframes pqSea { 0%, 100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(7px) rotate(1.5deg); } }
+.pq-shipw { position: absolute; right: 3%; top: 42%; width: 50%; max-width: 240px; z-index: 2; transform-origin: 50% 85%; animation: pqSea 3.2s ease-in-out infinite; }
+@keyframes pqSea { 0%, 100% { transform: translateY(0) rotate(-2deg); } 25% { transform: translateY(4px) rotate(0deg); } 50% { transform: translateY(1px) rotate(2deg); } 75% { transform: translateY(5px) rotate(0deg); } }
 .pq-ship2 { width: 100%; display: block; }
-.pq-gull { position: absolute; left: 24%; top: -44%; width: 46%; transform-origin: 50% 100%; transition: transform .14s ease-in, filter .2s; filter: drop-shadow(0 3px 4px rgba(0,0,0,.3)); }
-.pq-gull.turn { transform: scaleX(0.05); }
-.pq[data-st="hmm"] .pq-gull { animation: pqHmm .25s ease-in-out 3; } @keyframes pqHmm { 50% { rotate: -9deg; translate: -4px 0; } }
+.pq-gull { position: absolute; left: 47%; top: -42%; height: 58%; width: auto; translate: -50% 0; transform-origin: 50% 100%; transition: transform .17s ease-in-out, filter .2s; filter: drop-shadow(0 3px 4px rgba(0,0,0,.3)); }
+.pq-gull.turn { transform: translateY(-7px) scaleX(0); }
+.pq[data-st="hmm"] .pq-gull { animation: pqHmm .25s ease-in-out 3; } @keyframes pqHmm { 50% { rotate: -9deg; translate: calc(-50% - 4px) 0; } }
 .pq-gull.spot { animation: pqSpot .35s cubic-bezier(.2,.9,.3,1.4); } @keyframes pqSpot { from { scale: .7; } 60% { scale: 1.22; } }
 .pq-beam { position: absolute; left: 6%; top: -30%; width: 140%; height: 180%; transform-origin: 30% 10%; rotate: 22deg; background: conic-gradient(from 200deg at 30% 10%, transparent 0deg, rgba(255,245,170,.55) 14deg, transparent 30deg); opacity: 0; pointer-events: none; transition: opacity .2s; }
 .pq[data-st="look"] .pq-beam { opacity: 1; animation: pqBeam 1.4s ease-in-out infinite alternate; } @keyframes pqBeam { from { rotate: 30deg; } to { rotate: 8deg; } }
@@ -2982,3 +2982,15 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 @keyframes ppBspin { from { rotate: y 720deg; scale: .2; } to { rotate: y 0deg; scale: 1; } }
 @keyframes ppShine { from { scale: .2; opacity: 0; } 40% { opacity: 1; } to { scale: 1.3; opacity: 0; } }
 .pp-ok { animation-delay: 0s; }
+
+/* 여권 예시판 4차 */
+.pfx-conf { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.pq-bottle.float { animation: none; width: 70px; height: 78px; margin: -39px 0 0 -35px; }
+.pq-bottle.float img { position: relative; z-index: 1; animation: pqBob2 1.8s ease-in-out infinite; }
+@keyframes pqBob2 { 0%, 100% { transform: translateY(0) rotate(-14deg); } 50% { transform: translateY(-7px) rotate(-4deg); } }
+.pq-rip { position: absolute; left: 50%; bottom: 4px; width: 96px; height: 26px; margin-left: -48px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,.85); animation: pqRip 1.8s ease-out infinite; pointer-events: none; }
+.pq-rip.r2 { animation-delay: .9s; } @keyframes pqRip { from { scale: .35; opacity: 1; } to { scale: 1.5; opacity: 0; } }
+.pq-spl { position: absolute; left: 50%; bottom: 10px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: #fff; box-shadow: -18px -6px 0 -1px #fff, 16px -8px 0 0 rgba(255,255,255,.9), -8px -16px 0 -2px #fff, 10px -18px 0 -2px rgba(255,255,255,.8); animation: pqSpl 1.8s ease-out infinite; pointer-events: none; }
+@keyframes pqSpl { 0% { translate: 0 6px; opacity: 0; } 15% { opacity: 1; } 50% { translate: 0 -10px; opacity: .9; } 70%, 100% { translate: 0 4px; opacity: 0; } }
+.pq-lives { position: static; }
+.pq-msg-s { font-size: 14px; font-weight: 700; } .pq-msg-t { display: block; margin-bottom: 8px; color: #8A6A3A; font-size: 12px; }

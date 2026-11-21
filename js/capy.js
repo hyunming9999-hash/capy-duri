@@ -66,6 +66,8 @@ export function capy(o = {}) {
     : PIN_CHEST.has(o.pin) ? `<circle cx="44" cy="93" r="9.5" fill="#fff" stroke="#E9C46A" stroke-width="2.2"/><text x="44" y="97.6" font-size="12.5" text-anchor="middle">${o.pin}</text>`
     : FLUFFY ? `<text x="91" y="112" font-size="17" text-anchor="middle" transform="rotate(-12 91 106)">${o.pin}</text>${capyPaw(o, 86.5, 108.5, true, 0.46)}` // 보송 그림체: 몸이 작아서 물건을 몸 가까이 들고, 손은 털 그림으로
     : `<text x="98" y="115" font-size="23" text-anchor="middle" transform="rotate(-12 98 108)">${o.pin}</text><ellipse cx="92" cy="109" rx="5.5" ry="4.5" fill="${c.body}"/>`;
+  // 외교관 배지(여권 퀘스트 보상): 가슴 한가운데
+  const dipB = !o.dip || back || o.head ? '' : '<image href="img/quest/badge.webp" x="48.5" y="84" width="23" height="25"/>';
   // 인형 배지(인형뽑기에서 뽑은 인형): 가슴에 단다. 상징 배지가 왼쪽 가슴에 있으면 오른쪽에
   const dollB = o.doll == null || back || o.head ? '' : FLUFFY ? dollBadge(o.doll, o.pin && PIN_CHEST.has(o.pin) ? 76 : 44, 96, o.own) : `<circle cx="44" cy="93" r="9.5" fill="#fff" stroke="#FF7AD9" stroke-width="2.2"/><text x="44" y="97.6" font-size="12.5" text-anchor="middle">🧸</text>`;
   const fl = FLUFFY ? capyBody(o.color, o.face, back, o.own) : null, flW = fl ? capyWear(o, o.own, back) : { shoe: '', body: '', hat: '' }, flTop = fl ? (flW.hat || (o.hat ? '' : acc(o.acc))) + (o.face === 'sleepy' && !back ? '<text x="102" y="20" font-size="15" font-weight="700" fill="#8FB8DE" font-family="sans-serif">z</text><text x="111" y="9" font-size="10" font-weight="700" fill="#8FB8DE" font-family="sans-serif">z</text>' : '') : ''; // 보송 그림체(시험판): 몸·얼굴은 그림 한 장, 옷·모자는 그 위에 겹친다
@@ -91,8 +93,8 @@ export function capy(o = {}) {
       if (RARE_SHOE.has(k)) return; if (RARE_BACK.has(k)) wearB += img; else if (RARE_BODY.has(k)) wearM += img; else if (k === 2 && list.some(x => RARE_HOLD.has(x))) gem += `<g transform="matrix(-1 0 0 1 120 0)">${img}</g>`; else gem += img + (RARE_HOLD.has(k) ? `<ellipse cx="${96 + dx * 0.6}" cy="104" rx="7.5" ry="6.5" fill="${c.body}"/><path d="M${91 + dx * 0.6} 101 q5 -3 10 0" fill="none" stroke="${c.dark}" stroke-width="1.4" stroke-linecap="round" opacity=".6"/>` : ''); });
     gem += [[4, 62, 0], [116, 50, .6], [10, 126, 1.1], [112, 120, 1.6], [60, -34, .3], [-10, 22, .9], [130, 92, 1.3], [30, -24, .5]].map(([x, y, d]) => `<path d="M${x} ${y - 10} l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="#FFFDF0" stroke="#F0C24A" stroke-width="1"><animate attributeName="opacity" values="0.15;1;0.15" dur="1.6s" begin="${d}s" repeatCount="indefinite"/></path>`).join(''); }
   const flR = fl && o.rare && o.rare.i != null && !back ? capyRare((o.rare.list || [o.rare.i]).slice(0, 6), o.own, o) : { over: '', shoe: '', back: '' };
-  if (fl) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158"${glow ? ' style="overflow:visible"' : ''}>${glow}${o.noShadow ? '' : SHADOW}${flR.back}${fl.feet}${fl.body}${flR.shoe || flW.shoe}${flW.body}${flTop}${flR.over}${pin}${dollB}${gem}</svg>`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158"${glow ? ' style="overflow:visible"' : ''}>${glow}${wearB}${body}${wearM}${shoeToe}${head}${pin}${dollB}${gem}</svg>`;
+  if (fl) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158"${glow ? ' style="overflow:visible"' : ''}>${glow}${o.noShadow ? '' : SHADOW}${flR.back}${fl.feet}${fl.body}${flR.shoe || flW.shoe}${flW.body}${flTop}${flR.over}${pin}${dollB}${dipB}${gem}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158"${glow ? ' style="overflow:visible"' : ''}>${glow}${wearB}${body}${wearM}${shoeToe}${head}${pin}${dollB}${dipB}${gem}</svg>`;
 }
 
 export function capyEl(o = {}, cls = '') {
