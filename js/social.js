@@ -610,7 +610,7 @@ export function mount(el, ctx) {
     c.forEach(([i, t], k) => setTimeout(() => { if (alive && actors[i]) pop(actors[i].e, toned(i, t), 'say long'); }, k * 2800)); }
   // 🛂 여권 퀘스트(황금 장비 여섯 개를 두르면 시작)
   // 여권 퀘스트 시험판(?passtest): 황금 장비가 없어도 시작되고, 진행은 이 기기에만 적어 둔다(진짜 진행·보상과 무관). ?passtest=reset 처음부터 · ?passtest=1~4 그 단계부터
-  const PT = (() => { try { return new URLSearchParams(location.search).get('passtest'); } catch { return null; } })(), ptOn = PT != null;
+  const PT = (() => { try { return new URLSearchParams(location.search).get('passtest'); } catch { return null; } })(), ptOn = PT != null && ctx.me.name === '밍땅꾸리' && !!(ctx.ours && ctx.ours()); // 밍땅꾸리 계정에서만 열린다(다른 계정은 링크를 알아도 아무 일 없음)
   const ptStore = { on: (k, f) => { let v = {}; try { v = JSON.parse(localStorage.getItem('capy-passtest') || '{}') || {}; } catch {} if (PT === 'reset') v = {}; else if (/^[1-4]$/.test(PT)) v = { s: +PT, fish: 0, yuzu: 0, ck: {} }; ptStore.v = v; try { localStorage.setItem('capy-passtest', JSON.stringify(v)); } catch {} setTimeout(() => f(ptStore.v)); return () => {}; },
     update: (k, patch) => { ptStore.v = { ...(ptStore.v || {}), ...patch }; try { localStorage.setItem('capy-passtest', JSON.stringify(ptStore.v)); } catch {} return Promise.resolve(); } };
   if (ptOn) setTimeout(() => toast('🧪 여권 퀘스트 시험판 · 진짜 진행·보상과는 무관해요 (낚시·농사·요리는 진짜로 해요)', 4200), 1500);
