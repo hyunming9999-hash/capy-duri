@@ -2846,3 +2846,6 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 /* 대왕 폐하께 예의: 보송 그림은 몸 전체를 내 쪽으로 살짝 숙인다 */
 .so-an.bow .so-body, .so-an.bow.walk .so-body, .so-an.bow.swim .so-body { transform-origin: 50% 92%; animation: soBowF 2.4s ease-in-out !important; }
 @keyframes soBowF { 0%, 8% { rotate: 0deg; translate: 0 0; } 35%, 70% { rotate: calc(var(--bd, -1) * 16deg); translate: calc(var(--bd, -1) * 3px) 3px; } 100% { rotate: 0deg; translate: 0 0; } }
+/* 절(다시): 발은 땅에 붙인 채 윗몸·얼굴만 내 쪽으로 숙인다(기울이기 대신 밑을 고정한 비틀기) */
+.so-an.bow .so-body, .so-an.bow.walk .so-body, .so-an.bow.swim .so-body { transform-origin: 50% 90%; animation: soBowG 2.4s ease-in-out !important; }
+@keyframes soBowG { 0%, 8% { transform: none; } 35%, 70% { transform: skewX(calc(var(--bd, -1) * -16deg)) scaleY(.93); } 100% { transform: none; } }
