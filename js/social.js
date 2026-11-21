@@ -184,7 +184,7 @@ async function askAI(room, body) {
 
 export function mount(el, ctx) {
   let alive = true, mine = {}, theirs = {}, bag = {}, scroller, meEl, mePop;
-  const pid = () => ctx.partnerId, A = i => (mine[i] && mine[i].a) || 0;
+  const pid = () => ctx.partnerId, A = i => { const r = mine[i] || {}, v = r.a || 0; return v >= 100 && !r.cake ? 99 : v; }; // 단짝(100)은 케이크를 먹여 된 것만 인정한다(케이크 표시가 없으면 99로 본다)
   // 가로·풀화면 게임(카피배구 등)에서 막 돌아오면 화면이 아직 눕혀져 있어 높이가 작게 잡힌다 → 화면이 다시 커지면 친목회를 새로 그린다(키보드처럼 줄어드는 쪽은 무시)
   const h0 = innerHeight; let reT = 0; const onGrow = () => { if (!alive || innerHeight < h0 + 80) return; clearTimeout(reT); reT = setTimeout(() => { if (alive && innerHeight >= h0 + 80 && !fishOpen && !battle && !document.querySelector('.modal-wrap')) window.dispatchEvent(new Event('hashchange')); }, 350); };
   addEventListener('resize', onGrow);
@@ -227,7 +227,7 @@ export function mount(el, ctx) {
     <path d="M573 357 L594 324 q5 -6 10 0 L625 357z" fill="#F0625A" stroke="#B5473C" stroke-width="2.4" stroke-linejoin="round"/><circle cx="599" cy="339" r="4.5" fill="#FFD21F"/></svg>`;
   const capA = (i, v, cake) => (v >= 100 && !cake && A(i) < 100 ? 99 : Math.min(100, v)); // 100점은 케이크로만
   // 교류(점수가 오르거나 말을 나눔)하면 그때부터 하루 동안은 식지 않는다
-  const setRel = (i, patch, cake) => { if (patch.a != null) patch = { ...patch, a: capA(i, patch.a, cake) }; if (patch.a === 100 && A(i) < 100) patch = { ...patch, hit100: true, ...((mine[i] || {}).crowed ? { x2: true } : {}) }; if ((patch.a != null && patch.a > A(i)) || (patch.mem && !String((patch.mem[patch.mem.length - 1] || {}).s || '').startsWith('(')) || patch.fedAt) patch = { ...patch, fedAt: ctx.store.now(), dropN: 0, dropL: 0, lowAt: 0 }; mine = { ...mine, [i]: { ...(mine[i] || {}), ...patch } }; return ctx.store.update(`social/${ctx.uid}/${i}`, patch).catch(() => {}); };
+  const setRel = (i, patch, cake) => { if (patch.a != null) patch = { ...patch, a: capA(i, patch.a, cake) }; if (cake && patch.a === 100) patch = { ...patch, cake: 1 }; if (patch.a === 100 && A(i) < 100) patch = { ...patch, hit100: true, ...((mine[i] || {}).crowed ? { x2: true } : {}) }; if ((patch.a != null && patch.a > A(i)) || (patch.mem && !String((patch.mem[patch.mem.length - 1] || {}).s || '').startsWith('(')) || patch.fedAt) patch = { ...patch, fedAt: ctx.store.now(), dropN: 0, dropL: 0, lowAt: 0 }; mine = { ...mine, [i]: { ...(mine[i] || {}), ...patch } }; return ctx.store.update(`social/${ctx.uid}/${i}`, patch).catch(() => {}); };
   const pinOf = u => (ctx.members[u] || {}).pin;
   // 황금옷 값: 까마귀 이간질로 100에서 떨어졌다가 다시 100이 된 동물은 그 동물의 황금옷만 2배
   const rarePrice = i => RARE_BASE(i) * ((mine[i] || {}).x2 ? 2 : 1);
@@ -841,7 +841,7 @@ export function mount(el, ctx) {
   // 동물 머리 위 친밀도: 내 점수(크게)와 상대 점수(작게). 사이가 나쁘면 찌푸리고, 좋으면 하트가 떠오른다
   function scores() {
     if (!scroller) return;
-    scroller.querySelectorAll('.so-an').forEach(e => { const i = +e.dataset.i, a = A(i), lv = levelOf(a), t = pid() && theirs[i] ? theirs[i].a || 0 : null, s = e.querySelector('.so-score'), mood = moodOf(a), hearts = a >= 80 ? 3 : a >= 50 ? 2 : a >= 30 ? 1 : 0;
+    scroller.querySelectorAll('.so-an').forEach(e => { const i = +e.dataset.i, a = A(i), lv = levelOf(a), t = pid() && theirs[i] ? (theirs[i].a >= 100 && !theirs[i].cake ? 99 : theirs[i].a || 0) : null, s = e.querySelector('.so-score'), mood = moodOf(a), hearts = a >= 80 ? 3 : a >= 50 ? 2 : a >= 30 ? 1 : 0;
       s.className = 'so-score' + (a < 0 ? ' neg' : a >= PIN_AT ? ' hi' : ''); s.replaceChildren(h('b', null, `${lv[2]} ${a}`), t != null && h('i', null, `${ctx.nameOf(pid()).slice(0, 3)} ${t}`) || '');
       { const mk = mood + (i === 10 && questDone() ? '+f' : ''); if (e.dataset.mood !== mk) { e.dataset.mood = mk; e.querySelector('.so-body').innerHTML = crowned(i, animalSvg(i, true, mood)); } }
       if (+e.dataset.hearts !== hearts) { e.dataset.hearts = hearts; e.querySelector('.so-hearts').replaceChildren(...Array.from({ length: hearts }, (_, k) => h('i', { style: { animationDelay: k * 0.7 + 's', left: [50, 22, 78][k] + '%' } }, '💗'))); } });
