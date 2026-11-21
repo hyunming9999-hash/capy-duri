@@ -182,6 +182,7 @@ export function openFarm(o) {
     // 뒷모습 그림을 미리 받아 둔다: 서리 버튼을 처음 누를 때 그림을 받느라 캐릭터가 잠깐 사라지던 것 방지
     if (!sc) setTimeout(() => { try { [meSvg(true), meSvg(false)].forEach(html => (html.match(/href="[^"]+"/g) || []).forEach(m => { const im = new Image(); im.src = m.slice(6, -1); im.decode && im.decode().catch(() => {}); })); } catch {} }, 300);
     const kp = { x: plotX(0) + PW * 0.8, face: -1, k: 0, mode: 'walk', t: 0, next: 5, grace: 0, beat: 0, pose: '' }, prog = {}; let busy = false, bubT = 0;
+    const hero = () => { const n = o.keeper.worn ? o.keeper.worn() : 0; return n >= 4 && n < 6; }; // 황금 장신구 4~5개: 관리인마저 경의를 표한다
     const say = (t, ms = 1600) => { bub.textContent = t; bub.hidden = false; clearTimeout(bubT); bubT = setTimeout(() => { bub.hidden = true; }, ms); };
     const pose = n => { if (kp.pose !== n) { kp.pose = n; img.src = `img/farm/kp-${n}.webp`; } };
     const visit = () => who !== ctx.uid;
@@ -226,7 +227,7 @@ export function openFarm(o) {
       if (paused || kp.mode === 'bust') { /* 멈춤 */ }
       else if (kp.x < lo - 4 || kp.x > hi + 4) { kp.mode = 'walk'; pose('walk'); kp.face = kp.x < lo ? 1 : -1; kp.x += kp.face * 150 * dt; } // 내가 다른 밭으로 가면 뛰어서 따라온다
       else if (kp.mode === 'walk') { pose('walk'); if (kp.rest > 0) kp.rest -= dt; else kp.x += kp.face * (v ? 58 : 44) * dt; if (kp.x <= lo && kp.face < 0) { kp.x = lo; kp.face = 1; kp.rest = 0.45; } else if (kp.x >= hi && kp.face > 0) { kp.x = hi; kp.face = -1; kp.rest = 0.45; } /* 끝에서는 잠깐 멈췄다가 돌아선다 */
-        if ((kp.next -= dt) <= 0) { if (!v) { kp.mode = 'talk'; kp.t = 2.8; pose('front'); say(KP_SAY[Math.floor(Math.random() * (Math.random() < 0.7 ? 2 : KP_SAY.length))], 2700); kp.next = 5 + Math.random() * 4; }
+        if ((kp.next -= dt) <= 0) { if (!v) { kp.mode = 'talk'; kp.t = 2.8; pose('front'); say(hero() && Math.random() < 0.6 ? '나는 당신 앞에서 절대 선글라스를 벗지 않겠네. 이유는 비밀일세' : KP_SAY[Math.floor(Math.random() * (Math.random() < 0.7 ? 2 : KP_SAY.length))], 3200); kp.next = 5 + Math.random() * 4; }
           else if (kp.face !== toMe) { kp.mode = 'hum'; kp.t = 1.15 - f * 0.3; say('흠…', kp.t * 1000 + 150); kp.next = (5.5 + Math.random() * 4) * (1 - 0.45 * f); } // 등지고 걷다가 문득 멈춘다(게이지가 찰수록 자주·짧게)
           else kp.next = 0.6; } }
       else if (kp.mode === 'talk') { if ((kp.t -= dt) <= 0) { kp.mode = 'walk'; pose('walk'); } }
@@ -240,7 +241,7 @@ export function openFarm(o) {
       rc(sheet, h('div', { class: 'fm-ohead' }, h('b', null, `🤫 ${k + 1}번 밭 · 서리할 이랑 고르기`)), h('div', { class: 'fm-stpick' }, ...[0, 1, 2].map(i => { const ok = here.includes(i), r = rows[i], c = r && r.c ? cropOf(r.c) : null;
         return h('button', { class: 'fm-stp' + (ok ? '' : ' off'), disabled: !ok, onClick: () => { chosen = k + '|' + i; mode = 'hold'; sfx('pop'); } }, h('i', null, i + 1), c && live(r) ? h('img', { src: cropImg(c.id), alt: '' }) : h('span', null, '–'), h('b', null, `${i + 1}번 이랑`), h('small', null, ok ? `${c.name} · 다 익음` : live(r) ? '덜 익음' : '빈 이랑')); })),
         h('p', { class: 'dim fm-tip' }, '고르면 가운데 버튼이 서리 게이지로 바뀌어요. 관리인이 등 돌렸을 때 꾹!')); return true; };
-    return { tick, ctl, hint, tangB, pickView, greet: () => h('div', { class: 'fm-kpg' }, h('img', { src: 'img/farm/kp-front.webp', alt: '관리인' }), h('p', null, h('b', null, '카피철물 관리인'), '어서 오세요! ', KP_SAY[0], h('small', null, KP_SAY[1]))) };
+    return { tick, ctl, hint, tangB, pickView, greet: () => h('div', { class: 'fm-kpg' }, h('img', { src: 'img/farm/kp-front.webp', alt: '관리인' }), h('p', null, h('b', null, '카피철물 관리인'), '어서 오세요! ', hero() ? '나는 당신 앞에서 절대 선글라스를 벗지 않겠네. 이유는 비밀일세' : KP_SAY[0], h('small', null, KP_SAY[1]))) };
   })() : null;
   if (KP) quickEl.after(KP.ctl, KP.tangB, KP.hint);
 

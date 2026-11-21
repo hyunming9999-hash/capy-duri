@@ -509,7 +509,7 @@ export function mount(el, ctx) {
   try { const ct = new URLSearchParams(location.search).get('cooktest'); if (ct != null) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); if (!fishOpen && !battle) cookTest(ct || 'maeun'); }, 1400); } catch {}
   // 농장 체험 링크(?farmtest): 진짜 농장·돈과 따로 노는 연습 농장(코인 5,000 · 스프링클러 2개 · 자라는 작물). 닫으면 사라져요
   // 농장 관리인(서리)에서 쓰는 것: 내 황금 장비 목록 · 담보로 맡기기(가방에서 빼고, 입고 있으면 벗는다) · 되찾기 · 판 값 · 받은 돈 넣기
-  const farmKeeper = { gold: () => Object.keys(bag.rares || {}).filter(k => bag.rares[k] && ANIMALS[k]).map(k => ({ id: +k, name: rareName(+k) })),
+  const farmKeeper = { worn: () => myRares().length, gold: () => Object.keys(bag.rares || {}).filter(k => bag.rares[k] && ANIMALS[k]).map(k => ({ id: +k, name: rareName(+k) })),
     take: async it => { if (myRares().includes(it.id)) await wearRare(it.id); bag = { ...bag, rares: { ...(bag.rares || {}), [it.id]: null } }; await ctx.store.update('bag/' + ctx.uid + '/rares', { [it.id]: null }).catch(() => {}); },
     give: async it => { bag = { ...bag, rares: { ...(bag.rares || {}), [it.id]: true } }; await ctx.store.update('bag/' + ctx.uid + '/rares', { [it.id]: true }).catch(() => {}); },
     value: i => Math.max(1, Math.round(RARE_BASE(i) / 2)), credit: n => addCoins(n),
