@@ -2827,3 +2827,5 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .so-h-gallery { aspect-ratio: 600 / 593; } .so-h-gallery b { left: 13%; right: 13%; top: 33%; height: 12%; border-radius: 10px; background: #FFFBEE; border: 2.5px solid #7FB069; box-shadow: 0 3px 0 #5E8E4A; color: #4F7A3A; text-shadow: none; }
 .so-h-watch { aspect-ratio: 572 / 600; } .so-h-watch b { left: 21%; right: 20%; top: 33%; height: 13%; color: #C2364A; font-size: 12.5cqw; text-shadow: 1.5px 0 #FFF7E6, -1.5px 0 #FFF7E6, 0 1.5px #FFF7E6, 0 -1.5px #FFF7E6; }
 .so-h-watch b { left: 24%; right: 23.5%; top: 40.3%; height: 8%; font-size: 8.4cqw; }
+.so-h-walk { aspect-ratio: 600 / 559; } .so-h-walk b { left: 26%; right: 26%; top: 26.8%; height: 9%; font-size: 8.4cqw; border: 0; border-radius: 0; background: none; box-shadow: none; color: #6B3A16; text-shadow: 1.5px 0 #FFF1D6, -1.5px 0 #FFF1D6, 0 1.5px #FFF1D6, 0 -1.5px #FFF1D6; }
+.so-h-gallery b { left: 28.5%; right: 28.5%; top: 20.4%; height: 8.2%; font-size: 7.6cqw; border: 0; border-radius: 0; background: none; box-shadow: none; color: #4F7A3A; }
