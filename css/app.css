@@ -2833,3 +2833,12 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .so-an.cry::before, .so-an.cry::after { font-size: 19px; top: 30%; filter: drop-shadow(0 1px 1px rgba(0,60,120,.35)); animation: soTear2 .9s ease-in infinite; }
 .so-an.cry::after { animation-delay: .45s; }
 @keyframes soTear2 { 0% { translate: 0 0; opacity: 0; scale: .6; } 15% { opacity: 1; scale: 1; } 80% { opacity: 1; } 100% { translate: 0 30px; opacity: 0; scale: .8; } }
+/* 눈물(다시): 이모지 대신 작은 물방울이 눈 밑에서 맺혀 볼을 타고 흐른다 */
+.so-an.cry::before, .so-an.cry::after { content: ''; width: 5px; height: 7px; font-size: 0; top: 41%; border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%; background: radial-gradient(circle at 35% 35%, #fff 0 18%, #BFE6FF 30%, #7CC4F2 100%); box-shadow: 0 0 2px rgba(255,255,255,.9); filter: none; animation: soTear3 1.1s ease-in infinite; }
+.so-an.cry::before { left: 33%; } .so-an.cry::after { right: 33%; animation-delay: .55s; }
+@keyframes soTear3 { 0% { translate: 0 0; opacity: 0; scale: .3; } 20% { opacity: 1; scale: 1; } 85% { opacity: .95; } 100% { translate: 0 15px; opacity: 0; scale: .7 1.15; } }
+.so-an.cry::before, .so-an.cry::after { content: none; }
+.so-an.cry .so-body::before, .so-an.cry .so-body::after { content: ''; position: absolute; z-index: 3; width: 4.5px; height: 6.5px; top: 47%; border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%; background: radial-gradient(circle at 35% 35%, #fff 0 18%, #BFE6FF 30%, #7CC4F2 100%); box-shadow: 0 0 2px rgba(255,255,255,.9); pointer-events: none; animation: soTear3 1.1s ease-in infinite; }
+.so-an.cry .so-body::before { left: 36%; } .so-an.cry .so-body::after { right: 36%; animation-delay: .55s; }
+.so-an.cry .so-body { position: relative; }
+.so-an.cry .so-body::before, .so-an.cry .so-body::after { top: 44%; } .so-an.cry .so-body::before { left: 37%; } .so-an.cry .so-body::after { right: 33%; }
