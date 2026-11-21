@@ -252,7 +252,9 @@ export function openFishing(o) {
       document.body.append(fx); sfx('fanfare'); setTimeout(() => sfx('bigfish'), 500); [900, 1500, 2100, 2700].forEach(t => setTimeout(() => alive && sfx('coin'), t));
       try { navigator.vibrate && navigator.vibrate([80, 60, 80, 60, 200]); } catch {}
       [3000, 3400, 3800].forEach(t => setTimeout(() => alive && sfx('fanfare'), t));
-      const end = () => { fx.classList.add('out'); setTimeout(() => fx.remove(), 700); }; // 확인 버튼을 눌러야만 꺼진다(화면을 눌러도, 시간이 지나도 그대로)
+      // 폰에서 아래 화면(낚시터·친목회) 조각이 연출 위로 비쳐 나오던 문제: 연출 동안 아래 화면을 아예 숨겼다가, 확인을 누르면 되돌린다
+      const app = document.getElementById('app'), hid = [wrap, app].filter(Boolean); setTimeout(() => { if (fx.isConnected) hid.forEach(e => { e.style.visibility = 'hidden'; }); }, 350);
+      const end = () => { hid.forEach(e => { e.style.visibility = ''; }); fx.classList.add('out'); setTimeout(() => fx.remove(), 700); }; // 확인 버튼을 눌러야만 꺼진다(화면을 눌러도, 시간이 지나도 그대로)
       // 확인 버튼은 3초 뒤에야 생긴다: 릴을 연타하던 손가락에 눌려 바로 꺼지지 않게(그 전에는 버튼이 아예 없다)
       setTimeout(() => { if (!fx.isConnected) return; const born = performance.now(); fx.append(h('button', { class: 'btn primary pfx-ok', onClick: e => { e.stopPropagation(); if (performance.now() - born > 600) end(); } }, '✨ 확인')); }, 3000); }
     // 와! ○○○을 잡았다! — 화면 가득 터지는 글자, 그 아래 등급
