@@ -3028,3 +3028,6 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .sl-coin { position: absolute; top: -6%; font-style: normal; font-size: 6cqw; animation: slCoin 1.5s ease-in forwards; pointer-events: none; } @keyframes slCoin { to { translate: 0 125cqw; rotate: 540deg; } }
 .sl-note { font-size: 12px; margin-top: 6px; word-break: keep-all; }
 .sl-table > div { display: flex; align-items: center; justify-content: space-between; padding: 4px 10px; border-bottom: 1px dashed #E8D3AE; } .sl-table img { width: 34px; height: 34px; object-fit: contain; } .sl-table span { display: flex; gap: 4px; align-items: center; } .sl-table i { width: 34px; text-align: center; font-style: normal; font-weight: 900; color: #B9A58A; } .sl-table b { font: 900 18px var(--head); color: #C2410C; }
+/* 카피도박 안내 글: 기계 아래 러그 위의 펠트 이름표로 */
+.sl-msg { left: 13%; right: 13%; top: 86.5%; padding: 2cqw 3cqw; border-radius: 6cqw; background: linear-gradient(#FFFBEF, #FFEBC2); border: .8cqw solid #B5651D; box-shadow: 0 1cqw 0 #8A4A12, 0 0 0 .6cqw #FFF6DC inset; outline: .5cqw dashed #E7B36A; outline-offset: -1.6cqw; color: #7A3E0A; text-shadow: none; font-size: 4.6cqw; }
+.sl-msg.ok { color: #C2410C; font-size: 5.2cqw; background: linear-gradient(#FFF7B8, #FFD23F); border-color: #C97A0A; box-shadow: 0 1cqw 0 #A8650A, 0 0 5cqw 1cqw rgba(255,220,90,.9); }
