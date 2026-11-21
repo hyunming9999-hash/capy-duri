@@ -833,6 +833,7 @@ export function mount(el, ctx) {
         const goldOk = wall - ((mine[i] || {}).gp || 0) >= 600000, gold = (kind, list) => { setRel(i, { gp: wall }); const prev = o.lastGold, pool = list.filter(t => t !== prev), t = pool.length ? pool[Math.floor(Math.random() * pool.length)] : list[0]; o.lastGold = t; return line(i, kind, t, shineN); };
         const goldPool = base => [base, ...RAREGREET.map(f => toned(i, f(ctx.me.name)))];
         if (missOf(i)) { setRel(i, { miss: vit.missAt }); pop(o.e, line(i, 'miss', toned(i, pick(MISS)(ctx.me.name))), 'say long'); animalVoice(i); }
+        else if (shineN >= 4 && shineN < 6 && A(i) >= 0) { pop(o.e, gold('hero', [AWE2[i], ...HERO.map(f => toned(i, f(ctx.me.name)))]), 'say long'); o.e.classList.add('cry'); scores(); setTimeout(() => { o.e.classList.remove('cry'); scores(); }, 4200); } // 황금 4~5개: 친밀도가 마이너스만 아니면 마주칠 때마다 울며 영웅이라고(10분 제한 없음)
         else if (bag.rumorAt && shiny && !(mine[i] || {}).rumor) { setRel(i, { rumor: 1 }); pop(o.e, line(i, 'rumor', toned(i, pick(RUMOR)(ctx.me.name))), 'say long'); } // 첫 황금템 소문을 듣고 달려온다(동물마다 한 번)
         else if (!aquaOpen && aqua.t && (mine[i] || {}).aqInv !== ymd() && Math.random() < 0.3 && aqRareName()) { setRel(i, { aqInv: ymd() }); pop(o.e, toned(i, `${aqRareName()} 잡았다며! 나 수족관에 보러 가도 돼?`), 'say long'); } // 수족관에 귀한 물고기가 있으면 하루 한 번 보러 가도 되냐고 묻는다
         else if (near100 && now > (o.cakeAt || 0)) { o.cakeAt = now + 60000; pop(o.e, line(i, 'cake', toned(i, pick(CAKE_HINT))), 'say long'); } // 단짝 직전: 케이크가 필요하다고 알려 준다
