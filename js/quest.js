@@ -284,5 +284,6 @@ export function createQuest(d) {
         else { const nt = needText(s); if (!(await vn(s.say, s.who, title, nt ? [h('p', { class: 'vn-sub' }, `조건: ${nt} · 시험판에서는 바로 통과`)] : []))) return; }
         sceneBg = bgOf(n, 'done'); if (!(await vn(s.done, s.to, title + ' ✔', s.clue ? [h('p', { class: 'vn-sub' }, `📝 단서: ${s.clue}`)] : []))) return; }
       { const L = FLAT[total - 1], [c, a2] = rewardOf(L); finale([['🛴', '황금 퀵보드 (전설의 황금사자 스쿠터)', '가방에서 타기 · 육지와 농장에서 빠르게 달려요'], ['🪙', `${c.toLocaleString('ko-KR')}코인`, ''], ['🦁', '사자 친밀도 100', '단짝이 됐어요!'], ['💗', `다른 동물 친밀도 +${a2}`, '']], '🧪 시험판이라 실제로 지급되지는 않아요'); } } finally { sceneBg = ''; } }
-  return { demo, replay, open, status, progress, markOf, cooks, cooked, chatter, gossip, fresh, pirateOn, pirateResult, dispose: () => off && off() };
+  const scene = (lines, def, title, extra, buttons, bg) => { sceneBg = bg || ''; return vn(lines, def, title, extra, buttons).finally(() => { sceneBg = ''; }); }; // 다른 퀘스트(여권)가 같은 대화 화면을 쓴다
+  return { scene, demo, replay, open, status, progress, markOf, cooks, cooked, chatter, gossip, fresh, pirateOn, pirateResult, dispose: () => off && off() };
 }
