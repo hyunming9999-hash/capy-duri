@@ -9,6 +9,7 @@ import * as tetris from './g-tetris.js';
 import * as mahjong from './g-mahjong.js';
 import * as claw from './g-claw.js';
 import * as bubble from './g-bubble.js';
+import * as slot from './g-slot.js';
 import { RATE, ENTRY } from './money.js';
 import { needCoin, hasCredit, PLANS, leaveArcade } from './arcade.js';
 
@@ -24,6 +25,7 @@ export const GAMES = [
   { id: 'tetris', mod: tetris, title: '카피 테트리스', sub: '줄 지우기 · 경쟁·기록', face: 'wow', acc: 'leaf' },
   { id: 'bubble', mod: bubble, title: '카피 버블', sub: '같은 동물 구슬 3개 펑! · 기록·스테이지·경쟁', face: 'love', acc: 'ribbon' },
   { id: 'mahjong', mod: mahjong, title: '동물 마작', sub: '같은 동물 짝 없애기 · 경쟁·컴퓨터', face: 'smile', acc: 'flower' },
+  { id: 'slot', mod: slot, title: '카피도박', sub: '트리플 세븐 🎰 · 한 판 50 / 100코인', face: 'wow', acc: 'yuzu' },
   { id: 'claw', mod: claw, title: '인형뽑기', sub: '집게로 동물 인형 뽑기 · 1판 50 · 3판 150 · 5판 200', face: 'wow', acc: 'ribbon' },
 ];
 

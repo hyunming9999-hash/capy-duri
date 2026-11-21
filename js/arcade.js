@@ -16,7 +16,7 @@ const setCredit = on => { try { on ? sessionStorage.setItem(CK, '1') : sessionSt
 export const outOfGame = ctx => { leaveArcade(); ctx.go('game'); }; // 게임 목록(#game)은 친목회의 카피오락 창으로 이어진다
 
 // 판 수를 골라 넣는 게임(인형뽑기): [값, 판 수]. 이런 게임은 판 수를 게임이 따로 세고, 들어갈 때의 동전 창은 건너뛴다
-export const PLANS = { claw: [[50, 1], [150, 3], [200, 5]] };
+export const PLANS = { claw: [[50, 1], [150, 3], [200, 5]], slot: [] }; // slot: 들어갈 때 동전 없이, 돌릴 때마다 건 돈만
 // 동전 넣기: "50코인을 넣으세요" 창 → 누르면 내 돈에서 바로 50코인이 빠지고, 동전이 투입구로 들어가며 CREDIT 1 → done()
 // again: 진 뒤에 다시 넣는 창. 넣지 않고 닫으면 cancel()
 export function coinGate(ctx, game, done, cancel, again) {
