@@ -153,7 +153,10 @@ export function createQuest(d) {
   // 상대는 몇 단계까지 했는지(퀘스트 현황 창에 한 줄)
   const palLine = total => { const el = h('p', { class: 'qs-pal' }), pid = ctx.partnerId; if (!pid || !ctx.store.get) return null; el.textContent = `${ctx.nameOf(pid)}: 확인하는 중…`;
     ctx.store.get('quest/' + pid).then(v => { const n = Math.min(total, (v && v.s) || 0), st = FLAT[n], ch = st ? STORY[st.ci].t : '끝까지 완료!'; el.textContent = `👫 ${ctx.nameOf(pid)}: ${n} / ${total}단계 · ${n >= total ? '모두 끝냈어요 🏆' : ch}`; }).catch(() => { el.textContent = ''; }); return el; };
-  const off = ctx.store.on(ref, v => { q = v || {}; ready = true; d.onChange && d.onChange(); });
+  const off = ctx.store.on(ref, v => { q = v || {}; ready = true; d.onChange && d.onChange(); setTimeout(() => jump31(), 0); });
+  // 한 번만: 밍땅꾸리의 메인 이야기를 31단계까지 마친 것으로 넘긴다(2026-11-22 요청). 표시(j31). 넘긴 단계의 단서는 수첩에 채워 둔다
+  let jumped = false; const jump31 = () => { if (jumped || !ready || q.j31 || !(ctx.ours && ctx.ours()) || d.meName !== '밍땅꾸리') return; jumped = true; if ((q.s || 0) >= 31) return void save({ j31: 1 });
+    save({ s: 31, on: 0, ok: 0, j31: 1, clues: FLAT.slice(0, 31).map(f => f.clue).filter(Boolean) }); toast('📜 메인 이야기를 31단계까지 마친 것으로 넘겼어요', 3200); };
   const cur = () => FLAT[q.s || 0] || null, save = patch => { q = { ...q, ...patch }; d.onChange && d.onChange(); return ctx.store.update(ref, patch).catch(() => {}); };
   const say = (i, t) => d.toned(i, t), doneToday = () => (q.day === ymd() ? q.dn || 0 : 0), capped = () => false; // 하루 제한 없음: 시간과 상관없이 계속 진행할 수 있다
   // 지금 단계의 목표를 채웠는지
