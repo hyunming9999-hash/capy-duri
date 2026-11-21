@@ -4,12 +4,13 @@ import { h, toast } from './ui.js';
 import { sfx } from './sound.js';
 
 const LION = 10, OWL = 19, OCTO = 25, DOG = 0, PIG = 12, COW = 11, RACC = 29, BEAR = 6, TURTLE = 24;
-export const TAIL_N = 30, TAIL_SEC = 7; // 꼬리땐스: 좌우 번갈아 30번을 7초 안에
+export const TAIL_N = 30, TAIL_SEC = 5; // 꼬리땐스: 좌우 번갈아 30번을 5초 안에
 
 export async function passDemo(q, d) {
   const host = d.host(); if (!host) return;
   let n = 0; const TOTAL = 39;
-  const S = (lines, who, ch, bg, extra, buttons) => { n++; return q.scene(lines, who, `🛂 ${ch} · ${Math.min(n, TOTAL)}/${TOTAL}`, extra, buttons, bg); };
+  const S = (lines, who, ch, bg, extra, buttons, deco) => { n++; return q.scene(lines, who, `🛂 ${ch} · ${Math.min(n, TOTAL)}/${TOTAL}`, extra, buttons, bg, deco); };
+  const card = (src, cls) => { const el = h('img', { class: 'pq-deco ' + cls, src, alt: '' }); return () => el; }; // 대사 내내 화면 가운데에 그림 한 장
   const sub = t => h('p', { class: 'vn-sub' }, t);
   const fake = (lines, who, ch, what, bg) => S(lines, who, ch, bg, [sub(`🧪 예시판: 실제로는 ${what} 진행돼요`)], [{ label: '했다고 치고 넘어가기 ▶', value: 1, primary: true }]);
   const go = async (...a) => { const v = await S(...a); if (v == null) throw 0; return v; };
@@ -19,7 +20,7 @@ export async function passDemo(q, d) {
     const P = '프롤로그 · 바다에서 온 편지';
     await go(['{wow}폐, 폐하! 황금 장비 여섯 개를 두르시니 눈이 부셔서 못 보겠사옵니다!', '{think}그런데 바닷가에 뭔가 반짝이는 게 떠밀려 왔다는구먼요.', '{smile}가 보시지요!'], LION, P);
     if (!(await findBottle(host))) throw 0; n++;
-    await go(['{think}어디 보자… 발도장이 찍혀 있군. 핫똑랜드에서 온 편지일세.', '{smug}"황금 전사가 탄생했다는 소문이 바다 건너까지 들립니다. 진짜입니까? 진짜라면 꼭 와 주십시오. — 핫똑랜드 일동 (멍)"'], OWL, P);
+    await go(['{think}어디 보자… 발도장이 찍혀 있군. 핫똑랜드에서 온 편지일세.', '{smug}"황금 전사가 탄생했다는 소문이 바다 건너까지 들립니다. 진짜입니까? 진짜라면 꼭 와 주십시오. — 핫똑랜드 일동 (멍)"'], OWL, P, '', [], undefined, card('img/quest/letter.webp', 'letter'));
     await go(['{think}고급 바다부터는 갈맥 해적단 패악질 때문에 위험해.', '{smug}우리를 보증해 줄 황금 용사가 직접 가는 게 제일 확실하지.', '{smile}그러려면 여권이 필요하고… 가기 전에 준비할 게 산더미야!'], OCTO, P);
     // ── 1장 · 형제의 꼬리땐스
     const C1 = '1장 · 형제의 꼬리땐스';
@@ -27,7 +28,7 @@ export async function passDemo(q, d) {
     await go(['{think}(두리번두리번)', '{shy}…따라와.'], DOG, C1);
     await go(['{shy}여기라면 아무도 없겠지.', '(휘이잉… 바람에 덤불 하나가 굴러간다)', '{think}…', '{happy}(갑자기 꼬리를 미친 듯이 좌우로 흔든다! 엉덩이까지 같이 흔들린다!)', '{smug}…봤지? 이게 꼬리 땐스야.'], DOG, C1, 'lot');
     if (!(await tailDance(host, d))) throw 0; n++;
-    await go(['{cry}멍멍 멍멍!! (강아지 방언)', '{shy}할아버지랑 해 보고서… 오랜만에 해 봐.'], DOG, C1, 'lot');
+    { const bark = h('img', { class: 'pq-deco bark', src: 'img/quest/dog-bark.webp', alt: '' }); await go(['{cry}멍멍 멍멍!! (강아지 방언)', '{shy}할아버지랑 해 보고서… 오랜만에 해 봐.'], DOG, C1, 'lot', [], undefined, k => (k === 0 ? bark : null)); }
     // ── 2장 · 고급 입맛
     const C2 = '2장 · 고급 입맛';
     await go(['{smug}핫똑랜드 녀석들 입이 아주 고급이야.', '{think}평범한 생선 들고 가면 코웃음 친다고.'], PIG, C2);
@@ -42,7 +43,8 @@ export async function passDemo(q, d) {
     await go(['{smile}외교선물엔 뭐니 뭐니 해도 황금유자지. 300년 전에도 장터에서 제일 귀했던 과일이야.', '{think}근데 키우기도 힘들고… 까마귀 악당을 조심해야 해.'], COW, C3);
     await goF(['{happy}황금유자가 주렁주렁 열렸어!'], COW, C3, '농장 밭 3줄에 황금유자를 길러 다 익으면');
     if (!(await crowShoot(host))) throw 0; n++;
-    await go(['{happy}자, 내가 보자기로 예쁘게 싸 줄게!', '(끙차끙차 열심히 묶는다)', '{wow}어이쿠… 내 꼬리까지 같이 묶었네. 이것 좀 잠시 풀어 줄래?', '@{smile}…완전 허당이네.'], RACC, C3, 'wrap');
+    await go(['{happy}자, 내가 보자기로 예쁘게 싸 줄게!', '(끙차끙차 열심히 묶는다)'], RACC, C3, 'wrap');
+    await go(['{wow}어이쿠… 내 꼬리까지 같이 묶었네. 이것 좀 잠시 풀어 줄래?', '@{smile}…완전 허당이네.'], RACC, C3, 'wrap2');
     await go(['{happy}이 정도면 바다 건너에서도 향기가 나겠어. 고생했어 황금 폐하!', '{shy}근데… 혹시 우유 필요해?', '@{smile}아니, 괜찮을 거 같아…', '{happy}음메~~~ 외교선물 상자 완성!'], COW, C3);
     // ── 4장 · 감동의 요리 3종
     const C4 = '4장 · 감동의 요리 3종';
@@ -60,6 +62,7 @@ export async function passDemo(q, d) {
     const C6 = '6장 · 갈매기 몰래 답장';
     await go(['{happy}자, 이제 다 갖췄어! 마지막으로 답장을 보내야 하는데…', '{think}고급 바다부터 갈매기 정찰병이 깔렸어. 들키면 편지를 뺏겨.'], OCTO, C6);
     if (!(await gullThrow(host))) throw 0; n++;
+    await cutins(host, [['img/quest/throw.webp', '휙~!'], ['img/quest/current.webp', '해류를 타고 핫똑랜드로…']]);
     await go(['{smug}(병이 해류를 타고 멀리 떠내려간다)', '{happy}"황금 용사, 곧 갑니다." 이 정도면 충분하지.'], OCTO, C6);
     // ── 피날레
     await passportFx(d);
@@ -77,35 +80,45 @@ const xBtn = done => h('button', { class: 'vn-x pq-x', 'aria-label': '닫기', o
 
 // 해변 물병 찾기
 function findBottle(host) { return new Promise(res => { const el = stage(host, 'img/fl/bg/beach.webp', '🛂 프롤로그 · 해변에서 물병 찾기', '모래사장 어딘가에 반짝이는 게 있어요. 찾아서 눌러요!'), done = close(el, res);
-  const b = h('button', { class: 'pq-bottle', style: { left: 12 + Math.random() * 66 + '%', top: 58 + Math.random() * 26 + '%' }, 'aria-label': '물병', html: BOTTLE,
+  const b = h('button', { class: 'pq-bottle', style: { left: 12 + Math.random() * 66 + '%', top: 58 + Math.random() * 26 + '%' }, 'aria-label': '물병', html: '<img src="img/quest/bottle.webp" alt="">',
     onClick: e => { e.stopPropagation(); sfx('bigfish'); b.classList.add('got'); setTimeout(() => done(true), 900); } });
   el.append(b, xBtn(done)); }); }
-const BOTTLE = '<svg viewBox="0 0 60 60"><g transform="rotate(-28 30 30)"><rect x="25" y="6" width="10" height="9" rx="2" fill="#B07A45"/><path d="M24 15h12v6c6 3 9 7 9 13v16a5 5 0 0 1-5 5H20a5 5 0 0 1-5-5V34c0-6 3-10 9-13z" fill="#BFEFFF" fill-opacity=".85" stroke="#5FA9C9" stroke-width="2"/><rect x="21" y="30" width="18" height="16" rx="2" fill="#FFF3D6" stroke="#C9A46A"/><path d="M24 35h12M24 39h9" stroke="#C9A46A" stroke-width="1.5"/><path d="M20 26q2-3 5-4" stroke="#fff" stroke-width="2.5" stroke-linecap="round" fill="none"/></g></svg>';
 
-// 꼬리땐스: ◀ ▶ 를 번갈아 빠르게. 같은 쪽을 연달아 누르면 세지 않는다
+// 꼬리땐스: 뒷모습으로 서서 ◀ ▶ 를 번갈아 빠르게. 누를 때마다 엉덩이(아래쪽 절반)가 그쪽으로 씰룩. 같은 쪽을 연달아 누르면 세지 않는다
 function tailDance(host, d) { return new Promise(res => { const el = stage(host, 'img/quest/bg-lot.webp', '🛂 1장 · 꼬리땐스 미션', `◀ ▶ 를 번갈아 빠르게! ${TAIL_SEC}초 안에 ${TAIL_N}번`), done = close(el, res);
-  const me = h('div', { class: 'pq-me', html: d.meSvg('happy') }), bar = h('u'), cnt = h('b', { class: 'pq-cnt' }), tm = h('em', { class: 'pq-tm' });
-  let k = 0, last = '', t0 = 0, raf = 0, over = false;
+  const svg = d.meBack ? d.meBack() : d.meSvg('happy'), top = h('div', { class: 'pq-bt', html: svg }), butt = h('div', { class: 'pq-bb', html: svg }), whoosh = h('i', { class: 'pq-wh' });
+  const me = h('div', { class: 'pq-me pq-rear' }, top, butt, whoosh), bar = h('u'), cnt = h('b', { class: 'pq-cnt' }), tm = h('em', { class: 'pq-tm' });
+  let k = 0, last = '', t0 = 0, raf = 0, over = false, lastHit = 0;
   const draw = () => { bar.style.width = Math.min(100, k / TAIL_N * 100) + '%'; cnt.textContent = `${k} / ${TAIL_N}`; };
-  const tick = () => { if (over) return; const left = TAIL_SEC - (performance.now() - t0) / 1000; tm.textContent = t0 ? Math.max(0, left).toFixed(1) + '초' : `${TAIL_SEC}.0초`; if (t0 && left <= 0) return end(false); raf = requestAnimationFrame(tick); };
-  const hit = dir => { if (over) return; if (!t0) t0 = performance.now(); if (dir === last) return; last = dir; k++; me.classList.remove('wl', 'wr'); void me.offsetWidth; me.classList.add(dir === 'l' ? 'wl' : 'wr'); sfx('tock'); draw(); if (k >= TAIL_N) end(true); };
-  const end = ok => { over = true; cancelAnimationFrame(raf); window.removeEventListener('keydown', kd);
-    if (ok) { sfx('bigfish'); el.append(h('div', { class: 'pq-msg ok' }, '🐕 형제여!!')); setTimeout(() => done(true), 1300); }
+  const tick = now => { if (over) return; const left = TAIL_SEC - (performance.now() - t0) / 1000; tm.textContent = t0 ? Math.max(0, left).toFixed(1) + '초' : `${TAIL_SEC}.0초`; me.classList.toggle('hot', performance.now() - lastHit < 260); if (t0 && left <= 0) return end(false); raf = requestAnimationFrame(tick); };
+  const hit = dir => { if (over) return; if (!t0) t0 = performance.now(); if (dir === last) return; last = dir; k++; lastHit = performance.now(); me.classList.remove('wl', 'wr'); void me.offsetWidth; me.classList.add(dir === 'l' ? 'wl' : 'wr'); sfx('tock'); draw(); if (k >= TAIL_N) end(true); };
+  const end = ok => { over = true; cancelAnimationFrame(raf); window.removeEventListener('keydown', kd); me.classList.remove('hot');
+    if (ok) { sfx('bigfish'); me.classList.add('party'); el.append(h('div', { class: 'pq-msg ok' }, '🐕 형제여!!')); setTimeout(() => done(true), 1500); }
     else { sfx('bad'); el.append(h('div', { class: 'pq-msg' }, h('p', null, '🐶 "다시! 형제는 포기하지 않아!"'), h('button', { class: 'btn primary', onClick: e => { e.stopPropagation(); el.remove(); tailDance(host, d).then(res); } }, '다시 하기'))); } };
   const kd = e => { if (e.key === 'ArrowLeft') hit('l'); else if (e.key === 'ArrowRight') hit('r'); }; window.addEventListener('keydown', kd);
   const pad = (dir, t) => h('button', { class: 'pq-pad', onPointerDown: e => { e.preventDefault(); e.stopPropagation(); hit(dir); } }, t);
   el.append(me, h('div', { class: 'pq-gauge' }, bar), h('div', { class: 'pq-row' }, cnt, tm), h('div', { class: 'pq-pads' }, pad('l', '◀'), pad('r', '▶')), xBtn(v => { over = true; window.removeEventListener('keydown', kd); done(v); }));
   draw(); tick(); }); }
 
-// 까마귀 새총: 유자밭 위를 나는 까마귀를 3번 맞힌다
-function crowShoot(host) { return new Promise(res => { const el = stage(host, 'img/fl/bg/farm.webp', '🛂 3장 · 까마귀를 쫓아라', '수확하려는데 까마귀가 나타났다! 까마귀를 눌러 새총으로 맞혀요 (3번)'), done = close(el, res);
-  const crow = h('img', { class: 'pq-crow', src: 'img/fl/o/crow-fly.webp', alt: '까마귀' }), cnt = h('b', { class: 'pq-cnt' }, '🎯 0 / 3'); let hits = 0, over = false, x = 20, y = 30, vx = 0.5, vy = 0.3, raf = 0;
-  const move = () => { if (over) return; x += vx * (1 + hits * 0.5); y += vy * (1 + hits * 0.5); if (x < 4 || x > 76) vx = -vx; if (y < 16 || y > 56) vy = -vy; if (Math.random() < 0.02) vy = -vy;
+// 까마귀 새총: 화면 아래 새총을 들고, 누른 곳으로 돌멩이가 날아간다. 까마귀를 3번 맞히면 끝
+function crowShoot(host) { return new Promise(res => { const el = stage(host, 'img/fl/bg/farm.webp', '🛂 3장 · 까마귀를 쫓아라', '까마귀를 눌러요! 누른 곳으로 새총 돌멩이가 날아가요 (3번)'), done = close(el, res);
+  const crow = h('img', { class: 'pq-crow', src: 'img/fl/o/crow-fly.webp', alt: '까마귀' }), cnt = h('b', { class: 'pq-cnt' }, '🎯 0 / 3'), sling = h('img', { class: 'pq-sling', src: 'img/quest/sling.webp', alt: '새총' });
+  let hits = 0, over = false, x = 20, y = 30, vx = 0.5, vy = 0.3, raf = 0, busy = false;
+  const move = () => { if (over) return; x += vx * (1 + hits * 0.5); y += vy * (1 + hits * 0.5); if (x < 4 || x > 72) vx = -vx; if (y < 16 || y > 50) vy = -vy; if (Math.random() < 0.02) vy = -vy;
     crow.style.left = x + '%'; crow.style.top = y + '%'; crow.style.transform = vx < 0 ? 'scaleX(-1)' : ''; raf = requestAnimationFrame(move); };
-  crow.addEventListener('pointerdown', e => { e.stopPropagation(); if (over) return; hits++; sfx('hit'); cnt.textContent = `🎯 ${hits} / 3`; crow.classList.remove('hit'); void crow.offsetWidth; crow.classList.add('hit'); vx = (Math.random() < 0.5 ? -1 : 1) * (0.5 + Math.random() * 0.4); vy = (Math.random() < 0.5 ? -1 : 1) * 0.35;
-    if (hits >= 3) { over = true; cancelAnimationFrame(raf); crow.classList.add('away'); el.append(h('div', { class: 'pq-msg ok' }, '🍊 까마귀가 도망갔다! 황금유자 수확 완료')); sfx('bigfish'); setTimeout(() => done(true), 1500); } });
-  el.addEventListener('pointerdown', () => { if (!over) sfx('tock'); });
-  el.append(crow, h('div', { class: 'pq-row top' }, cnt), xBtn(v => { over = true; cancelAnimationFrame(raf); done(v); })); move(); }); }
+  el.addEventListener('pointerdown', e => { if (over || busy || e.target.closest('.vn-x')) return; e.stopPropagation(); busy = true;
+    const R = el.getBoundingClientRect(), tx = e.clientX - R.left, ty = e.clientY - R.top, sR = sling.getBoundingClientRect(), sx = sR.left - R.left + sR.width / 2, sy = sR.top - R.top + sR.height * 0.3;
+    const cR = crow.getBoundingClientRect(), onCrow = e.clientX > cR.left - 14 && e.clientX < cR.right + 14 && e.clientY > cR.top - 14 && e.clientY < cR.bottom + 14;
+    sling.style.transform = `rotate(${Math.max(-25, Math.min(25, (tx - sx) / 8))}deg)`; sling.classList.remove('fire'); void sling.offsetWidth; sling.classList.add('fire'); sfx('tock');
+    const rock = h('i', { class: 'pq-rock', style: { left: sx + 'px', top: sy + 'px' } }); el.append(rock);
+    requestAnimationFrame(() => { rock.style.transform = `translate(${tx - sx}px, ${ty - sy}px) scale(.55)`; });
+    setTimeout(() => { rock.remove(); busy = false; if (over) return;
+      if (!onCrow) { el.append(Object.assign(h('b', { class: 'pq-miss', style: { left: tx + 'px', top: ty + 'px' } }, '빗나감!'), {})); setTimeout(() => el.querySelectorAll('.pq-miss').forEach(m => m.remove()), 600); return; }
+      hits++; sfx('hit'); cnt.textContent = `🎯 ${hits} / 3`; crow.classList.remove('hit'); void crow.offsetWidth; crow.classList.add('hit'); el.append(h('b', { class: 'pq-pow', style: { left: tx + 'px', top: ty + 'px' } }, '퍽!')); setTimeout(() => el.querySelectorAll('.pq-pow').forEach(m => m.remove()), 600);
+      vx = (Math.random() < 0.5 ? -1 : 1) * (0.5 + Math.random() * 0.4); vy = (Math.random() < 0.5 ? -1 : 1) * 0.35;
+      if (hits >= 3) { over = true; cancelAnimationFrame(raf); crow.classList.add('away'); el.append(h('div', { class: 'pq-msg ok' }, '🍊 까마귀가 도망갔다! 황금유자 수확 완료')); sfx('bigfish'); setTimeout(() => done(true), 1500); } }, 230); });
+  el.append(crow, sling, h('div', { class: 'pq-row top' }, cnt), xBtn(v => { over = true; cancelAnimationFrame(raf); done(v); })); move(); }); }
+
 
 // 역사 퀴즈: 거북이 수업에서 들은 내용. 틀리면 다시
 const QUIZ = [
@@ -122,29 +135,43 @@ async function quiz(S, ch) { let k = 0;
     else { sfx('bad'); if ((await S(['{think}흐음… 다시 잘 생각해 보게.'], 24, `${ch} · 오답`, 'class')) == null) return false; } }
   return (await S(['{happy}다 맞혔군! 이제 핫똑랜드에 가서도 부끄럽지 않겠어.'], 24, `${ch} · 합격`, 'class')) != null; }
 
-// 갈매기 몰래 병 던지기: 해적선이 등을 돌렸을 때만 [병 투척]을 꾹 눌러 3초를 채운다. "흠…" 다음에 돌아본다
-function gullThrow(host) { return new Promise(res => { const el = stage(host, 'img/fl/bg/sea.webp', '🛂 6장 · 갈매기 몰래 투척', '해적선이 등을 돌렸을 때 [병 투척]을 꾹! "흠…" 하면 바로 손을 떼요'), done = close(el, res);
-  const ship = h('img', { class: 'pq-ship', src: 'img/fl/o/ship.webp', alt: '해적선' }), say = h('b', { class: 'pq-say' }), bar = h('u'), btn = h('button', { class: 'btn primary pq-hold' }, '🍾 병 투척 (꾹)');
+// 갈매기 몰래 병 던지기: 해적선 망루의 갈매기가 딴 데를 볼 때만 [병 투척]을 꾹 눌러 3초를 채운다
+// 딴청(하품) → "흠…?"(고개 갸웃·느낌표 조짐) → 홱 돌아서 망원경으로 이쪽을 본다(빨간 경보·탐조등). 보는 동안 누르고 있으면 들킨다
+function gullThrow(host) { return new Promise(res => { const el = stage(host, 'img/fl/bg/sea.webp', '🛂 6장 · 갈매기 몰래 투척', '망루의 갈매기가 딴 데를 볼 때 [병 투척]을 꾹! "흠…?" 하면 바로 손을 떼요'), done = close(el, res);
+  const gull = h('img', { class: 'pq-gull', src: 'img/quest/gull-idle.webp', alt: '갈매기 정찰병' }), beam = h('i', { class: 'pq-beam' }), alarm = h('i', { class: 'pq-alarm' });
+  const shipW = h('div', { class: 'pq-shipw' }, h('img', { class: 'pq-ship2', src: 'img/fl/o/ship.webp', alt: '해적선' }), gull, beam);
+  const say = h('b', { class: 'pq-say' }), bar = h('u'), btn = h('button', { class: 'btn primary pq-hold' }, '🍾 병 투척 (꾹)');
+  new Image().src = 'img/quest/gull-look.webp';
   let st = 'back', tSt = performance.now(), dur = 1600, held = false, prog = 0, last = performance.now(), over = false, raf = 0;
-  const setSt = s => { st = s; tSt = performance.now(); dur = s === 'back' ? 1300 + Math.random() * 1700 : s === 'hmm' ? 650 : 1300; ship.classList.toggle('look', s === 'look'); say.textContent = s === 'hmm' ? '흠…?' : s === 'look' ? '‼ 누구냐!' : ''; say.className = 'pq-say ' + s; };
+  const setSt = s => { st = s; tSt = performance.now(); dur = s === 'back' ? 1400 + Math.random() * 1800 : s === 'hmm' ? 750 : 1400;
+    el.dataset.st = s; say.textContent = s === 'hmm' ? '흠…?' : s === 'look' ? '‼ 거기 누구냐!' : ''; say.className = 'pq-say ' + s;
+    if (s === 'look') { gull.classList.add('turn'); setTimeout(() => { if (st === 'look') { gull.src = 'img/quest/gull-look.webp'; gull.classList.remove('turn'); gull.classList.add('spot'); } }, 140); sfx('bad'); }
+    else if (s === 'back') { gull.classList.remove('spot'); gull.classList.add('turn'); setTimeout(() => { gull.src = 'img/quest/gull-idle.webp'; gull.classList.remove('turn'); }, 140); } };
   const loop = now => { if (over) return; const dt = (now - last) / 1000; last = now;
     if (now - tSt > dur) setSt(st === 'back' ? 'hmm' : st === 'hmm' ? 'look' : 'back');
-    if (held) { if (st === 'look') { held = false; prog = 0; btn.classList.remove('on'); sfx('bad'); toast('🚨 들켰다! 처음부터', 1200); } else prog += dt / 3; }
+    if (held) { if (st === 'look') { held = false; prog = 0; btn.classList.remove('on'); toast('🚨 들켰다! 처음부터', 1200); } else prog += dt / 3; }
     bar.style.width = Math.min(100, prog * 100) + '%';
-    if (prog >= 1) { over = true; sfx('bigfish'); el.append(h('div', { class: 'pq-msg ok' }, '🍾 휙~! 답장 병이 해류를 탔다!')); return setTimeout(() => done(true), 1500); }
+    if (prog >= 1) { over = true; sfx('bigfish'); return setTimeout(() => done(true), 300); }
     raf = requestAnimationFrame(loop); };
   const down = e => { e.preventDefault(); e.stopPropagation(); if (over) return; if (st === 'look') { sfx('bad'); toast('지금은 보고 있어요!', 900); return; } held = true; btn.classList.add('on'); };
   const up = () => { held = false; btn.classList.remove('on'); };
   btn.addEventListener('pointerdown', down); btn.addEventListener('pointerup', up); btn.addEventListener('pointerleave', up); btn.addEventListener('pointercancel', up);
-  el.append(ship, say, h('div', { class: 'pq-gauge low' }, bar), btn, xBtn(v => { over = true; cancelAnimationFrame(raf); done(v); })); setSt('back'); raf = requestAnimationFrame(loop); }); }
+  el.append(alarm, shipW, say, h('div', { class: 'pq-gauge low' }, bar), btn, xBtn(v => { over = true; cancelAnimationFrame(raf); done(v); })); setSt('back'); raf = requestAnimationFrame(loop); }); }
 
-// 여권 발급 연출: 화면을 덮고(아래 화면은 숨김) 여권이 돌며 나타나 펼쳐지고, 도장이 쾅. 확인은 3초 뒤에
+// 컷신: 그림을 한 장씩 천천히 다가가며 보여 준다(누르면 다음)
+function cutins(host, list) { return list.reduce((p, [src, cap]) => p.then(() => new Promise(res => {
+  const el = h('div', { class: 'pq pq-cut' }, h('img', { class: 'pq-cutimg', src, alt: '' }), h('p', { class: 'pq-cap' }, cap)); host.append(el); sfx('tock');
+  let gone = false; const go = () => { if (gone) return; gone = true; el.classList.add('out'); setTimeout(() => { el.remove(); res(); }, 280); };
+  setTimeout(go, 2600); el.addEventListener('pointerdown', e => { e.stopPropagation(); go(); }); })), Promise.resolve()); }
+
+// 여권 발급 연출: 화면을 덮고(아래 화면은 숨김) 여권이 돌며 나타나 펼쳐지고, 도장이 쾅 → 외교관 배지가 날아와 가슴에 착. 확인은 그 뒤에
 function passportFx(d) { return new Promise(res => { const app = document.getElementById('app'); if (app) app.style.visibility = 'hidden';
   const conf = h('div', { class: 'pfx-conf' }); for (let i = 0; i < 46; i++) conf.append(h('i', { style: { left: Math.random() * 100 + '%', animationDelay: (1.6 + Math.random() * 1.6).toFixed(2) + 's', animationDuration: (2.2 + Math.random() * 1.8).toFixed(2) + 's', background: ['#FFD54A', '#FFF3B0', '#FF8FB1', '#9BE1FF', '#FFB347'][i % 5] } }));
-  const page = h('div', { class: 'pp-page' }, h('div', { class: 'pp-photo', html: d.meSvg('smile') }),
+  const page = h('div', { class: 'pp-page' }, h('div', { class: 'pp-photo', html: d.meSvg('smile') }, h('img', { class: 'pp-pin', src: 'img/quest/badge.webp', alt: '' })),
     h('dl', null, h('dt', null, '이름'), h('dd', null, d.meName), h('dt', null, '국적'), h('dd', null, '카피랜드'), h('dt', null, '직위'), h('dd', null, '카피황금폐하'), h('dt', null, '자격'), h('dd', null, '외교관')),
     h('div', { class: 'pp-stamp' }, h('b', null, '外交官'), h('small', null, 'KAPYLAND')));
+  const badge = h('div', { class: 'pp-badge' }, h('i', { class: 'pp-shine' }), h('img', { src: 'img/quest/badge.webp', alt: '외교관 배지' }), h('p', null, '🎖 외교관 배지 획득!'), h('small', null, '가슴에 달았어요'));
   const ok = h('button', { class: 'btn primary pp-ok' }, '확인');
-  const el = h('div', { class: 'ppfx' }, h('div', { class: 'pp-rays' }), conf, h('img', { class: 'pp-cover', src: 'img/quest/passport.webp', alt: '' }), page, h('p', { class: 'pp-title' }, '🛂 카피랜드 여권 발급!'));
-  document.body.append(el); sfx('fanfare'); setTimeout(() => sfx('boom'), 2300); setTimeout(() => sfx('coin'), 2500);
-  setTimeout(() => { el.append(ok); ok.onclick = () => { el.remove(); if (app) app.style.visibility = ''; res(true); }; }, 4200); }); }
+  const el = h('div', { class: 'ppfx' }, h('div', { class: 'pp-rays' }), conf, h('img', { class: 'pp-cover', src: 'img/quest/passport.webp', alt: '' }), page, h('p', { class: 'pp-title' }, '🛂 카피랜드 여권 발급!'), badge);
+  document.body.append(el); sfx('fanfare'); setTimeout(() => sfx('boom'), 2300); setTimeout(() => sfx('coin'), 2500); setTimeout(() => sfx('fanfare'), 3900); setTimeout(() => sfx('point'), 5600);
+  setTimeout(() => { el.append(ok); ok.onclick = () => { el.remove(); if (app) app.style.visibility = ''; res(true); }; }, 6600); }); }
