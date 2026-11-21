@@ -248,7 +248,7 @@ export function openFishing(o) {
       fx.append(h('div', { class: 'pfx-frame' }));
       for (let k = 0; k < 40; k++) fx.append(h('i', { class: 'pfx-rain', style: { left: Math.random() * 100 + '%', animationDelay: (0.4 + Math.random() * 3.6).toFixed(2) + 's', animationDuration: (1.8 + Math.random() * 1.6).toFixed(2) + 's', fontSize: 14 + Math.random() * 18 + 'px' } }, ['🦪', '✨', '💎', '🌟', '🪙', '💖'][k % 6]));
       for (let k = 0; k < 30; k++) fx.append(h('i', { class: 'pfx-twk', style: { left: Math.random() * 100 + '%', top: Math.random() * 100 + '%', animationDelay: (Math.random() * 3).toFixed(2) + 's', color: C[k % C.length] } }, '✦'));
-      const app = document.getElementById('app') || document.body.firstElementChild; app && app.classList.add('pfx-shake'); setTimeout(() => app && app.classList.remove('pfx-shake'), 900);
+
       document.body.append(fx); sfx('fanfare'); setTimeout(() => sfx('bigfish'), 500); [900, 1500, 2100, 2700].forEach(t => setTimeout(() => alive && sfx('coin'), t));
       try { navigator.vibrate && navigator.vibrate([80, 60, 80, 60, 200]); } catch {}
       [3000, 3400, 3800].forEach(t => setTimeout(() => alive && sfx('fanfare'), t));
@@ -265,6 +265,7 @@ export function openFishing(o) {
       if (isNew) { sfx('bigfish'); for (let k = 0; k < 14; k++) wow.append(h('i', { class: 'fs-spark', style: { '--a': (k / 14 * 360) + 'deg', '--d': (60 + Math.random() * 70).toFixed(0) + 'px' } }, '✨')); }
       (wrap.querySelector('.fs-view') || wrap).append(wow); setTimeout(() => wow.classList.add('out'), 1900); setTimeout(() => wow.remove(), 2400); }
   }
+  if (o.trial && new URLSearchParams(location.search).has('pearltest')) window.__fsPearl = () => { cur = rollCatch(zone, rodT(), true, 0.5, false); landed(); }; // 진주 연출 확인용
   if (o.shinyTest) window.__fsLand = () => { cur = rollCatch(zone, rodT(), false, 0.5, true); landed(); }; // 이로치 결과 화면 확인용(?fishtest=1&shiny)
   // 찔끔찔끔 누르기: 0.3초도 안 되게 눌렀다 떼면 물고기가 눈치채고 인내심이 깎인다(깊은 바다일수록 많이)
   const down = () => { if (!hold) pressAt = performance.now(); hold = true; };
