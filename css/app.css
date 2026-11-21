@@ -2826,3 +2826,4 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .so-h-walk { aspect-ratio: 600 / 514; } .so-h-walk b { left: 20%; right: 20%; top: 2%; height: 17%; border-radius: 10px; background: linear-gradient(#A8743C, #7E4E22); border: 2.5px solid #FFE3A6; box-shadow: 0 3px 0 #5A3214; color: #FFF7E6; text-shadow: 0 2px 0 #4A2A10; }
 .so-h-gallery { aspect-ratio: 600 / 593; } .so-h-gallery b { left: 13%; right: 13%; top: 33%; height: 12%; border-radius: 10px; background: #FFFBEE; border: 2.5px solid #7FB069; box-shadow: 0 3px 0 #5E8E4A; color: #4F7A3A; text-shadow: none; }
 .so-h-watch { aspect-ratio: 572 / 600; } .so-h-watch b { left: 21%; right: 20%; top: 33%; height: 13%; color: #C2364A; font-size: 12.5cqw; text-shadow: 1.5px 0 #FFF7E6, -1.5px 0 #FFF7E6, 0 1.5px #FFF7E6, 0 -1.5px #FFF7E6; }
+.so-h-watch b { left: 24%; right: 23.5%; top: 40.3%; height: 8%; font-size: 8.4cqw; }
