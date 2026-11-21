@@ -2758,3 +2758,13 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .pfx .pfx-boom { box-shadow: 0 -52px, 37px -37px, 52px 0, 37px 37px, 0 52px, -37px 37px, -52px 0, -37px -37px; }
 .pfx-ok { box-shadow: 0 5px 0 #B87A00; }
 .pfx { animation: none !important; transition: none !important; }
+
+/* 고래킹 연출: 진주 연출의 바다색 판 + 큰 물기둥 */
+.pfx.whale { background: radial-gradient(circle at 50% 45%, #2F7FD8 0, #0E3A8A 42%, #041238 100%) !important; }
+.pfx.whale .pfx-pearl { width: 300px; height: 200px; margin: -100px 0 0 -150px; } .pfx.whale .pfx-pearl::before { background: radial-gradient(circle, rgba(255, 255, 255, .85) 0, rgba(130, 210, 255, .6) 35%, rgba(255, 220, 120, .3) 55%, rgba(255, 220, 120, 0) 70%); }
+.pfx.whale .pfx-title { top: calc(45% + 110px); } .pfx.whale .pfx-title b { font-size: 54px; -webkit-text-stroke: 2px #0A3A8A; text-shadow: 0 4px 0 #062A66; background: linear-gradient(#FFFFFF, #BFE9FF 50%, #FFD86B); -webkit-background-clip: text; background-clip: text; }
+.pfx.whale .pfx-rays { background: repeating-conic-gradient(rgba(150, 220, 255, .26) 0 8deg, rgba(150, 220, 255, 0) 8deg 18deg) !important; }
+.pfx.whale .pfx-frame { box-shadow: inset 0 0 0 6px rgba(150, 220, 255, .95), inset 0 0 36px 8px rgba(80, 160, 255, .8); }
+.pfx.whale::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 38%; z-index: 2; pointer-events: none; background: radial-gradient(60% 100% at 50% 100%, rgba(190, 235, 255, .75), rgba(120, 200, 255, .35) 55%, rgba(120, 200, 255, 0) 75%); animation: pfxWave 1.6s ease-in-out infinite alternate; transform-origin: 50% 100%; }
+@keyframes pfxWave { from { transform: scaleY(.75); } to { transform: scaleY(1.15); } }
+.fs.whale .fs-view { border-color: #4DA3FF; box-shadow: 0 0 0 3px rgba(120, 200, 255, .7), 0 0 22px rgba(80, 160, 255, .9); } .fs.whale .fs-pearltxt { color: #D6F1FF; -webkit-text-stroke: 1px #0A3A8A; }

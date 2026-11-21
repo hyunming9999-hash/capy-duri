@@ -159,7 +159,7 @@ export function openFishing(o) {
   const setBar = (v, cls = '') => { v = Math.max(0, Math.min(100, v)); const pow = cls.startsWith('pow'), ten = cls.startsWith('ten'); bar.className = 'fs-bar ' + cls; bar.firstChild.style.width = v + '%'; bar.lastChild.style.left = v + '%'; gl.firstChild.textContent = pow ? '던지는 힘' : ten ? '줄 팽팽함' : '낚싯대'; gl.lastChild.textContent = pow || ten ? Math.round(v) : ''; const tk = bar.nextSibling; tk.firstChild.textContent = pow ? '가까이' : ten ? '느슨(안 끌려옴)' : ''; tk.lastChild.textContent = pow ? '멀리 ★' : ten ? '끊어짐!' : ''; };
   function close() { if (!alive) return; if (phase === 'fight' && cur && cur.f.icon && cur.price < 0) o.coins(cur.price); alive = false; cancelAnimationFrame(raf); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); window.removeEventListener('pointerup', pu); window.removeEventListener('pointercancel', pu); wrap.remove(); o.onClose && o.onClose(); }
   function ready(text) {
-    phase = 'ready'; hold = false; strikes = 0; stormAt = 0; armed = !ptrDown; patEl.hidden = true; tele = 0; wrap.classList.remove('pearl'); pearlTxt.hidden = true; wrap.classList.remove('reel'); rodEl.className = 'fs-rod'; rodEl.dataset.t = rodT(); hook.classList.remove('up'); fishEl.className = 'fs-fish'; fishEl.innerHTML = ''; mark.textContent = ''; float.style.display = rl.style.display = hook.style.display = 'none'; setBar(0); wrap.classList.remove('fight'); drawInfo();
+    phase = 'ready'; hold = false; strikes = 0; stormAt = 0; armed = !ptrDown; patEl.hidden = true; tele = 0; wrap.classList.remove('pearl', 'whale'); pearlTxt.hidden = true; wrap.classList.remove('reel'); rodEl.className = 'fs-rod'; rodEl.dataset.t = rodT(); hook.classList.remove('up'); fishEl.className = 'fs-fish'; fishEl.innerHTML = ''; mark.textContent = ''; float.style.display = rl.style.display = hook.style.display = 'none'; setBar(0); wrap.classList.remove('fight'); drawInfo();
     const b = o.bag(), r = rod();
     if (!r) { say('낚싯대가 없어요. 카피수퍼에서 사 오세요.', 'warn'); btn.textContent = '닫기'; btn.onclick = close; return; }
     if (!(b.rodD > 0)) { say('낚싯대가 다 닳았어요. 카피수퍼에서 수리하세요.', 'warn'); btn.textContent = '닫기'; btn.onclick = close; return; }
@@ -175,7 +175,7 @@ export function openFishing(o) {
     gift = deep && !o.trial && !!(o.ctx && o.ctx.ours && o.ctx.ours()) && b.pgift !== '20261121' && new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10) === '2026-11-21';
     if (deep && o.trial && !b.pgift && new URLSearchParams(location.search).has('pearltest')) { gift = true; b.pgift = 1; } // 진주 연습 링크(?fishtest=3&pearltest): 첫 낚시에 진주
     const isPearl = deep && (gift || (boost ? bk >= boost.at : Math.random() < PEARL_P)); o.save({ [BAIT_KEY[zone]]: b[BAIT_KEY[zone]] - 1, rodD: b.rodD - 1, casts: (b.casts || 0) + 1, ...(deep ? { casts3: n, ...(boost ? { pboost: isPearl ? null : { k: bk, at: boost.at } } : {}) } : {}) }); pboosted = !!(boost && isPearl && !gift); if (gift) o.save({ pgift: '20261121', ...(boost ? { pboost: { k: boost.k || 0, at: boost.at } } : {}) }); // 선물 진주: 기회는 이 한 번(던질 때 표시) · 부적 차례는 쓰지 않는다
-    cur = rollCatch(zone, rodT(), isPearl, power / 100, o.shinyTest);
+    cur = rollCatch(zone, rodT(), isPearl, power / 100, o.shinyTest); if (window.__whaleNext && o.trial) { const wn = window.__whaleNext(); if (wn) cur = wn; }
     if (gift) { for (let k = 0; k < 8; k++) { const n = rollCatch(zone, rodT(), false, 1, false); if (n.f && !n.f.king && !n.f.icon) { cur.d = n.d; break; } } } // 선물 진주는 보통 고급 물고기와 같은 힘으로 버틴다
     { const key = 'sp' + zone, sp = (o.bag()[key]) || {}, n = (sp.n || 0) % STORM_EVERY + 1, at = n === 1 || !Array.isArray(sp.at) || sp.at.length !== 1 ? stormPlan() : sp.at, due = !!sp.due || at.includes(n); stormIn = due && !cur.f.pearl; o.save({ [key]: { n, at, due } }); }
     stormAt = 0; phase = 'cast'; c0 = performance.now(); castTo = 48 + power * 0.44; flew = false; shown = false; setBar(power, 'pow'); drawInfo();
@@ -191,6 +191,7 @@ export function openFishing(o) {
     fishEl.className = 'fs-fish on far'; fishEl.innerHTML = shadow(); fishEl.style.left = '125%'; setBar(0);
     say('찌가 쑥 들어가면 바로 챔질!'); btn.textContent = '챔질!'; btn.onclick = strike;
     // 진주가 걸리면 "앗, 진주 같아!" 그리고 진주부적 3장이 있으면 쓸지 묻는다(쓰면 90% 확률로 낚고 부적 3장이 사라진다)
+    if (cur.f.name === '고래킹') { say('심상치 않다… 설마? 고래킹?'); wrap.classList.add('whale'); sfx('bigfish'); pearlTxt.hidden = false; pearlTxt.textContent = '🌊 거대한 그림자가… 🌊'; } // 대장 중의 대장
     if (cur.f.pearl) { say(gift ? '엇? 진주 아니야?' : '앗, 진주 같아!'); if (pboosted) { phase = 'ask'; btn.textContent = '…'; btn.onclick = null; setTimeout(() => alive && usePearlSet(), 700); } } // 부적으로 불러낸 진주는 바로 부적이 끌어올린다(90%)
   }
   // 진주부적 쓰기(고급 바다, 3장): 앞으로 10번 던지는 동안 진주가 꼭 한 번 걸린다
@@ -238,15 +239,16 @@ export function openFishing(o) {
       h('div', { class: 'fs-acts' }, h('button', { class: 'btn primary', onClick: () => { if (safe()) { card.remove(); ready(); } } }, '또 던지기'), h('button', { class: 'btn', onClick: () => { if (safe()) { card.remove(); close(); } } }, '그만하기')));
     wrap.append(card); say(''); btn.textContent = '…'; btn.onclick = null; card.classList.add('wait'); setTimeout(() => card.classList.remove('wait'), 1200);
     // 바다 진주: 역대급 연출 — 화면 전체가 하얗게 번쩍, 금빛 햇살이 돌고, 진주가 솟아오르며 폭죽·꽃가루·반짝이가 쏟아진다
-    if (f.pearl) { card.classList.add('wait'); setTimeout(() => card.classList.remove('wait'), 4200); const fx = h('div', { class: 'pfx' }, h('div', { class: 'pfx-flash' }), h('div', { class: 'pfx-rays' }), h('div', { class: 'pfx-ring' }), h('div', { class: 'pfx-ring r2' }),
-        h('div', { class: 'pfx-pearl', html: fishSvg(f) }), h('div', { class: 'pfx-title' }, h('b', null, '바다 진주'), h('small', null, '✦ LEGENDARY ✦ 평생 한 번 볼까 말까!')));
-      const C = ['#FFE066', '#FF9AC7', '#B8F3FF', '#FFFFFF', '#C9A2FF', '#FFC94D'];
+    const whale = f.name === '고래킹'; wrap.classList.remove('whale');
+    if (f.pearl || whale) { card.classList.add('wait'); setTimeout(() => card.classList.remove('wait'), 4200); const fx = h('div', { class: 'pfx' + (whale ? ' whale' : '') }, h('div', { class: 'pfx-flash' }), h('div', { class: 'pfx-rays' }), h('div', { class: 'pfx-ring' }), h('div', { class: 'pfx-ring r2' }),
+        h('div', { class: 'pfx-pearl', html: fishSvg(f, false, shiny) }), h('div', { class: 'pfx-title' }, h('b', null, whale ? '고래킹' : '바다 진주'), h('small', null, whale ? `👑 대장 중의 대장! ${cm}cm 👑` : '✦ LEGENDARY ✦ 평생 한 번 볼까 말까!')));
+      const C = whale ? ['#7FD4FF', '#FFE066', '#FFFFFF', '#4DA3FF', '#B8F3FF', '#FFC94D'] : ['#FFE066', '#FF9AC7', '#B8F3FF', '#FFFFFF', '#C9A2FF', '#FFC94D'];
       for (let k = 0; k < 60; k++) fx.append(h('i', { class: 'pfx-conf', style: { left: Math.random() * 100 + '%', background: C[k % C.length], animationDelay: (0.4 + Math.random() * 4.2).toFixed(2) + 's', animationDuration: (2.4 + Math.random() * 2).toFixed(2) + 's', '--r': (Math.random() * 720 - 360).toFixed(0) + 'deg', width: 6 + Math.random() * 6 + 'px', height: 10 + Math.random() * 8 + 'px' } }));
       for (let k = 0; k < 28; k++) fx.append(h('i', { class: 'pfx-spark', style: { '--a': (k / 36 * 360) + 'deg', '--d': (140 + Math.random() * 260).toFixed(0) + 'px', animationDelay: (0.5 + (k % 4) * 0.35).toFixed(2) + 's', color: C[k % C.length] } }, k % 3 ? '✦' : '✨'));
       for (let k = 0; k < 10; k++) fx.append(h('b', { class: 'pfx-boom', style: { left: 4 + Math.random() * 92 + '%', top: 4 + Math.random() * 80 + '%', animationDelay: (0.6 + k * 0.5).toFixed(2) + 's', color: C[k % C.length], transform: `scale(${(0.8 + Math.random() * 1.4).toFixed(2)})` } }));
       fx.prepend(h('div', { class: 'pfx-beam b1' }), h('div', { class: 'pfx-beam b2' }), h('div', { class: 'pfx-beam b3' }), h('div', { class: 'pfx-beam b4' }));
       fx.append(h('div', { class: 'pfx-frame' }));
-      for (let k = 0; k < 20; k++) fx.append(h('i', { class: 'pfx-rain', style: { left: Math.random() * 100 + '%', animationDelay: (0.4 + Math.random() * 3.6).toFixed(2) + 's', animationDuration: (1.8 + Math.random() * 1.6).toFixed(2) + 's', fontSize: 14 + Math.random() * 18 + 'px' } }, ['🦪', '✨', '💎', '🌟', '🪙', '💖'][k % 6]));
+      for (let k = 0; k < 20; k++) fx.append(h('i', { class: 'pfx-rain', style: { left: Math.random() * 100 + '%', animationDelay: (0.4 + Math.random() * 3.6).toFixed(2) + 's', animationDuration: (1.8 + Math.random() * 1.6).toFixed(2) + 's', fontSize: 14 + Math.random() * 18 + 'px' } }, (whale ? ['🐳', '💦', '👑', '🌟', '🪙', '🌊'] : ['🦪', '✨', '💎', '🌟', '🪙', '💖'])[k % 6]));
       for (let k = 0; k < 14; k++) fx.append(h('i', { class: 'pfx-twk', style: { left: Math.random() * 100 + '%', top: Math.random() * 100 + '%', animationDelay: (Math.random() * 3).toFixed(2) + 's', color: C[k % C.length] } }, '✦'));
 
       document.body.append(fx); sfx('fanfare'); setTimeout(() => sfx('bigfish'), 500); [900, 1500, 2100, 2700].forEach(t => setTimeout(() => alive && sfx('coin'), t));
@@ -263,10 +265,11 @@ export function openFishing(o) {
       const wow = h('div', { class: 'fs-wow shy' }, h('b', null, '✨ 이로치다! ✨'), h('small', null, `색이 다른 ${f.name} · 📖 이로치 도감에 기록`));
       for (let k = 0; k < 20; k++) wow.append(h('i', { class: 'fs-spark', style: { '--a': (k / 20 * 360) + 'deg', '--d': (70 + Math.random() * 90).toFixed(0) + 'px', color: ['#FF7EB6', '#8F7CFF', '#5ED3F3', '#FFE066'][k % 4] } }, k % 2 ? '✦' : '✨'));
       (wrap.querySelector('.fs-view') || wrap).append(wow); setTimeout(() => wow.classList.add('out'), 2600); setTimeout(() => wow.remove(), 3100); }
-    else if (!f.icon && !f.pearl) { const wow = h('div', { class: 'fs-wow' + (isNew ? ' new' : f.pearl || f.king ? ' gold' : '') }, h('b', null, isNew ? '와! 새로운 물고기다!' : `와! ${josaUl(f.pearl ? '바다 진주' : f.name)} 잡았다!`), isNew ? h('small', null, `📖 ${f.name} · 도감에 새로 올렸어요`) : cur.g && h('small', null, '몇 등급일까? 등급 확인하기를 눌러 보세요'));
+    else if (!f.icon && !f.pearl && !whale) { const wow = h('div', { class: 'fs-wow' + (isNew ? ' new' : f.pearl || f.king ? ' gold' : '') }, h('b', null, isNew ? '와! 새로운 물고기다!' : `와! ${josaUl(f.pearl ? '바다 진주' : f.name)} 잡았다!`), isNew ? h('small', null, `📖 ${f.name} · 도감에 새로 올렸어요`) : cur.g && h('small', null, '몇 등급일까? 등급 확인하기를 눌러 보세요'));
       if (isNew) { sfx('bigfish'); for (let k = 0; k < 14; k++) wow.append(h('i', { class: 'fs-spark', style: { '--a': (k / 14 * 360) + 'deg', '--d': (60 + Math.random() * 70).toFixed(0) + 'px' } }, '✨')); }
       (wrap.querySelector('.fs-view') || wrap).append(wow); setTimeout(() => wow.classList.add('out'), 1900); setTimeout(() => wow.remove(), 2400); }
   }
+  if (o.trial && new URLSearchParams(location.search).has('whaletest')) { const W = FISH.find(x => x.name === '고래킹'), mk = () => ({ f: W, cm: 880, g: 'S', price: 7950, d: 8, p: 1, shiny: false }); let used = false; window.__fsWhale = () => { cur = mk(); landed(); }; window.__whaleNext = () => { if (used) return null; used = true; return mk(); }; } // 고래킹 연습 링크(?fishtest=3&whaletest): 첫 낚시에 고래킹
   if (o.trial && new URLSearchParams(location.search).has('pearltest')) window.__fsPearl = () => { cur = rollCatch(zone, rodT(), true, 0.5, false); landed(); }; // 진주 연출 확인용
   if (o.shinyTest) window.__fsLand = () => { cur = rollCatch(zone, rodT(), false, 0.5, true); landed(); }; // 이로치 결과 화면 확인용(?fishtest=1&shiny)
   // 찔끔찔끔 누르기: 0.3초도 안 되게 눌렀다 떼면 물고기가 눈치채고 인내심이 깎인다(깊은 바다일수록 많이)
