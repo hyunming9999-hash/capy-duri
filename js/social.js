@@ -839,7 +839,7 @@ export function mount(el, ctx) {
         else if (near100 && now > (o.cakeAt || 0)) { o.cakeAt = now + 60000; pop(o.e, line(i, 'cake', toned(i, pick(CAKE_HINT))), 'say long'); } // 단짝 직전: 케이크가 필요하다고 알려 준다
         else if (shineN >= 6 && (goldOk || (!kingTrial && (taxDue(mine[i], wall) || wall - ((mine[i] || {}).bowAt || 0) >= BOW_MS)) || kingTrial)) { const kingTrial0 = kingTrial; { const kingTrial = kingTrial0 || (ctx.goldTest ? 1 : 0); // ?goldtest 시험이면 체험처럼(세금·기록 없이 12초마다 절) // 대왕 폐하: 10분에 한 번 절을 하고, 하루에 한 번 세금 20코인을 바친다
           const r = mine[i] || {}, due = !kingTrial && taxDue(r, wall), bow = kingTrial ? now > (o.tbow || 0) : wall - (r.bowAt || 0) >= BOW_MS; if (kingTrial) o.tbow = now + 12000; pop(o.e, due ? '대왕 폐하! 세금 20코인 바치옵니다 🪙' : gold('king', KING), 'say long');
-          if (bow) { o.e.style.setProperty('--bd', me.x < o.x ? -1 : 1); o.e.classList.add('bow'); setTimeout(() => o.e.classList.remove('bow'), 2400); } // 선 채로 내 쪽을 향해 허리를 깊이 숙였다 일어난다
+          if (bow) { o.e.style.setProperty('--bd', me.x < o.x ? -1 : 1); bowFx(o); } // 선 채로 내 쪽을 향해 허리를 깊이 숙였다 일어난다
           if (!kingTrial && (due || bow)) setRel(i, { ...(due ? { taxAt: wall } : {}), ...(bow ? { bowAt: wall } : {}) }); if (due) { addCoins(20); sfx('coin'); } } }
         else if (shineN >= 4 && goldOk) { pop(o.e, gold('hero', [AWE2[i], ...HERO.map(f => toned(i, f(ctx.me.name)))]), 'say long'); o.e.classList.add('cry'); scores(); setTimeout(() => { o.e.classList.remove('cry'); scores(); }, 4200); } // 눈물을 흘리며 영웅이라고(4초 넘게 운다)
         else if (shineN >= 2 && goldOk) pop(o.e, gold('awe', goldPool(AWE1[i])), 'say long');
@@ -853,6 +853,10 @@ export function mount(el, ctx) {
   // 동물 머리 위 친밀도: 내 점수(크게)와 상대 점수(작게). 사이가 나쁘면 찌푸리고, 좋으면 하트가 떠오른다
   // 표정 그림을 바꿀 때 새 그림이 다 받아진 뒤에 갈아 끼운다(빈 칸이 한 번 깜빡이지 않게)
   const imgReady = new Set();
+  // 절: 다리는 그대로 두고(아래쪽 그림은 고정) 윗몸·머리만 허리를 축으로 내 쪽으로 숙인다
+  function bowFx(o) { const b = o.body; if (!b || b.querySelector('.so-bowtop')) return; o.e.classList.add('bow');
+    const top = h('span', { class: 'so-bowtop' }); [...b.children].forEach(c => top.append(c.cloneNode(true))); b.classList.add('bowing'); b.append(top);
+    setTimeout(() => { top.remove(); b.classList.remove('bowing'); o.e.classList.remove('bow'); }, 2400); }
   function swapBody(el, html) { el.dataset.want = html;
     if (!el.firstChild) { el.innerHTML = html; return; }
     const nb = document.createElement('span'); nb.style.cssText = 'position:absolute;left:0;top:0;width:100%;opacity:0;pointer-events:none'; nb.innerHTML = html; if (getComputedStyle(el).position === 'static') el.style.position = 'relative'; el.append(nb); // 새 그림을 안 보이게 먼저 붙여 다 받은 뒤 바꾼다(깜빡임 없게)

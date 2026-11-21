@@ -2849,3 +2849,9 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 /* 절(다시): 발은 땅에 붙인 채 윗몸·얼굴만 내 쪽으로 숙인다(기울이기 대신 밑을 고정한 비틀기) */
 .so-an.bow .so-body, .so-an.bow.walk .so-body, .so-an.bow.swim .so-body { transform-origin: 50% 90%; animation: soBowG 2.4s ease-in-out !important; }
 @keyframes soBowG { 0%, 8% { transform: none; } 35%, 70% { transform: skewX(calc(var(--bd, -1) * -16deg)) scaleY(.93); } 100% { transform: none; } }
+/* 절(최종): 비틀기 없이, 다리는 고정하고 윗몸만 허리를 축으로 숙인다 */
+.so-an.bow .so-body, .so-an.bow.walk .so-body, .so-an.bow.swim .so-body { animation: none !important; transform: none; }
+.so-body.bowing { position: relative; }
+.so-body.bowing > :not(.so-bowtop) { clip-path: inset(72% -50% -50% -50%); }
+.so-bowtop { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: block; pointer-events: none; clip-path: inset(-60% -60% 20% -60%); transform-origin: 50% 78%; animation: soNod 2.4s ease-in-out; }
+@keyframes soNod { 0%, 8% { rotate: 0deg; } 35%, 70% { rotate: calc(var(--bd, -1) * 20deg); } 100% { rotate: 0deg; } }
