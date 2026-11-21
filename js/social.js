@@ -691,6 +691,9 @@ export function mount(el, ctx) {
   const CAKE_FIX = { '밍땅꾸리': [23, 17], '두두': [1, 3, 13, 26, 28] }; // 두두: 고양이·햄스터·개구리·물개·다람쥐(2026-11-22 점검 창으로 확인)
   let cakeFixed = false; function cakeFix() { const L = CAKE_FIX[ctx.me.name]; if (cakeFixed || !L || !(ctx.ours && ctx.ours())) return; cakeFixed = true;
     L.forEach(i => { const r = mine[i] || {}; if (r.ckfix) return; setRel(i, { a: 100, ckfix: 1, fedAt: ctx.store.now() }, true); }); }
+  // 한 번만(2026-11-22): 메인 이야기를 다 깬 보답으로 두 사람 모두 사자(10)와 단짝(100). 표시(lionfix)
+  let lionFixed = false; function lionFix() { if (lionFixed || !['밍땅꾸리', '두두'].includes(ctx.me.name) || !(ctx.ours && ctx.ours())) return; lionFixed = true;
+    const r = mine[10] || {}; if (r.lionfix) return; setRel(10, { a: 100, lionfix: 1, fedAt: ctx.store.now() }, true); setTimeout(() => toast('🦁 사자와 단짝(100)이 됐어요! 왕관을 찾아 준 보답이래요', 3200), 1200); }
   const acc = {}; // 동물별로 화가 풀리는 데 쌓인 시간 { calm } — 중간중간 저장해 두고 다음에 이어서 센다
   const accOf = k => acc[k] || (acc[k] = { calm: (mine[k] || {}).calmT || 0 });
   function calm(ms) { let ch = false; Object.keys(mine).forEach(k => { const r = mine[k]; if (!r || !ANIMALS[k]) return; const t = accOf(k), was = { ...t };
@@ -1345,7 +1348,7 @@ export function mount(el, ctx) {
   }
 
   const offs = [
-    ctx.store.on('social', v => { v = v || {}; mine = v[ctx.uid] || {}; theirs = (pid() && v[pid()]) || {}; cakeFix(); scores(); }),
+    ctx.store.on('social', v => { v = v || {}; mine = v[ctx.uid] || {}; theirs = (pid() && v[pid()]) || {}; cakeFix(); lionFix(); scores(); }),
     ctx.store.on('bag/' + ctx.uid, v => { rawBag = v || {}; bag = mergeBag(); drawHp(); if (xOpen) xDraw(); }),
     ctx.store.on('socialchat', onChat, { limit: 20 }),
     ctx.store.on('fishdex/' + ctx.uid, v => { dex = v || {}; }),
