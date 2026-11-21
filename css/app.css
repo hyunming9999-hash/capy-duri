@@ -3055,3 +3055,8 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .sl-tabs .so-tab:nth-child(2).on { background: linear-gradient(#FF9F1C, #F26B0F); border-color: #9A3F06; color: #fff; box-shadow: 0 3px 0 #7A3206; animation: none; }
 .sl-how { max-width: 380px; margin: 10px auto 0; padding: 10px 14px; border-radius: 16px; border: 2.5px solid #E7C989; background: #FFFBEF; } .sl-how b { display: block; margin-bottom: 4px; font: 900 15px var(--head); color: #7A3E0A; }
 .sl-how ol { margin: 0; padding-left: 20px; font-size: 13.5px; line-height: 1.55; color: #5B4636; word-break: keep-all; }
+/* 카피도박: 레버 옆 "터치!" + 배팅 버튼 세 개 */
+.sl-touch { position: absolute; left: 82.5%; top: 29.5%; width: 16%; text-align: center; font: 900 4.2cqw/1 var(--head); font-style: normal; color: #fff; background: #FF4D6D; border: .6cqw solid #fff; border-radius: 3cqw; padding: 1cqw 0; box-shadow: 0 .6cqw 0 #B3264A; pointer-events: none; animation: slTouch .9s ease-in-out infinite; }
+.sl-touch::after { content: ''; position: absolute; left: 50%; bottom: -2cqw; margin-left: -1.2cqw; border: 1.2cqw solid transparent; border-top-color: #FF4D6D; border-bottom: 0; }
+@keyframes slTouch { 50% { translate: 0 -1.2cqw; } }
+.sl-btns button { font-size: 3.9cqw; }
