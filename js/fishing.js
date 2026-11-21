@@ -252,7 +252,8 @@ export function openFishing(o) {
       document.body.append(fx); sfx('fanfare'); setTimeout(() => sfx('bigfish'), 500); [900, 1500, 2100, 2700].forEach(t => setTimeout(() => alive && sfx('coin'), t));
       try { navigator.vibrate && navigator.vibrate([80, 60, 80, 60, 200]); } catch {}
       [3000, 3400, 3800].forEach(t => setTimeout(() => alive && sfx('fanfare'), t));
-      const end = () => { fx.classList.add('out'); setTimeout(() => fx.remove(), 700); }; fx.onclick = end; setTimeout(end, 6800); }
+      const end = () => { fx.classList.add('out'); setTimeout(() => fx.remove(), 700); }; // 확인 버튼을 눌러야만 꺼진다(화면을 눌러도, 시간이 지나도 그대로)
+      const ok = h('button', { class: 'btn primary pfx-ok', onClick: e => { e.stopPropagation(); end(); } }, '✨ 확인'); fx.append(ok); }
     // 와! ○○○을 잡았다! — 화면 가득 터지는 글자, 그 아래 등급
     if (!f.icon && shiny) { // 이로치: 화면이 무지갯빛으로 번쩍이고 반짝이가 터진다
       const fl = h('div', { class: 'fs-shyflash' }); (wrap.querySelector('.fs-view') || wrap).append(fl); setTimeout(() => fl.remove(), 1600);

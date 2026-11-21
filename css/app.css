@@ -2743,3 +2743,4 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .pfx-twk { position: absolute; font-style: normal; font-size: 18px; text-shadow: 0 0 10px currentColor, 0 0 20px #fff; animation: fsTwinkle 1.1s ease-in-out infinite; }
 .pfx .pfx-boom { width: 10px; height: 10px; }
 .pfx-shake { animation: pfxShake .8s ease-in-out; } @keyframes pfxShake { 10%, 50%, 90% { transform: translate(-6px, 3px); } 30%, 70% { transform: translate(6px, -3px); } }
+.pfx-ok { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 9%); transform: translateX(-50%); z-index: 5; min-width: 160px; padding: 13px 26px; font-size: 18px; border-radius: 999px; background: linear-gradient(#FFE27A, #F2B33D); border: 3px solid #fff; color: #5A3200; box-shadow: 0 5px 0 #B87A00, 0 0 24px rgba(255, 220, 120, .9); animation: pfxTitle .7s cubic-bezier(.2, 1.6, .4, 1) 2s both, beat 1.4s ease-in-out 2.8s infinite; }
