@@ -18,11 +18,14 @@ export async function passDemo(q, d) {
   const fake = (lines, who, ch, what, bg) => S(lines, who, ch, bg, [sub(`🧪 예시판: 실제로는 ${what} 진행돼요`)], [{ label: '했다고 치고 넘어가기 ▶', value: 1, primary: true }]);
   const go = async (...a) => { const v = await S(...a); if (v == null) throw 0; return v; };
   const goF = async (...a) => { const v = await fake(...a); if (v == null) throw 0; return v; };
+  // ?passdemo=skip: 미니게임도 버튼 하나로 넘어간다(이야기 흐름만 빠르게 보기)
+  const SKIP = (() => { try { return new URLSearchParams(location.search).get('passdemo') === 'skip'; } catch { return false; } })();
+  const mg = async (who, ch, what, play, bg) => (SKIP ? (await fake([`(${what})`], who, ch, `${what}가`, bg)) != null : play());
   try {
     // ── 프롤로그 · 바다에서 온 편지
     const P = '프롤로그 · 바다에서 온 편지';
     await go(['{wow}폐, 폐하! 황금 장비 여섯 개를 두르시니 눈이 부셔서 못 보겠사옵니다!', '{think}그런데 바닷가에 뭔가 반짝이는 게 떠밀려 왔다는구먼요.', '{smile}가 보시지요!'], LION, P);
-    if (!(await findBottle(host))) throw 0; n++;
+    if (!(await mg(LION, P, '바닷가에서 반짝이는 물병 찾기', () => findBottle(host), ''))) throw 0; n++;
     await go(['{think}어디 보자… 발도장이 찍혀 있군. 핫똑랜드에서 온 편지일세.', '{smug}"황금 전사가 탄생했다는 소문이 바다 건너까지 들립니다. 진짜입니까? 진짜라면 꼭 와 주십시오. — 핫똑랜드 일동 (멍)"'], OWL, P, '', [], undefined, card('img/quest/letter.webp', 'letter'));
     await go(['{think}고급 바다부터는 갈맥 해적단 패악질 때문에 위험해.', '{smug}우리를 보증해 줄 황금 용사가 직접 가는 게 제일 확실하지.', '{smile}그러려면 여권이 필요하고… 가기 전에 준비할 게 산더미야!'], OCTO, P);
     // ── 1장 · 형제의 꼬리땐스
@@ -30,7 +33,7 @@ export async function passDemo(q, d) {
     await go(['{smile}핫똑랜드랑 친해지려면 땐스를 배워야 해.', '{happy}강아지한테는 형제애를 느끼는 아주 중요한 땐스거든.', '{shy}근데… 이건 아무한테나 보여 주는 게 아닌데.'], DOG, C1);
     await go(['{think}(두리번두리번)', '{shy}…따라와.'], DOG, C1);
     await go(['{shy}여기라면 아무도 없겠지.', '(휘이잉… 바람에 덤불 하나가 굴러간다)', '{think}…', '{happy}(갑자기 꼬리를 미친 듯이 좌우로 흔든다! 엉덩이까지 같이 흔들린다!)', '{smug}…봤지? 이게 꼬리 땐스야.'], DOG, C1, 'lot', [], undefined, (() => { const dd = h('div', { class: 'pq-deco dogdance', 'data-nopf': '1' }, h('img', { src: 'img/fl/a0-back.webp', alt: '' }), h('i', { class: 'pq-wh' })); return k => (k >= 3 ? dd : null); })());
-    if (!(await tailDance(host, d))) throw 0; n++;
+    if (!(await mg(DOG, C1, '꼬리땐스 미션', () => tailDance(host, d), 'lot'))) throw 0; n++;
     { const bark = h('img', { class: 'pq-deco bark', src: 'img/quest/dog-bark.webp', alt: '', 'data-nopf': '1' }); await go(['{cry}멍멍 멍멍!! (강아지 방언)', '{shy}할아버지랑 해 보고서… 오랜만에 해 봐.'], DOG, C1, 'lot', [], undefined, k => (k === 0 ? bark : null)); }
     // ── 2장 · 고급 입맛
     const C2 = '2장 · 고급 입맛';
@@ -45,7 +48,7 @@ export async function passDemo(q, d) {
     const C3 = '3장 · 외교선물 황금유자';
     await go(['{smile}외교선물엔 뭐니 뭐니 해도 황금유자지. 300년 전에도 장터에서 제일 귀했던 과일이야.', '{think}근데 키우기도 힘들고… 까마귀 악당을 조심해야 해.'], COW, C3);
     await goF(['{happy}황금유자가 주렁주렁 열렸어!'], COW, C3, '농장 밭 3줄에 황금유자를 길러 다 익으면');
-    if (!(await crowShoot())) throw 0; n++;
+    if (!(await mg(COW, C3, '까마귀 새총 놀이', () => crowShoot(), ''))) throw 0; n++;
     await go(['{happy}자, 내가 보자기로 예쁘게 싸 줄게!', '(끙차끙차 열심히 묶는다)'], RACC, C3, 'wrap');
     { const mk = h('i', { class: 'pq-deco', 'data-nopf': '1', 'data-top': '1' }); await go(['{wow}어이쿠… 내 꼬리까지 같이 묶었네. 이것 좀 잠시 풀어 줄래?', '@{smile}…완전 허당이네.'], RACC, C3, 'wrap2', [], undefined, () => mk); }
     await go(['{happy}이 정도면 바다 건너에서도 향기가 나겠어. 고생했어 황금 폐하!', '{shy}근데… 혹시 우유 필요해?', '@{smile}아니, 괜찮을 거 같아…', '{happy}음메~~~ 외교선물 상자 완성!'], COW, C3);
@@ -60,11 +63,11 @@ export async function passDemo(q, d) {
     const C5 = '5장 · 카피랜드 역사 교육';
     await go(['{smile}그래도 내가 여기서 오래 살았으니, 우리 아빠한테 들은 걸 토대로 역사 교육을 해 주겠네.', '{think}역사를 바로 알아야 핫똑랜드도 안심을 할 거야. 이 얘기를 꼭 잘 기억했다가 핫똑랜드에 알려 줘야 해.'], TURTLE, C5, 'class');
     await go(['{smug}1교시! 300년 전 갈매기 국의 침입을 크게 막은 장군의 이름은 카피맥스웰이었다.', '{smile}이 장군은 핫똑 집성촌 군사들과 아주 유대감이 깊었지.', '{happy}특히 맥스웰 장군이 원반을 던져서 물어 오라고 하면, 강아지 수십 명이 꼬리땐스를 추며 달려가는 게 장관이었다지.', '{smug}갈매기 해적단을 크게 이긴 작전은 이랬네. 갈매기가 육지에 상륙하자마자 원반 80개를 던졌고, 강아지들은 얼떨결에 출격해서 갈매기 군대를 크게 깨뜨렸어.', '{think}이 트라우마로 갈매기 해적단은 그렇게 많은 함선을 갖고도 카피랜드 바닷가에는 얼씬도 못 하는 거란다.', '{smug}특히 원반을 던질 때 가장 앞장서 나가던 전설의 강아지, 진돌카이막이라는 병사가 있었는데…', '{smile}지금 핫똑랜드의 시조 격으로 아주 유명해. 이 이름은 꼭 외워 두게.'], TURTLE, C5, 'class');
-    if (!(await quiz(S, C5))) throw 0;
+    if (!(await mg(TURTLE, C5, '역사 퀴즈 5문제', () => quiz(S, C5), 'class'))) throw 0;
     // ── 6장 · 갈매기 몰래 답장
     const C6 = '6장 · 갈매기 몰래 답장';
     await go(['{happy}자, 이제 다 갖췄어! 마지막으로 답장을 보내야 하는데…', '{think}고급 바다부터 갈매기 정찰병이 깔렸어. 들키면 편지를 뺏겨.'], OCTO, C6);
-    if (!(await gullThrow(host))) throw 0; n++;
+    if (!(await mg(OCTO, '6장 · 갈매기 몰래 답장', '갈매기 몰래 병 던지기', () => gullThrow(host), ''))) throw 0; n++;
     await cutins(host, [['img/quest/throw.webp', '휙~!'], ['img/quest/current.webp', '해류를 타고 핫똑랜드로…']]);
     await go(['{smug}(병이 해류를 타고 멀리 떠내려간다)', '{happy}"황금 용사, 곧 갑니다." 이 정도면 충분하지.'], OCTO, C6);
     // ── 피날레
