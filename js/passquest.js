@@ -10,8 +10,8 @@ export const TAIL_N = 30, TAIL_SEC = 5; // 꼬리땐스: 좌우 번갈아 30번�
 
 export async function passDemo(q, d) {
   const host = d.host(); if (!host) return;
-  ['bg-lot', 'bg-wrap', 'bg-wrap2', 'bg-class', 'bg-plaza-happy', 'letter', 'dog-bark', 'bottle', 'throw', 'current', 'gull-idle', 'gull-look', 'ship-q', 'badge', 'passport'].forEach(n => { new Image().src = `img/quest/${n}.webp`; }); new Image().src = 'img/fl/a0-back.webp'; // 장면이 바뀔 때 그림이 늦게 뜨지 않게 미리 받아 둔다
-  let n = 0; const TOTAL = 39;
+  ['bg-lot', 'bg-wrap', 'bg-wrap2', 'bg-class', 'bg-h1', 'bg-h2', 'bg-h3', 'bg-plaza-happy', 'letter', 'dog-bark', 'bottle', 'throw', 'current', 'gull-idle', 'gull-look', 'ship-q', 'badge', 'passport'].forEach(n => { new Image().src = `img/quest/${n}.webp`; }); new Image().src = 'img/fl/a0-back.webp'; // 장면이 바뀔 때 그림이 늦게 뜨지 않게 미리 받아 둔다
+  let n = 0; const TOTAL = 41;
   const S = (lines, who, ch, bg, extra, buttons, deco) => { n++; return q.scene(lines, who, `🛂 ${ch} · ${Math.min(n, TOTAL)}/${TOTAL}`, extra, buttons, bg, deco); };
   const card = (src, cls) => { const el = h('img', { class: 'pq-deco ' + cls, src, alt: '' }); return () => el; }; // 대사 내내 화면 가운데에 그림 한 장
   const sub = t => h('p', { class: 'vn-sub' }, t);
@@ -62,7 +62,10 @@ export async function passDemo(q, d) {
     // ── 5장 · 역사 교육
     const C5 = '5장 · 카피랜드 역사 교육';
     await go(['{smile}그래도 내가 여기서 오래 살았으니, 우리 아빠한테 들은 걸 토대로 역사 교육을 해 주겠네.', '{think}역사를 바로 알아야 핫똑랜드도 안심을 할 거야. 이 얘기를 꼭 잘 기억했다가 핫똑랜드에 알려 줘야 해.'], TURTLE, C5, 'class');
-    await go(['{smug}1교시! 300년 전 갈매기 국의 침입을 크게 막은 장군의 이름은 카피맥스웰이었다.', '{smile}이 장군은 핫똑 집성촌 군사들과 아주 유대감이 깊었지.', '{happy}특히 맥스웰 장군이 원반을 던져서 물어 오라고 하면, 강아지 수십 명이 꼬리땐스를 추며 달려가는 게 장관이었다지.', '{smug}갈매기 해적단을 크게 이긴 작전은 이랬네. 갈매기가 육지에 상륙하자마자 원반 80개를 던졌고, 강아지들은 얼떨결에 출격해서 갈매기 군대를 크게 깨뜨렸어.', '{think}이 트라우마로 갈매기 해적단은 그렇게 많은 함선을 갖고도 카피랜드 바닷가에는 얼씬도 못 하는 거란다.', '{smug}특히 원반을 던질 때 가장 앞장서 나가던 전설의 강아지, 진돌카이막이라는 병사가 있었는데…', '{smile}지금 핫똑랜드의 시조 격으로 아주 유명해. 이 이름은 꼭 외워 두게.'], TURTLE, C5, 'class');
+    { const mk = h('i', { class: 'pq-deco', 'data-nopf': '1' }); // 역사 수업 그림: 장면마다 배경을 바꾸고, 초상 없이 말풍선을 넓고 낮게
+    await go(['{smug}1교시! 300년 전 갈매기 국의 침입을 크게 막은 장군의 이름은 카피맥스웰이었다.', '{smile}이 장군은 핫똑 집성촌 군사들과 아주 유대감이 깊었지.', '{happy}특히 맥스웰 장군이 원반을 던져서 물어 오라고 하면, 강아지 수십 명이 꼬리땐스를 추며 달려가는 게 장관이었다지.'], TURTLE, C5, 'h1', [], undefined, () => mk);
+    await go(['{smug}갈매기 해적단을 크게 이긴 작전은 이랬네. 갈매기가 육지에 상륙하자마자 원반 80개를 던졌고, 강아지들은 얼떨결에 출격해서 갈매기 군대를 크게 깨뜨렸어.', '{think}이 트라우마로 갈매기 해적단은 그렇게 많은 함선을 갖고도 카피랜드 바닷가에는 얼씬도 못 하는 거란다.'], TURTLE, C5, 'h2', [], undefined, () => mk);
+    await go(['{smug}특히 원반을 던질 때 가장 앞장서 나가던 전설의 강아지, 진돌카이막이라는 병사가 있었는데…', '{smile}지금 핫똑랜드의 시조 격으로 아주 유명해. 이 이름은 꼭 외워 두게.'], TURTLE, C5, 'h3', [], undefined, () => mk); }
     if (!(await mg(TURTLE, C5, '역사 퀴즈 5문제', () => quiz(S, C5), 'class'))) throw 0;
     // ── 6장 · 갈매기 몰래 답장
     const C6 = '6장 · 갈매기 몰래 답장';
@@ -188,7 +191,7 @@ export function createPassQuest(q, d) {
   const visible = () => ready && (started() || eligible());
   const mark = () => (!visible() ? '' : done() ? '' : !started() || ready2() ? '!' : '…');
   const goal = () => s() === 1 ? `🎣 중급 바다 희귀 물고기 ${Math.min(3, st.fish || 0)} / 3마리` : s() === 2 ? `🍊 농장에서 황금유자 이랑 ${Math.min(3, st.yuzu || 0)} / 3줄 수확` : s() === 3 ? `🍳 카피백반에서 요리 완벽하게 ${cookDone()} / 3 (${PP_COOK.map(([k, n]) => ((st.ck || {})[k] ? '✔' : '·') + n).join(' ')})` : s() === 4 ? (gTries() >= 3 ? '🌙 오늘은 세 번 들켰어요 · 내일 고급 바다에서 다시' : '⛵ 배를 타고 고급 바다에서 낚시를 시작하면 갈매기 몰래 답장 던지기') : '';
-  function preload() { ['bg-lot', 'bg-wrap', 'bg-wrap2', 'bg-class', 'bg-plaza-happy', 'letter', 'dog-bark', 'bottle', 'throw', 'current', 'gull-idle', 'gull-look', 'ship-q', 'badge', 'passport'].forEach(n => { new Image().src = `img/quest/${n}.webp`; }); new Image().src = 'img/fl/a0-back.webp'; }
+  function preload() { ['bg-lot', 'bg-wrap', 'bg-wrap2', 'bg-class', 'bg-h1', 'bg-h2', 'bg-h3', 'bg-plaza-happy', 'letter', 'dog-bark', 'bottle', 'throw', 'current', 'gull-idle', 'gull-look', 'ship-q', 'badge', 'passport'].forEach(n => { new Image().src = `img/quest/${n}.webp`; }); new Image().src = 'img/fl/a0-back.webp'; }
   async function run(fn) { if (busy) return; const host = d.host(); if (!host) return; busy = true; preload(); try { await fn(host); } catch (e) { if (e !== 0) throw e; toast('퀘스트를 멈췄어요 · 🛂 버튼으로 이어서 할 수 있어요', 2400); } finally { busy = false; d.changed && d.changed(); } }
   const statusLine = (who, ch, line) => S([line], who, ch, '', [h('div', { class: 'qw-goal' }, h('b', null, '목표'), h('span', null, goal()))]);
   // 🛂 버튼·자동 시작
@@ -234,7 +237,10 @@ export function createPassQuest(q, d) {
     await go(['{happy}오이 물회, 손질도 양념도 딱이야!', '{wow}매운탕 국물이 끝내주는데?', '{love}대파 생선구이 냄새 봐…', '(앞치마로 눈물을 훔친다)', '{cry}…합격. 우리는 두두 보유국이다!'], BEAR, C4);
     const C5 = '5장 · 카피랜드 역사 교육';
     await go(['{smile}그래도 내가 여기서 오래 살았으니, 우리 아빠한테 들은 걸 토대로 역사 교육을 해 주겠네.', '{think}역사를 바로 알아야 핫똑랜드도 안심을 할 거야. 이 얘기를 꼭 잘 기억했다가 핫똑랜드에 알려 줘야 해.'], TURTLE, C5, 'class');
-    await go(['{smug}1교시! 300년 전 갈매기 국의 침입을 크게 막은 장군의 이름은 카피맥스웰이었다.', '{smile}이 장군은 핫똑 집성촌 군사들과 아주 유대감이 깊었지.', '{happy}특히 맥스웰 장군이 원반을 던져서 물어 오라고 하면, 강아지 수십 명이 꼬리땐스를 추며 달려가는 게 장관이었다지.', '{smug}갈매기 해적단을 크게 이긴 작전은 이랬네. 갈매기가 육지에 상륙하자마자 원반 80개를 던졌고, 강아지들은 얼떨결에 출격해서 갈매기 군대를 크게 깨뜨렸어.', '{think}이 트라우마로 갈매기 해적단은 그렇게 많은 함선을 갖고도 카피랜드 바닷가에는 얼씬도 못 하는 거란다.', '{smug}특히 원반을 던질 때 가장 앞장서 나가던 전설의 강아지, 진돌카이막이라는 병사가 있었는데…', '{smile}지금 핫똑랜드의 시조 격으로 아주 유명해. 이 이름은 꼭 외워 두게.'], TURTLE, C5, 'class');
+    { const mk = h('i', { class: 'pq-deco', 'data-nopf': '1' }); // 역사 수업 그림: 장면마다 배경을 바꾸고, 초상 없이 말풍선을 넓고 낮게
+    await go(['{smug}1교시! 300년 전 갈매기 국의 침입을 크게 막은 장군의 이름은 카피맥스웰이었다.', '{smile}이 장군은 핫똑 집성촌 군사들과 아주 유대감이 깊었지.', '{happy}특히 맥스웰 장군이 원반을 던져서 물어 오라고 하면, 강아지 수십 명이 꼬리땐스를 추며 달려가는 게 장관이었다지.'], TURTLE, C5, 'h1', [], undefined, () => mk);
+    await go(['{smug}갈매기 해적단을 크게 이긴 작전은 이랬네. 갈매기가 육지에 상륙하자마자 원반 80개를 던졌고, 강아지들은 얼떨결에 출격해서 갈매기 군대를 크게 깨뜨렸어.', '{think}이 트라우마로 갈매기 해적단은 그렇게 많은 함선을 갖고도 카피랜드 바닷가에는 얼씬도 못 하는 거란다.'], TURTLE, C5, 'h2', [], undefined, () => mk);
+    await go(['{smug}특히 원반을 던질 때 가장 앞장서 나가던 전설의 강아지, 진돌카이막이라는 병사가 있었는데…', '{smile}지금 핫똑랜드의 시조 격으로 아주 유명해. 이 이름은 꼭 외워 두게.'], TURTLE, C5, 'h3', [], undefined, () => mk); }
     if (!(await quiz(S, C5))) throw 0;
     await go(['{happy}자, 이제 다 갖췄어! 마지막으로 답장을 보내야 하는데…', '{think}고급 바다부터 갈매기 정찰병이 깔렸어. 들키면 편지를 뺏겨.', '{smile}배를 타고 고급 바다로 나가서 낚싯대를 드리우면, 그때 몰래 던지는 거야. 세 번 들키면 그날은 끝!'], OCTO, '6장 · 갈매기 몰래 답장');
     await save({ s: 4 }); sfx('point'); toast('🛂 다음 목표 · 고급 바다에서 갈매기 몰래 답장 던지기', 3200); }

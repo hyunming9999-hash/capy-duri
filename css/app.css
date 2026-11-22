@@ -3081,3 +3081,6 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 /* 퀵보드 뒷자리 동물: 누를 수 있게 + 걸어다닐 때와 같은 크기(74px ÷ 0.79 = 94px) */
 .so-me.scoot .sc-pas { pointer-events: auto; cursor: pointer; }
 .fluffy .sc-rig.b .sc-pas { width: 94px; left: 10px; bottom: 28px; }
+/* 역사 수업 그림(bg-h1~3): 그림 위쪽부터 화면 너비에 맞춰 깔고, 남는 아래는 어두운 나무색 → 말풍선이 그림을 덜 가린다 */
+.vn.bg[style*="bg-h"] { background-size: 100% auto; background-position: center top; background-color: #3B2A1E; }
+.vn.bg[style*="bg-h"].vn-nopf .vn-box { bottom: 8px; }
