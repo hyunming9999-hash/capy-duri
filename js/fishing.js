@@ -49,8 +49,8 @@ FISH.forEach(f => { const m = priceUp(f); f.price = [Math.round(f.price[0] * m),
 // 바다 쓰레기(F등급): 어느 바다에서나 10~20% 확률. 클수록 처리 비용이 커진다(50~250코인)
 export const TRASH = [['스티로폼 박스', '📦', 30, 90], ['페트병', '🧴', 12, 35], ['헌 옷', '👕', 40, 110], ['타이어', '🛞', 50, 120], ['축구공', '⚽', 18, 30]].map(([name, icon, c0, c1], k) => ({ id: 't' + k, name, icon, img: `img/fish/trash${k}.webp`, cm: [c0, c1] }));
 const PEARL = { id: 'pearl', name: '바다 진주', pearl: true };
-// 산호 조각: 중급 바다에서만 낚이는 보물(초희귀 한 종만큼 드물게). 15개 모으면 카피수퍼에서 진주부적 1장
-export const CORAL = { id: 'coral', name: '산호 조각', coral: true }, CORAL_PER = 15, KING_DEX = 40, ULTRA_DEX = 42; // ULTRA_DEX: 중급 바다 초희귀(번개참치·황금비늘잉어)는 초급 도감을 이만큼 채워야 문다
+// 산호 조각: 중급 바다에서만 낚이는 보물(초희귀 한 종만큼 드물게). 3개 모으면 카피수퍼에서 진주부적 1장
+export const CORAL = { id: 'coral', name: '산호 조각', coral: true }, CORAL_PER = 3, KING_DEX = 40, ULTRA_DEX = 42; // ULTRA_DEX: 중급 바다 초희귀(번개참치·황금비늘잉어)는 초급 도감을 이만큼 채워야 문다
 // 오늘의 어종: 매일(한국 날짜) 중급 바다 물고기 3종. 그날 잡은 것만 값 2배
 export const kstDay = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
 export function todayFish(day = kstDay()) { let x = [...('fish' + day)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 11); const rnd = () => { x = (x * 1103515245 + 12345) >>> 0; return x / 4294967296; };
