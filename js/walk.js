@@ -3,6 +3,7 @@
 import { h, toast, holdBtn, loadImg, josa } from './ui.js';
 import { sfx, bgm } from './sound.js';
 import { capy, svgUrl } from './capy.js';
+import { onsenRead, ONSEN_STEP, ONSEN_MAX, ONSEN_KEEP } from './fishing.js';
 
 /* ---------- 히노끼탕 그림 (192×144 저해상도로 그려 크게 늘려 보여 준다) ---------- */
 const W = 192, H = 204, SW = 28, SH = 36.9; // 세로로 긴 탕(화면을 크게 쓰도록)
@@ -103,6 +104,8 @@ export function makeVoice(ctx, ui) {
 }
 
 export function mount(el, ctx) {
+  const onsen = { ms: onsenRead().ms, saved: 0 }; // ♨️ 탕 안에서 쉰 시간(10분마다 희귀 물고기 확률 조금 업, 30분까지). 나간 뒤 1시간 유지
+  const onsenSave = t => { onsen.saved = t || performance.now(); try { localStorage.setItem('capy-onsen', JSON.stringify({ ms: Math.round(onsen.ms), until: Date.now() + ONSEN_KEEP })); } catch {} };
   let alive = true, raf = 0, last = 0, sendT = 0, dirty = true, S = 2;
   const canvas = h('canvas', { class: 'park' }), g = canvas.getContext('2d');
   const bg = drawBath(); let bgImg = null; loadImg('img/fl/bg/bath.webp').then(i => { bgImg = i; dirty = true; }).catch(() => {}); // 보송 그림 탕(소품까지 그려져 있다). 못 받으면 도트 탕
@@ -121,7 +124,7 @@ export function mount(el, ctx) {
   // 옷 입은 카피바라 그림(메인 화면과 같은 그림)
   // 그림은 앞·뒤 모습을 미리 만들어 두고, 새 그림이 준비될 때까지는 있던 그림을 계속 쓴다(깜빡임 없게)
   const lastIm = {};
-  function build(uid, view, o) { svgUrl(capy(ctx.capyOf(uid, { view, face: 'happy', noShadow: true })).replace('<svg ', '<svg width="480" height="632" ')).then(loadImg).then(im => (im.decode ? im.decode().catch(() => {}) : 0, im)).then(im => { o.im = im; o.stale = false; dirty = true; }).catch(() => {}); }
+  function build(uid, view, o) { svgUrl(capy(ctx.capyOf(uid, { view, face: 'happy', noShadow: true, top: '', bottom: '', hat: '', shoe: '', rare: undefined, pin: '', doll: null, dip: 0 })) /* 온센 안에서는 옷·장비를 다 벗는다(나가면 그대로 입은 모습) */.replace('<svg ', '<svg width="480" height="632" ')).then(loadImg).then(im => (im.decode ? im.decode().catch(() => {}) : 0, im)).then(im => { o.im = im; o.stale = false; dirty = true; }).catch(() => {}); }
   function sprite(uid, view) {
     const k = uid + view; let o = sprites[k];
     if (!o) { o = sprites[k] = { im: null }; build(uid, view, o); build(uid, view === 'back' ? 'front' : 'back', sprites[uid + (view === 'back' ? 'front' : 'back')] || (sprites[uid + (view === 'back' ? 'front' : 'back')] = { im: null })); }
@@ -195,6 +198,8 @@ export function mount(el, ctx) {
       const d = Math.exp(-6 * dt); me.kx *= d; me.ky *= d; if (Math.hypot(me.kx, me.ky) < 4) me.kx = me.ky = 0; dirty = true;
     }
     { const w = inWater(me.x, me.y); if (w !== me.wet) { if (me.wet !== undefined) sfx('splash'); me.wet = w; } } // 탕에 들어가고 나올 때 첨벙
+    if (me.wet && !document.hidden && onsen.ms < ONSEN_STEP * ONSEN_MAX) { const was = Math.floor(onsen.ms / ONSEN_STEP); onsen.ms = Math.min(ONSEN_STEP * ONSEN_MAX, onsen.ms + dt * 1000); const now2 = Math.floor(onsen.ms / ONSEN_STEP);
+      if (now2 > was) { onsenSave(); sfx('coin'); toast(`♨️ 몸이 사르르 풀렸다… 희귀 물고기 확률 +${now2 * 10}%${now2 >= ONSEN_MAX ? ' (최대)' : ` · 10분 더 쉬면 +${(now2 + 1) * 10}%`}`, 3200); } else if (t - (onsen.saved || 0) > 5000) onsenSave(t); }
     send(t);
     // 그리기: 도트 배경 → y 순서대로 소품·유자·카피바라 → 김
     g.imageSmoothingEnabled = !!bgImg; g.imageSmoothingQuality = 'high'; g.drawImage(bgImg || bg, 0, 0, canvas.width, canvas.height);
@@ -265,7 +270,7 @@ export function mount(el, ctx) {
   if (mode !== 'off') setMode(mode, true); // 지난번에 켜 둔 모드 그대로
   window.__capyVoice = voice; // 연결 상태 점검용
   return () => {
-    alive = false; cancelAnimationFrame(raf); offs.forEach(f => f()); voice.destroy(); window.__capyVoice = null; ro && ro.disconnect();
+    alive = false; if (onsen.ms > 0) onsenSave(); cancelAnimationFrame(raf); offs.forEach(f => f()); voice.destroy(); window.__capyVoice = null; ro && ro.disconnect();
     window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); window.removeEventListener('pointerdown', wake);
     root.classList.remove('fixed-page'); root.style.removeProperty('--vvh'); root.style.removeProperty('--vvt');
     if (vv) { vv.removeEventListener('resize', fit); vv.removeEventListener('scroll', fit); } window.removeEventListener('resize', fit);
