@@ -251,6 +251,21 @@ export function openAquarium(o) {
   function popAt(f, t) { const p2 = h('i', { class: 'aq-pop', style: { zIndex: 950, left: (f.x + f.dir * f.len * 0.4) * ppm + 'px', top: (f.y - f.len * 0.2) * ppm + 'px' } }, t); layer.append(p2); setTimeout(() => p2.remove(), 1200); }
   function close() { if (editing) saveDeco(); try { screen.orientation && screen.orientation.unlock && screen.orientation.unlock(); } catch {} alive = false; cancelAnimationFrame(raf); window.removeEventListener('resize', onResize); if (vv) { vv.removeEventListener('resize', fitBook); vv.removeEventListener('scroll', fitBook); } if (wentFull && document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {}); root.remove(); o.onClose && o.onClose(); }
   orient(); try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); } catch {} // 폰이 세로여도 화면을 눕혀서 가로로 보여 준다
-  requestAnimationFrame(() => { build(o.test ? demoFish(tank) : o.fish || [], o.test ? demoDeco() : o.deco || []); raf = requestAnimationFrame(loop); if (o.guest) { visit.hidden = true; goMode('pal'); } }); // guest: 내 수족관 없이 상대 수족관만 구경
+  // 해양박사 카피냥이 교수: 하루 첫 방문에 희귀 어종 2종을 찾으러 온다. 수조에 있으면 5배 값에 사 간다
+  function profShow() { const P = o.prof, jong = w => { const c = w.charCodeAt(w.length - 1) - 0xAC00; return c >= 0 && c <= 11171 && c % 28 !== 0; };
+    const want = P.ids.map(F0).filter(Boolean), have = (o.fish || []).filter(d => d && P.ids.includes(d.id)), found = [...new Set(have.map(d => d.id))].map(id => F0(id).name);
+    const ask = want.map(f => f.name + ' 어종').join('과 '), bub = h('div', { class: 'aq-prof-b' }), btns = h('div', { class: 'aq-prof-btns' });
+    const box = h('div', { class: 'aq-prof', onClick: e => e.stopPropagation() }, h('div', { class: 'aq-prof-l' }, h('b', { class: 'aq-prof-n' }, '해양박사 카피냥이 교수'), bub, btns), h('img', { class: 'aq-prof-c', src: 'img/aqua/prof.webp', alt: '카피냥이 교수' }));
+    root.append(box); sfx('pop');
+    const done = () => { box.classList.add('out'); setTimeout(() => box.remove(), 350); };
+    const say = (t, bs) => { bub.textContent = t; btns.replaceChildren(...bs.map(([l, f, pri]) => h('button', { class: 'aq-prof-btn' + (pri ? ' pri' : ''), onClick: f }, l))); };
+    const total = have.reduce((t, d) => t + P.price(d), 0), fl = found.join(', '), last = found[found.length - 1] || '';
+    const end = () => { if (!have.length) return say(`나는 ${ask}을 찾고 있는데… 여기엔 없군. 다시 오겠네.`, [['살펴 가세요', done, 1]]);
+      say(`나는 ${ask}을 찾고 있는데, 마침 ${fl}${jong(last) ? '이' : '가'} 있군! 5배 값에 팔겠나? (${have.length}마리 · ${total.toLocaleString()}코인)`, [['아니오', () => say('허허, 아끼는 녀석인가 보군. 다음에 또 들르겠네.', [['살펴 가세요', done, 1]])],
+        ['네', async () => { btns.replaceChildren(); const got = await P.sell(have); if (got === false) return say('흠, 지금은 거래가 어렵겠군. 다음에 오겠네.', [['확인', done, 1]]);
+          const ks = new Set(have.map(d => d.key)); o.fish = (o.fish || []).filter(d => !ks.has(d.key)); fish = fish.filter(f => { if (ks.has(f.d.key)) { f.el.remove(); return false; } return true; }); drawInfo(); sfx('coin');
+          say(`고맙네! 해류 연구에 큰 도움이 되겠어. 약속한 ${total.toLocaleString()}코인일세.`, [['확인', done, 1]]); }, 1]]); };
+    say('나는 갑자기 들어선 해류를 연구하고 있다네.', [['다음', () => say('그러기 위해선 희귀 등급 어종을 지표로 삼아 분석이 필요하다네.', [['다음', end, 1]]), 1]]); }
+  requestAnimationFrame(() => { build(o.test ? demoFish(tank) : o.fish || [], o.test ? demoDeco() : o.deco || []); raf = requestAnimationFrame(loop); if (o.guest) { visit.hidden = true; goMode('pal'); } if (o.prof) setTimeout(() => alive && profShow(), 700); }); // guest: 내 수족관 없이 상대 수족관만 구경
   return { close };
 }

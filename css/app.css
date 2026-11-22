@@ -3084,3 +3084,18 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 /* 역사 수업 그림(bg-h1~3): 그림 위쪽부터 화면 너비에 맞춰 깔고, 남는 아래는 어두운 나무색 → 말풍선이 그림을 덜 가린다 */
 .vn.bg[style*="bg-h"] { background-size: 100% auto; background-position: center top; background-color: #3B2A1E; }
 .vn.bg[style*="bg-h"].vn-nopf .vn-box { bottom: 8px; }
+/* 해양박사 카피냥이 교수(수족관 첫 방문): 왼쪽 말풍선 · 오른쪽 캐릭터 */
+.aq-prof{position:absolute;inset:auto 0 0 0;z-index:3000;display:flex;align-items:flex-end;justify-content:center;gap:8px;padding:0 12px 10px;pointer-events:none;background:linear-gradient(transparent,rgba(4,30,50,.55) 55%);animation:aqProfIn .45s ease-out both}
+.aq-prof.out{animation:aqProfOut .35s ease-in both}
+.aq-prof>*{pointer-events:auto}
+.aq-prof-l{flex:0 1 460px;margin-bottom:14px;position:relative}
+.aq-prof-n{display:inline-block;background:#1f5f86;color:#fff;font-size:12px;padding:3px 10px;border-radius:10px 10px 0 0;margin-left:14px}
+.aq-prof-b{position:relative;background:#fffdf5;color:#3a2a14;border:3px solid #e0b252;border-radius:16px;padding:12px 14px;font-size:14px;line-height:1.5;box-shadow:0 4px 14px rgba(0,0,0,.25);min-height:44px}
+.aq-prof-b:after{content:'';position:absolute;right:-14px;bottom:22px;border:9px solid transparent;border-left:14px solid #e0b252}
+.aq-prof-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+.aq-prof-btn{border:0;border-radius:12px;padding:7px 16px;font-weight:700;font-size:13px;background:#e9e3d6;color:#5a4630}
+.aq-prof-btn.pri{background:#2f8fc4;color:#fff}
+.aq-prof-c{height:min(62vh,300px);width:auto;flex:none;filter:drop-shadow(0 6px 10px rgba(0,0,0,.35));animation:aqProfBob 2.4s ease-in-out infinite}
+@keyframes aqProfIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
+@keyframes aqProfOut{to{opacity:0;transform:translateY(30px)}}
+@keyframes aqProfBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}

@@ -462,7 +462,12 @@ export function mount(el, ctx) {
       if (aquaOpen) return; const m0 = await import('./aquarium.js'); aquaOpen = true; keys.clear();
       return void m0.openAquarium({ guest: true, book: aqBook, tank: pd.tank, fish: [], deco: [], me: ctx.me.name, partner: ctx.nameOf(pid()), loadPartner: loadPal, onClose: () => { aquaOpen = false; lastT = performance.now(); scores(); } }); }
     const m = await import('./aquarium.js'); aquaOpen = true; keys.clear(); bookNews(); const AQ = 'aqua/' + ctx.uid, cleanFish = d => { const v = { ...d }; delete v.key; return v; };
-    m.openAquarium({ tank: aqua.t, fish: aqFish(), deco: Object.values(aqua.deco || {}).filter(Boolean), decoInv: aqua.inv || {}, me: ctx.me.name, partner: pid() ? ctx.nameOf(pid()) : '', bag: bagFish, book: aqBook,
+    const today = ymd(), profIds = (() => { const pool = FISH.filter(f => f.tier === 3 && !f.king); let x = [...today].reduce((t, c) => (t * 31 + c.charCodeAt(0)) >>> 0, 7); const r = () => (x = (x * 1103515245 + 12345) >>> 0) / 4294967296, a = pool[Math.floor(r() * pool.length)]; let b; do b = pool[Math.floor(r() * pool.length)]; while (pool.length > 1 && b === a); return [a.id, b.id]; })();
+    const prof = aqua.prof === today ? null : { ids: profIds, price: d => (fishP(d) || 0) * 5,
+      sell: async list => { const total = list.reduce((t, d) => t + (fishP(d) || 0) * 5, 0), patch = Object.fromEntries(list.map(d => [d.key, null])); const left = { ...(aqua.fish || {}) }; list.forEach(d => delete left[d.key]); aqua = { ...aqua, fish: left };
+        await ctx.store.update(AQ + '/fish', patch).catch(() => {}); await addCoins(total); return total; } };
+    if (prof) { aqua = { ...aqua, prof: today }; ctx.store.update(AQ, { prof: today }).catch(() => {}); }
+    m.openAquarium({ prof, tank: aqua.t, fish: aqFish(), deco: Object.values(aqua.deco || {}).filter(Boolean), decoInv: aqua.inv || {}, me: ctx.me.name, partner: pid() ? ctx.nameOf(pid()) : '', bag: bagFish, book: aqBook,
       release: async d => { const v = cleanFish(d); const left = { ...(bag.fish || {}) }; delete left[d.key]; bag = { ...bag, fish: left }; await ctx.store.update('bag/' + ctx.uid + '/fish', { [d.key]: null }).catch(() => {}); await ctx.store.update(AQ + '/fish', { [d.key]: v }).catch(() => {}); return true; },
       takeOut: async d => { const v = cleanFish(d); delete v.name; await ctx.store.update(AQ + '/fish', { [d.key]: null }).catch(() => {}); bag = { ...bag, fish: { ...(bag.fish || {}), [d.key]: v } }; await ctx.store.update('bag/' + ctx.uid + '/fish', { [d.key]: v }).catch(() => {}); return true; },
       movePearl: (d, px) => { if (d.key) ctx.store.update(AQ + '/fish/' + d.key, { px }).catch(() => {}); },
