@@ -3136,7 +3136,7 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .ap-term { position: absolute; bottom: 31%; z-index: 2; padding: 0; border: 0; background: none; cursor: pointer; aspect-ratio: 900 / 682; container-type: inline-size; }
 .ap-term img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 6px 6px rgba(0,0,0,.18)); }
 
-.ap-term-t { position: absolute; left: 19%; right: 25%; top: 11%; height: 17%; display: flex; align-items: center; justify-content: center; font: 900 9cqw/1 var(--head); color: #fff; letter-spacing: 1px; text-shadow: 0 0 6px rgba(120, 200, 255, .9), 0 2px 0 #0D2A5C; } /* 현대식 남색 간판 가운데 */
+.ap-term-t { position: absolute; left: 19.7%; right: 25.2%; top: 12.2%; height: 14.9%; padding-left: 0; text-indent: 1px; display: flex; align-items: center; justify-content: center; font: 900 9cqw/1 var(--head); color: #fff; letter-spacing: 1px; text-shadow: 0 0 6px rgba(120, 200, 255, .9), 0 2px 0 #0D2A5C; } /* 현대식 남색 간판 가운데 */
 .ap-crew { position: absolute; bottom: 9%; height: 31%; transform: translateX(-50%); z-index: 3; pointer-events: none; animation: apBob 2.6s ease-in-out infinite; }
 .ap-crew + .ap-crew { animation-delay: -1.3s; }
 .ap-crew.in { bottom: 10%; height: 30%; }
@@ -3194,9 +3194,9 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .ap-ride-pl, .ap-ride-hull { display: block; width: 100%; transform: scaleX(-1); } .ap-ride-hull { position: absolute; left: 0; top: 0; }
 .ap-ride-me { position: absolute; left: 47.5%; top: -3%; width: 27%; transform: translateX(-50%); } .ap-ride-me svg { width: 100%; display: block; transform: scaleX(-1); }
 .ap-sky { position: absolute; inset: 0; overflow: hidden; } .ap-sky[hidden] { display: none; }
-.ap-sky-bg { position: absolute; inset: 0; background: url(../img/air/sky.webp) 0 50% / auto 100% repeat-x; animation: apSky 9s linear infinite; } @keyframes apSky { to { background-position-x: calc(-1 * var(--skyw, 2000px)); } }
-.ap-cloud { position: absolute; left: 0; height: auto; animation: apCloud 1.4s linear infinite; pointer-events: none; }
-@keyframes apCloud { from { transform: translateX(110vw); } to { transform: translateX(-60vw); } }
+.ap-sky-bg { position: absolute; left: 0; top: 0; height: 100%; width: calc(var(--skyw, 2000px) * 2); background: url(../img/air/sky.webp?v=2) 0 0 / var(--skyw, 2000px) 100% repeat-x; animation: apSky 14s linear infinite; will-change: transform; } @keyframes apSky { to { transform: translate3d(calc(-1 * var(--skyw, 2000px)), 0, 0); } }
+.ap-cloud { position: absolute; left: 0; height: auto; animation: apCloud 1.4s linear infinite; pointer-events: none; will-change: transform; }
+@keyframes apCloud { from { transform: translate3d(105vw, 0, 0); } to { transform: translate3d(-75vw, 0, 0); } }
 .ap-ride-t { position: absolute; left: 10px; right: 10px; top: 6px; flex-direction: row !important; justify-content: center; gap: 10px !important; z-index: 5; padding: 6px 12px; border-radius: 16px; background: rgba(255, 250, 240, .94); border: 2px solid #9CC6EE; text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; }
 .ap-ride-t b { font: 900 16px/1.2 var(--head); color: #2F6FA8; } .ap-ride-t small { font-size: 12px; color: #6a7f95; }
 
