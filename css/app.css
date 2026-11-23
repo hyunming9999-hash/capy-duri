@@ -3099,3 +3099,10 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 @keyframes aqProfIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
 @keyframes aqProfOut{to{opacity:0;transform:translateY(30px)}}
 @keyframes aqProfBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+/* 카피온센 효과 남은 시간 게이지 */
+.onsen-gauge{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 58px);transform:translateX(-50%);z-index:9000;display:flex;align-items:center;gap:6px;padding:4px 10px 4px 7px;border-radius:999px;background:rgba(255,250,240,.94);border:2px solid #f0b26a;box-shadow:0 3px 10px rgba(120,60,10,.2);font-size:12px;font-weight:700;color:#8a4a12;pointer-events:none}
+.onsen-gauge[hidden]{display:none}
+.onsen-gauge b{font-size:14px}
+.onsen-bar{width:74px;height:8px;border-radius:6px;background:#f6dcc0;overflow:hidden}
+.onsen-fill{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#ff8a5c,#ffc35c);transition:width 1s linear}
+.onsen-txt{white-space:nowrap;font-variant-numeric:tabular-nums}

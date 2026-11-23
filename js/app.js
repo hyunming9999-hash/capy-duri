@@ -214,6 +214,10 @@ function leave() { LS.del('room'); location.hash = ''; location.reload(); }
 // 패치 소식
 // 패치 소식: 한 장씩 옆으로 넘겨 본다. 장마다 나온 시각에서 하루가 지나면 저절로 사라진다(남은 장이 없으면 창도 안 뜬다)
 const DAY = 86400000, PATCH = [
+  { at: '2026-11-23T09:50:00+09:00', head: '♨️ 카피온센 효능 발견!', sub: '11/23 업데이트 · 카피온센', img: 'img/patch-onsen.webp', li: [
+    ['🛁', '탕에 들어가면 옷을 벗고, 나오면 다시 입어요', ''],
+    ['🎣', '10분 쉴 때마다 희귀 물고기 확률 +3%', '30분이면 최대 +9%'],
+    ['⏳', '효과는 10분당 2분 유지', '30분 쉬면 6분 · 화면 위 게이지로 남은 시간을 볼 수 있어요']] },
   { at: '2026-11-23T09:00:00+09:00', head: '🔬 해양박사 카피냥이 교수 등장!', sub: '11/23 업데이트 · 카피수족관', img: 'img/patch-prof.webp', li: [
     ['🌀', '갑자기 들어선 해류를 연구하는 교수님', '하루 첫 수족관 방문 때 찾아와요'],
     ['🔍', '매일 희귀 등급 어종 2종을 찾아요', '두 사람 모두 같은 어종이에요'],
@@ -426,3 +430,14 @@ function home() {
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
 boot();
+
+// ♨️ 카피온센 효과 게이지: 온센에서 쉰 효과(희귀 물고기 확률 업)가 남아 있는 동안 화면 위에 남은 시간을 막대로 보여 준다
+{ const STEP = 600000, MAX = 3, KEEP = 120000, UP = 3;
+  const fill = h('i', { class: 'onsen-fill' }), txt = h('span', { class: 'onsen-txt' }), bar = h('div', { class: 'onsen-gauge', hidden: true, 'aria-live': 'off' }, h('b', null, '♨️'), h('div', { class: 'onsen-bar' }, fill), txt);
+  document.body.append(bar);
+  const tick = () => { let v = {}; try { v = JSON.parse(localStorage.getItem('capy-onsen') || '{}') || {}; } catch {}
+    const st = Math.min(MAX, Math.floor((v.ms || 0) / STEP)), left = (v.until || 0) - Date.now(), inBath = location.hash.startsWith('#walk');
+    if (!st || left <= 0 || inBath) { bar.hidden = true; return; }
+    const s = Math.ceil(left / 1000); bar.hidden = false; fill.style.width = Math.max(0, Math.min(100, left / (st * KEEP) * 100)) + '%';
+    txt.textContent = `희귀 +${st * UP}% · ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+  tick(); setInterval(tick, 1000); }
