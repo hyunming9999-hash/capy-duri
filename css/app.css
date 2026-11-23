@@ -3245,3 +3245,8 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .ap-landbg { position: absolute; inset: 0; background: url(../img/hd/air.webp?v=1) 100% 50% / auto 100% no-repeat; opacity: 0; transition: opacity 1.6s ease-in-out; z-index: 1; } .ap-landbg.on { opacity: 1; }
 .ap-sky.landing .ap-cloud { transition: opacity 1s; opacity: 0 !important; }
 .ap-ride-rig.air.down { animation: none; z-index: 2; transition: left 4.2s cubic-bezier(.2,.6,.3,1), top 4.2s cubic-bezier(.3,0,.4,1), width 4.2s ease-in-out, rotate 4.2s ease-out; left: 66%; top: 61%; width: min(40%, 190px); rotate: 0deg; }
+.hd-sign { position: absolute; transform: translateX(-50%); z-index: 30; padding: 4px 9px; border-radius: 8px; background: #6B4423; color: #FFE9B8; border: 2px solid #3E2511; font: 900 11px/1.2 var(--head); white-space: nowrap; box-shadow: 0 2px 0 #3E2511; pointer-events: none; }
+
+.hd-plane { position: absolute; pointer-events: none; z-index: 1; filter: drop-shadow(0 3px 3px rgba(0,0,0,.2)); }
+.hd-plane.air { left: 71%; bottom: 39%; width: 17%; } .hd-plane.in { left: 88.2%; bottom: 44%; width: 7%; z-index: 0; }
+.hd-meet .so-face > span { display: block; } .hd-meet .so-face > span img { width: 88px; height: auto; display: block; }
