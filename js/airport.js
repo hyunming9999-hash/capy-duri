@@ -1,12 +1,12 @@
 // 카피공항: 놀이터 왼쪽 '카피공항으로' 팻말로 가는 따로 된 공간(농장처럼).
 // 바깥: 바닷가 도로 · 통유리 터미널 · 그 뒤 활주로(비행기가 10초마다 내리고 뜬다). 터미널에 들어가면 안쪽: 카운터 · 출국 대기장 · 큰 창 너머 활주로.
-// 비행기: 1분마다 한 번 내려앉아 잠시 머물다 다시 떠난다(두 사람 화면이 같은 시계로 맞춰 움직인다)
+// 비행기: 10분마다 한 번 내려앉아 잠시 머물다 다시 떠난다(두 사람 화면이 같은 시계로 맞춰 움직인다)
 import { h, toast, modal, holdBtn } from './ui.js';
 import { capy } from './capy.js';
 import { sfx, bgm } from './sound.js';
 
 const BG_W = 1344, BG_H = 576, WALK_SP = 150;
-export const FLIGHT = { every: 60000, land: 10000, stay: 10000, off: 8000 }; // 1분마다: 10초 동안 왼쪽으로 들어와 출입구 앞에 서고 → 10초 안에 타야 한다 → 8초 동안 오른쪽으로 달려 나가 떠난다
+export const FLIGHT = { every: 600000, land: 10000, stay: 10000, off: 8000 }; // 10분마다: 10초 동안 왼쪽으로 들어와 출입구 앞에 서고 → 10초 안에 타야 한다 → 8초 동안 오른쪽으로 달려 나가 떠난다
 export const FLIGHT_DEMO = { every: 30000, land: 10000, stay: 3000, off: 8000 }; // 예시판: 30초마다 · 10초 안에 도착 → 3초 뒤 출발
 export function flightNow(t, F = FLIGHT) { const k = ((t % F.every) + F.every) % F.every, a = F.land, b = a + F.stay, c = b + F.off;
   if (k < a) return { phase: 'land', p: k / a, left: 0 }; if (k < b) return { phase: 'stay', p: (k - a) / F.stay, left: b - k }; if (k < c) return { phase: 'off', p: (k - b) / F.off, left: 0 };
@@ -91,7 +91,7 @@ export function openAirport(o) {
   function openTicket() { const f = flightNow(now(), F), dep = depAt(now());
     const row = (k, name, desc) => h('button', { class: 'ap-tk', onClick: () => confirmBuy(k, name) }, h('b', null, `🎫 ${DEST} ${name}`), h('small', null, desc), h('em', null, `${TICKET[k].toLocaleString()}코인`));
     modal({ title: `🎫 ${DEST} 탑승권`, body: [h('div', { class: 'ap-cnt' }, h('img', { src: 'img/air/att.webp', alt: '' }),
-      h('p', null, `어서 오세요, 카피공항입니다! ✈️`, h('br'), `${DEST}행 카피 오픈카 비행기는 1분마다 한 대씩 떠나요.`),
+      h('p', null, `어서 오세요, 카피공항입니다! ✈️`, h('br'), `${DEST}행 카피 오픈카 비행기는 10분마다 한 대씩 떠나요.`),
       h('p', { class: 'ap-cnt-s' }, canBoard(f) ? `지금 탑승할 수 있어요 · ${mmss(f.left)} 뒤 마감` : `다음 비행기 ${hhmm(dep)} 출발 · 출입구 앞에 선 뒤 10초 안에 타야 해요`),
       demo && h('p', { class: 'ap-cnt-n' }, '🧪 예시판이라 코인은 빠지지 않아요'),
       freeFly > 0 && h('button', { class: 'ap-tk', onClick: async () => { document.querySelectorAll('.modal-wrap').forEach(m => m.remove()); freeFly = 0; await ctx.store.update('bag/' + ctx.uid, { flight: null }).catch(() => {}); await ctx.store.update(TK, { round: (tk.round || 0) + 1 }).catch(() => {}); sfx('fanfare'); toast('🎫 첫 비행 무료 항공권을 왕복 탑승권으로 바꿨어요!', 2400); } }, h('b', null, '🎁 첫 비행 무료 항공권 쓰기'), h('small', null, '여권과 함께 받은 항공권 · 왕복 한 번'), h('em', null, '무료')),
