@@ -20,6 +20,7 @@ import { recOf } from './cook.js';
 import { TANKS as AQT, DECO as AQD } from './aquarium.js';
 const AQACT = { peck: '콕콕 쪼기', hide: '숨바꼭질', circle: '빙글빙글', bubble: '거품 타기', glow: '반짝반짝', heart: '하트 뿅', startle: '깜짝 놀라기', slide: '미끄럼 타기' };
 import { openFishing, seaBattle, PIRATE_LOOT, FLEE_FEE, CBOAT_FIX, FISH, TIERS, RODS, ZONES, BAIT, BAIT2, BAIT3, baitIc, BALL, CANNON, CANNON2, WBOAT, BOAT_FIX, PIRATE_HIT, fishSvg, SHINY_LIST, PEARL_PRICE, PRICE_V, priceUp, todayFish, CORAL_PER, KING_DEX } from './fishing.js';
+const AIRDEMO = (() => { try { return new URLSearchParams(location.search).has('airdemo'); } catch { return false; } })(); // 카피공항: 아직 예시 링크(?airdemo)에서만 보인다
 const CROW_IMG = FLUFFY ? 'img/fl/o/crow.webp' : 'img/crow/crow.webp';
 const FL_GUN = '<svg viewBox="110 30 64 48"><image href="img/fl/o/gun.webp" x="114" y="36" width="56" height="24"/><image href="img/fl/o/wheel.webp" x="117" y="48" width="26" height="26"/></svg>', FL_GUN2 = '<svg viewBox="108 28 66 50"><image href="img/fl/o/gun2.webp" x="112" y="33" width="58" height="31"/><image href="img/fl/o/wheel2.webp" x="113" y="48" width="26" height="26"/></svg>'; // 상점 그림: 배에 달린 대포와 같은 그림
 
@@ -287,6 +288,7 @@ export function mount(el, ctx) {
     meTube = h('div', { class: 'so-metube', html: tubeSvg('#FF6B6B'), style: { display: 'none' } }); palTube = h('div', { class: 'so-metube', html: tubeSvg('#FF9DB8'), style: { display: 'none' } }); meTubeB = h('div', { class: 'so-metube', html: tubeSvg('#FF6B6B', 'back'), style: { display: 'none' } }); palTubeB = h('div', { class: 'so-metube', html: tubeSvg('#FF9DB8', 'back'), style: { display: 'none' } }); world.append(meTubeB, palTubeB); boatEl = h('div', { class: 'so-boat', style: { display: 'none' } }); palBoat = h('div', { class: 'so-boat', style: { display: 'none' } }); palBoatI = palBoatDrawn = -1; world.append(meTube, palTube, boatEl, palBoat, palPop); me.boat = null; offer = null;
     palEl = h('div', { class: 'so-me so-pal', style: { display: 'none' } }); pal.spot = null; pal.dx = -1; world.append(palEl); drawPal();
     // 놀이터 왼쪽 끝: '농장 가는 길' 팻말 → 따로 된 카피 농장
+    if (AIRDEMO) world.append(h('button', { class: 'so-airsign', 'aria-label': '카피공항으로', style: { left: Math.round(TILE * 0.006) + 'px', height: Math.round(H * 0.3) + 'px' }, onClick: () => goAir() }, h('img', { src: 'img/air/sign.webp', alt: '' }), h('b', null, '카피공항으로'))); // 농장 팻말 바로 아래: 카피공항
     world.append(h('button', { class: 'so-farmsign', 'aria-label': '농장 가는 길', style: { left: Math.round(TILE * 0.012) + 'px', height: Math.round(H * 0.34) + 'px' }, onClick: () => goFarm() }, h('img', { src: 'img/farm/sign.webp', alt: '' }), h('b', null, '농장 가는 길'), h('i', { class: 'so-fclick' }, '👆 클릭!')));
     // 카피백반: 놀이터 맨 오른쪽(카피수퍼 바로 옆) 가게 자리에 카피백반 건물
     { const cx0 = (TILES - 1) * TILE + 985 / 1213 * TILE, cw = 205 / 1213 * TILE;
@@ -490,6 +492,8 @@ export function mount(el, ctx) {
   let farmOpen = false;
   function goFarm() { if (farmOpen) return; if (fishOpen || battle) return toast('하던 걸 끝내고 농장에 갈 수 있어요'); if (me.boat) return toast('배에서 내린 뒤에 농장에 갈 수 있어요'); fishOpen = true; farmOpen = true; keys.clear(); sfx('pop');
     openFarm({ ctx, keeper: farmKeeper, onRowDone: (c, g) => pq && pq.onRow(c, g), scoot: () => (scoot ? scootHtml() : null), onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); } }); }
+  function goAir() { if (farmOpen) return; if (fishOpen || battle) return toast('하던 걸 끝내고 공항에 갈 수 있어요'); if (me.boat) return toast('배에서 내린 뒤에 공항에 갈 수 있어요'); fishOpen = true; farmOpen = true; keys.clear(); sfx('pop');
+    import('./airport.js').then(m => m.openAirport({ ctx, demo: AIRDEMO, scoot: () => (scoot ? scootHtml() : null), onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); } })).catch(() => { fishOpen = false; farmOpen = false; }); }
   const fcrow = farmCrow(ctx, { goFarm: () => goFarm() });
   // 카피수족관 시험판 링크(?aqtest=1·2·3): 실제 물고기 자료로 채운 수족관을 바로 띄운다. 아무것도 저장하지 않음
   try { const at = +new URLSearchParams(location.search).get('aqtest'); if (at >= 1 && at <= 3) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); import('./aquarium.js').then(m => m.openAquarium({ test: true, tank: at, me: ctx.me.name, partner: ctx.nameOf(ctx.partnerId) || '두두' })); }, 1200); } catch {}
@@ -548,6 +552,7 @@ export function mount(el, ctx) {
   try { if (new URLSearchParams(location.search).has('passdemo')) { let tries = 0; const go = () => { const hostEl = worldEl && worldEl.isConnected && worldEl.parentElement; if (!hostEl) { if (++tries < 40) setTimeout(go, 500); return; } document.querySelectorAll('.modal-wrap').forEach(x => x.remove()); import('./passquest.js').then(m => m.passDemo(quest, { host: () => (worldEl && worldEl.parentElement), meSvg: face => capy(ctx.capyOf(ctx.uid, { face })), meBack: () => capy(ctx.capyOf(ctx.uid, { view: 'back' })), meName: ctx.me.name, showDip: () => { window.__capyDip = true; refreshMe(); } })).catch(e => toast('여권 예시판을 못 불러왔어요: ' + e.message, 4000)); }; setTimeout(go, 2200); } } catch { } // 여권 퀘스트 예시판(?passdemo): 저장·보상 없음
   try { const qv = new URLSearchParams(location.search); if (qv.has('replaytest')) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); quest.replay(15, 18); }, 1600); /* 다시 보기 연습 */ if (qv.has('questtest')) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); quest.demo(Math.max(0, (+qv.get('questtest') || 1) - 1)); }, 1600); } catch {}
   // 까마귀 연습 링크(?crowtest): 친목회에 들어오면 바로 농장으로 데려간다
+  if (AIRDEMO) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); goAir(); }, 1600); // 예시 링크: 바로 공항으로
   try { if (new URLSearchParams(location.search).has('crowtest')) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); if (!farmOpen && !me.boat && !fishOpen && !battle) goFarm(); setTimeout(() => fcrow.practice(), 900); }, 1200); } catch {}
   // 까마귀 퇴치 연습(?taltest)·해적전 연습(?piratetest, =2면 별빛포): 친밀도·돈·배·포탄에는 아무 영향 없음
   try { const tq = new URLSearchParams(location.search), shut = () => document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click());
