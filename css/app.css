@@ -3192,8 +3192,29 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .ap-ride-rig.air { left: 50%; top: 64%; width: min(74%, 350px); z-index: 2; animation: apAir 2.2s ease-in-out infinite; }
 @keyframes apAir { 0%, 100% { translate: 0 -12px; rotate: -3deg; } 50% { translate: 0 12px; rotate: 2deg; } }
 .ap-ride-pl, .ap-ride-hull { display: block; width: 100%; transform: scaleX(-1); } .ap-ride-hull { position: absolute; left: 0; top: 0; }
-.ap-ride-me { position: absolute; left: 42.6%; top: 6%; width: 18%; transform: translateX(-50%); }
-.ap-ride-cpt { position: absolute; left: 56.8%; top: 9%; width: 19%; transform: translateX(-50%); } .ap-ride-me svg { width: 100%; display: block; transform: scaleX(-1); }
+.ap-ride-me { position: absolute; left: 39.5%; top: 6%; width: 18%; transform: translateX(-50%); }
+.ap-ride-cpt { position: absolute; left: 57.6%; top: 9%; width: 19%; transform: translateX(-50%); z-index: 1; } .ap-ride-hull { z-index: 2; } /* 기장이 나보다 앞(앞좌석·앞 레이어) */
+.ap-exit { position: absolute; left: 8px; top: 8px; z-index: 9; padding: 6px 10px; border-radius: 12px; border: 2px solid #8B5A2B; background: rgba(245,215,161,.94); font: 900 12px/1 var(--head); color: #5A3A1E; box-shadow: 0 2px 0 #8B5A2B; cursor: pointer; } .ap-exit[hidden], .fm-scene:has(.ap-ride) .ap-exit { display: none; }
+/* 여권 확인: 표지가 넘어가며 펼쳐지고 출국 도장이 쾅 */
+.apv { position: fixed; inset: 0; z-index: 9990; background: rgba(22,15,44,.78); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; animation: apvIn .25s ease-out; }
+@keyframes apvIn { from { opacity: 0; } }
+.apv-t { margin: 0; font: 900 22px/1 var(--head); color: #FFE38A; text-shadow: 0 3px 0 #8A5A00; }
+.apv-book { position: relative; width: min(64vw, 250px); aspect-ratio: 3 / 4; perspective: 900px; animation: apvBook .5s cubic-bezier(.2,.9,.3,1.2) both; }
+@keyframes apvBook { from { scale: .3; opacity: 0; rotate: -12deg; } }
+.apv-cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transform-origin: 0 50%; backface-visibility: hidden; filter: drop-shadow(0 8px 14px rgba(0,0,0,.45)); animation: apvOpen .9s .75s cubic-bezier(.5,0,.3,1) forwards; z-index: 2; }
+@keyframes apvOpen { 60% { opacity: 1; } 100% { transform: rotateY(-165deg); opacity: 0; } }
+.apv-page { position: absolute; inset: 3% 5%; border-radius: 12px; background: linear-gradient(#FFFBEF, #F4E9CF); border: 3px solid #C9A04A; box-shadow: 0 0 0 3px #1F2F6B, 0 10px 22px rgba(0,0,0,.45); padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.apv-photo { width: 52%; aspect-ratio: 1; border-radius: 10px; background: #DDE8F5; border: 2px solid #9BB0C8; overflow: hidden; } .apv-photo svg { width: 100%; display: block; }
+.apv-page dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; margin: 0; font-size: 13px; color: #3A2A1A; align-self: stretch; } .apv-page dt { color: #8A6A3A; font-weight: 700; } .apv-page dd { margin: 0; font-weight: 900; }
+.apv-stamp { position: absolute; right: 6%; bottom: 7%; width: 82px; height: 82px; border-radius: 50%; border: 5px double #D2263A; color: #D2263A; display: grid; place-items: center; align-content: center; rotate: -16deg; background: rgba(255,240,240,.4); opacity: 0; scale: 3.4; animation: apvStamp .26s 1.75s cubic-bezier(.5,0,.8,.6) forwards; }
+.apv-stamp b { font-size: 21px; font-weight: 900; line-height: 1; letter-spacing: 2px; } .apv-stamp small { font-size: 8.5px; font-weight: 900; letter-spacing: .5px; }
+@keyframes apvStamp { to { opacity: .92; scale: 1; } }
+.apv-book { animation: apvBook .5s cubic-bezier(.2,.9,.3,1.2) both, apvShake .3s 2s; }
+@keyframes apvShake { 25% { translate: -5px 3px; } 75% { translate: 5px -2px; } }
+.apv-crew { position: relative; display: flex; align-items: flex-end; gap: 6px; height: 74px; margin-top: 26px; } .apv-crew img { height: 100%; }
+.apv.done .apv-crew img { animation: apvBow .7s ease-in-out 2; transform-origin: 50% 100%; } @keyframes apvBow { 50% { rotate: 14deg; translate: 0 4px; } }
+.apv-say { position: absolute; left: 50%; bottom: calc(100% + 6px); translate: -50% 0; background: #fffdf5; color: #5a3a1e; border: 2px solid #e0b252; border-radius: 12px; padding: 5px 10px; font: 800 13px/1.3 var(--head); white-space: nowrap; } .apv-say.bow { font-size: 16px; color: #B32020; animation: parkBub .3s ease-out; }
+.apv-ok { visibility: hidden; } .apv.done .apv-ok { visibility: visible; animation: parkBub .3s ease-out; } .ap-ride-me svg { width: 100%; display: block; transform: scaleX(-1); }
 .ap-sky { position: absolute; inset: 0; overflow: hidden; } .ap-sky[hidden] { display: none; }
 .ap-sky-bg { position: absolute; left: 0; top: 0; height: 100%; width: calc(var(--skyw, 2000px) * 2); background: url(../img/air/sky.webp?v=2) 0 0 / var(--skyw, 2000px) 100% repeat-x; animation: apSky 14s linear infinite; will-change: transform; } @keyframes apSky { to { transform: translate3d(calc(-1 * var(--skyw, 2000px)), 0, 0); } }
 .ap-cloud { position: absolute; left: 0; height: auto; animation: apCloud 1.4s linear infinite; pointer-events: none; will-change: transform; }

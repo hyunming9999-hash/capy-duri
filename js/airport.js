@@ -41,8 +41,8 @@ export function openAirport(o) {
   const exitSign = h('button', { class: 'fm-exit', style: { left: W - Math.round(W * 0.13) + 'px' }, onClick: () => close() }, '놀이터로 →');
   const outWorld = h('div', { class: 'fm-world ap-world', style: { width: W + 'px', height: H + 'px', backgroundImage: 'url(img/air/out.webp?v=4)' } }, h('div', { class: 'ap-runway' }, outPlane), h('img', { class: 'ap-boat', src: 'img/air/boat.webp?v=2', alt: '' }), ...parked, front, term, exitSign);
   // 안쪽
-  const counter = h('button', { class: 'ap-counter', 'aria-label': '공항 카운터', onClick: () => walkTo(W * 0.13, openTicket) });
-  const inAtt = h('img', { class: 'ap-crew in tap', src: 'img/air/att.webp', alt: '카피승무원', style: { left: W * 0.115 + 'px' }, onClick: () => walkTo(W * 0.13, openTicket) }), inPilot = h('img', { class: 'ap-crew in pl', src: 'img/air/pilot.webp', alt: '카피기장', style: { left: W * 0.392 + 'px' } }); // 기장: 카운터 옆 출입구(탑승구) 바로 곁
+  const counter = h('button', { class: 'ap-counter', 'aria-label': '공항 카운터', onClick: () => walkTo(W * 0.13, atCounter) });
+  const inAtt = h('img', { class: 'ap-crew in tap', src: 'img/air/att.webp', alt: '카피승무원', style: { left: W * 0.115 + 'px' }, onClick: () => walkTo(W * 0.13, atCounter) }), inPilot = h('img', { class: 'ap-crew in pl', src: 'img/air/pilot.webp', alt: '카피기장', style: { left: W * 0.392 + 'px' } }); // 기장: 카운터 옆 출입구(탑승구) 바로 곁
   const inPlane = h('img', { class: 'ap-plane in', src: 'img/air/plane.webp?v=4', alt: '' });
   const boardEl = h('div', { class: 'ap-board' }), boardRows = h('div', { class: 'ap-brows' }); boardEl.append(h('span', null, `🛫 출발 안내 · ${DEST}행`), boardRows);
   const walker = h('img', { class: 'ap-crew in wk', src: 'img/air/att-walk.webp', alt: '카피승무원' }), wk = { x: W * 0.8, y: 0.3, tx: W * 0.5, ty: 0.5, d: -1, wait: 0 }; // 캐리어를 끌고 대기장을 오가는 승무원
@@ -51,14 +51,14 @@ export function openAirport(o) {
   const inWorld = h('div', { class: 'fm-world ap-world in', hidden: true, style: { width: W + 'px', height: H + 'px', backgroundImage: 'url(img/air/in.webp)' } }, h('div', { class: 'ap-window' }, inPlane, h('img', { class: 'ap-mull', src: 'img/air/mullion.webp', alt: '' })), boardEl, counter, inAtt, h('img', { class: 'ap-desk', src: 'img/air/desk.webp?v=3', alt: '' }), inPilot, walker, cntT);
   const scroller = h('div', { class: 'fm-scroll' }, outWorld, inWorld);
   const keys = new Set(), padBtn = (k, t) => { const b = h('button', { class: 'dp fm-dp' + (k === 'U' || k === 'D' ? ' ap-v' : ''), 'aria-label': { L: '왼쪽', R: '오른쪽', U: '위', D: '아래' }[k] }, t); holdBtn(b, () => keys.add(k), () => keys.delete(k)); return b; };
-  const enterBtn = h('button', { class: 'fm-enter', hidden: true, onClick: () => (!inside ? goIn() : atGate() ? board() : openTicket()) });
-  const ud = { hidden: true }; // (예전 위아래 버튼 자리)
+  const enterBtn = h('button', { class: 'fm-enter', hidden: true, onClick: () => (!inside ? goIn() : atGate() ? board() : atCounter()) });
+  const ud = h('button', { class: 'ap-exit', hidden: true, onClick: () => { sfx('keyB'); goOut(); } }, '🚪 나가기'); // (예전 위아래 버튼 자리)
   const dpad = h('div', { class: 'dpad ap-dpad' }, [['U', '▲'], ['L', '◀'], ['D', '▼'], ['R', '▶']].map(([k, t]) => { const b = h('button', { class: 'dp ap-dp ap-' + k, 'aria-label': { L: '왼쪽', R: '오른쪽', U: '위', D: '아래' }[k] }, t); holdBtn(b, () => { keys.add(k); b.classList.add('held'); }, () => { keys.delete(k); b.classList.remove('held'); }); return b; })); // 동물친목회와 같은 십자 방향키
   // 오른쪽 버튼: 놀이터와 같은 말하기·A·B. A = 지금 할 수 있는 일(입장·구매·탑승), B = 나가기
   const aLab = h('small', null, '입장'), aBtn = h('button', { class: 'ap-ab ap-a', disabled: true, 'aria-label': 'A', onClick: () => { sfx('keyA'); enterBtn.click(); } }, aLab);
   const bBtn = h('button', { class: 'ap-ab ap-b', 'aria-label': 'B', onClick: () => { sfx('keyB'); inside ? goOut() : close(); } }, h('small', null, '나가기'));
   const chatBtn = h('button', { class: 'ap-chat', 'aria-label': '말하기', onClick: () => { sfx('keyC'); if (inside) { const f = flightNow(now(), F); say('cnt', f); say('pl', f); say('wk', f); } else toast('바닷바람이 시원해요 🌊', 1200); } });
-  const scene = h('div', { class: 'fm-scene' }, scroller, h('div', { class: 'fm-pad ap-pad' }, dpad, h('div', { class: 'ap-acts' }, chatBtn, bBtn, aBtn)));
+  const scene = h('div', { class: 'fm-scene' }, scroller, ud, h('div', { class: 'fm-pad ap-pad' }, dpad, h('div', { class: 'ap-acts' }, chatBtn, bBtn, aBtn)));
   const title = h('b', null, '✈️ 카피공항'), flightEl = h('span', { class: 'ap-flight' });
   const wrap = h('div', { class: 'fm ap' }, h('div', { class: 'fm-top' }, title, flightEl, h('button', { class: 'top-x', 'aria-label': '닫기', onClick: () => close() }, '✕')), scene);
   document.body.append(wrap); bgm.start('airport');
@@ -74,6 +74,18 @@ export function openAirport(o) {
   const canBoard = f => f.phase === 'stay'; // 비행기가 출입구 앞에 다 서고 나서 10초 안에만 탈 수 있다
   const atGate = () => inside && me.x > W * 0.27 && me.x < W * 0.56; // 카운터 옆 출입구 앞
   function fitCrew() { const hh = 84; inPilot.style.height = hh + 'px'; walker.style.height = Math.round(hh * 1.22) + 'px'; inAtt.style.height = hh + 'px'; inAtt.style.bottom = Math.round(0.417 * H - 0.5 * hh) + 'px'; } // 카피바라(밍땅꾸리·두두)와 같은 키 + 모자. 카운터 승무원은 허리까지 책상 뒤에 · 기장은 조금 안쪽(작게)
+  // 여권 확인: 탑승권을 사기 전에 카운터에서 먼저 받는다 — 여권이 펼쳐지고 출국 도장이 쾅, 직원들이 "폐하 망극하옵니다"
+  let passOK = false; const atCounter = () => (passOK ? openTicket() : passCheck());
+  function passCheck() { if (document.querySelector('.apv')) return;
+    const bub = h('span', { class: 'apv-say' }, '폐하, 여권을 살펴보겠사옵니다…'), ok = h('button', { class: 'btn primary apv-ok', onClick: () => { el.remove(); openTicket(); } }, '🎫 탑승권 사러 가기');
+    const page = h('div', { class: 'apv-page' }, h('div', { class: 'apv-photo', html: capy(ctx.capyOf(ctx.uid, { face: 'smile' })) }),
+      h('dl', null, h('dt', null, '국적'), h('dd', null, '카피랜드'), h('dt', null, '직위'), h('dd', null, '카피황금폐하'), h('dt', null, '행선지'), h('dd', null, DEST)),
+      h('div', { class: 'apv-stamp' }, h('b', null, '출국'), h('small', null, 'CAPY AIRPORT')));
+    const el = h('div', { class: 'apv' }, h('p', { class: 'apv-t' }, '🛂 여권 확인'), h('div', { class: 'apv-book' }, page, h('img', { class: 'apv-cover', src: 'img/quest/passport.webp', alt: '' })),
+      h('div', { class: 'apv-crew' }, h('img', { src: 'img/air/att.webp', alt: '' }), h('img', { src: 'img/air/pilot.webp', alt: '' }), h('img', { src: 'img/air/att-walk.webp', alt: '' }), bub), ok);
+    document.body.append(el); sfx('pop'); setTimeout(() => el.isConnected && sfx('keyB'), 800);
+    setTimeout(() => { if (!el.isConnected) return; sfx('boom'); passOK = true; }, 1950);
+    setTimeout(() => { if (!el.isConnected) return; bub.textContent = '폐하, 망극하옵니다!!'; bub.classList.add('bow'); el.classList.add('done'); sfx('fanfare'); for (const k in says) sayText(k, '폐하, 망극하옵니다!'); }, 2350); }
   function openTicket() { const f = flightNow(now(), F), dep = depAt(now());
     const row = (k, name, desc) => h('button', { class: 'ap-tk', onClick: () => confirmBuy(k, name) }, h('b', null, `🎫 ${DEST} ${name}`), h('small', null, desc), h('em', null, `${TICKET[k].toLocaleString()}코인`));
     modal({ title: `🎫 ${DEST} 탑승권`, body: [h('div', { class: 'ap-cnt' }, h('img', { src: 'img/air/att.webp', alt: '' }),
@@ -94,12 +106,13 @@ export function openAirport(o) {
   function depAt(t) { const blk = Math.floor(t / F.every) * F.every, d = blk + F.land + F.stay; return t < d ? d : d + F.every; }
 
   // 말풍선: 승무원·기장·카운터 직원이 비행기 상황에 맞춰 한마디씩 한다
-  const LINES = { cnt: { none: ['핫똑랜드행 탑승권 여기서 사요~', '편도 18,000 · 왕복 30,000코인이에요', '어서 오세요, 카피공항입니다!'], land: ['비행기가 들어오고 있어요!', '곧 탑승 시작해요, 탑승권 챙기셨죠?'], stay: ['지금 탑승하세요! 서둘러요!', '탑승 마감이 얼마 안 남았어요!'], off: ['방금 떠났어요. 다음 편을 기다려 주세요', '즐거운 여행 되세요~'] },
-    pl: { none: ['오늘 하늘이 참 맑군요', '핫똑랜드까지 금방입니다', '안전 운항이 제일이지요'], land: ['착륙 자세 좋고!', '비행기 들어옵니다, 물러서 주세요'], stay: ['탑승권 확인하겠습니다!', '이쪽 문으로 탑승하세요!'], off: ['이륙합니다! 좋은 비행 되길!', '다음 비행 준비해야겠군'] },
-    wk: { none: ['바쁘다 바빠~', '캐리어가 오늘따라 무겁네', '면세점 구경하고 싶다…', '손님, 뛰지 마세요~'], land: ['어머, 비행기 왔다!', '도착이요~ 도착!'], stay: ['탑승하실 분 서두르세요~!', '잠깐만요, 저도 타야 해요!'], off: ['아이고, 또 놓쳤네…', '다음 비행기는 꼭 타야지'] } };
+  const LINES = { cnt: { none: ['폐하, 핫똑랜드행 탑승권은 이쪽이옵니다~', '폐하, 편도 18,000 · 왕복 30,000코인이옵니다', '폐하께서 오시니 공항이 다 환해졌사옵니다!', '폐하의 왕관은 오늘도 눈이 부시옵니다 ✨', '폐하 같은 손님은 개항 이래 처음이옵니다!'], land: ['폐하, 비행기가 들어오고 있사옵니다!', '폐하를 모시러 비행기가 달려오옵니다!'], stay: ['폐하, 지금 탑승하시옵소서!', '폐하, 마감이 얼마 안 남았사옵니다!'], off: ['폐하, 방금 떠났사옵니다… 다음 편을 대령하겠나이다', '폐하 없는 비행기라니, 허전했을 것이옵니다'] },
+    pl: { none: ['폐하, 오늘 하늘은 폐하의 덕으로 맑사옵니다', '폐하를 모시는 것이 소신 평생의 영광이옵니다', '폐하, 핫똑랜드까지 한달음에 모시겠나이다', '폐하의 위엄에 구름도 비켜 갈 것이옵니다'], land: ['폐하, 착륙 자세가 좋사옵니다!', '폐하, 비행기 들어오니 한 걸음만 물러나 주시옵소서'], stay: ['폐하, 탑승권을 확인하겠사옵니다!', '폐하, 이쪽 문으로 오르시옵소서!'], off: ['폐하, 이륙하옵니다! 만수무강하시옵소서!', '다음엔 꼭 폐하를 모시고 날겠사옵니다'] },
+    wk: { none: ['폐하 납시오~!', '폐하, 걸음걸이마저 기품이 넘치시옵니다', '폐하의 캐리어라면 백 개도 끌겠사옵니다!', '폐하, 오늘따라 털결이 고우시옵니다', '바쁘다 바빠~ 앗, 폐하!'], land: ['폐하, 비행기가 왔사옵니다!', '폐하 납시니 비행기도 서둘러 오옵니다~'], stay: ['폐하, 어서 오르시옵소서~!', '폐하 먼저! 소인은 그다음이옵니다!'], off: ['아이고 폐하, 놓치셨사옵니다…', '폐하를 두고 가다니, 저 비행기 벌 받을 것이옵니다'] } };
   const says = { cnt: h('span', { class: 'ap-say', hidden: true }), pl: h('span', { class: 'ap-say', hidden: true }), wk: h('span', { class: 'ap-say', hidden: true }) }, npc = { cnt: inAtt, pl: inPilot, wk: walker }, sayT = { cnt: 0, pl: 0, wk: 0 }; inWorld.append(says.cnt, says.pl, says.wk);
   let talkAt = 2, lastPh = '';
-  function say(k, f) { const a = LINES[k][f.phase] || LINES[k].none; says[k].textContent = a[Math.floor(Math.random() * a.length)]; says[k].hidden = false; says[k].classList.remove('pop'); void says[k].offsetWidth; says[k].classList.add('pop'); sayT[k] = 3.2; }
+  function say(k, f) { const a = LINES[k][f.phase] || LINES[k].none; sayText(k, a[Math.floor(Math.random() * a.length)]); }
+  function sayText(k, t) { says[k].textContent = t; says[k].hidden = false; says[k].classList.remove('pop'); void says[k].offsetWidth; says[k].classList.add('pop'); sayT[k] = 3.2; }
   function talk(dt, f) { if (f.phase !== lastPh) { lastPh = f.phase; if (f.phase !== 'none') { say('cnt', f); say('pl', f); say('wk', f); talkAt = 5; } } if ((talkAt -= dt) <= 0) { talkAt = 3.5 + Math.random() * 3; say(['cnt', 'pl', 'wk'][Math.floor(Math.random() * 3)], f); }
     for (const k in says) { if (sayT[k] > 0 && (sayT[k] -= dt) <= 0) says[k].hidden = true; if (!says[k].hidden) { const e = npc[k]; says[k].style.left = e.style.left; says[k].style.bottom = `calc(${getComputedStyle(e).bottom} + ${e.offsetHeight * (k === 'wk' ? 1 - wk.y * 0.12 : 1) + 4}px)`; } } }
   // 탑승: 바닷가 활주로 시작점에 선 비행기에 내 카피바라가 앉아 → 쪽을 본다
@@ -114,8 +127,8 @@ export function openAirport(o) {
     msg.textContent = `✈️ ${DEST}행 출발!`; sub.textContent = '활주로를 달려요…'; scene.append(el); sfx('pop');
     const vw = el.clientWidth || 360, c0 = W * 0.52, c1 = W * 0.675, c2 = Math.min(W * 0.87, W - vw / 2), RY = H * 0.585, rw = W * 0.19; rig.style.width = rw + 'px';
     const run = now2 => { if (!el.isConnected) return; const t = (now2 - t0) / 1000; let py = RY, rot = 0;
-      // 4초 동안 끊김 없이 점점 빨라지며 달리고, 등대와 딱 겹치는 자리(0.868W)에서 기수를 들고 ↗ 로 떠오른다
-      const RUN = 4, x0 = c0 - vw * 0.12, xL = W * 0.868, v1 = (xL - x0) * 1.7 / RUN, s = t - RUN;
+      // 4초 동안 끊김 없이 점점 빨라지며 달리고, 등대에 닿기 전(0.78W)에 기수를 들고 ↗ 로 떠오른다
+      const RUN = 4, x0 = c0 - vw * 0.12, xL = W * 0.78, v1 = (xL - x0) * 1.7 / RUN, s = t - RUN;
       const X = t < RUN ? x0 + (xL - x0) * Math.pow(t / RUN, 1.7) : xL + v1 * s * (1 + s * 0.15);
       const cmax = W - vw / 2, kk = vw * 0.06, cam = -kk * Math.log(Math.exp(-(X + vw * 0.12) / kk) + Math.exp(-cmax / kk)); // 화면 끝에서 카메라가 부드럽게 멈춘다
       if (s > 0) { const u = s / 1.5; py = RY - H * 0.9 * u * u; const k = Math.min(1, s / 0.9); rot = -24 * k * k * (3 - 2 * k); }
