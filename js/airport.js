@@ -33,7 +33,7 @@ export function openAirport(o) {
   // 바깥
   const TX = W * 0.14, TWD = W * 0.3, doorX = TX + TWD * 0.42;
   const outPlane = h('img', { class: 'ap-plane out', src: 'img/air/plane.webp', alt: '' });
-  const parked = [[0.035, 1], [0.105, 0.85], [0.475, 1], [0.575, 0.9], [0.94, 1]].map(([x, k], i) => h('img', { class: 'ap-parked', src: 'img/air/plane.webp', alt: '', style: { left: W * x + 'px', width: 8.5 * k + '%', transform: `translate(-50%, -100%)${i % 2 ? ' scaleX(-1)' : ''}` } })); // 계류장에 서 있는 비행기들(터미널 양옆·활주로 끝)
+  const parked = [0.035, 0.105].map(x => h('img', { class: 'ap-parked', src: 'img/air/plane.webp', alt: '', style: { left: W * x + 'px' } })); // 터미널 왼쪽 계류장: 두 대가 나란히
   const term = h('button', { class: 'ap-term', 'aria-label': '카피공항 들어가기', style: { left: TX + 'px', width: TWD + 'px' }, onClick: () => walkTo(doorX, goIn) }, h('img', { src: 'img/air/terminal.webp', alt: '' }), h('b', { class: 'ap-term-t' }, '카피공항'));
   const front = h('img', { class: 'ap-front', src: 'img/air/front.webp', alt: '' }); // 활주로 앞 야자수·난간: 비행기보다 앞에 보이게
   const exitSign = h('button', { class: 'fm-exit', style: { left: W - Math.round(W * 0.13) + 'px' }, onClick: () => close() }, '놀이터로 →');
@@ -84,6 +84,10 @@ export function openAirport(o) {
   function depAt(t) { const blk = Math.floor(t / FLIGHT.every) * FLIGHT.every, d = blk + FLIGHT.land + FLIGHT.stay; return t < d ? d : d + FLIGHT.every; }
 
   let lastT = performance.now(), tick = 0;
+  // 바깥 비행기(14초마다): 4초 동안 내려앉고 → 10초 동안 왼쪽으로 천천히 굴러 터미널 뒤로 들어가 사라진다
+  function drawOut(t) { const k = t % 14000, el = outPlane; let x, y = 0, r = 0;
+    if (k < 4000) { const e = ease(k / 4000); x = 1.15 - 0.3 * e; y = -0.9 * (1 - e); r = -6 * (1 - e); } else { const e = (k - 4000) / 10000; x = 0.85 - 0.65 * (1 - Math.pow(1 - e, 1.6)); }
+    el.style.opacity = x < 0.22 ? String(Math.max(0, (x - 0.18) / 0.04)) : '1'; el.style.left = x * 100 + '%'; el.style.transform = `translate(-50%, ${(y * 100 - 100).toFixed(1)}%) rotate(${r.toFixed(1)}deg)`; }
   function drawPlane(el, f, at) { const q = planePos(f, at); if (!q.on) { el.style.opacity = '0'; return; } el.style.opacity = '1'; el.style.left = q.x * 100 + '%'; el.style.transform = `translate(-50%, ${(q.y * 100 - 100).toFixed(1)}%) rotate(${q.r.toFixed(1)}deg)${q.flip ? ' scaleX(-1)' : ''}`; }
   function drawBoard(f) { const t = now(), d0 = depAt(t), rows = [0, 1, 2].map(i => { const d = d0 + i * FLIGHT.every, st = i ? '예정' : canBoard(f) ? `탑승 마감 ${mmss(f.left)}` : f.phase === 'land' ? '도착 중 · 곧 탑승' : f.phase === 'off' ? '출발' : `${mmss(d - FLIGHT.stay - FLIGHT.land - t)} 뒤 도착`; return [hhmm(d), st, !i && canBoard(f)]; });
     const key = rows.map(r => r.join('|')).join('/'); if (key !== boardRows.dataset.k) { boardRows.dataset.k = key; boardRows.replaceChildren(...rows.map(([tm, st, on]) => h('div', { class: 'ap-brow' + (on ? ' on' : '') }, h('b', null, tm), h('span', null, DEST), h('em', null, st)))); }
@@ -97,7 +101,7 @@ export function openAirport(o) {
     const want = me.x - scroller.clientWidth / 2; if (Math.abs(scroller.scrollLeft - want) > 4 && (meEl.classList.contains('walk') || dir)) scroller.scrollLeft += (want - scroller.scrollLeft) * Math.min(1, dt * 6);
     const gate = atGate(), near = inside ? me.x < W * 0.24 || gate : Math.abs(me.x - doorX) < TWD * 0.55, lab = !inside ? '✈️ 공항 들어가기' : gate ? '✈️ 탑승하기' : '🎫 탑승권 사기';
     if (enterBtn.hidden === near) enterBtn.hidden = !near; if (enterBtn.textContent !== lab) enterBtn.textContent = lab;
-    const f = flightNow(now()); if (inside) drawPlane(inPlane, f, 0.2); else { const k = now() % 20000; drawPlane(outPlane, k < 10000 ? { phase: k < 8000 ? 'land' : 'stay', p: Math.min(1, k / 8000) } : k < 18000 ? { phase: 'off', p: (k - 10000) / 8000 } : { phase: 'none' }, 0.5); } // 바깥은 10초마다 내려앉고 떠나는 모습을 되풀이
+    const f = flightNow(now()); if (inside) drawPlane(inPlane, f, 0.2); else drawOut(now()); // 바깥: 오른쪽 하늘에서 내려앉아 야자나무 뒤를 지나 천천히 터미널 뒤로 사라지기를 되풀이
     if ((tick += dt) > 0.5) { tick = 0; drawBoard(f); }
     raf = requestAnimationFrame(step); }
   raf = requestAnimationFrame(step);
