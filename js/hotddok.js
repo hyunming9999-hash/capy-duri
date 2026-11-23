@@ -6,7 +6,7 @@ import { sfx, bgm } from './sound.js';
 import { askAI } from './social.js';
 import { tailDance as tailGame } from './passquest.js';
 
-const BG_W = 1344, BG_H = 576, TOWN_W = 6480, AIR_W = 2628, IMG = 'img/hd/', V = '?v=4';
+const BG_W = 1344, BG_H = 576, TOWN_W = 6480, AIR_W = 2628, IMG = 'img/hd/', V = '?v=5';
 // [이름, 견종, 상징품, 한마디]
 export const DOGS = [
   ['몽실', '말티즈 · 승무원', '🎀 복주머니', '핫똑랜드에 오신 것을 환영하옵니다, 폐하!'], ['송이', '말티즈 · 승무원', '🪭 부채', '폐하, 짐은 저희가 들겠사옵니다!'], ['곱슬', '푸들 · 기장', '🧭 나침반', '폐하, 핫똑랜드 하늘길은 소인이 지키고 있사옵니다!'],
@@ -26,6 +26,14 @@ const CHAT = ['오늘은 소나무 향이 좋네요.', '기와 위에 햇볕이 
 const QUICK = { good: ['오늘도 귀엽다!', '너 정말 멋져!', '만나서 반가워!', '털결이 곱다!', '넌 최고의 강아지야'], flat: ['안녕, 뭐 해?', '소나무 향 좋다', '밥은 먹었어?'], bad: ['너 좀 못생겼다', '저리 가, 냄새나', '멍청이 아니야?'] };
 const REPLY = { good: ['헤헤, 폐하께 칭찬받았다! 꼬리가 멈추질 않아요!', '황금폐하가 그렇게 말씀해 주시다니… 멍!', '오늘 일기에 꼭 쓸 거예요!'], flat: ['네, 폐하! 마을은 마음에 드세요?', '소나무 그늘에서 쉬다 가세요.', '방금 뼈다귀국 먹었어요!'], bad: ['끼잉… 폐하, 너무하세요.', '으르르… 아무리 폐하라도 그건 좀.', '귀가 축 처져요…'] };
 const LEVELS = [[-100, '원수', '💢'], [-30, '사이 나쁨', '😠'], [-5, '서먹', '😐'], [10, '아는 사이', '🙂'], [30, '친구', '😊'], [50, '친한 친구', '🥰'], [80, '단짝', '💖']];
+// 핫똑 나루터 물고기 10종(카피랜드처럼 상상의 물고기, 한국 전통 소재): 매우 흔함 4 · 보통 3 · 희귀 2 · 초희귀 1
+export const HD_FISH = [['기와비늘붕어', 0], ['솔잎꼬리피라미', 0], ['엿가락미꾸리', 0], ['호떡복어', 0], ['단청잉어', 1], ['갓쓴메기', 1], ['부채지느러미쏘가리', 1], ['청사초롱아귀', 2], ['태극무늬돔', 2], ['황금비늘 이무기', 3]];
+const TIER = [['매우 흔함', 46, '#7A8A99'], ['보통', 33, '#3E9BE0'], ['희귀', 16, '#B05BD8'], ['초희귀', 5, '#F2A700']];
+// 마주치면 건네는 말: 카피랜드 궁금증 · 폐하 궁금증 · 안부 · 폐하는 존경하지만 우리는 진돌카이저를 섬긴다
+const MEET = [['카피랜드에는 정말 온천이 있어요?', '카피랜드 동물들은 다 그렇게 동글동글한가요?', '카피랜드 귤이 그렇게 달다면서요?', '카피랜드에도 소나무가 있나요?', '카피랜드 바다는 무슨 색이에요?', '카피랜드 강아지도 꼬리땐스를 추나요?', '카피랜드에선 스쿠터를 탄다면서요?', '카피랜드 수족관엔 고래가 산다면서요?'],
+  ['폐하는 왜 머리에 귤을 이고 다니세요?', '폐하는 하루에 몇 시간 주무세요?', '폐하의 황금 갑옷은 무겁지 않으세요?', '폐하는 무슨 간식을 제일 좋아하세요?', '폐하도 목욕을 좋아하세요?', '폐하는 낚시를 그렇게 잘하신다면서요?', '폐하의 꼬리는 왜 그렇게 짧으세요?', '폐하와 함께 사는 분은 어떤 분이세요?'],
+  ['폐하, 밤새 평안하셨어요?', '폐하, 진지는 잡수셨어요?', '폐하, 먼 길에 피곤하진 않으세요?', '폐하, 오늘도 좋은 하루 되세요!', '폐하, 마을은 편히 둘러보고 계세요?', '폐하, 날이 좋지요? 산책하기 딱이에요.', '폐하, 또 뵙네요! 반가워요!', '폐하, 발은 안 아프세요? 길이 넓어서요.'],
+  ['폐하는 존경하지만, 저희 임금님은 진돌카이저 한 분뿐이랍니다.', '황금폐하도 멋지시지만, 저는 진돌카이저 전하를 섬겨요!', '폐하께 예는 다하되, 충성은 진돌카이저께 바쳤답니다.', '폐하는 귀한 손님, 진돌카이저는 우리 임금님이시지요.', '폐하를 우러러보지만, 제 꼬리는 진돌카이저를 향해 흔들려요.', '폐하도 훌륭하시지만 핫똑랜드의 왕은 진돌카이저이십니다!', '폐하께 절은 올려도, 밥은 진돌카이저께 얻어먹는걸요.', '폐하, 서운해 마세요. 저희는 대대로 진돌 왕가를 모셨답니다.']];
 const pick = a => a[Math.floor(Math.random() * a.length)];
 // 강아지마다 성격 · 싫어하는 것 · 말투 (AI 대답용). 좋아하는 것은 상징품
 const PERS = [['상냥하고 싹싹한 승무원', '무례한 손님', '극존칭 사극 말투(~하옵니다)'], ['꼼꼼하고 다정한 승무원', '지각', '극존칭 사극 말투(~하옵니다)'], ['듬직하고 허풍기 있는 기장', '난기류', '씩씩한 군인 말투(~입니다!)'],
@@ -42,10 +50,12 @@ const RPERS = { king: ['위엄 있지만 손님을 반기는 왕', '무례', '�
 export function openHotddok(o) {
   const { ctx } = o, demo = !!o.demo; let alive = true, raf = 0, zone = 'in', lastT = performance.now();
   const H = Math.max(280, Math.min(Math.round(innerHeight * 0.52), 520)), W1 = Math.round(H * BG_W / BG_H), DH = 84;
-  const Z = { air: { bg: 'air', w: Math.round(H * AIR_W / BG_H), base: 3, span: 26, title: '🐶 핫똑공항 · 활주로' }, in: { bg: 'inn', w: W1, base: 3, span: 22, title: '🐶 핫똑공항 · 입국장' }, town: { bg: 'town', w: Math.round(H * TOWN_W / BG_H), base: 2, span: 21, title: '🏯 핫똑랜드 마을' }, pal: { bg: 'pal', w: W1, base: 3, span: 22, title: '👑 진돌카이저 궁' } };
-  const PIER = 0.7655, PIER_END = 0.866, PAV = [0.522, 0.558]; // 나루터: 길이 끝나고 바다 위로 뻗은 다리
+  const Z = { air: { bg: 'air', w: Math.round(H * AIR_W / BG_H), base: 3, span: 26, title: '🐶 핫똑공항 · 활주로' }, in: { bg: 'inn', w: W1, base: 3, span: 22, title: '🐶 핫똑공항 · 입국장' }, tea: { bg: 'tea', w: W1, base: 3, span: 22, title: '🍵 솔향찻집' }, bath: { bg: 'bath', w: W1, base: 3, span: 24, title: '♨️ 솔숲탕' }, town: { bg: 'town', w: Math.round(H * TOWN_W / BG_H), base: 2, span: 21, title: '🏯 핫똑랜드 마을' }, pal: { bg: 'pal', w: W1, base: 3, span: 22, title: '👑 진돌카이저 궁' } };
+  const PIER = 0.7655, PIER_END = 0.866, PAV = [0.522, 0.558], SWING = 0.497;
+// 쉴 곳: [가운데 x, 발 높이(%), 이름] — 강아지들이 가끔 가서 쉰다
+const SPOTS = [[0.54, 37, '정자'], [0.579, 36, '의자'], [0.482, 36, '연못가'], [0.318, 30, '우물가'], [0.179, 30, '찻집 마루'], [0.633, 30, '탕 앞']]; // 나루터: 길이 끝나고 바다 위로 뻗은 다리
   const me = { x: Z.in.w * 0.34, y: 0.6 }, meEl = h('div', { class: 'fm-me ap-me', html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) });
-  const npcs = { air: [], in: [], town: [], pal: [] }, keys = new Set(), rel = {}, mem = {}; // 친밀도 · 나눈 말(예시판은 이번 방문 동안만)
+  const npcs = { air: [], in: [], town: [], pal: [], tea: [], bath: [] }, spots = {}, keys = new Set(), rel = {}, mem = {}; // 친밀도 · 나눈 말(예시판은 이번 방문 동안만)
   const mk = (z, key, x, y, fixed, b) => { const royal = typeof key === 'string', src = royal ? key : 'd' + key, info = royal ? ROYAL[key] : DOGS[key], W = Z[z].w;
     const n = { key, info, src, pers: royal ? RPERS[key] : PERS[key], x: W * x, y, hx: W * x, tx: W * x, ty: y, wait: Math.random() * 3, fixed, b, say: null, sayT: 0 };
     n.el = h('img', { class: 'hd-dog' + (royal ? ' royal' : ''), src: `${IMG}${src}.webp?v=1`, alt: info[0], style: { height: DH + 'px' }, onClick: () => meet(n) }); n.sh = h('i', { class: 'hd-sh' }); npcs[z].push(n); return n; };
@@ -53,11 +63,14 @@ export function openHotddok(o) {
   mk('air', 2, 0.8, 0.85, 1); mk('in', 1, 0.13, 1, 1); mk('in', 0, 0.27, 0.95, 1); // 활주로 쪽엔 기장, 심사대엔 승무원 둘
   DOGS.forEach((_, i) => i === 27 ? mk('town', 27, 0.292, 0.97, 1) : i === 26 ? Object.assign(mk('town', 26, 0.82, 0.96), { rng: [0.775, 0.862], yb: [0.93, 1] }) : mk('town', i, 0.03 + 0.72 * ((i * 7) % 30 + 0.5) / 30, (i * 0.37) % 1)); // 넓은 마을에 띄엄띄엄(교관은 훈련소 앞, 짚신은 나루터)
   mk('pal', 'king', 0.5, 1, 1, 39); mk('pal', 'gw', 0.39, 0.95, 1); mk('pal', 'gb', 0.61, 0.95, 1); const king = { st: 'sit', t: 7 }; // 왕은 궁 안 옥좌에, 좌우에 백구 · 흑구
-  const worlds = {}; for (const z in Z) { worlds[z] = h('div', { class: 'fm-world ap-world hd-world', hidden: z !== zone, style: { width: Z[z].w + 'px', height: H + 'px', backgroundImage: `url(${IMG}${Z[z].bg}.webp${V})` } }, z === 'air' && h('img', { class: 'hd-plane air', src: 'img/air/plane.webp?v=4', alt: '' }), ...npcs[z].flatMap(n => [n.sh, n.el])); } // 타고 온 비행기는 활주로에 그대로 서 있다
+  { const day = Math.floor((Date.now() + 9 * 3600000) / 86400000), rnd = k => { const a = []; let q = day * 7 + k; while (a.length < 3) { q = (q * 31 + 11) % 30; if (q > 2 && q !== 6 && q !== 27 && !a.includes(q)) a.push(q); } return a; };
+    rnd(1).forEach((i, k) => mk('tea', i, 0.42 + k * 0.17, 0.75 - k * 0.2, 1)); mk('tea', 6, 0.1, 1, 1); rnd(5).forEach((i, k) => mk('bath', i, 0.4 + k * 0.2, 0.9, 1, 34 + (k % 2) * 3)); }
+  const swing = h('div', { class: 'hd-swing', style: { left: Z.town.w * SWING + 'px' } }, h('img', { src: `${IMG}swing.webp?v=1`, alt: '' }));
+  const worlds = {}; for (const z in Z) { worlds[z] = h('div', { class: 'fm-world ap-world hd-world', hidden: z !== zone, style: { width: Z[z].w + 'px', height: H + 'px', backgroundImage: `url(${IMG}${Z[z].bg}.webp${V})` } }, z === 'air' && h('img', { class: 'hd-plane air', src: 'img/air/plane.webp?v=4', alt: '' }), z === 'town' && swing, ...npcs[z].flatMap(n => [n.sh, n.el])); } // 타고 온 비행기는 활주로에 그대로 서 있다
   const scroller = h('div', { class: 'fm-scroll' }, ...Object.values(worlds));
   const dpad = h('div', { class: 'dpad ap-dpad' }, [['U', '▲'], ['L', '◀'], ['D', '▼'], ['R', '▶']].map(([k, t]) => { const b = h('button', { class: 'dp ap-dp ap-' + k, 'aria-label': { L: '왼쪽', R: '오른쪽', U: '위', D: '아래' }[k] }, t); holdBtn(b, () => { keys.add(k); b.classList.add('held'); }, () => { keys.delete(k); b.classList.remove('held'); }); return b; }));
   const aLab = h('small', null, '인사'), aBtn = h('button', { class: 'ap-ab ap-a', disabled: true, 'aria-label': 'A', onClick: () => { sfx('keyA'); act && act.go(); } }, aLab); // 이동 · 입장은 모두 A 버튼으로
-  const bBtn = h('button', { class: 'ap-ab ap-b', 'aria-label': 'B', onClick: () => { sfx('keyB'); if (zone === 'pal') go('town', 0.703, 0.95); else if (zone === 'town') go('air', 0.07, 0.8); else if (zone === 'air') go('in', 0.86, 0.6); else toast('카피랜드로 돌아가려면 심사대에서 말해요 ✈️', 1800); } }, h('small', null, '나가기'));
+  const bBtn = h('button', { class: 'ap-ab ap-b', 'aria-label': 'B', onClick: () => { sfx('keyB'); if (zone === 'pal') go('town', 0.703, 0.95); else if (zone === 'tea') go('town', 0.179, 0.95); else if (zone === 'bath') go('town', 0.621, 0.95); else if (zone === 'town') go('air', 0.07, 0.8); else if (zone === 'air') go('in', 0.86, 0.6); else toast('카피랜드로 돌아가려면 심사대에서 말해요 ✈️', 1800); } }, h('small', null, '나가기'));
   const chatBtn = h('button', { class: 'ap-chat', 'aria-label': '말하기', onClick: () => { sfx('keyC'); npcs[zone].filter(n => Math.abs(n.x - me.x) < 260).slice(0, 4).forEach(n => say(n, n.info[3])); } });
   const scene = h('div', { class: 'fm-scene' }, scroller, h('div', { class: 'fm-pad ap-pad' }, dpad, h('div', { class: 'ap-acts' }, chatBtn, bBtn, aBtn)));
   const title = h('b', null, Z[zone].title);
@@ -68,7 +81,7 @@ export function openHotddok(o) {
   requestAnimationFrame(() => { scroller.scrollLeft = me.x - scroller.clientWidth / 2; });
 
   let act = null, seenTown = false, seenKing = false, passed = false, tailKey = null, guideAt = 1, bag = {};
-  function go(z, x, y) { sfx('pop'); me.pav = false; worlds[zone].hidden = true; zone = z; worlds[z].hidden = false; me.x = Z[z].w * x; me.y = y == null ? 0.3 : y; worlds[z].append(meEl); title.textContent = Z[z].title; scroller.scrollLeft = Math.max(0, me.x - scroller.clientWidth / 2);
+  function go(z, x, y) { sfx('pop'); me.on = null; swing.classList.remove('on'); worlds[zone].hidden = true; zone = z; worlds[z].hidden = false; me.x = Z[z].w * x; me.y = y == null ? 0.3 : y; worlds[z].append(meEl); title.textContent = Z[z].title; scroller.scrollLeft = Math.max(0, me.x - scroller.clientWidth / 2);
     if (z === 'town' && !seenTown) { seenTown = true; welcome(); } if (z === 'pal' && !seenKing) { seenKing = true; setTimeout(() => alive && zone === 'pal' && say(npcs.pal[0], '오오! 전설의 카피랜드 황금폐하가 아니시오!', 4), 600); } }
   function say(n, t, sec = 3) { if (!n.say) { n.say = h('span', { class: 'ap-say' }); worlds[zone].append(n.say); } n.say.textContent = t; n.say.hidden = false; n.say.classList.remove('pop'); void n.say.offsetWidth; n.say.classList.add('pop'); n.sayT = sec; }
   // 강아지를 누르면: 카피랜드 동물과 같은 구성(얼굴 · 말풍선 · 친밀도 · 빠른 말 세 가지 · 말하기 · 선물/거래/기억). 대답은 강아지마다 성격 · 말투에 맞춰 AI가 한다
@@ -92,37 +105,57 @@ export function openHotddok(o) {
   function statue() { modal({ title: '🗿 진돌카이막 장군 동상', body: [h('div', { class: 'ap-cnt hd-card' }, h('img', { class: 'hd-gen', src: 'img/quest/bg-h2.webp', alt: '' }), h('p', null, h('b', null, '핫똑랜드를 세운 개국 장군')), h('p', null, '“팔짱을 끼고 바다를 지켜본 지 어언 백 년.”'), h('p', { class: 'ap-cnt-n' }, '마을 강아지들은 지나갈 때마다 꼬리를 한 번씩 흔들어요'))], actions: [{ label: '닫기' }] }); }
   function counter() { modal({ title: '🛂 입국 심사대', body: [h('div', { class: 'ap-cnt hd-card' }, h('img', { src: `${IMG}d1.webp?v=1`, alt: '' }), h('p', null, '폐하, 카피랜드로 돌아가시겠사옵니까?'), demo && h('p', { class: 'ap-cnt-n' }, '🧪 예시판: 누르면 바로 카피공항으로 돌아가요'))], actions: [{ label: '더 구경하기' }, { label: '✈️ 카피랜드로 돌아가기', primary: true, onClick: () => leave() }] }); }
   // 상점: 가게마다 2~3가지. 값은 카피랜드 황금 장비 수준부터
-  const SHOPS = { toy: ['🪃 부메랑상회', 24, [['boom', '🪃', '솔나무 부메랑', 6000, '던지면 강아지들이 쫓아가 물어 와요'], ['kite', '🪁', '방패연', 5500, '바람 좋은 날 날리는 연'], ['drum', '🥁', '소고', 7000, '둥둥 치면 흥이 나요']]],
+  const SHOPS = { toy: ['🪃 부메랑상회', 24, [['boom', '🪃', '솔나무 부메랑', 6000, '던지면 강아지들이 쫓아가 물어 와요'], ['kite', '🪁', '방패연', 5500, '바람 좋은 날 날리는 연'], ['drum', '🥁', '소고', 7000, '둥둥 치면 흥이 나요'], ['bait', '🪱', '핫똑 미끼', 1000, '나루터 낚시용 · 중급 어종부터 낚여요']]],
     cloth: ['👘 비단옷집', 10, [['jeogori', '👘', '비단 저고리', 8000, '고운 비단으로 지은 저고리'], ['chima', '👗', '다홍치마', 8500, '같은 값이면 다홍치마'], ['gat', '🎩', '선비 갓', 9000, '점잖은 양반의 갓']]],
     tea: ['🍵 솔향찻집', 6, [['tea', '🍵', '솔잎차', 5000, '솔향이 은은한 차'], ['sikhye', '🍶', '식혜', 5200, '살얼음 동동 식혜']]],
     cake: ['🍡 꿀떡방', 8, [['ggul', '🍡', '꿀떡', 5000, '깨물면 꿀이 톡'], ['hotteok', '🥞', '호떡', 5300, '핫똑랜드 이름의 유래'], ['yakgwa', '🍘', '약과', 5500, '쫀득하고 달콤한 약과']]] };
   function shop(kind) { const [nm, keeper, items] = SHOPS[kind], kd = DOGS[keeper]; let cl;
     const row = ([id, ic, name, price, desc]) => h('button', { class: 'so-row', onClick: () => { modal({ title: '🧾 구매 확인', body: h('p', { class: 'center' }, `${ic} ${name}`, h('br'), `${price.toLocaleString()}코인에 살까요?`, demo && h('small', { style: { display: 'block', marginTop: '6px' } }, '🧪 예시판이라 코인은 빠지지 않아요')), actions: [{ label: '취소' }, { label: '구매', primary: true, onClick: async c => { if (typeof c === 'function') c(); if (!demo && !(await ctx.spend(price))) return; bag[id] = (bag[id] || 0) + 1; if (!demo) ctx.store.update('hd/' + ctx.uid + '/bag', { [id]: bag[id] }).catch(() => {}); sfx('coin'); toast(`${ic} ${name}을(를) 샀어요!${id === 'boom' ? ' 마을에서 A(던지기)로 던져 보세요' : ''}`, 2200); cl && cl(); shop(kind); } }] }); } }, h('span', null, ic), h('b', null, name), h('small', null, `${price.toLocaleString()}코인 · ${desc}${bag[id] ? ` · 가진 것 ${bag[id]}개` : ''}`));
-    cl = modal({ title: nm, body: h('div', { class: 'so-list' }, h('div', { class: 'ap-cnt hd-card' }, h('img', { src: `${IMG}d${keeper}-happy.webp?v=1`, alt: '' }), h('p', null, `“어서 오세요, 폐하! ${kd[0]}네 가게예요.”`)), ...items.map(row)), actions: [{ label: '닫기' }] }); }
+    cl = modal({ title: nm, body: h('div', { class: 'so-list' }, h('div', { class: 'ap-cnt hd-card' }, h('img', { class: 'hd-keeper', src: `${IMG}k-${kind}.webp?v=1`, alt: '' }), h('p', null, `“어서 오세요, 폐하! ${kind === 'cloth' ? '몽실이' : kd[0]}네 가게예요.”`)), ...items.map(row)), actions: [{ label: '닫기' }] }); }
   // 부메랑 던지기: 근처 강아지들이 우르르 쫓아가 물어 온다
   let boomBusy = false;
-  function throwBoom() { if (boomBusy) return; boomBusy = true; const W = Z.town.w, dir = meEl.classList.contains('left') ? -1 : 1, tx = Math.max(W * 0.03, Math.min(W * 0.74, me.x + dir * 330)), b = h('i', { class: 'hd-boom', style: { left: me.x + 'px', bottom: `${Z.town.base + me.y * Z.town.span + 12}%` } }, '🪃'); worlds.town.append(b); sfx('pop');
+  function throwBoom() { if (boomBusy) return; boomBusy = true; const W = Z.town.w, dir = meEl.classList.contains('left') ? -1 : 1, tx = Math.max(W * 0.03, Math.min(W * 0.74, me.x + dir * 210)), b = h('i', { class: 'hd-boom', style: { left: me.x + 'px', bottom: `${Z.town.base + me.y * Z.town.span + 12}%` } }, '🪃'); worlds.town.append(b); sfx('pop');
     requestAnimationFrame(() => { b.style.left = tx + 'px'; b.classList.add('fly'); });
-    const pack = npcs.town.filter(n => !n.fixed && !n.rng && Math.abs(n.x - me.x) < 520).slice(0, 6); pack.forEach(n => { n.wait = 0; n.tx = tx + (Math.random() - 0.5) * 50; n.ty = me.y; n.fast = true; face(n, 'wow', 2); });
-    setTimeout(() => { b.remove(); pack.forEach(n => { n.fast = false; }); const w = pack.slice().sort((p, q) => Math.abs(p.x - tx) - Math.abs(q.x - tx))[0]; if (w && alive) { w.tx = me.x + 40; w.ty = me.y; w.wait = 0; w.fast = true; face(w, 'happy', 4); say(w, '제가 물어 왔어요, 폐하! 🪃', 3.5); rel[w.src] = Math.min(100, (rel[w.src] || 0) + 1); setTimeout(() => { w.fast = false; }, 2200); } else toast('근처에 강아지가 없어요', 1400); boomBusy = false; }, 2300); }
+    const pack = npcs.town.filter(n => !n.fixed && !n.rng && Math.abs(n.x - me.x) < 420).slice(0, 6); pack.forEach(n => { n.wait = 0; if (n.spot) { n.spot.busy = 0; n.spot = null; n.b = null; n.y = 0.95; } n.going = null; n.tx = tx + (Math.random() - 0.5) * 50; n.ty = me.y; n.fast = true; face(n, 'wow', 2.4); }); setTimeout(() => { b.style.transitionDuration = '1s'; b.style.left = me.x + 'px'; }, 1250); // 눈을 반짝이며 쫓아가고, 부메랑은 되돌아온다
+    setTimeout(() => { b.remove(); pack.forEach(n => { n.fast = false; }); const w = pack.slice().sort((p, q) => Math.abs(p.x - tx) - Math.abs(q.x - tx))[0]; if (w && alive) { w.tx = me.x + 40; w.ty = me.y; w.wait = 0; w.fast = true; face(w, 'happy', 4); say(w, '제가 물어 왔어요, 폐하! 🪃', 3.5); up2(w, 2); pack.filter(n => n !== w).forEach(n => { rel[n.src] = Math.min(100, (rel[n.src] || 0) + 1); }); setTimeout(() => { w.fast = false; }, 2200); } else toast('근처에 강아지가 없어요', 1400); boomBusy = false; }, 2300); }
   // 궁 안: 왕이 옥좌에 앉아 있다가 가끔 내려와 거닐고, 백구 · 흑구가 뒤를 졸졸 따른다
-  function court(dt, W) { const [k, gw, gb] = npcs.pal; king.t -= dt;
-    if (king.st === 'sit') { if (king.t <= 0) { king.st = 'walk'; king.t = 9 + Math.random() * 5; k.b = null; k.y = 0.95; k.fixed = 0; k.wait = 0.1; k.rng = [0.3, 0.7]; k.yb = [0.35, 0.95]; } }
+  function court(dt, W) { const [k, gw, gb] = npcs.pal, FL = Z.pal.base + Z.pal.span; king.t -= dt;
+    if (king.st === 'sit') { if (king.t <= 0) { king.st = 'down'; k.y = 1; k.el.classList.add('go'); } }
+    else if (king.st === 'down') { k.b = Math.max(FL, k.b - 11 * dt); if (k.b <= FL) { k.b = null; king.st = 'walk'; king.t = 10 + Math.random() * 6; k.fixed = 0; k.wait = 0.1; k.rng = [0.26, 0.74]; k.yb = [0.1, 0.95]; } }
     else if (king.st === 'walk') { if (king.t <= 0) { king.st = 'back'; k.fixed = 1; k.el.classList.add('go'); } }
-    else { const ex = W * 0.5 - k.x, ey = (0.98 - k.y) * 60, d = Math.hypot(ex, ey); if (d < 4) { king.st = 'sit'; king.t = 8 + Math.random() * 6; k.b = 39; k.x = W * 0.5; k.el.classList.remove('go'); } else { k.x += ex / d * 40 * dt; k.y += ey / d * 40 * dt / 60; } }
-    [[gw, -1], [gb, 1]].forEach(([g, s]) => { const sit = king.st === 'sit', gx = sit ? g.hx : k.x + s * 62, gy = sit ? 0.95 : Math.min(1, k.y + 0.08), ex = gx - g.x, ey = (gy - g.y) * 60, d = Math.hypot(ex, ey); if (d > 5) { const v = Math.min(46, d * 1.6); g.x += ex / d * v * dt; g.y += ey / d * v * dt / 60; g.el.classList.add('go'); } else g.el.classList.remove('go'); }); }
-  // 나루터 낚시: 곁에 있던 강아지가 한마디 한다
-  function fish() { const n = npcs.town.slice().sort((a, b) => Math.abs(a.x - me.x) - Math.abs(b.x - me.x))[0]; say(n, '우리는 낚시를 하지 않아. 여기 바다에는 맛없는 생선들밖에 없어.', 4.5); toast('🎣 핫똑 나루터 낚시는 곧 열려요 🚧', 1800); }
+    else if (king.st === 'back') { const ex = W * 0.5 - k.x, ey = (1 - k.y) * 60, d = Math.hypot(ex, ey); if (d < 4) { king.st = 'up'; k.x = W * 0.5; k.y = 1; k.b = FL; } else { k.x += ex / d * 40 * dt; k.y += ey / d * 40 * dt / 60; } }
+    else { k.b = Math.min(39, k.b + 11 * dt); if (k.b >= 39) { king.st = 'sit'; king.t = 8 + Math.random() * 6; k.el.classList.remove('go'); } }
+    const off = king.st === 'walk' || king.st === 'back';
+    [[gw, -1], [gb, 1]].forEach(([g, sd]) => { const gx = off ? k.x + sd * 58 : g.hx, gy = off ? Math.max(0, Math.min(1, k.y + 0.12)) : 0.95, ex = gx - g.x, ey = (gy - g.y) * 60, d = Math.hypot(ex, ey); if (d > (g.mv ? 3 : 16)) { g.mv = 1; const v = Math.min(44, 12 + d * 1.2); g.x += ex / d * v * dt; g.y += ey / d * v * dt / 60; g.el.classList.add('go'); } else { g.mv = 0; g.el.classList.remove('go'); } }); }
+  let fishing = false;
+  function fish() { const n = npcs.town.slice().sort((p, q) => Math.abs(p.x - me.x) - Math.abs(q.x - me.x))[0]; if (fishing) return;
+    if (!bag.bait) { say(n, '우리는 낚시를 하지 않아. 여기 바다에는 맛없는 생선들밖에 없어.', 4.5); return toast('🪱 미끼가 없어요 · 부메랑상회에서 1,000코인에 팔아요', 2200); }
+    fishing = true; bag.bait--; sfx('pop'); toast(`🎣 찌를 던졌어요… (남은 미끼 ${bag.bait})`, 1800); if (Math.random() < 0.5) say(n, '우리는 낚시를 하지 않아. 여기 바다에는 맛없는 생선들밖에 없어.', 4);
+    setTimeout(() => { fishing = false; if (!alive) return; let r = Math.random() * 100, t = 0; while (t < 3 && r >= TIER[t][1]) { r -= TIER[t][1]; t++; } const id = pick(HD_FISH.map((f, i) => i).filter(i => HD_FISH[i][1] === t)), cm = Math.round((28 + t * 22) * (0.8 + Math.random() * 0.7)), isNew = !(bag.dex || {})[id];
+      bag.dex = { ...(bag.dex || {}), [id]: Math.max((bag.dex || {})[id] || 0, cm) }; if (!demo) ctx.store.update('hd/' + ctx.uid + '/dex', { [id]: bag.dex[id] }).catch(() => {}); sfx(t >= 2 ? 'fanfare' : 'coin');
+      modal({ title: `🎣 ${HD_FISH[id][0]}!`, body: h('div', { class: 'ap-cnt hd-card' }, h('img', { class: 'hd-fish', src: `${IMG}f${id}.webp?v=2`, alt: '' }), h('p', null, h('b', { style: { color: TIER[t][2] } }, TIER[t][0]), ` · ${cm}cm`, isNew && h('em', { class: 'hd-new' }, ' NEW')), h('p', { class: 'ap-cnt-n' }, '핫똑 도감에 기록했어요')), actions: [{ label: '닫기' }, { label: '📖 핫똑 도감', primary: true, onClick: c => { if (typeof c === 'function') c(); dex(); } }] }); }, 2200 + Math.random() * 1800); }
+  function dex() { const d = bag.dex || {}; modal({ title: `📖 핫똑 도감 · ${Object.keys(d).length} / ${HD_FISH.length}`, body: h('div', { class: 'hd-dex' }, HD_FISH.map(([nm, t], i) => h('div', { class: 'hd-dexc' + (d[i] ? '' : ' no') }, h('img', { src: `${IMG}f${i}.webp?v=2`, alt: '' }), h('b', null, d[i] ? nm : '???'), h('small', { style: { color: TIER[t][2] } }, d[i] ? `${TIER[t][0]} · ${d[i]}cm` : TIER[t][0])))), actions: [{ label: '닫기' }] }); }
   // 지금 자리에서 A 버튼으로 할 수 있는 일
   function findAct() { const x = me.x / Z[zone].w, up = me.y > 0.5;
     if (zone === 'air') return Math.abs(x - 0.683) < 0.035 && up ? { t: '입장', go: () => go('in', 0.86, 0.5) } : x < 0.13 && up ? { t: '마을', go: () => go('town', 0.012, 0.5) } : near();
     if (zone === 'in') return x > 0.8 ? (passed ? { t: '나가기', go: () => go('air', 0.683, 0.9) } : { t: '나가기', go: () => { say(npcs.in[1], '폐하, 먼저 심사대에서 여권을 제출해 주시옵소서!', 3.5); } }) : x < 0.3 && up ? (passed ? { t: '심사대', go: counter } : { t: '여권 제출', go: stamp }) : near();
+    if (zone === 'tea') return x > 0.8 ? { t: '나가기', go: () => go('town', 0.179, 0.95) } : x < 0.2 && up ? { t: '주문', go: () => shop('tea') } : nearDo('차 대접', treat);
+    if (zone === 'bath') return x < 0.07 ? { t: '나가기', go: () => go('town', 0.621, 0.95) } : nearDo('같이 목욕', soak, 150);
     if (zone === 'pal') return x > 0.86 ? { t: '마을', go: () => go('town', 0.703, 0.95) } : Math.abs(x - 0.5) < 0.09 && up && king.st === 'sit' ? { t: '알현', go: () => meet(npcs.pal[0]) } : near();
-    if (me.pav) return { t: '내려가기', go: () => { me.pav = false; me.y = 0.95; sfx('pop'); } };
+    if (me.on) return { t: me.on.sw ? '내리기' : '일어나기', go: () => { me.on = null; swing.classList.remove('on'); me.y = 0.95; sfx('pop'); } };
     if (x < 0.006) return { t: '공항', go: () => go('air', 0.07, 0.8) };
     if (x > 0.85) return { t: '낚시', go: fish };
-    if (up) { const b = [[0.07, 0.094, '동상', statue], [0.095, 0.116, '상점', () => shop('toy')], [0.13, 0.152, '옷가게', () => shop('cloth')], [0.168, 0.19, '찻집', () => shop('tea')], [0.213, 0.236, '떡집', () => shop('cake')], [0.255, 0.305, '훈련소', () => toast('🎯 훈련소는 아직 준비 중이에요 🚧', 1800)], [PAV[0], PAV[1], '정자', () => { me.pav = true; sfx('pop'); toast('🏞️ 정자에 올랐어요 · 연꽃 향기에 바람이 시원해요', 1800); }], [0.61, 0.632, '목욕집', soon('♨️ 솔숲탕')], [0.69, 0.717, '입궁', () => go('pal', 0.84, 0.3)]].find(r => x >= r[0] && x <= r[1]); if (b) return { t: b[2], go: b[3] }; }
+    if (x > PIER && Object.keys(bag.dex || {}).length) return near() || { t: '도감', go: dex };
+    if (up) { const b = [[0.07, 0.094, '동상', statue], [0.095, 0.116, '상점', () => shop('toy')], [0.13, 0.152, '옷가게', () => shop('cloth')], [0.168, 0.19, '찻집', () => go('tea', 0.86, 0.4)], [0.213, 0.236, '떡집', () => shop('cake')], [0.255, 0.305, '훈련소', () => toast('🎯 훈련소는 아직 준비 중이에요 🚧', 1800)], [PAV[0], PAV[1], '정자', () => rest({ x0: PAV[0], x1: PAV[1], b: 37, s: 0.74 }, '정자')], [0.572, 0.586, '의자', () => rest({ x0: 0.579, x1: 0.579, b: 36, s: 0.8 }, '의자')], [SWING - 0.009, SWING + 0.009, '그네', () => { rest({ x0: SWING, x1: SWING, b: 31, s: 0.8, sw: 1 }, '그네'); swing.classList.add('on'); }], [0.61, 0.632, '목욕탕', () => go('bath', 0.08, 0.4)], [0.69, 0.717, '입궁', () => go('pal', 0.84, 0.3)]].find(r => x >= r[0] && x <= r[1]); if (b) return { t: b[2], go: b[3] }; }
     const d = near(); return d || (bag.boom ? { t: '던지기', go: throwBoom } : null); }
+  function nearDo(t, fn, r = 60) { let best = null, bd = r; for (const n of npcs[zone]) { if (n.key === 6 && zone === 'tea') continue; const d = Math.abs(n.x - me.x); if (d < bd) { bd = d; best = n; } } return best ? { t, go: () => fn(best) } : null; }
+  const up2 = (n, d, why) => { rel[n.src] = Math.max(-100, Math.min(100, (rel[n.src] || 0) + d)); face(n, 'happy', 4); const f = h('em', { class: 'hd-up' }, `+${d}`); f.style.left = n.x + 'px'; f.style.bottom = `calc(${n.b != null ? n.b : Z[zone].base + n.y * Z[zone].span}% + ${DH + 10}px)`; worlds[zone].append(f); setTimeout(() => f.remove(), 1300); if (why) say(n, why, 3.5); };
+  // 찻집: 차를 대접하면 친밀도 +2
+  function treat(n) { modal({ title: `🍵 ${n.info[0]}에게 차 대접`, body: h('p', { class: 'center' }, '솔잎차 한 잔 · 5,000코인', h('br'), '같이 마시면 친밀도 +2', demo && h('small', { style: { display: 'block', marginTop: '6px' } }, '🧪 예시판이라 코인은 빠지지 않아요')), actions: [{ label: '취소' }, { label: '대접하기', primary: true, onClick: async c => { if (typeof c === 'function') c(); if (!demo && !(await ctx.spend(5000))) return; sfx('coin'); up2(n, 2, pick(['호로록… 폐하와 마시니 더 향긋해요!', '차 한 잔의 은혜, 잊지 않을게요!', '따뜻하다… 감사합니다, 폐하!'])); } }] }); }
+  // 목욕탕: 날마다 다른 세 마리. 같이 몸을 담그면 친밀도 +3(하루 한 번씩)
+  const soaked = {}; function soak(n) { if (soaked[n.src]) return say(n, '오늘은 벌써 같이 담갔잖아요~ 내일 또 와요!', 3); soaked[n.src] = 1; sfx('pop'); up2(n, 3, pick(['아~ 시원하다! 폐하도 뜨끈하시죠?', '등 밀어 드릴까요, 폐하?', '탕에선 다 같은 강아지… 아니, 카피바라죠!'])); }
+  // 쉬기: 정자 · 의자 · 그네에 앉으면 곁의 강아지들과 친밀도 +1(1분에 한 번)
+  let restAt = 0; function rest(on, name) { me.on = on; sfx('pop'); const pals = npcs.town.filter(n => Math.abs(n.x - me.x) < 420).slice(0, 5); if (Date.now() - restAt > 60000 && pals.length) { restAt = Date.now(); pals.forEach(n => up2(n, 1)); toast(`🌿 ${name}에서 쉬었어요 · 곁의 강아지 ${pals.length}마리와 친밀도 +1`, 2200); } else toast(`🌿 ${name}에서 쉬는 중`, 1400); }
   function near() { let best = null, bd = 46; for (const n of npcs[zone]) { const d = Math.hypot(n.x - me.x, (n.y - me.y) * 30); if (d < bd) { bd = d; best = n; } } return best ? { t: '인사', go: () => meet(best) } : null; }
   // 입국 도장: 심사대에서 여권을 내면 펼쳐지고 "입국" 도장이 쾅
   function stamp() { if (document.querySelector('.apv')) return; const bub = h('span', { class: 'apv-say' }, '폐하, 여권을 받들겠사옵니다…'), ok = h('button', { class: 'btn primary apv-ok', onClick: () => { el.remove(); say(npcs.in[0], '입국을 환영하옵니다, 폐하!', 3.5); setTimeout(() => alive && zone === 'in' && say(npcs.in[1], '오른쪽 문으로 나가시면 활주로이옵니다.', 4), 900); } }, '🐾 핫똑랜드 입국하기');
@@ -133,7 +166,7 @@ export function openHotddok(o) {
   function welcome() { const el = h('div', { class: 'hd-wel', onClick: () => { el.remove(); tailDance(); } }, h('img', { src: `${IMG}welcome.webp?v=1`, alt: '' }), h('b', null, '🎉 진돌카이저 2세와 강아지들이 마중 나왔어요!'), h('small', null, '눌러서 계속')); document.body.append(el); sfx('fanfare'); }
   function tailDance() { const shy = h('div', { class: 'hd-tail' }, h('img', { class: 'hd-tail-bg', src: `${IMG}welcome.webp?v=1`, alt: '' }), h('b', null, '이렇게까지 반겨 주다니… 어, 어떡하지…?'), h('div', { class: 'hd-tail-me', html: capy(ctx.capyOf(ctx.uid, { face: 'shy' })) }), h('small', null, '…좋아, 꼬리땐스로 화답하자!')); document.body.append(shy);
     setTimeout(() => { shy.remove(); if (!alive) return; const host = h('div', { class: 'hd-tailhost' }); document.body.append(host); // 여권 퀘스트의 꼬리땐스 게임을 그대로 쓴다
-      tailGame(host, { meBack: () => capy(ctx.capyOf(ctx.uid, { view: 'back' })), meSvg: f => capy(ctx.capyOf(ctx.uid, { face: f })) }, { bg: `${IMG}welcome.webp?v=1`, title: '💃 핫똑랜드 환영 · 꼬리땐스', win: '🐶 와아아!!' }).then(() => { host.remove(); if (alive) party(); }); }, 2000); }
+      tailGame(host, { meBack: () => capy(ctx.capyOf(ctx.uid, { view: 'back' })), meSvg: f => capy(ctx.capyOf(ctx.uid, { face: f })) }, { bg: `${IMG}welcome-dim.webp?v=1`, title: '💃 핫똑랜드 환영 · 꼬리땐스', win: '🐶 와아아!!' }).then(() => { host.remove(); if (alive) party(); }); }, 2000); }
   function party() { const conf = h('div', { class: 'hd-conf' }); for (let i = 0; i < 44; i++) conf.append(h('i', { style: { left: Math.random() * 100 + '%', animationDelay: (Math.random() * 1.8).toFixed(2) + 's', animationDuration: (2 + Math.random() * 1.8).toFixed(2) + 's', background: ['#FFD54A', '#FF8FB1', '#9BE1FF', '#FFB347', '#B8F28A'][i % 5] } }));
     const el = h('div', { class: 'hd-wel party', onClick: () => close() }, conf, h('img', { src: `${IMG}party.webp?v=1`, alt: '' }), h('b', null, '🎆 핫똑랜드 모두가 폐하를 환영합니다!'), h('small', null, '“와아아! 꼬리댄스 최고!!” · 눌러서 마을로')); let t = setTimeout(() => close(), 6000);
     function close() { if (!el.isConnected) return; clearTimeout(t); el.remove(); wow(); } document.body.append(el); sfx('fanfare'); setTimeout(() => el.isConnected && sfx('coin'), 500); }
@@ -143,17 +176,18 @@ export function openHotddok(o) {
   function step(t) { if (!alive) return; const dt = Math.min(0.05, (t - lastT) / 1000); lastT = t; const zz = Z[zone], W = zz.w, modalOn = !!document.querySelector('.modal-wrap,.apv,.hd-wel,.hd-tail');
     const dx = modalOn ? 0 : (keys.has('R') ? 1 : 0) - (keys.has('L') ? 1 : 0), dy = modalOn ? 0 : (keys.has('U') ? 1 : 0) - (keys.has('D') ? 1 : 0);
     me.x = Math.max(W * 0.004, Math.min(W * (zone === 'town' ? PIER_END : 0.99), me.x + dx * 150 * dt)); me.y = Math.max(0, Math.min(1, me.y + dy * 1.1 * dt)); if (zone === 'town' && me.x > W * (PIER - 0.012)) me.y = Math.max(Math.min(0.93, (me.x / W - PIER + 0.012) * 80), Math.min(1, me.y)); // 나루터: 다리 폭을 벗어나지 못한다
-    if (me.pav) { me.x = Math.max(W * PAV[0], Math.min(W * PAV[1], me.x)); }
+    if (me.on) { me.x = Math.max(W * me.on.x0, Math.min(W * me.on.x1, me.x)); }
     meEl.classList.toggle('walk', !!(dx || dy)); if (dx) meEl.classList.toggle('left', dx < 0);
-    meEl.style.left = me.x + 'px'; meEl.style.bottom = me.pav ? '41%' : `${zz.base + me.y * zz.span}%`; meEl.style.transform = `translateX(-50%) scale(${me.pav ? 0.72 : (1 - me.y * 0.14).toFixed(3)})`; meEl.style.zIndex = me.pav ? '1' : String(20 - Math.round(me.y * 10));
+    meEl.style.left = me.x + 'px'; meEl.style.bottom = me.on ? me.on.b + '%' : `${zz.base + me.y * zz.span}%`; meEl.style.transform = `translateX(-50%) scale(${me.on ? me.on.s : (1 - me.y * 0.14).toFixed(3)})`; meEl.classList.toggle('hd-sw', !!(me.on && me.on.sw)); meEl.style.zIndex = me.on ? (me.on.sw ? '25' : '1') : String(20 - Math.round(me.y * 10));
     const want = me.x - scroller.clientWidth / 2; if (Math.abs(scroller.scrollLeft - want) > 4 && (dx || dy)) scroller.scrollLeft += (want - scroller.scrollLeft) * Math.min(1, dt * 6);
     if (zone === 'pal') court(dt, W);
-    for (const n of npcs[zone]) { if (!n.fixed) { if (n.wait > 0) { n.wait -= dt; n.el.classList.remove('go'); if (n.wait <= 0) { const rg = n.rng || [0.015, 0.755], yb = n.yb || [0, 1]; n.tx = Math.max(W * rg[0], Math.min(W * rg[1], (n.run != null ? n.run : n.hx) + (Math.random() - 0.5) * (n.rng ? 9999 : 560))); n.ty = yb[0] + Math.random() * (yb[1] - yb[0]); } }
-        else { const ex = n.tx - n.x, ey = (n.ty - n.y) * 60, d = Math.hypot(ex, ey); if (d < 3) n.wait = 1.5 + Math.random() * 4; else { const sp = n.fast ? 150 : 34; n.x += ex / d * sp * dt; n.y += ey / d * sp * dt / 60; n.el.classList.add('go'); } } }
+    for (const n of npcs[zone]) { if (!n.fixed) { if (n.spot) { if ((n.rest -= dt) <= 0) { n.spot.busy = 0; n.spot = null; n.b = null; n.y = 0.95; n.wait = 0.5; } } else if (n.wait > 0) { n.wait -= dt; n.el.classList.remove('go'); if (n.wait <= 0) { let sp = null; if (zone === 'town' && !n.rng && !n.fast && Math.random() < 0.14) sp = SPOTS.map(a => spots[a[2]] || (spots[a[2]] = { a })).filter(q => !q.busy && Math.abs(q.a[0] * W - n.x) < 900)[0]; if (sp) { sp.busy = 1; n.going = sp; n.tx = sp.a[0] * W; n.ty = 1; } else { const rg = n.rng || [0.015, 0.755], yb = n.yb || [0, 1]; n.tx = Math.max(W * rg[0], Math.min(W * rg[1], (n.run != null ? n.run : n.hx) + (Math.random() - 0.5) * (n.rng ? 9999 : 560))); n.ty = yb[0] + Math.random() * (yb[1] - yb[0]); } } }
+        else { const ex = n.tx - n.x, ey = (n.ty - n.y) * 60, d = Math.hypot(ex, ey); if (d < 3) { if (n.going) { n.spot = n.going; n.going = null; n.b = n.spot.a[1]; n.x = n.spot.a[0] * W; n.rest = 7 + Math.random() * 8; n.el.classList.remove('go'); } else n.wait = 1.5 + Math.random() * 4; } else { const sp = n.fast ? 150 : 34; n.x += ex / d * sp * dt; n.y += ey / d * sp * dt / 60; n.el.classList.add('go'); } } }
       const bt = n.b != null ? n.b : zz.base + n.y * zz.span; n.el.style.left = n.x + 'px'; n.el.style.bottom = bt + '%'; n.el.style.zIndex = String(20 - Math.round(n.y * 10)); n.el.style.setProperty('--s', (1 - Math.min(1, n.y) * 0.14).toFixed(3)); n.sh.style.left = n.x + 'px'; n.sh.style.bottom = bt + '%'; n.sh.style.zIndex = n.el.style.zIndex;
       if (n.say && !n.say.hidden) { if ((n.sayT -= dt) <= 0) n.say.hidden = true; else { n.say.style.left = n.x + 'px'; n.say.style.bottom = `calc(${bt}% + ${n.el.offsetHeight + 4}px)`; n.say.style.zIndex = '40'; } } }
     if (zone === 'in' && !passed && !modalOn && (guideAt -= dt) <= 0) { guideAt = 5; say(npcs.in[1], '폐하, 이쪽 심사대에서 여권을 제출해 주시옵소서!', 3.6); setTimeout(() => alive && !passed && zone === 'in' && say(npcs.in[0], '심사대 앞에서 A 버튼이옵니다!', 3), 1200); } // 말티즈 승무원들이 여권 제출을 안내한다
-    if (!modalOn && zone !== 'in' && (talkAt -= dt) <= 0) { talkAt = 4 + Math.random() * 4; const c = npcs[zone].filter(n => Math.abs(n.x - me.x) < 300); if (c.length) { const n = pick(c); say(n, Math.random() < 0.5 ? n.info[3] : pick(zone === 'town' ? CHAT : WOW)); } }
+    if (!modalOn && zone === 'town') for (const n of npcs.town) { if (Math.abs(n.x - me.x) < 80 && Math.abs(n.y - me.y) < 0.5 && !(n.greet > t)) { n.greet = t + 26000; const c = (n.gc = ((n.gc == null ? n.key : n.gc) + 1) % 4), i = typeof n.key === 'number' ? n.key : 0; say(n, MEET[c][(i * 3 + c * 5 + (n.gn = (n.gn || 0) + 1)) % 8], 3.6); break; } }
+    if (!modalOn && zone !== 'in' && zone !== 'town' && (talkAt -= dt) <= 0) { talkAt = 4 + Math.random() * 4; const c = npcs[zone].filter(n => Math.abs(n.x - me.x) < 300); if (c.length) { const n = pick(c); say(n, Math.random() < 0.5 ? n.info[3] : pick(zone === 'town' ? CHAT : WOW)); } }
     act = modalOn ? null : findAct(); if (aBtn.disabled === !!act) { aBtn.disabled = !act; aBtn.classList.toggle('ready', !!act); } if (act && aLab.textContent !== act.t) aLab.textContent = act.t;
     raf = requestAnimationFrame(step); }
   raf = requestAnimationFrame(step);
