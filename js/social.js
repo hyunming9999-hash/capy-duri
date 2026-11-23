@@ -179,7 +179,7 @@ export function judgeLocal(text, p) {
   const reply = b.length ? pick(LINES.bad) : hate ? pick(LINES.hate).replace(/\{w\}/g, hate) : like ? pick(LINES.like).replace(/\{w\}/g, like) : g.length ? pick(LINES.good) : pick(LINES.flat);
   return { reply, delta: Math.max(-10, Math.min(10, d)) };
 }
-async function askAI(room, body) {
+export async function askAI(room, body) {
   if (!PUSH_URL || isMock) return null;
   const ac = new AbortController(), t = setTimeout(() => ac.abort(), 9000);
   try { const r = await fetch(PUSH_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ room, ai: body }), signal: ac.signal }); const j = await r.json(); return j && j.reply ? { reply: String(j.reply), delta: Math.max(-10, Math.min(10, Math.round(+j.delta || 0))), ai: true, by: j.by || '' } : null; }

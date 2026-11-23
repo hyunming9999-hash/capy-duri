@@ -3244,9 +3244,20 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 /* 착륙: 하늘에서 핫똑공항 활주로로 서서히 */
 .ap-landbg { position: absolute; inset: 0; background: url(../img/hd/air.webp?v=1) 100% 50% / auto 100% no-repeat; opacity: 0; transition: opacity 1.6s ease-in-out; z-index: 1; } .ap-landbg.on { opacity: 1; }
 .ap-sky.landing .ap-cloud { transition: opacity 1s; opacity: 0 !important; }
-.ap-ride-rig.air.down { animation: none; z-index: 2; transition: left 4.2s cubic-bezier(.2,.6,.3,1), top 4.2s cubic-bezier(.3,0,.4,1), width 4.2s ease-in-out, rotate 4.2s ease-out; left: 66%; top: 61%; width: min(40%, 190px); rotate: 0deg; }
+.ap-ride-rig.air.small { animation: none; z-index: 2; transition: none; left: 30%; top: 34%; width: min(40%, 190px); rotate: 5deg; opacity: 0; } .ap-ride-rig.air.small.go { opacity: 1; left: 66%; top: 61%; rotate: 0deg; transition: left 3.6s cubic-bezier(.2,.6,.3,1), top 3.6s cubic-bezier(.3,0,.4,1), rotate 3.6s ease-out, opacity .5s; }
 .hd-sign { position: absolute; transform: translateX(-50%); z-index: 30; padding: 4px 9px; border-radius: 8px; background: #6B4423; color: #FFE9B8; border: 2px solid #3E2511; font: 900 11px/1.2 var(--head); white-space: nowrap; box-shadow: 0 2px 0 #3E2511; pointer-events: none; }
 
 .hd-plane { position: absolute; pointer-events: none; z-index: 1; filter: drop-shadow(0 3px 3px rgba(0,0,0,.2)); }
-.hd-plane.air { left: 71%; bottom: 39%; width: 17%; } .hd-plane.in { left: 88.2%; bottom: 44%; width: 7%; z-index: 0; }
+.hd-plane.air { left: 85%; bottom: 39%; width: 8.7%; }
 .hd-meet .so-face > span { display: block; } .hd-meet .so-face > span img { width: 88px; height: auto; display: block; }
+.hd-tail { position: fixed; inset: 0; z-index: 9990; background: #1a1236; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+.hd-tail-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .32; filter: blur(2px); }
+.hd-tail > b { position: relative; font: 900 20px/1.25 var(--head); color: #FFE38A; text-shadow: 0 3px 0 #8A5A00; text-align: center; } .hd-tail > small { position: relative; color: #fff; font-size: 13px; min-height: 18px; }
+.hd-tail-me { position: relative; width: min(52vw, 210px); transform-origin: 50% 90%; transition: rotate .09s ease-out, translate .09s ease-out; animation: hdShy 1s ease-in-out infinite; } .hd-tail-me svg { width: 100%; display: block; }
+@keyframes hdShy { 50% { translate: 4px 0; rotate: 2deg; } }
+.hd-tail-me.dance { animation: none; } .hd-tail-me.dance.l { rotate: -16deg; translate: -14px 0; } .hd-tail-me.dance.r { rotate: 16deg; translate: 14px 0; } .hd-tail-me.win { animation: hdWow .35s ease-in-out 2; }
+.hd-tail-g { position: relative; width: min(74vw, 300px); height: 16px; border-radius: 10px; background: rgba(255,255,255,.22); border: 2px solid #FFE38A; overflow: hidden; visibility: hidden; } .hd-tail-g u { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #FFB347, #FF7FA8); transition: width .12s linear; }
+.hd-tail-btns { position: relative; display: flex; gap: 26px; visibility: hidden; } .hd-tail.go .hd-tail-btns, .hd-tail.go .hd-tail-g { visibility: visible; }
+.hd-tail-b { width: 92px; height: 92px; border-radius: 50%; border: 4px solid #8B5A2B; background: #FFD98A; font-size: 38px; color: #5A3A1E; box-shadow: 0 6px 0 #8B5A2B; touch-action: none; } .hd-tail-b:active { translate: 0 4px; box-shadow: 0 2px 0 #8B5A2B; background: #FFB347; }
+.hd-wel.party img { animation: apvBook .5s cubic-bezier(.2,.9,.3,1.2) both, hdGlow 1.2s ease-in-out infinite alternate; } @keyframes hdGlow { to { box-shadow: 0 0 0 4px #1F2F6B, 0 0 38px 10px rgba(255,214,90,.75); } }
+.hd-conf { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 2; } .hd-conf i { position: absolute; top: -12px; width: 9px; height: 14px; border-radius: 2px; animation: hdConf 3s linear infinite; } @keyframes hdConf { to { translate: 20px 105vh; rotate: 720deg; } }

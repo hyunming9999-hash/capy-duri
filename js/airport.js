@@ -141,8 +141,8 @@ export function openAirport(o) {
       tick(); timer = setInterval(tick, 500); };
     // 3) 착륙: 구름이 걷히고 핫똑공항이 서서히 나타난다 → 활주로에 내려앉으면 핫똑랜드로
     let landed = false; const land = () => { if (landed || !el.isConnected) return; landed = true; clearInterval(timer); offBtn.remove(); landBtn.remove(); msg.textContent = `🛬 ${DEST} 도착!`; sub.textContent = '착륙하고 있어요…';
-      const bg = h('i', { class: 'ap-landbg' }); sky.prepend(bg); sky.classList.add('landing'); void bg.offsetWidth; bg.classList.add('on'); rig.style.rotate = '5deg'; setTimeout(() => { rig.classList.add('down'); rig.style.rotate = ''; }, 900);
-      setTimeout(() => { if (!el.isConnected) return; sfx('pop'); el.remove(); import('./hotddok.js').then(m => m.openHotddok({ ctx, demo, onClose: () => bgm.start('airport') })).catch(() => bgm.start('airport')); }, 5600); };
+      const bg = h('i', { class: 'ap-landbg' }); sky.prepend(bg); sky.classList.add('landing'); void bg.offsetWidth; bg.classList.add('on'); rig.classList.add('small'); void rig.offsetWidth; setTimeout(() => rig.classList.add('go'), 500); // 처음부터 작은 크기로 나타나 활주로에 내려 멈춘다
+      setTimeout(() => { if (!el.isConnected) return; sfx('pop'); el.remove(); import('./hotddok.js').then(m => m.openHotddok({ ctx, demo, onClose: () => bgm.start('airport') })).catch(() => bgm.start('airport')); }, 5200); };
     const landBtn = h('button', { class: 'btn sm', onClick: () => land() }, '🛬 바로 착륙 (예시판)');
     raf2 = requestAnimationFrame(run); }
   let lastT = performance.now(), tick = 0;
