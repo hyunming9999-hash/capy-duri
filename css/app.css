@@ -3136,7 +3136,7 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .ap-term { position: absolute; bottom: 31%; z-index: 2; padding: 0; border: 0; background: none; cursor: pointer; aspect-ratio: 900 / 682; container-type: inline-size; }
 .ap-term img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 6px 6px rgba(0,0,0,.18)); }
 .ap-term:active { transform: scale(.98); }
-.ap-term-t { position: absolute; left: 22%; right: 31%; top: 4%; height: 13%; display: flex; align-items: center; justify-content: center; font: 900 8cqw/1 var(--head); color: #FFF6E0; letter-spacing: -.5px; text-shadow: 0 2px 0 #7A4A1E, 2px 0 #7A4A1E, -2px 0 #7A4A1E, 0 -2px #7A4A1E; }
+.ap-term-t { position: absolute; left: 19%; right: 28%; top: 3%; height: 16%; display: flex; align-items: center; justify-content: center; font: 900 12.5cqw/1 var(--head); color: #FFF6E0; letter-spacing: -.5px; text-shadow: 0 2px 0 #7A4A1E, 2px 0 #7A4A1E, -2px 0 #7A4A1E, 0 -2px #7A4A1E; }
 .ap-crew { position: absolute; bottom: 9%; height: 31%; transform: translateX(-50%); z-index: 3; pointer-events: none; animation: apBob 2.6s ease-in-out infinite; }
 .ap-crew + .ap-crew { animation-delay: -1.3s; }
 .ap-crew.in { bottom: 10%; height: 30%; }
@@ -3152,7 +3152,7 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .ap-cnt { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
 .ap-cnt img { height: 110px; } .ap-cnt p { margin: 0; line-height: 1.5; } .ap-cnt-s { font-weight: 800; color: #2F6FA8; } .ap-cnt-n { font-size: 13px; color: #8a6a3a; }
 /* 놀이터: 농장 팻말 아래 '카피공항으로' 팻말(대각선 아래) */
-.so-airsign { position: absolute; bottom: 6%; z-index: 2; padding: 0; border: 0; background: none; cursor: pointer; aspect-ratio: 323 / 360; }
+.so-airsign { position: absolute; bottom: 6%; z-index: 400; padding: 0; border: 0; background: none; cursor: pointer; aspect-ratio: 323 / 360; }
 .so-airsign img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 2px 2px rgba(0,0,0,.2)); }
 .so-airsign b { position: absolute; left: 14%; right: 6%; top: 25%; height: 24%; display: flex; align-items: center; justify-content: center; transform: rotate(-21deg); font: 900 clamp(11px, 3.6vw, 15px)/1 var(--head); letter-spacing: -.5px; color: #2F6FA8; white-space: nowrap; text-shadow: 1.5px 0 #FFF3D6, -1.5px 0 #FFF3D6, 0 1.5px #FFF3D6, 0 -1.5px #FFF3D6; }
 .so-airsign:active { transform: scale(.96); }
@@ -3166,3 +3166,8 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .ap-tk { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; width: 100%; text-align: left; gap: 2px 10px; padding: 10px 12px; border-radius: 14px; border: 2px solid #9CC6EE; background: #F1F8FF; cursor: pointer; }
 .ap-tk b { font: 900 15px/1.2 var(--head); color: #2F6FA8; } .ap-tk small { grid-row: 2; font-size: 12px; color: #6a7f95; } .ap-tk em { grid-row: 1 / 3; grid-column: 2; align-self: center; font: 900 14px/1 var(--head); font-style: normal; color: #B8860B; background: #FFF3C4; border: 2px solid #E0B43A; border-radius: 10px; padding: 6px 8px; }
 .ap-tk:active { transform: scale(.98); }
+
+.ap-front { position: absolute; left: 46.95%; top: 43.92%; width: 53.05%; height: 27.96%; z-index: 1; pointer-events: none; }
+.ap-lr { display: flex; align-items: flex-end; gap: 6px; }
+.ap-ud { display: flex; flex-direction: column; gap: 4px; } .ap-ud[hidden] { display: none; }
+.fm-dp.ap-v { width: 46px; height: 40px; min-width: 0; font-size: 16px; padding: 0; }
