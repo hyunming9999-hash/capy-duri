@@ -45,7 +45,7 @@ export function openAirport(o) {
   const inAtt = h('img', { class: 'ap-crew in tap', src: 'img/air/att.webp', alt: '카피승무원', style: { left: W * 0.115 + 'px' }, onClick: () => walkTo(W * 0.13, openTicket) }), inPilot = h('img', { class: 'ap-crew in pl', src: 'img/air/pilot.webp', alt: '카피기장', style: { left: W * 0.392 + 'px' } }); // 기장: 카운터 옆 출입구(탑승구) 바로 곁
   const inPlane = h('img', { class: 'ap-plane in', src: 'img/air/plane.webp', alt: '' });
   const boardEl = h('div', { class: 'ap-board' }), boardRows = h('div', { class: 'ap-brows' }); boardEl.append(h('span', null, `🛫 출발 안내 · ${DEST}행`), boardRows);
-  const walker = h('img', { class: 'ap-crew in wk', src: 'img/air/att-walk.webp', alt: '카피승무원' }), wk = { x: W * 0.8, d: -1, wait: 0 }; // 캐리어를 끌고 대기장을 오가는 승무원
+  const walker = h('img', { class: 'ap-crew in wk', src: 'img/air/att-walk.webp', alt: '카피승무원' }), wk = { x: W * 0.8, y: 0.3, tx: W * 0.5, ty: 0.5, d: -1, wait: 0 }; // 캐리어를 끌고 대기장을 오가는 승무원
   const cntT = h('b', { class: 'ap-cnt-t', style: { fontSize: Math.round(H * 0.052) + 'px' } }, '카운터');
   const outBtn = h('button', { class: 'fm-exit ap-out', style: { left: W * 0.338 + 'px' }, onClick: () => goOut() }, '← 밖으로');
   const inWorld = h('div', { class: 'fm-world ap-world in', hidden: true, style: { width: W + 'px', height: H + 'px', backgroundImage: 'url(img/air/in.webp)' } }, h('div', { class: 'ap-window' }, inPlane, h('img', { class: 'ap-mull', src: 'img/air/mullion.webp', alt: '' })), boardEl, counter, inAtt, h('img', { class: 'ap-desk', src: 'img/air/desk.webp', alt: '' }), inPilot, walker, cntT, outBtn);
@@ -69,7 +69,7 @@ export function openAirport(o) {
   function goOut() { if (!inside) return; inside = false; sfx('pop'); inWorld.hidden = true; outWorld.hidden = false; me.x = me.tx = doorX; me.y = 0; me.then = null; place(); ud.hidden = true; title.textContent = '✈️ 카피공항'; scroller.scrollLeft = Math.max(0, me.x - scroller.clientWidth / 2); }
   const canBoard = f => f.phase === 'stay'; // 비행기가 출입구 앞에 다 서고 나서 10초 안에만 탈 수 있다
   const atGate = () => inside && me.x > W * 0.27 && me.x < W * 0.56; // 카운터 옆 출입구 앞
-  function fitCrew() { const hh = 84; inPilot.style.height = hh + 'px'; walker.style.height = hh + 'px'; inAtt.style.height = hh + 'px'; inAtt.style.bottom = Math.round(0.417 * H - 0.5 * hh) + 'px'; } // 카피바라(밍땅꾸리·두두)와 같은 키 + 모자. 카운터 승무원은 허리까지 책상 뒤에 · 기장은 조금 안쪽(작게)
+  function fitCrew() { const hh = 84; inPilot.style.height = hh + 'px'; walker.style.height = Math.round(hh * 1.22) + 'px'; inAtt.style.height = hh + 'px'; inAtt.style.bottom = Math.round(0.417 * H - 0.5 * hh) + 'px'; } // 카피바라(밍땅꾸리·두두)와 같은 키 + 모자. 카운터 승무원은 허리까지 책상 뒤에 · 기장은 조금 안쪽(작게)
   function openTicket() { const f = flightNow(now(), F), dep = depAt(now());
     const row = (k, name, desc) => h('button', { class: 'ap-tk', onClick: () => buy(k, name) }, h('b', null, `🎫 ${DEST} ${name}`), h('small', null, desc), h('em', null, `${TICKET[k].toLocaleString()}코인`));
     modal({ title: `🎫 ${DEST} 탑승권`, body: [h('div', { class: 'ap-cnt' }, h('img', { src: 'img/air/att.webp', alt: '' }),
@@ -83,10 +83,24 @@ export function openAirport(o) {
     sfx('coin'); toast(`🎫 ${DEST} ${name} 탑승권을 샀어요!${demo ? ' (예시판)' : ''}`, 1800); }
   function board() { const f = flightNow(now(), F); if (!canBoard(f)) return toast(f.phase === 'land' ? '비행기가 출입구 앞에 다 설 때까지 기다려 주세요!' : `탑승 시간이 아니에요 · 다음 출발 ${hhmm(depAt(now()))} (도착 뒤 10초 안에 타요)`, 2200);
     if (!tk.one && !tk.round) return toast('🎫 탑승권이 없어요. 승무원에게서 먼저 사 주세요!', 1800);
-    sfx('pop'); modal({ title: `✈️ ${DEST}행 탑승`, body: [h('div', { class: 'ap-cnt' }, h('img', { src: 'img/air/pilot.webp', alt: '' }), h('p', null, `${DEST}는 지금 한창 공사 중이래요! 🚧`, h('br'), '조금만 기다려 주세요. 곧 날아갈 수 있어요.'), h('p', { class: 'ap-cnt-n' }, '탑승권은 그대로 가지고 있어요.'))], actions: [{ label: '알겠어요', primary: true }] }); }
+    sfx('pop'); ride(); }
   // 출발 시각: 이번(또는 다음) 비행기가 떠나는 때
   function depAt(t) { const blk = Math.floor(t / F.every) * F.every, d = blk + F.land + F.stay; return t < d ? d : d + F.every; }
 
+  // 말풍선: 승무원·기장·카운터 직원이 비행기 상황에 맞춰 한마디씩 한다
+  const LINES = { cnt: { none: ['핫똑랜드행 탑승권 여기서 사요~', '편도 18,000 · 왕복 30,000코인이에요', '어서 오세요, 카피공항입니다!'], land: ['비행기가 들어오고 있어요!', '곧 탑승 시작해요, 탑승권 챙기셨죠?'], stay: ['지금 탑승하세요! 서둘러요!', '탑승 마감이 얼마 안 남았어요!'], off: ['방금 떠났어요. 다음 편을 기다려 주세요', '즐거운 여행 되세요~'] },
+    pl: { none: ['오늘 하늘이 참 맑군요', '핫똑랜드까지 금방입니다', '안전 운항이 제일이지요'], land: ['착륙 자세 좋고!', '비행기 들어옵니다, 물러서 주세요'], stay: ['탑승권 확인하겠습니다!', '이쪽 문으로 탑승하세요!'], off: ['이륙합니다! 좋은 비행 되길!', '다음 비행 준비해야겠군'] },
+    wk: { none: ['바쁘다 바빠~', '캐리어가 오늘따라 무겁네', '면세점 구경하고 싶다…', '손님, 뛰지 마세요~'], land: ['어머, 비행기 왔다!', '도착이요~ 도착!'], stay: ['탑승하실 분 서두르세요~!', '잠깐만요, 저도 타야 해요!'], off: ['아이고, 또 놓쳤네…', '다음 비행기는 꼭 타야지'] } };
+  const says = { cnt: h('span', { class: 'ap-say', hidden: true }), pl: h('span', { class: 'ap-say', hidden: true }), wk: h('span', { class: 'ap-say', hidden: true }) }, npc = { cnt: inAtt, pl: inPilot, wk: walker }, sayT = { cnt: 0, pl: 0, wk: 0 }; inWorld.append(says.cnt, says.pl, says.wk);
+  let talkAt = 2, lastPh = '';
+  function say(k, f) { const a = LINES[k][f.phase] || LINES[k].none; says[k].textContent = a[Math.floor(Math.random() * a.length)]; says[k].hidden = false; says[k].classList.remove('pop'); void says[k].offsetWidth; says[k].classList.add('pop'); sayT[k] = 3.2; }
+  function talk(dt, f) { if (f.phase !== lastPh) { lastPh = f.phase; if (f.phase !== 'none') { say('cnt', f); say('pl', f); say('wk', f); talkAt = 5; } } if ((talkAt -= dt) <= 0) { talkAt = 3.5 + Math.random() * 3; say(['cnt', 'pl', 'wk'][Math.floor(Math.random() * 3)], f); }
+    for (const k in says) { if (sayT[k] > 0 && (sayT[k] -= dt) <= 0) says[k].hidden = true; if (!says[k].hidden) { const e = npc[k]; says[k].style.left = e.style.left; says[k].style.bottom = `calc(${getComputedStyle(e).bottom} + ${e.offsetHeight * (k === 'wk' ? 1 - wk.y * 0.12 : 1) + 4}px)`; } } }
+  // 탑승: 바닷가 활주로 시작점에 선 비행기에 내 카피바라가 앉아 → 쪽을 본다
+  function ride() { const cap = h('div', { class: 'ap-ride-me', html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) });
+    const el = h('div', { class: 'ap-ride' }, h('div', { class: 'ap-ride-rig' }, cap, h('img', { class: 'ap-ride-pl', src: 'img/air/plane.webp', alt: '' }), h('img', { class: 'ap-ride-hull', src: 'img/air/plane-hull.webp', alt: '' })),
+      h('div', { class: 'ap-ride-t' }, h('b', null, `✈️ ${DEST}행 탑승 완료!`), h('small', null, `${DEST}는 지금 한창 공사 중이에요 🚧 · 곧 날아갈 수 있어요`), h('button', { class: 'btn primary', onClick: () => { sfx('pop'); el.remove(); } }, '내리기')));
+    wrap.append(el); }
   let lastT = performance.now(), tick = 0;
   // 바깥 비행기(25초마다): 4초 동안 내려앉고 → 10초 동안 왼쪽으로 천천히 굴러 터미널 뒤로 들어가고 → 3초 뒤 → 8초 동안 터미널 뒤에서 나와 오른쪽(→)으로 달려 떠오른다
   function drawOut(t) { const k = t % 25000, el = outPlane; let x, y = 0, r = 0, flip = 0;
@@ -109,7 +123,10 @@ export function openAirport(o) {
     const gate = atGate(), near = inside ? me.x < W * 0.24 || gate : Math.abs(me.x - doorX) < TWD * 0.55, lab = !inside ? '✈️ 공항 들어가기' : gate ? '✈️ 탑승하기' : '🎫 탑승권 사기';
     if (enterBtn.hidden === near) enterBtn.hidden = !near; if (enterBtn.textContent !== lab) enterBtn.textContent = lab;
     const f = flightNow(now(), F); if (inside) drawPlane(inPlane, f, 0.2); else drawOut(now()); // 바깥: 내려앉아 터미널 뒤로 들어갔다가, 3초 뒤 다시 나와 오른쪽으로 떠나기를 되풀이
-    if (inside) { if (wk.wait > 0) { wk.wait -= dt; walker.classList.remove('go'); } else { wk.x += wk.d * 38 * dt; walker.classList.add('go'); if (wk.x < W * 0.6 || wk.x > W * 0.95) { wk.d = wk.x < W * 0.6 ? 1 : -1; wk.wait = 1.5 + Math.random() * 2; } } walker.style.left = wk.x + 'px'; walker.style.transform = `translateX(-50%)${wk.d > 0 ? ' scaleX(-1)' : ''}`; }
+    if (inside) { if (wk.wait > 0) { wk.wait -= dt; walker.classList.remove('go'); if (wk.wait <= 0) { wk.tx = W * (0.07 + Math.random() * 0.87); wk.ty = Math.random(); } }
+      else { const dx = wk.tx - wk.x, dy = wk.ty - wk.y, d = Math.hypot(dx, dy * 60); if (d < 3) wk.wait = 1 + Math.random() * 2.5; else { wk.x += dx / d * 42 * dt; wk.y += dy * 60 / d * 42 * dt / 60; if (Math.abs(dx) > 2) wk.d = Math.sign(dx); walker.classList.add('go'); } }
+      walker.style.left = wk.x + 'px'; walker.style.bottom = `${2 + wk.y * 16}%`; walker.style.zIndex = String(6 - Math.round(wk.y * 3)); walker.style.transform = `translateX(-50%) scale(${(1 - wk.y * 0.12).toFixed(3)})${wk.d > 0 ? ' scaleX(-1)' : ''}`;
+      talk(dt, f); }
     if ((tick += dt) > 0.5) { tick = 0; drawBoard(f); }
     raf = requestAnimationFrame(step); }
   raf = requestAnimationFrame(step);
