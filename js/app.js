@@ -56,7 +56,7 @@ ctx.nameOf = uid => (ctx.members[uid] || {}).name || '카피';
 // 황금 장비 입어 보기 링크(?goldtest 또는 ?goldtest=10,3,17): 내 화면에서만 입혀 보고 저장하지 않는다
 const GOLD_TEST = (() => { try { const v = new URLSearchParams(location.search).get('goldtest'); if (v == null) return null; const l = v.split(',').filter(x => x.trim() !== '').map(Number).filter(n => Number.isInteger(n) && n >= 0); return l.length ? l : [10, 3, 17, 2, 0, 9, 18, 12]; } catch { return null; } })();
 ctx.goldTest = GOLD_TEST;
-ctx.capyOf = (uid, extra = {}) => { const m0 = ctx.members[uid] || {}, m = GOLD_TEST && uid === ctx.uid ? { ...m0, rare: GOLD_TEST } : m0, d = ctx.dress[uid] || {}, blk = social.goldBlocks(GOLD_TEST && uid === ctx.uid ? GOLD_TEST : social.rareList(m.rare)), dv = k => (blk.has(k) ? '' : d[k]); return { color: m.color, acc: m.acc, top: dv('top'), bottom: dv('bottom'), hat: dv('hat'), shoe: dv('shoe'), pin: m.pin != null && social.PERSONA[m.pin] ? social.PERSONA[m.pin].pin : '', doll: Number.isInteger(m.doll) && m.doll >= 0 && m.doll < 30 ? m.doll : null, rare: GOLD_TEST && uid === ctx.uid ? { ...(social.rareOf(GOLD_TEST.slice(0, 1)) || {}), list: GOLD_TEST } : social.rareOf(m.rare), ...(m.dip || (uid === ctx.uid && window.__capyDip) ? { dip: 1 } : {}), ...extra, ...(FACES[m.face] && (!extra.face || extra.face === 'happy') && extra.view !== 'back' ? { face: m.face } : {}) }; };
+ctx.capyOf = (uid, extra = {}) => { const m0 = ctx.members[uid] || {}, m = GOLD_TEST && uid === ctx.uid ? { ...m0, rare: GOLD_TEST } : m0, d = ctx.dress[uid] || {}, blk = social.goldBlocks(GOLD_TEST && uid === ctx.uid ? GOLD_TEST : social.rareList(m.rare)), dv = k => (blk.has(k) ? '' : d[k]); return { hdw: (ctx.hdw || {})[uid], color: m.color, acc: m.acc, top: dv('top'), bottom: dv('bottom'), hat: dv('hat'), shoe: dv('shoe'), pin: m.pin != null && social.PERSONA[m.pin] ? social.PERSONA[m.pin].pin : '', doll: Number.isInteger(m.doll) && m.doll >= 0 && m.doll < 30 ? m.doll : null, rare: GOLD_TEST && uid === ctx.uid ? { ...(social.rareOf(GOLD_TEST.slice(0, 1)) || {}), list: GOLD_TEST } : social.rareOf(m.rare), ...(m.dip || (uid === ctx.uid && window.__capyDip) ? { dip: 1 } : {}), ...extra, ...(FACES[m.face] && (!extra.face || extra.face === 'happy') && extra.view !== 'back' ? { face: m.face } : {}) }; };
 // 표정 고르기: 평소 얼굴(예전에는 늘 웃는 얼굴)을 내가 고른 표정으로 보여 준다. 졸음·기절처럼 상황에 따라 바뀌는 표정은 그대로
 const FACES = { happy: '활짝', smile: '방긋', wink: '윙크', love: '하트', shy: '수줍', wow: '깜짝', sleepy: '졸려', sad: '시무룩', cry: '엉엉', angry: '뾰로통' };
 ctx.faceOf = uid => { const f = (ctx.members[uid] || {}).face; return FACES[f] ? f : 'happy'; };
@@ -323,6 +323,7 @@ function enter() {
     if (curRoute() !== 'where') notify(`${josa(ctx.nameOf(p.by), '가', '이')} 위치 핑을 찍었어요${p.msg ? ': “' + p.msg + '”' : ''}`, '보기', () => ctx.go('where'));
   }, { limit: 1 });
   setupMoney(ctx);
+  ctx.store.on('hd', v => { const w = {}; Object.entries(v || {}).forEach(([u, d]) => { if (d && d.wear) w[u] = d.wear; }); ctx.hdw = { ...(ctx.hdw || {}), ...w }; }); // 핫똑랜드 상징품: 카피랜드에서도 그대로 달고 다닌다
   ctx.store.on('dress', v => {
     const before = ctx.dress[ctx.uid] || {}, now = (v || {})[ctx.uid] || {}; ctx.dress = v || {};
     if (!firstDress && now.by && now.by !== ctx.uid && now.ts !== before.ts && curRoute() !== 'dress') notify(`${josa(ctx.nameOf(now.by), '가', '이')} 내 카피바라에게 옷을 입혀 줬어요`, '보기', () => ctx.go('dress'));

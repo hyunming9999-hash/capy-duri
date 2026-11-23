@@ -47,6 +47,7 @@ function face(f, c) {
     <ellipse cx="18.5" cy="54" rx="6" ry="4" fill="#FF8F8F" opacity=".55"/><ellipse cx="101.5" cy="54" rx="6" ry="4" fill="#FF8F8F" opacity=".55"/>${extra}`;
 }
 
+const HD_SLOT = { head: [60, 50, 6], neck: [60, 44, 92], back: [60, 112, 124], waist: [88, 36, 122], lhand: [14, 42, 106], rhand: [106, 42, 106] }; // [가운데 x, 크기, 아래 끝 y]
 // opts: {color, acc, face, view:'front'|'back', head:true(머리만), top/bottom/hat: 옷·모자 id, pin: 친목회에서 받은 상징(그림 글자), rare: 초레어 보물 {e: 그림 글자, c: 빛 색}}. 모자를 쓰면 머리 장식(acc) 대신 모자가 보인다
 let rareN = 0;
 // 가슴에 다는 상징(나머지는 손에 든다)
@@ -95,8 +96,9 @@ export function capy(o = {}) {
       if (RARE_SHOE.has(k)) return; if (RARE_BACK.has(k)) wearB += img; else if (RARE_BODY.has(k)) wearM += img; else if (k === 2 && list.some(x => RARE_HOLD.has(x))) gem += `<g transform="matrix(-1 0 0 1 120 0)">${img}</g>`; else gem += img + (RARE_HOLD.has(k) ? `<ellipse cx="${96 + dx * 0.6}" cy="104" rx="7.5" ry="6.5" fill="${c.body}"/><path d="M${91 + dx * 0.6} 101 q5 -3 10 0" fill="none" stroke="${c.dark}" stroke-width="1.4" stroke-linecap="round" opacity=".6"/>` : ''); });
     gem += [[4, 62, 0], [116, 50, .6], [10, 126, 1.1], [112, 120, 1.6], [60, -34, .3], [-10, 22, .9], [130, 92, 1.3], [30, -24, .5]].map(([x, y, d]) => `<path d="M${x} ${y - 10} l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="#FFFDF0" stroke="#F0C24A" stroke-width="1"><animate attributeName="opacity" values="0.15;1;0.15" dur="1.6s" begin="${d}s" repeatCount="indefinite"/></path>`).join(''); }
   const flR = fl && o.rare && o.rare.i != null && !back ? capyRare((o.rare.list || [o.rare.i]).slice(0, 6), o.own, o) : { over: '', shoe: '', back: '' };
-  if (fl) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158"${glow ? ' style="overflow:visible"' : ''}>${glow}${o.noShadow ? '' : SHADOW}${flR.back}${fl.feet}${fl.body}${flR.shoe || flW.shoe}${flW.body}${flTop}${flR.over}${pin}${dollB}${dipB}${gem}</svg>`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158"${glow ? ' style="overflow:visible"' : ''}>${glow}${wearB}${body}${wearM}${shoeToe}${head}${pin}${dollB}${dipB}${gem}</svg>`;
+  const hdS = sl => { const i = o.hdw && o.hdw[sl]; if (i == null || o.head) return ''; const [cx, w, yb] = HD_SLOT[sl]; return `<image href="img/hd/y${i}.webp" x="${cx - w / 2}" y="${yb - w}" width="${w}" height="${w}" preserveAspectRatio="xMidYMax meet"/>`; }, hdB = back ? '' : hdS('back'), hdF = (back ? ['back'] : ['neck', 'waist', 'lhand', 'rhand']).map(hdS).join('') + hdS('head'); // 핫똑랜드 상징품(자리마다 하나)
+  if (fl) return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158"${glow ? ' style="overflow:visible"' : ''}>${glow}${hdB}${o.noShadow ? '' : SHADOW}${flR.back}${fl.feet}${fl.body}${flR.shoe || flW.shoe}${flW.body}${flTop}${flR.over}${pin}${dollB}${dipB}${gem}${hdF}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -22 120 158"${glow ? ' style="overflow:visible"' : ''}>${glow}${wearB}${body}${wearM}${shoeToe}${head}${pin}${dollB}${dipB}${gem}${hdF}</svg>`;
 }
 
 export function capyEl(o = {}, cls = '') {
