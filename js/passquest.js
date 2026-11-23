@@ -263,5 +263,17 @@ export function createPassQuest(q, d) {
   const cooks = () => (ready && s() === 3 ? PP_COOK.filter(([k]) => !(st.ck || {})[k]).map(([k]) => ({ q: 'pp-' + k, i: BEAR, rec: k })) : []);
   function cooked(qk) { const k = String(qk).slice(3); if (!ready || s() !== 3) return; const ck = { ...(st.ck || {}), [k]: 1 }; save({ ck }); const n = PP_COOK.filter(([x]) => ck[x]).length; toast(n >= 3 ? '🛂 요리 3종 완성! 🛂 버튼을 눌러 곰에게 가요' : `🛂 퀘스트 요리 ${n} / 3`, 2600); }
   const wantGull = () => ready && s() === 4 && gTries() < 3 && !busy;
-  return { open, auto, mark, visible, goal, step: () => s(), onFish, onRow, cooks, cooked, beforeFish, wantGull, done, ping: () => d.changed && d.changed(), dispose: () => off && off() };
+  // 여권 퀘스트 현황(위쪽 버튼): 진행만 보여 준다. 몇 장인지·지금 목표·상대 진행
+  const CHS = ['1장 · 형제의 꼬리땐스', '2장 · 고급 입맛', '3장 · 외교선물 황금유자', '4장 · 감동의 요리 3종', '5장 · 카피랜드 역사 교육', '6장 · 갈매기 몰래 답장'];
+  const chDone = k => (k >= 5 ? 6 : k >= 4 ? 5 : k); // 저장 단계(0~5) → 끝낸 장 수(4단계에 들어서면 5장 역사 교육까지 끝난 것)
+  function status() { const n = started() ? chDone(s()) : 0, pct = Math.round(n / CHS.length * 100);
+    const rows = CHS.map((t, i) => { const st = i < n ? 'done' : i === n && started() ? 'now' : 'lock'; return h('div', { class: 'qs-ch ' + st }, h('b', null, st === 'done' ? '✔' : st === 'now' ? '🛂' : '🔒'), h('span', null, t), h('small', null, st === 'done' ? '완료' : st === 'now' ? '진행 중' : '')); });
+    const pal = h('p', { class: 'qs-pal' }, d.palName ? `👫 ${d.palName}: 확인하는 중…` : '');
+    if (d.palId && d.store.get) d.store.get('passq/' + d.palId).then(v => { const k = v && v.s != null ? chDone(v.s) : -1; pal.textContent = `👫 ${d.palName}: ${k < 0 ? '아직 시작 전이에요' : k >= CHS.length ? '여권 발급 완료 🏆' : `${k} / ${CHS.length}장 · ${CHS[k]}`}`; }).catch(() => { pal.textContent = ''; });
+    const todo = !started() ? h('p', { class: 'qs-todo' }, '황금 장비 여섯 개를 모두 두르면 시작돼요') : done() ? h('p', { class: 'qs-todo done' }, '🛂 여권 발급 완료! 카피공항이 열리면 떠나요.') : h('div', { class: 'qs-todo' }, h('small', null, CHS[n] || ''), h('b', null, goal() || '이야기를 이어 가요'), h('em', { class: ready2() ? 'ok' : '' }, ready2() ? '✔ 준비 완료! 친목회에서 이야기를 이어 가요' : '진행 중'));
+    modal({ title: '🛂 여권 퀘스트 현황', body: [h('div', { class: 'qs' }, h('p', { class: 'qs-name' }, '에픽 퀘스트 「폐하의 첫 외교」'),
+      h('div', { class: 'qs-bar' }, h('i', null, h('u', { style: { width: pct + '%' } })), h('small', null, `${n} / ${CHS.length}장 · ${pct}%`)), pal,
+      h('b', { class: 'qs-h' }, '📌 지금 할 일'), todo, h('b', { class: 'qs-h' }, '📁 장 목록'), h('div', { class: 'qs-chs' }, ...rows))], actions: [{ label: '닫기', primary: true }] }); }
+  const pctOf = () => Math.round((started() ? chDone(s()) : 0) / CHS.length * 100);
+  return { open, auto, mark, visible, goal, step: () => s(), status, pct: pctOf, onFish, onRow, cooks, cooked, beforeFish, wantGull, done, ping: () => d.changed && d.changed(), dispose: () => off && off() };
 }
