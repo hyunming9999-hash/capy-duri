@@ -172,10 +172,9 @@ export function openAquarium(o) {
         if (s.dir !== big.dir && Math.sign(big.x - s.x) === s.dir && !s.turnT && Math.random() < 0.02) turn(s);
         if (s.st === 'sleep') setSt(s, 'swim', rnd(2, 4)); } } }
   function setSt(f, st, t) { f.st = st; f.stT = t; f.el.classList.toggle('dash', st === 'dash'); f.el.classList.toggle('sleep', st === 'sleep'); if (st === 'dash') bubbles(f); }
-  // 방향 바꾸기: 종이처럼 뒤집지 않고, 예전 방향 모습이 스르르 사라지면서 새 방향 모습이 나타나고 몸이 살짝 기울며 돈다
+  // 방향 바꾸기: 한 마리가 몸을 돌리듯 좌우 폭이 좁아졌다가 반대쪽으로 펴진다(겹쳐 보이는 잔상 없음) · 몸이 살짝 기운다
   function turn(f, wall) { if (f.turnT && !wall) return; f.turnT = 0.9;
-    const g = f.body.cloneNode(true); g.classList.add('aq-ghost'); f.el.append(g); setTimeout(() => g.remove(), 650);
-    f.dir *= -1; f.body.classList.remove('aq-in'); void f.body.offsetWidth; f.body.classList.add('aq-in'); f.el.classList.remove('turn'); void f.el.offsetWidth; f.el.classList.add('turn'); }
+    f.dir *= -1; f.el.classList.remove('turn'); void f.el.offsetWidth; f.el.classList.add('turn'); }
   function bubbles(f) { for (let k = 0; k < 4; k++) { const b = h('i', { class: 'aq-bub', style: { zIndex: f.el.style.zIndex, left: (f.x - f.dir * f.len * scOf(f) * 0.45) * ppm + 'px', top: (f.y + rnd(-0.1, 0.1) * hOf(f)) * ppm + 'px', animationDelay: k * 0.08 + 's' } }); layer.append(b); setTimeout(() => b.remove(), 1400); } }
   // 앞에 있는 물고기가 뒤 물고기를 가린다(반투명 없이 그대로 덮는다)
   // 화면 밖 물고기는 위치만 계산하고 그리지 않는다(꼬리 흔들기도 멈춤)
@@ -183,7 +182,7 @@ export function openAquarium(o) {
     for (const f of fish) { sizeFish(f); const sc = scOf(f) / f.near, w = f.lw * sc, px = f.x * ppm, py = f.y * ppm, on = px + w / 2 > L && px - w / 2 < Rr && py + w / 3 > T0 && py - w / 3 < B0;
       if (on !== f.on) { f.on = on; f.el.classList.toggle('off', !on); } if (!on) continue;
       const q = Math.round(f.z * 20); if (q !== f.dq) { f.dq = q; f.el.style.zIndex = 500 - q * 20; }
-      f.el.style.transform = `translate(${(px - w / 2).toFixed(1)}px, ${(py - w / 3).toFixed(1)}px) scale(${sc.toFixed(3)})`; const fl = f.dir > 0 ? 'scaleX(-1)' : ''; if (fl !== f.fl) { f.fl = fl; f.body.style.transform = fl; } } }
+      f.el.style.transform = `translate(${(px - w / 2).toFixed(1)}px, ${(py - w / 3).toFixed(1)}px) scale(${sc.toFixed(3)})`; const b = f.dir > 0 ? -1 : 1, k = f.turnT > 0.4 ? Math.min(1, (0.9 - f.turnT) / 0.5) : 1, c = -Math.cos(k * Math.PI), sx = k >= 1 ? b : b * Math.sign(c || 1) * Math.max(0.12, Math.abs(c)), fl = sx === 1 ? '' : `scaleX(${sx.toFixed(3)})`; if (fl !== f.fl) { f.fl = fl; f.body.style.transform = fl; } } }
   // 구경 오기: 가끔 한 마리가 유리 바로 앞까지 성큼 다가와 몇 초 머물다 돌아간다
   function peek() { const c = fish.filter(f => !f.still && f.z > -0.6); if (!c.length) return; const f = c[Math.floor(Math.random() * c.length)]; f.pk = 1; f.tz = rnd(-2.6, -2); f.zT = rnd(5, 7.5); f.ty = H * rnd(0.35, 0.6); }
   function loop(t) { if (!alive) return; const dt = Math.min(0.05, (t - last) / 1000); last = t; step(dt); draw(); if (t > reactAt) { reactAt = t + rnd(2500, 5000); react(); } if (t > peekAt) { peekAt = t + rnd(5000, 10000); peek(); } raf = requestAnimationFrame(loop); }
