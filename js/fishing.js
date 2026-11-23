@@ -188,6 +188,7 @@ export function openFishing(o) {
     drawPips(true); say(text || (r.t < zone ? `낚싯대보다 깊은 바다예요. 귀한 물고기는 안 물어요. 끊어짐 칸을 ${lim()}번 건드리면 놓쳐요.` : `끊어짐 칸을 ${lim()}번 건드리면 놓쳐요. 릴을 눌러 힘을 모으고 한 번 더 눌러 던지세요.`)); btn.textContent = '던질\n준비'; btn.onclick = () => { if (!armed) return; phase = 'power'; power = 0; pdir = 1; say('멀리 던질수록 큰 물고기·귀한 물고기가 잘 물고, 줄도 덜 끊어져요. 85 넘게 던지면 쓰레기도 안 걸려요!'); btn.textContent = '던지기!'; btn.onclick = cast; };
   }
   function cast() {
+    if (power >= 95) power = 100; // 95~100%는 최대로 친다
     const b = o.bag(), deep = zone === 3, n = (b.casts3 || 0) + (deep ? 1 : 0), boost = deep && b.pboost && b.pboost.at ? b.pboost : null, bk = boost ? (boost.k || 0) + 1 : 0;
     // 갈매기 해적단(중급·고급): 낚시 10번 묶음마다 0~1번. 묶음이 바뀔 때 나올지(절반 확률)·몇 번째에 나올지 미리 정해 둔다
     if (zone >= 2 && o.onPirate) { const pn = (b.pcasts || 0) + 1, blk = Math.floor((pn - 1) / PIRATE_EVERY), fresh = b.pirBlk !== blk, at = fresh ? (Math.random() < 0.5 ? blk * PIRATE_EVERY + 1 + Math.floor(Math.random() * PIRATE_EVERY) : -1) : b.pirNext, hit = pn === at; o.save({ pcasts: pn, pirBlk: blk, pirNext: hit ? -1 : at }); if (hit) { close(); return o.onPirate(); } }
