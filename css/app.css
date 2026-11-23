@@ -3296,3 +3296,4 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .wh-ck { position: absolute; left: 3px; top: 3px; width: 17px; height: 17px; border-radius: 5px; border: 2px solid #C9B79C; background: #fff; font: 900 12px/13px sans-serif; font-style: normal; color: #fff; text-align: center; } .wh-it.on .wh-ck { background: #FF9F1C; border-color: #E08600; }
 .wh-acts { display: flex; gap: 6px; justify-content: center; align-items: center; flex-wrap: wrap; margin: 6px 0; } .wh-ghost { position: fixed; z-index: 99999; translate: -50% -120%; padding: 8px 14px; border-radius: 999px; background: #5A3A22; color: #fff; font: 800 14px/1 var(--head); pointer-events: none; box-shadow: 0 6px 14px rgba(0,0,0,.3); }
 .mk-top .so-tabs { grid-template-columns: repeat(4, 1fr); gap: 4px; } .mk-top .so-tabs .so-tab { padding: 8px 2px; font-size: 12.5px; white-space: nowrap; }
+.ap-sky.hd-back { transform: scaleX(-1); } /* 돌아가는 비행: 올 때와 좌우만 반대 */
