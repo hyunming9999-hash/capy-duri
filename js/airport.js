@@ -28,8 +28,8 @@ export function openAirport(o) {
   const { ctx } = o; let alive = true, raf = 0, inside = false;
   const now = () => (ctx.store && ctx.store.now ? ctx.store.now() : Date.now());
   const F = o.demo ? FLIGHT_DEMO : FLIGHT;
-  const demo = !!o.demo, TK = 'air/' + ctx.uid; let tk = { one: 0, round: 0 }; // 가진 핫똑랜드 탑승권(편도·왕복). 예시판은 저장하지 않는다
-  const offTk = !demo && ctx.store.on ? ctx.store.on(TK, v => { tk = { one: (v && v.one) || 0, round: (v && v.round) || 0 }; }) : null;
+  const demo = !!o.demo, TK = 'air/' + ctx.uid; let tk = { one: 0, round: 0, ret: 0 }, pp = demo, freeFly = 0; if (!demo && ctx.store.get) ctx.store.get('bag/' + ctx.uid).then(v => { pp = !!(v && v.passport); freeFly = (v && v.flight) || 0; }).catch(() => {}); // 가진 핫똑랜드 탑승권(편도·왕복). 예시판은 저장하지 않는다
+  const offTk = !demo && ctx.store.on ? ctx.store.on(TK, v => { tk = { one: (v && v.one) || 0, round: (v && v.round) || 0, ret: (v && v.ret) || 0 }; }) : null;
   const H = Math.max(280, Math.min(Math.round(innerHeight * 0.52), 520)), W = Math.round(H * BG_W / BG_H);
   const me = { x: W * 0.62, tx: W * 0.62, y: 0 }; // y: 실내에서 안쪽(위)으로 들어간 정도 0~1
   const sc = o.scoot ? o.scoot() : null, meEl = h('div', { class: 'fm-me ap-me' + (sc ? ' scoot' : ''), html: sc || capy(ctx.capyOf(ctx.uid, { face: 'happy' })) });
@@ -77,7 +77,7 @@ export function openAirport(o) {
   function fitCrew() { const hh = 84; inPilot.style.height = hh + 'px'; walker.style.height = Math.round(hh * 1.22) + 'px'; inAtt.style.height = hh + 'px'; inAtt.style.bottom = Math.round(0.417 * H - 0.5 * hh) + 'px'; } // 카피바라(밍땅꾸리·두두)와 같은 키 + 모자. 카운터 승무원은 허리까지 책상 뒤에 · 기장은 조금 안쪽(작게)
   // 여권 확인: 탑승권을 사기 전에 카운터에서 먼저 받는다 — 여권이 펼쳐지고 출국 도장이 쾅, 직원들이 "폐하 망극하옵니다"
   let passOK = false; const atCounter = () => (passOK ? openTicket() : passCheck());
-  function passCheck() { if (document.querySelector('.apv')) return;
+  function passCheck() { if (document.querySelector('.apv')) return; if (!pp) return modal({ title: '🛂 여권이 없어요', body: [h('div', { class: 'ap-cnt' }, h('img', { src: 'img/air/att.webp', alt: '' }), h('p', null, '폐하, 송구하오나 여권이 있어야 출국하실 수 있사옵니다.'), h('p', { class: 'ap-cnt-n' }, '동물친목회의 「카피랜드 여권 발급」 이야기를 먼저 마쳐 주세요'))], actions: [{ label: '확인', primary: true }] });
     const bub = h('span', { class: 'apv-say' }, '폐하, 여권을 살펴보겠사옵니다…'), ok = h('button', { class: 'btn primary apv-ok', onClick: () => { el.remove(); openTicket(); } }, '🎫 탑승권 사러 가기');
     const page = h('div', { class: 'apv-page' }, h('div', { class: 'apv-photo', html: capy(ctx.capyOf(ctx.uid, { face: 'smile' })) }),
       h('dl', null, h('dt', null, '국적'), h('dd', null, '카피랜드'), h('dt', null, '직위'), h('dd', null, '카피황금폐하'), h('dt', null, '행선지'), h('dd', null, DEST)),
@@ -93,6 +93,7 @@ export function openAirport(o) {
       h('p', null, `어서 오세요, 카피공항입니다! ✈️`, h('br'), `${DEST}행 카피 오픈카 비행기는 10분마다 한 대씩 떠나요.`),
       h('p', { class: 'ap-cnt-s' }, canBoard(f) ? `지금 탑승할 수 있어요 · ${mmss(f.left)} 뒤 마감` : `다음 비행기 ${hhmm(dep)} 출발 · 출입구 앞에 선 뒤 10초 안에 타야 해요`),
       demo && h('p', { class: 'ap-cnt-n' }, '🧪 예시판이라 코인은 빠지지 않아요'),
+      freeFly > 0 && h('button', { class: 'ap-tk', onClick: async () => { document.querySelectorAll('.modal-wrap').forEach(m => m.remove()); freeFly = 0; await ctx.store.update('bag/' + ctx.uid, { flight: null }).catch(() => {}); await ctx.store.update(TK, { round: (tk.round || 0) + 1 }).catch(() => {}); sfx('fanfare'); toast('🎫 첫 비행 무료 항공권을 왕복 탑승권으로 바꿨어요!', 2400); } }, h('b', null, '🎁 첫 비행 무료 항공권 쓰기'), h('small', null, '여권과 함께 받은 항공권 · 왕복 한 번'), h('em', null, '무료')),
       row('one', '편도', '가는 비행기 한 번'), row('round', '왕복', '갔다가 돌아오는 비행기 · 더 싸요'),
       h('p', { class: 'ap-cnt-n' }, `가진 탑승권: 편도 ${tk.one}장 · 왕복 ${tk.round}장`))], actions: [{ label: '닫기' }] }); }
   function confirmBuy(k, name) { document.querySelectorAll('.modal-wrap').forEach(m => m.remove());
@@ -102,6 +103,7 @@ export function openAirport(o) {
     sfx('coin'); toast(`🎫 ${DEST} ${name} 탑승권을 샀어요!${demo ? ' (예시판)' : ''}`, 1800); }
   function board() { const f = flightNow(now(), F); if (!canBoard(f)) return toast(f.phase === 'land' ? '비행기가 출입구 앞에 다 설 때까지 기다려 주세요!' : `탑승 시간이 아니에요 · 다음 출발 ${hhmm(depAt(now()))} (도착 뒤 10초 안에 타요)`, 2200);
     if (!tk.one && !tk.round) return toast('🎫 탑승권이 없어요. 승무원에게서 먼저 사 주세요!', 1800);
+    if (tk.round > 0) { tk = { ...tk, round: tk.round - 1, ret: (tk.ret || 0) + 1 }; if (!demo) ctx.store.update(TK, { round: tk.round, ret: tk.ret }).catch(() => {}); } else { tk = { ...tk, one: tk.one - 1 }; if (!demo) ctx.store.update(TK, { one: tk.one }).catch(() => {}); } /* 왕복권은 돌아오는 표가 남는다 */
     sfx('pop'); ride(); }
   // 출발 시각: 이번(또는 다음) 비행기가 떠나는 때
   function depAt(t) { const blk = Math.floor(t / F.every) * F.every, d = blk + F.land + F.stay; return t < d ? d : d + F.every; }
