@@ -113,7 +113,9 @@ export function mount(el, ctx) {
   let ogAt = 0; const ogDraw = () => { const ms = onsen.ms, st = Math.min(ONSEN_MAX, Math.floor(ms / ONSEN_STEP)), cur = Math.round(st * ONSEN_UP * 100), full = ONSEN_STEP * ONSEN_MAX; ogFill.style.width = Math.min(100, ms / full * 100) + '%'; ogBar.classList.toggle('max', st >= ONSEN_MAX); ogBar.classList.toggle('dry', !me.wet && st < ONSEN_MAX);
     const left = Math.ceil((ONSEN_STEP - (ms % ONSEN_STEP)) / 1000), mm = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
     ogTxt.textContent = st >= ONSEN_MAX ? `효능 최대 +${cur}% 달성! · 나가면 ${st * ONSEN_KEEP / 60000}분 유지` : !me.wet ? `탕에 들어가야 효능이 쌓여요 · 지금 +${cur}%` : `희귀 물고기 +${cur}% → +${cur + Math.round(ONSEN_UP * 100)}%까지 ${mm}`; };
-  const tags = h('div', { class: 'park-tags' }), wrap = h('div', { class: 'park-wrap' }, canvas, tags, ogBar);
+  const bub = h('span', { class: 'park-bub', hidden: true }), BUB = ['아~ 노폐물이 빠진다.', '집중력 향상!', '희귀 물고기 내꺼!']; let bubAt = 0, bubOff = 0, bubI = Math.floor(Math.random() * 3); // 탕 안에서 가끔 혼잣말
+  const bubSay = (t, txt) => { bub.textContent = txt || BUB[bubI++ % BUB.length]; bub.hidden = false; bub.classList.remove('pop'); void bub.offsetWidth; bub.classList.add('pop'); bubOff = t + 3500; bubAt = t + 25000 + Math.random() * 20000; };
+  const tags = h('div', { class: 'park-tags' }, bub), wrap = h('div', { class: 'park-wrap' }, canvas, tags, ogBar);
   // 탕에 떠 있는 유자들
   const yuzus = Array.from({ length: 6 }, (_, i) => ({ x: WATER.x0 + 12 + i * 18 + (i % 2) * 5, y: WATER.y0 + 14 + (i * 29) % 76, ph: i * 1.7, vx: (i % 2 ? 1 : -1) * 2.2 }));
   const steam = Array.from({ length: 14 }, () => ({ x: WATER.x0 + rnd() * (WATER.x1 - WATER.x0), y: WATER.y1 - rnd() * 90, r: 3 + rnd() * 4, v: 5 + rnd() * 5 }));
@@ -205,6 +207,7 @@ export function mount(el, ctx) {
     if (me.wet && !document.hidden && onsen.ms < ONSEN_STEP * ONSEN_MAX) { const was = Math.floor(onsen.ms / ONSEN_STEP); onsen.ms = Math.min(ONSEN_STEP * ONSEN_MAX, onsen.ms + dt * 1000); const now2 = Math.floor(onsen.ms / ONSEN_STEP);
       if (now2 > was) { onsenSave(); sfx('coin'); toast(`♨️ 몸이 사르르 풀렸다… 희귀 물고기 확률 +${Math.round(now2 * ONSEN_UP * 100)}%${now2 >= ONSEN_MAX ? ' (최대)' : ` · 10분 더 쉬면 +${Math.round((now2 + 1) * ONSEN_UP * 100)}%`}`, 3200); } else if (t - (onsen.saved || 0) > 5000) onsenSave(t); }
     if (t - ogAt > 250) { ogAt = t; ogDraw(); }
+    if (me.wet) { if (!bubAt) bubAt = t + 6000; else if (t > bubAt) bubSay(t); } else if (bubAt && !bubOff) bubAt = 0; if (bubOff && t > bubOff) { bub.hidden = true; bubOff = 0; }
     send(t);
     // 그리기: 도트 배경 → y 순서대로 소품·유자·카피바라 → 김
     g.imageSmoothingEnabled = !!bgImg; g.imageSmoothingQuality = 'high'; g.drawImage(bgImg || bg, 0, 0, canvas.width, canvas.height);
@@ -233,6 +236,7 @@ export function mount(el, ctx) {
         if (wet) { const r = 11 + Math.sin(t / 260) * 0.8; g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 0.9 * S; g.beginPath(); g.ellipse(p.x * S, line * S, r * S, 2.4 * S, 0, 0, 7); g.stroke(); g.strokeStyle = 'rgba(255,255,255,.35)'; g.beginPath(); g.ellipse(p.x * S, (line + 1.2) * S, (r + 4) * S, 3.2 * S, 0, 0, 7); g.stroke(); }
       } });
       const el = tag(u), talking = (level[u] || 0) > 0.045 && !p.mu; el.style.left = (p.x / W * 100) + '%'; el.style.top = ((p.y - SH - 0.5 + sink) / H * 100) + '%';
+      if (u === ctx.uid) { bub.style.left = el.style.left; bub.style.top = el.style.top; }
       el.classList.toggle('talk', talking); el.firstChild.textContent = talking ? '🔊' : p.mu && (u === ctx.uid ? voice.on : peerOn) ? '🔇' : '';
     }
     for (const st of steam) { st.y -= st.v * dt; st.x += Math.sin(t / 900 + st.r) * 0.08; if (st.y < 8) { st.y = WATER.y1 - 4; st.x = WATER.x0 + rnd() * (WATER.x1 - WATER.x0); } const a = Math.max(0, Math.min(0.32, (st.y - 8) / 120)); g.fillStyle = `rgba(255,255,255,${a})`; g.beginPath(); g.arc(st.x * S, st.y * S, st.r * S * (1.6 - st.y / H), 0, 7); g.fill(); } // 김은 캐릭터 뒤에서 피어오른다(얼굴을 가리지 않게)
