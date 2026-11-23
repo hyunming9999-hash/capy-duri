@@ -135,10 +135,15 @@ export function openAirport(o) {
       layer.style.transform = `translateX(${-(Math.max(vw / 2, Math.min(W - vw / 2, cam)) - vw / 2).toFixed(1)}px)`; rig.style.left = X + 'px'; rig.style.top = py + 'px'; rig.style.rotate = rot + 'deg';
       if (t < T) raf2 = requestAnimationFrame(run); else fly(); };
     // 2) 하늘: 위아래로 흔들리며 구름이 빠르게 스친다(3분)
-    const fly = () => { layer.remove(); rig.removeAttribute('style'); rig.classList.add('air'); el.classList.add('fly'); sky.classList.remove('wait'); sky.append(rig); const f0 = Date.now(); bgm.start('flight');
-      const tick = () => { const left = FLY - (Date.now() - f0); if (left <= 0) { clearInterval(timer); msg.textContent = `🛬 ${DEST} 공항이 보여요!`; sub.textContent = `${DEST} 공항은 지금 공사 중이에요 🚧 · 곧 내릴 수 있어요`; if (!offBtn.isConnected) box.append(offBtn); offBtn.textContent = '카피공항으로 돌아가기'; return; }
+    const fly = () => { layer.remove(); rig.removeAttribute('style'); rig.classList.add('air'); el.classList.add('fly'); sky.classList.remove('wait'); sky.append(rig); if (demo) box.append(landBtn); const f0 = Date.now(); bgm.start('flight');
+      const tick = () => { const left = FLY - (Date.now() - f0); if (left <= 0) { land(); return; }
         msg.textContent = `✈️ ${DEST}로 가는 중`; sub.textContent = `도착까지 ${mmss(left)}`; };
       tick(); timer = setInterval(tick, 500); };
+    // 3) 착륙: 구름이 걷히고 핫똑공항이 서서히 나타난다 → 활주로에 내려앉으면 핫똑랜드로
+    let landed = false; const land = () => { if (landed || !el.isConnected) return; landed = true; clearInterval(timer); offBtn.remove(); landBtn.remove(); msg.textContent = `🛬 ${DEST} 도착!`; sub.textContent = '착륙하고 있어요…';
+      const bg = h('i', { class: 'ap-landbg' }); sky.prepend(bg); sky.classList.add('landing'); void bg.offsetWidth; bg.classList.add('on'); rig.style.rotate = '5deg'; setTimeout(() => { rig.classList.add('down'); rig.style.rotate = ''; }, 900);
+      setTimeout(() => { if (!el.isConnected) return; sfx('pop'); el.remove(); import('./hotddok.js').then(m => m.openHotddok({ ctx, demo, onClose: () => bgm.start('airport') })).catch(() => bgm.start('airport')); }, 5600); };
+    const landBtn = h('button', { class: 'btn sm', onClick: () => land() }, '🛬 바로 착륙 (예시판)');
     raf2 = requestAnimationFrame(run); }
   let lastT = performance.now(), tick = 0;
   // 바깥 비행기(25초마다): 4초 동안 내려앉고 → 10초 동안 왼쪽으로 천천히 굴러 터미널 뒤로 들어가고 → 3초 뒤 → 8초 동안 터미널 뒤에서 나와 오른쪽(→)으로 달려 떠오른다

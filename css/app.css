@@ -3230,3 +3230,18 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .ap-ab.ready { animation: flReady .8s ease-in-out infinite alternate; }
 .ap-chat { position: absolute; right: 88px; top: -6px; width: 54px; height: 53px; border: 0; padding: 0; background: url(../img/fl/ui/chat.webp) center / contain no-repeat; filter: drop-shadow(0 3px 2px rgba(110, 60, 20, .3)); } .ap-chat:active { transform: translateY(2px); }
 .ap-boat { position: absolute; left: 64.5%; top: 26%; width: 5.2%; z-index: 0; pointer-events: none; animation: apFloat 3.2s ease-in-out infinite; transform-origin: 50% 90%; } @keyframes apFloat { 0%, 100% { translate: 0 0; rotate: -2.5deg; } 50% { translate: 0 -4px; rotate: 2.5deg; } }
+
+/* ── 핫똑랜드(예시판) ── */
+.hd { z-index: 4600; }
+.hd-dog { position: absolute; width: auto; transform: translateX(-50%) scale(var(--s, 1)); transform-origin: 50% 100%; cursor: pointer; filter: drop-shadow(0 3px 2px rgba(60,30,10,.3)); -webkit-tap-highlight-color: transparent; }
+.hd-dog.go { animation: hdStep .36s ease-in-out infinite; } @keyframes hdStep { 50% { translate: 0 -4px; } }
+.hd-dog.wow { animation: hdWow .42s ease-in-out 6; } @keyframes hdWow { 50% { translate: 0 -14px; } }
+.hd-card img { width: 96px; height: auto; display: block; margin: 0 auto 6px; } .hd-card img.hd-gen { width: 150px; border-radius: 14px; border: 3px solid #C9A04A; }
+.apv-stamp.hd-in { border-color: #1F5FBF; color: #1F5FBF; background: rgba(230,240,255,.45); } .apv-stamp.hd-in small { font-size: 7.5px; }
+.hd-wel { position: fixed; inset: 0; z-index: 9990; background: rgba(22,15,44,.82); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 16px; animation: apvIn .3s ease-out; cursor: pointer; }
+.hd-wel img { max-width: min(92vw, 420px); max-height: 68vh; border-radius: 18px; border: 4px solid #C9A04A; box-shadow: 0 0 0 4px #1F2F6B, 0 14px 30px rgba(0,0,0,.5); animation: apvBook .5s cubic-bezier(.2,.9,.3,1.2) both; }
+.hd-wel b { font: 900 19px/1.2 var(--head); color: #FFE38A; text-shadow: 0 3px 0 #8A5A00; text-align: center; } .hd-wel small { color: #fff; opacity: .85; font-size: 12.5px; text-align: center; }
+/* 착륙: 하늘에서 핫똑공항 활주로로 서서히 */
+.ap-landbg { position: absolute; inset: 0; background: url(../img/hd/air.webp?v=1) 100% 50% / auto 100% no-repeat; opacity: 0; transition: opacity 1.6s ease-in-out; z-index: 1; } .ap-landbg.on { opacity: 1; }
+.ap-sky.landing .ap-cloud { transition: opacity 1s; opacity: 0 !important; }
+.ap-ride-rig.air.down { animation: none; z-index: 2; transition: left 4.2s cubic-bezier(.2,.6,.3,1), top 4.2s cubic-bezier(.3,0,.4,1), width 4.2s ease-in-out, rotate 4.2s ease-out; left: 66%; top: 61%; width: min(40%, 190px); rotate: 0deg; }
