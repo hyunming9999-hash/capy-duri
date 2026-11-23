@@ -44,7 +44,7 @@ export function openAirport(o) {
   const inPlane = h('img', { class: 'ap-plane in', src: 'img/air/plane.webp', alt: '' });
   const boardEl = h('div', { class: 'ap-board' }), boardRows = h('div', { class: 'ap-brows' }); boardEl.append(h('span', null, `🛫 출발 안내 · ${DEST}행`), boardRows);
   const outBtn = h('button', { class: 'fm-exit ap-out', style: { left: W * 0.27 + 'px' }, onClick: () => goOut() }, '← 밖으로');
-  const inWorld = h('div', { class: 'fm-world ap-world in', hidden: true, style: { width: W + 'px', height: H + 'px', backgroundImage: 'url(img/air/in.webp)' } }, h('div', { class: 'ap-window' }, inPlane, h('img', { class: 'ap-mull', src: 'img/air/mullion.webp', alt: '' })), boardEl, counter, inAtt, inPilot, outBtn);
+  const inWorld = h('div', { class: 'fm-world ap-world in', hidden: true, style: { width: W + 'px', height: H + 'px', backgroundImage: 'url(img/air/in.webp)' } }, h('div', { class: 'ap-window' }, inPlane, h('img', { class: 'ap-mull', src: 'img/air/mullion.webp', alt: '' })), boardEl, counter, inAtt, h('img', { class: 'ap-desk', src: 'img/air/desk.webp', alt: '' }), inPilot, outBtn);
   const scroller = h('div', { class: 'fm-scroll' }, outWorld, inWorld);
   const keys = new Set(), padBtn = (k, t) => { const b = h('button', { class: 'dp fm-dp' + (k === 'U' || k === 'D' ? ' ap-v' : ''), 'aria-label': { L: '왼쪽', R: '오른쪽', U: '위', D: '아래' }[k] }, t); holdBtn(b, () => keys.add(k), () => keys.delete(k)); return b; };
   const enterBtn = h('button', { class: 'fm-enter', hidden: true, onClick: () => (!inside ? goIn() : atGate() ? board() : openTicket()) });
@@ -64,8 +64,7 @@ export function openAirport(o) {
   function goOut() { if (!inside) return; inside = false; sfx('pop'); inWorld.hidden = true; outWorld.hidden = false; me.x = me.tx = doorX; me.y = 0; me.then = null; place(); ud.hidden = true; title.textContent = '✈️ 카피공항'; scroller.scrollLeft = Math.max(0, me.x - scroller.clientWidth / 2); }
   const canBoard = f => f.phase === 'stay'; // 비행기가 출입구 앞에 다 서고 나서 10초 안에만 탈 수 있다
   const atGate = () => inside && me.x > W * 0.27 && me.x < W * 0.56; // 카운터 옆 출입구 앞
-  // 승무원 키를 내 캐릭터에 맞춘다(모자만큼 조금 더). 카운터 승무원은 책상 뒤에 서 있게 아래를 가린다
-  function fitCrew() { requestAnimationFrame(() => { const ch = meEl.getBoundingClientRect().height || 80, hh = Math.round(ch * 1.12); inPilot.style.height = hh + 'px'; inAtt.style.height = hh + 'px'; inAtt.style.bottom = Math.round(0.43 * H - 0.38 * hh) + 'px'; }); }
+  function fitCrew() { const hh = 84; inPilot.style.height = Math.round(hh * 0.9) + 'px'; inAtt.style.height = hh + 'px'; inAtt.style.bottom = Math.round(0.417 * H - 0.18 * hh) + 'px'; } // 카피바라(밍땅꾸리·두두)와 같은 키 + 모자. 카운터 승무원은 허리까지 책상 뒤에 · 기장은 조금 안쪽(작게)
   function openTicket() { const f = flightNow(now()), dep = depAt(now());
     const row = (k, name, desc) => h('button', { class: 'ap-tk', onClick: () => buy(k, name) }, h('b', null, `🎫 ${DEST} ${name}`), h('small', null, desc), h('em', null, `${TICKET[k].toLocaleString()}코인`));
     modal({ title: `🎫 ${DEST} 탑승권`, body: [h('div', { class: 'ap-cnt' }, h('img', { src: 'img/air/att.webp', alt: '' }),
