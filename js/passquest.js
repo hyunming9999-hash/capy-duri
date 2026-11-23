@@ -263,5 +263,5 @@ export function createPassQuest(q, d) {
   const cooks = () => (ready && s() === 3 ? PP_COOK.filter(([k]) => !(st.ck || {})[k]).map(([k]) => ({ q: 'pp-' + k, i: BEAR, rec: k })) : []);
   function cooked(qk) { const k = String(qk).slice(3); if (!ready || s() !== 3) return; const ck = { ...(st.ck || {}), [k]: 1 }; save({ ck }); const n = PP_COOK.filter(([x]) => ck[x]).length; toast(n >= 3 ? '🛂 요리 3종 완성! 🛂 버튼을 눌러 곰에게 가요' : `🛂 퀘스트 요리 ${n} / 3`, 2600); }
   const wantGull = () => ready && s() === 4 && gTries() < 3 && !busy;
-  return { open, auto, mark, visible, goal, onFish, onRow, cooks, cooked, beforeFish, wantGull, done, ping: () => d.changed && d.changed(), dispose: () => off && off() };
+  return { open, auto, mark, visible, goal, step: () => s(), onFish, onRow, cooks, cooked, beforeFish, wantGull, done, ping: () => d.changed && d.changed(), dispose: () => off && off() };
 }
