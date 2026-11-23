@@ -34,8 +34,8 @@ export function openAirport(o) {
   const sc = o.scoot ? o.scoot() : null, meEl = h('div', { class: 'fm-me ap-me' + (sc ? ' scoot' : ''), html: sc || capy(ctx.capyOf(ctx.uid, { face: 'happy' })) });
   // 바깥
   const TX = W * 0.14, TWD = W * 0.3, doorX = TX + TWD * 0.42;
-  const outPlane = h('img', { class: 'ap-plane out', src: 'img/air/plane.webp?v=3', alt: '' });
-  const parked = [0.035, 0.105].map(x => h('img', { class: 'ap-parked', src: 'img/air/plane.webp?v=3', alt: '', style: { left: W * x + 'px' } })); // 터미널 왼쪽 계류장: 두 대가 나란히
+  const outPlane = h('img', { class: 'ap-plane out', src: 'img/air/plane.webp?v=4', alt: '' });
+  const parked = [0.035, 0.105].map(x => h('img', { class: 'ap-parked', src: 'img/air/plane.webp?v=4', alt: '', style: { left: W * x + 'px' } })); // 터미널 왼쪽 계류장: 두 대가 나란히
   const term = h('button', { class: 'ap-term', 'aria-label': '카피공항 들어가기', style: { left: TX + 'px', width: TWD + 'px' }, onClick: () => walkTo(doorX, goIn) }, h('img', { src: 'img/air/terminal.webp', alt: '' }), h('b', { class: 'ap-term-t' }, '카피공항'));
   const front = h('img', { class: 'ap-front', src: 'img/air/front.webp?v=4', alt: '' }); // 활주로 앞 야자수·난간: 비행기보다 앞에 보이게
   const exitSign = h('button', { class: 'fm-exit', style: { left: W - Math.round(W * 0.13) + 'px' }, onClick: () => close() }, '놀이터로 →');
@@ -43,7 +43,7 @@ export function openAirport(o) {
   // 안쪽
   const counter = h('button', { class: 'ap-counter', 'aria-label': '공항 카운터', onClick: () => walkTo(W * 0.13, openTicket) });
   const inAtt = h('img', { class: 'ap-crew in tap', src: 'img/air/att.webp', alt: '카피승무원', style: { left: W * 0.115 + 'px' }, onClick: () => walkTo(W * 0.13, openTicket) }), inPilot = h('img', { class: 'ap-crew in pl', src: 'img/air/pilot.webp', alt: '카피기장', style: { left: W * 0.392 + 'px' } }); // 기장: 카운터 옆 출입구(탑승구) 바로 곁
-  const inPlane = h('img', { class: 'ap-plane in', src: 'img/air/plane.webp?v=3', alt: '' });
+  const inPlane = h('img', { class: 'ap-plane in', src: 'img/air/plane.webp?v=4', alt: '' });
   const boardEl = h('div', { class: 'ap-board' }), boardRows = h('div', { class: 'ap-brows' }); boardEl.append(h('span', null, `🛫 출발 안내 · ${DEST}행`), boardRows);
   const walker = h('img', { class: 'ap-crew in wk', src: 'img/air/att-walk.webp', alt: '카피승무원' }), wk = { x: W * 0.8, y: 0.3, tx: W * 0.5, ty: 0.5, d: -1, wait: 0 }; // 캐리어를 끌고 대기장을 오가는 승무원
   const cntT = h('b', { class: 'ap-cnt-t', style: { fontSize: Math.round(H * 0.052) + 'px' } }, '카운터');
@@ -103,8 +103,8 @@ export function openAirport(o) {
   function talk(dt, f) { if (f.phase !== lastPh) { lastPh = f.phase; if (f.phase !== 'none') { say('cnt', f); say('pl', f); say('wk', f); talkAt = 5; } } if ((talkAt -= dt) <= 0) { talkAt = 3.5 + Math.random() * 3; say(['cnt', 'pl', 'wk'][Math.floor(Math.random() * 3)], f); }
     for (const k in says) { if (sayT[k] > 0 && (sayT[k] -= dt) <= 0) says[k].hidden = true; if (!says[k].hidden) { const e = npc[k]; says[k].style.left = e.style.left; says[k].style.bottom = `calc(${getComputedStyle(e).bottom} + ${e.offsetHeight * (k === 'wk' ? 1 - wk.y * 0.12 : 1) + 4}px)`; } } }
   // 탑승: 바닷가 활주로 시작점에 선 비행기에 내 카피바라가 앉아 → 쪽을 본다
-  function ride() { const cap = h('div', { class: 'ap-ride-me', html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) });
-    const rig = h('div', { class: 'ap-ride-rig' }, h('img', { class: 'ap-ride-pl', src: 'img/air/plane.webp?v=3', alt: '' }), cap, h('img', { class: 'ap-ride-hull', src: 'img/air/plane-hull.webp?v=3', alt: '' }));
+  function ride() { const cap = h('div', { class: 'ap-ride-me', html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) }), cpt = h('img', { class: 'ap-ride-cpt', src: 'img/air/pilot-seat.webp?v=1', alt: '' }); // 좌석 3개: 맨 앞은 기장, 나는 가운데
+    const rig = h('div', { class: 'ap-ride-rig' }, h('img', { class: 'ap-ride-pl', src: 'img/air/plane.webp?v=4', alt: '' }), cpt, cap, h('img', { class: 'ap-ride-hull', src: 'img/air/plane-hull.webp?v=4', alt: '' }));
     const msg = h('b'), sub = h('small'), offBtn = h('button', { class: 'btn sm', onClick: () => end() }, demo ? '내리기 (예시판)' : '내리기'), box = h('div', { class: 'ap-ride-t' }, msg, sub, demo && offBtn);
     const sky = h('div', { class: 'ap-sky', hidden: true, style: { '--skyw': Math.round(H * 2688 / 576) + 'px' } }, h('i', { class: 'ap-sky-bg' }), ...Array.from({ length: 7 }, (_, i) => h('img', { class: 'ap-cloud', src: `img/air/cloud${i % 3 + 1}.webp?v=2`, alt: '', style: { top: 4 + i * 13 + (i % 2) * 4 + '%', width: 26 + (i * 17) % 30 + '%', animationDuration: 1.6 + (i * 0.41) % 1.5 + 's', animationDelay: -(i * 0.47) + 's', opacity: 0.7 + (i % 3) * 0.12, zIndex: i % 3 === 0 ? 3 : 1 } })));
     // 1) 바깥 풍경 그대로: 활주로를 달리며 화면이 따라간다(1.5초 뒤 돛단배 · 다시 1.5초 뒤 등대) → 등대 앞에서 떠오른다
@@ -112,10 +112,10 @@ export function openAirport(o) {
     const el = h('div', { class: 'ap-ride', style: { height: H + 'px' } }, layer, sky, box); let timer = 0, raf2 = 0, t0 = performance.now(); const FLY = 180000;
     const end = () => { clearInterval(timer); cancelAnimationFrame(raf2); el.remove(); bgm.start('airport'); };
     msg.textContent = `✈️ ${DEST}행 출발!`; sub.textContent = '활주로를 달려요…'; scene.append(el); sfx('pop');
-    const vw = el.clientWidth || 360, c0 = W * 0.52, c1 = W * 0.675, c2 = Math.min(W * 0.87, W - vw / 2), RY = H * 0.585, rw = W * 0.15; rig.style.width = rw + 'px';
+    const vw = el.clientWidth || 360, c0 = W * 0.52, c1 = W * 0.675, c2 = Math.min(W * 0.87, W - vw / 2), RY = H * 0.585, rw = W * 0.19; rig.style.width = rw + 'px';
     const run = now2 => { if (!el.isConnected) return; const t = (now2 - t0) / 1000; let py = RY, rot = 0;
-      // 4초 동안 끊김 없이 점점 빨라지며 달리고, 등대를 막 지난 자리(0.9W)에서 기수를 들고 ↗ 로 떠오른다
-      const RUN = 4, x0 = c0 - vw * 0.12, xL = W * 0.9, v1 = (xL - x0) * 1.7 / RUN, s = t - RUN;
+      // 4초 동안 끊김 없이 점점 빨라지며 달리고, 등대와 딱 겹치는 자리(0.868W)에서 기수를 들고 ↗ 로 떠오른다
+      const RUN = 4, x0 = c0 - vw * 0.12, xL = W * 0.868, v1 = (xL - x0) * 1.7 / RUN, s = t - RUN;
       const X = t < RUN ? x0 + (xL - x0) * Math.pow(t / RUN, 1.7) : xL + v1 * s * (1 + s * 0.15);
       const cmax = W - vw / 2, kk = vw * 0.06, cam = -kk * Math.log(Math.exp(-(X + vw * 0.12) / kk) + Math.exp(-cmax / kk)); // 화면 끝에서 카메라가 부드럽게 멈춘다
       if (s > 0) { const u = s / 1.5; py = RY - H * 0.9 * u * u; const k = Math.min(1, s / 0.9); rot = -24 * k * k * (3 - 2 * k); }
