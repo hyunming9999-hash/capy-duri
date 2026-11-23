@@ -160,8 +160,8 @@ export function openAquarium(o) {
       if (f.goal) visitDeco(f, dt);
       const sp = f.base * (f.st === 'dash' ? 3.4 : f.st === 'sleep' ? 0.08 : 1) * (f.slow || 1);
       f.x += f.dir * sp * dt;
-      f.zT -= dt; if (f.zT <= 0) { f.zT = rnd(6, 14); f.tz = Math.random() < 0.7 ? (f.z < -0.3 ? rnd(0.3, 1) : rnd(-1, -0.55)) : rnd(-1, 1); if (f.tz < -0.5) f.zT = rnd(9, 16); } // 앞뒤로 오가기: 뒤에 있던 물고기는 앞으로, 앞에 있던 물고기는 뒤로
-      { const dz = f.tz - f.z, vz = 0.12 + 0.08 * Math.min(1, f.base); f.z += Math.sign(dz) * Math.min(Math.abs(dz), vz * dt * (0.4 + Math.min(1, Math.abs(dz) * 3))); } const hg = hOf(f), lo = hg / 2 + H * 0.03, hi = Math.max(lo, H * Math.min(0.94, 0.9 - 0.12 * f.z) - hg / 2), ty = f.st === 'sleep' ? hi - hg * 0.1 : f.ty;
+      f.zT -= dt; if (f.zT <= 0 && f.pk === 1) { f.pk = 2; f.zT = rnd(3, 5); f.tz = rnd(0.1, 0.7); } else if (f.zT <= 0) { f.pk = 0; f.zT = rnd(6, 14); f.tz = Math.random() < 0.7 ? (f.z < -0.3 ? rnd(0.3, 1) : rnd(-1, -0.55)) : rnd(-1, 1); if (f.tz < -0.5) f.zT = rnd(9, 16); } // 앞뒤로 오가기: 뒤에 있던 물고기는 앞으로, 앞에 있던 물고기는 뒤로
+      { const dz = f.tz - f.z, vz = (0.12 + 0.08 * Math.min(1, f.base)) * (f.pk ? 5 : 1); f.z += Math.sign(dz) * Math.min(Math.abs(dz), vz * dt * (0.4 + Math.min(1, Math.abs(dz) * 3))); } const hg = hOf(f), lo = hg / 2 + H * 0.03, hi = Math.max(lo, H * Math.min(0.94, 0.9 - 0.12 * f.z) - hg / 2), ty = f.st === 'sleep' ? hi - hg * 0.1 : f.ty;
       f.vy += ((Math.max(lo, Math.min(hi, ty)) - f.y) * 0.6 - f.vy) * Math.min(1, dt * 2); f.y += f.vy * dt;
       if (f.x < f.len / 2 && f.dir < 0 || f.x > W - f.len / 2 && f.dir > 0) turn(f, true);
       f.x = Math.max(f.len / 2 - 0.01, Math.min(W - f.len / 2 + 0.01, f.x)); }
@@ -185,7 +185,7 @@ export function openAquarium(o) {
       const q = Math.round(f.z * 20); if (q !== f.dq) { f.dq = q; f.el.style.zIndex = 500 - q * 20; }
       f.el.style.transform = `translate(${(px - w / 2).toFixed(1)}px, ${(py - w / 3).toFixed(1)}px) scale(${sc.toFixed(3)})`; const fl = f.dir > 0 ? 'scaleX(-1)' : ''; if (fl !== f.fl) { f.fl = fl; f.body.style.transform = fl; } } }
   // 구경 오기: 가끔 한 마리가 유리 바로 앞까지 성큼 다가와 몇 초 머물다 돌아간다
-  function peek() { const c = fish.filter(f => !f.still && f.z > -0.6); if (!c.length) return; const f = c[Math.floor(Math.random() * c.length)]; f.tz = rnd(-2.6, -2); f.zT = rnd(4, 7); f.ty = H * rnd(0.35, 0.6); }
+  function peek() { const c = fish.filter(f => !f.still && f.z > -0.6); if (!c.length) return; const f = c[Math.floor(Math.random() * c.length)]; f.pk = 1; f.tz = rnd(-2.6, -2); f.zT = rnd(5, 7.5); f.ty = H * rnd(0.35, 0.6); }
   function loop(t) { if (!alive) return; const dt = Math.min(0.05, (t - last) / 1000); last = t; step(dt); draw(); if (t > reactAt) { reactAt = t + rnd(2500, 5000); react(); } if (t > peekAt) { peekAt = t + rnd(5000, 10000); peek(); } raf = requestAnimationFrame(loop); }
   // 두 손가락으로 확대·축소
   let pinch = null; view.addEventListener('touchstart', e => { if (e.touches.length === 2) pinch = { d: Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY), z: zoom }; }, { passive: true });
