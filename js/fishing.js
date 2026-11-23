@@ -37,7 +37,7 @@ Z3.push(...[['극광고래상어', 200, 400, 250, 500, '', 2], ['심해별가오
 export const FISH = [Z1, Z2, Z3].flatMap((list, zi) => list.map(([name, c0, c1, p0, p1, tag, fixT], k) => ({ id: `f${zi + 1}-${k}`, z: zi + 1, k, name, cm: [c0, c1], price: [p0, p1], rare: tag === 'r', king: tag === 'k', ...(fixT ? { fixT } : {}) })));
 // 희귀도 4단계: 같은 낚시터 안에서도 종의 절반은 흔한 물고기, 40%는 보기 힘든, 8%는 희귀한, 2%는 초희귀(대장 포함).
 // 대장 → 원래 귀한 물고기 → 원래 값이 비싼 순서로 위쪽 급에 앉힌다. 급이 오를수록 잘 안 물고(w), 값이 비싸진다(x)
-export const TIERS = [null, { n: '매우 흔한 물고기', s: '매우 흔함', w: 1, x: 1 }, { n: '보통 물고기', s: '보통', w: 0.45, x: 1.4 }, { n: '희귀한 물고기', s: '희귀', w: 0.2, x: 2.2 }, { n: '초희귀 물고기', s: '초희귀', w: 0.06, x: 4 }];
+export const TIERS = [null, { n: '매우 흔한 물고기', s: '매우 흔함', w: 1, x: 1 }, { n: '보통 물고기', s: '보통', w: 0.45, x: 1.4 }, { n: '희귀한 물고기', s: '희귀', w: 0.4, x: 2.2 }, { n: '초희귀 물고기', s: '초희귀', w: 0.06, x: 4 }];
 FISH.filter(f => f.fixT).forEach(f => { f.tier = f.fixT; const x = TIERS[f.tier].x; f.price = [Math.round(f.price[0] * x), Math.round(f.price[1] * x)]; if (f.tier >= 3) f.rare = true; });
 for (const z of [1, 2, 3]) { const list = FISH.filter(f => f.z === z && !f.fixT), n = list.length, kings = list.filter(f => f.king).length;
   const n4 = Math.max(1, kings, Math.round(n * 0.02)), n3 = Math.round(n * 0.08), n2 = Math.round(n * 0.4);
