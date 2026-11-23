@@ -37,7 +37,7 @@ export function demoFish(t) {
 
 // o = { tank: 1~3, fish: [{id, cm, g, shiny}], animals: [동물 번호], test, onClose }
 export function openAquarium(o) {
-  let tank = o.tank || 3, zoom = 1, raf = 0, last = performance.now(), alive = true, fee = 0, reactAt = 0;
+  let tank = o.tank || 3, zoom = 1, raf = 0, last = performance.now(), alive = true, fee = 0, reactAt = 0, peekAt = performance.now() + 2500;
   const seats = o.animals || shuffle(ANIMALS.map((_, i) => i)).slice(0, 5), feeN = {};
   const view = h('div', { class: 'aq-view' }), world = h('div', { class: 'aq-world' }), bg = h('div', { class: 'aq-bg' }), layer = h('div', { class: 'aq-fishes' });
   world.append(bg, layer); view.append(world);
@@ -184,7 +184,9 @@ export function openAquarium(o) {
       if (on !== f.on) { f.on = on; f.el.classList.toggle('off', !on); } if (!on) continue;
       const q = Math.round(f.z * 20); if (q !== f.dq) { f.dq = q; f.el.style.zIndex = 500 - q * 20; }
       f.el.style.transform = `translate(${(px - w / 2).toFixed(1)}px, ${(py - w / 3).toFixed(1)}px) scale(${sc.toFixed(3)})`; const fl = f.dir > 0 ? 'scaleX(-1)' : ''; if (fl !== f.fl) { f.fl = fl; f.body.style.transform = fl; } } }
-  function loop(t) { if (!alive) return; const dt = Math.min(0.05, (t - last) / 1000); last = t; step(dt); draw(); if (t > reactAt) { reactAt = t + rnd(2500, 5000); react(); } raf = requestAnimationFrame(loop); }
+  // 구경 오기: 가끔 한 마리가 유리 바로 앞까지 성큼 다가와 몇 초 머물다 돌아간다
+  function peek() { const c = fish.filter(f => !f.still && f.z > -0.6); if (!c.length) return; const f = c[Math.floor(Math.random() * c.length)]; f.tz = rnd(-2.6, -2); f.zT = rnd(4, 7); f.ty = H * rnd(0.35, 0.6); }
+  function loop(t) { if (!alive) return; const dt = Math.min(0.05, (t - last) / 1000); last = t; step(dt); draw(); if (t > reactAt) { reactAt = t + rnd(2500, 5000); react(); } if (t > peekAt) { peekAt = t + rnd(5000, 10000); peek(); } raf = requestAnimationFrame(loop); }
   // 두 손가락으로 확대·축소
   let pinch = null; view.addEventListener('touchstart', e => { if (e.touches.length === 2) pinch = { d: Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY), z: zoom }; }, { passive: true });
   view.addEventListener('touchmove', e => { if (pinch && e.touches.length === 2) { const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); const z = Math.max(zMin, Math.min(6, pinch.z * d / pinch.d)); if (Math.abs(z - zoom) > 0.05) { zoom = z; layout(true); } } }, { passive: true });
