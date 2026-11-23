@@ -11,7 +11,7 @@ import { askAI } from './social.js';
 import { tailDance as tailGame } from './passquest.js';
 import { TICKET } from './airport.js';
 
-const BG_W = 1344, BG_H = 576, TOWN_W = 6480, AIR_W = 2628, IMG = 'img/hd/', V = '?v=11';
+const BG_W = 1344, BG_H = 576, TOWN_W = 6480, AIR_W = 2628, IMG = 'img/hd/', V = '?v=12';
 // [이름, 견종, 상징품, 한마디]
 export const DOGS = [
   ['몽실', '말티즈 · 승무원', '🎀 복주머니', '핫똑랜드에 오신 것을 환영하옵니다, 폐하!'], ['송이', '말티즈 · 승무원', '🪭 부채', '폐하, 짐은 저희가 들겠사옵니다!'], ['곱슬', '푸들 · 기장', '🧭 나침반', '폐하, 핫똑랜드 하늘길은 소인이 지키고 있사옵니다!'],
@@ -252,6 +252,7 @@ const SPOTS = [[0.54, 37, '정자'], [0.578, 33, '의자'], [0.482, 36, '연못�
 
   let talkAt = 6;
   function step(t) { if (!alive) return; const dt = Math.min(0.05, (t - lastT) / 1000); lastT = t; const zz = Z[zone], W = zz.w, modalOn = !!document.querySelector('.modal-wrap,.apv,.hd-wel,.hd-tail,.fs,.hd-dress');
+    if (modalOn && keys.size) keys.clear(); /* 창이 뜨는 순간 누르고 있던 방향이 그대로 남아 반대쪽으로 못 가던 문제 */
     const dx = modalOn ? 0 : (keys.has('R') ? 1 : 0) - (keys.has('L') ? 1 : 0), dy = modalOn ? 0 : (keys.has('U') ? 1 : 0) - (keys.has('D') ? 1 : 0);
     me.x = Math.max(W * 0.004, Math.min(W * (zone === 'town' ? PIER_END : 0.99), me.x + dx * 150 * dt)); me.y = Math.max(0, me.y + dy * 1.1 * dt); { const px = zone === 'town' ? (me.x / W - PIER) / 0.014 : -1; if (px <= 0) me.y = Math.min(1, me.y); else if (px < 1) me.y = Math.max(px * PY[0], Math.min(PY[0] + (PY[1] - PY[0]) * px, me.y)); else me.y = Math.max(PY[0], Math.min(PY[1], me.y)); } // 나루터: 다리 폭을 벗어나지 못한다
     if ((pedT -= dt) <= 0) { pedT = 1; pedTick(Date.now()); }
