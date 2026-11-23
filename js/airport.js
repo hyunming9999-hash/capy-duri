@@ -34,8 +34,8 @@ export function openAirport(o) {
   const sc = o.scoot ? o.scoot() : null, meEl = h('div', { class: 'fm-me ap-me' + (sc ? ' scoot' : ''), html: sc || capy(ctx.capyOf(ctx.uid, { face: 'happy' })) });
   // 바깥
   const TX = W * 0.14, TWD = W * 0.3, doorX = TX + TWD * 0.42;
-  const outPlane = h('img', { class: 'ap-plane out', src: 'img/air/plane.webp', alt: '' });
-  const parked = [0.035, 0.105].map(x => h('img', { class: 'ap-parked', src: 'img/air/plane.webp', alt: '', style: { left: W * x + 'px' } })); // 터미널 왼쪽 계류장: 두 대가 나란히
+  const outPlane = h('img', { class: 'ap-plane out', src: 'img/air/plane.webp?v=3', alt: '' });
+  const parked = [0.035, 0.105].map(x => h('img', { class: 'ap-parked', src: 'img/air/plane.webp?v=3', alt: '', style: { left: W * x + 'px' } })); // 터미널 왼쪽 계류장: 두 대가 나란히
   const term = h('button', { class: 'ap-term', 'aria-label': '카피공항 들어가기', style: { left: TX + 'px', width: TWD + 'px' }, onClick: () => walkTo(doorX, goIn) }, h('img', { src: 'img/air/terminal.webp', alt: '' }), h('b', { class: 'ap-term-t' }, '카피공항'));
   const front = h('img', { class: 'ap-front', src: 'img/air/front.webp', alt: '' }); // 활주로 앞 야자수·난간: 비행기보다 앞에 보이게
   const exitSign = h('button', { class: 'fm-exit', style: { left: W - Math.round(W * 0.13) + 'px' }, onClick: () => close() }, '놀이터로 →');
@@ -43,12 +43,12 @@ export function openAirport(o) {
   // 안쪽
   const counter = h('button', { class: 'ap-counter', 'aria-label': '공항 카운터', onClick: () => walkTo(W * 0.13, openTicket) });
   const inAtt = h('img', { class: 'ap-crew in tap', src: 'img/air/att.webp', alt: '카피승무원', style: { left: W * 0.115 + 'px' }, onClick: () => walkTo(W * 0.13, openTicket) }), inPilot = h('img', { class: 'ap-crew in pl', src: 'img/air/pilot.webp', alt: '카피기장', style: { left: W * 0.392 + 'px' } }); // 기장: 카운터 옆 출입구(탑승구) 바로 곁
-  const inPlane = h('img', { class: 'ap-plane in', src: 'img/air/plane.webp', alt: '' });
+  const inPlane = h('img', { class: 'ap-plane in', src: 'img/air/plane.webp?v=3', alt: '' });
   const boardEl = h('div', { class: 'ap-board' }), boardRows = h('div', { class: 'ap-brows' }); boardEl.append(h('span', null, `🛫 출발 안내 · ${DEST}행`), boardRows);
   const walker = h('img', { class: 'ap-crew in wk', src: 'img/air/att-walk.webp', alt: '카피승무원' }), wk = { x: W * 0.8, y: 0.3, tx: W * 0.5, ty: 0.5, d: -1, wait: 0 }; // 캐리어를 끌고 대기장을 오가는 승무원
   const cntT = h('b', { class: 'ap-cnt-t', style: { fontSize: Math.round(H * 0.052) + 'px' } }, '카운터');
   const outBtn = h('button', { class: 'fm-exit ap-out', style: { left: W * 0.338 + 'px' }, onClick: () => goOut() }, '← 밖으로');
-  const inWorld = h('div', { class: 'fm-world ap-world in', hidden: true, style: { width: W + 'px', height: H + 'px', backgroundImage: 'url(img/air/in.webp)' } }, h('div', { class: 'ap-window' }, inPlane, h('img', { class: 'ap-mull', src: 'img/air/mullion.webp', alt: '' })), boardEl, counter, inAtt, h('img', { class: 'ap-desk', src: 'img/air/desk.webp', alt: '' }), inPilot, walker, cntT, outBtn);
+  const inWorld = h('div', { class: 'fm-world ap-world in', hidden: true, style: { width: W + 'px', height: H + 'px', backgroundImage: 'url(img/air/in.webp)' } }, h('div', { class: 'ap-window' }, inPlane, h('img', { class: 'ap-mull', src: 'img/air/mullion.webp', alt: '' })), boardEl, counter, inAtt, h('img', { class: 'ap-desk', src: 'img/air/desk.webp?v=3', alt: '' }), inPilot, walker, cntT, outBtn);
   const scroller = h('div', { class: 'fm-scroll' }, outWorld, inWorld);
   const keys = new Set(), padBtn = (k, t) => { const b = h('button', { class: 'dp fm-dp' + (k === 'U' || k === 'D' ? ' ap-v' : ''), 'aria-label': { L: '왼쪽', R: '오른쪽', U: '위', D: '아래' }[k] }, t); holdBtn(b, () => keys.add(k), () => keys.delete(k)); return b; };
   const enterBtn = h('button', { class: 'fm-enter', hidden: true, onClick: () => (!inside ? goIn() : atGate() ? board() : openTicket()) });
@@ -98,7 +98,7 @@ export function openAirport(o) {
     for (const k in says) { if (sayT[k] > 0 && (sayT[k] -= dt) <= 0) says[k].hidden = true; if (!says[k].hidden) { const e = npc[k]; says[k].style.left = e.style.left; says[k].style.bottom = `calc(${getComputedStyle(e).bottom} + ${e.offsetHeight * (k === 'wk' ? 1 - wk.y * 0.12 : 1) + 4}px)`; } } }
   // 탑승: 바닷가 활주로 시작점에 선 비행기에 내 카피바라가 앉아 → 쪽을 본다
   function ride() { const cap = h('div', { class: 'ap-ride-me', html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) });
-    const el = h('div', { class: 'ap-ride' }, h('div', { class: 'ap-ride-rig' }, cap, h('img', { class: 'ap-ride-pl', src: 'img/air/plane.webp', alt: '' }), h('img', { class: 'ap-ride-hull', src: 'img/air/plane-hull.webp', alt: '' })),
+    const el = h('div', { class: 'ap-ride' }, h('div', { class: 'ap-ride-rig' }, cap, h('img', { class: 'ap-ride-pl', src: 'img/air/plane.webp?v=3', alt: '' }), h('img', { class: 'ap-ride-hull', src: 'img/air/plane-hull.webp?v=3', alt: '' })),
       h('div', { class: 'ap-ride-t' }, h('b', null, `✈️ ${DEST}행 탑승 완료!`), h('small', null, `${DEST}는 지금 한창 공사 중이에요 🚧 · 곧 날아갈 수 있어요`), h('button', { class: 'btn primary', onClick: () => { sfx('pop'); el.remove(); } }, '내리기')));
     wrap.append(el); }
   let lastT = performance.now(), tick = 0;
