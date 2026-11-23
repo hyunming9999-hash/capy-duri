@@ -110,7 +110,10 @@ export function rollCatch(zone, rodT, isPearl, power, forceShiny, kingOk = true,
   if (isPearl) return { f: PEARL, cm: 0, price: PEARL_PRICE, d: 9.5, p: power };
   if (!forceShiny && power < TRASH_FAR && Math.random() < trashP(power)) { const t = pick(TRASH), k = Math.random(), cm = Math.round((t.cm[0] + (t.cm[1] - t.cm[0]) * k) * 10) / 10; return { f: t, cm, g: 'F', price: -Math.round(50 + 200 * k), d: 1, p: power }; }
   const under = rodT < zone, pool = forceShiny ? SHINY_LIST[zone].map(id => FISH.find(f => f.id === id)) : FISH.filter(f => f.z === zone && !(under && (f.rare || f.king)) && !(f.king && !kingOk) && !(zone === 2 && f.tier === 4 && !ultraOk)); // 대장(고래킹·상어킹)은 중급 도감 40종을 채워야 만난다
-  const w = pool.map(f => TIERS[f.tier || 1].w * (f.tier >= 3 ? 1 + power * 1.2 : 1) * (f.tier === 3 ? 1 + rareUp : 1)), tot = w.reduce((a, b) => a + b, 0); if (zone === 2 && !forceShiny && !under) { const cw = TIERS[3].w * (1 + power * 1.2); /* 산호 조각: 희귀 등급 한 종과 같은 비율 */ if (Math.random() < cw / (tot + cw)) return { f: CORAL, cm: 0, price: 0, d: 4 + Math.random() * 2 + 1, p: power }; } // 산호 조각 = 초희귀 한 종만큼
+  const w = pool.map(f => TIERS[f.tier || 1].w * (f.tier >= 3 ? 1 + power * 1.2 : 1));
+  if (rareUp > 0) { const all = w.reduce((a, b) => a + b, 0), R = pool.reduce((t, f, i) => t + (f.tier === 3 ? w[i] : 0), 0); /* 온센: 희귀 등급이 걸릴 확률 자체를 rareUp(%p)만큼 더한다 */
+    if (R > 0 && R < all) { const s1 = Math.min(0.9, R / all + rareUp), k = s1 * (all - R) / (R * (1 - s1)); pool.forEach((f, i) => { if (f.tier === 3) w[i] *= k; }); } }
+  const tot = w.reduce((a, b) => a + b, 0); if (zone === 2 && !forceShiny && !under) { const cw = TIERS[3].w * (1 + power * 1.2); /* 산호 조각: 희귀 등급 한 종과 같은 비율 */ if (Math.random() < cw / (tot + cw)) return { f: CORAL, cm: 0, price: 0, d: 4 + Math.random() * 2 + 1, p: power }; } // 산호 조각 = 초희귀 한 종만큼
   let r = Math.random() * tot, f = pool[0]; for (let i = 0; i < pool.length; i++) { r -= w[i]; if (r <= 0) { f = pool[i]; break; } }
   // 등급(크기): 같은 물고기라도 D~S. S일수록 드물고 크고 비싸다. 멀리 던질수록 높은 등급이 조금 더 잘 문다
   const g = rollGrade(power), [b0, b1] = GRADE[g].band, t = b0 + (b1 - b0) * Math.random(), cm = Math.round((f.cm[0] + (f.cm[1] - f.cm[0]) * t) * 10) / 10;
