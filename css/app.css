@@ -3142,13 +3142,15 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .ap-crew.in { bottom: 10%; height: 30%; }
 .ap-world.in .ap-crew:first-of-type { z-index: 2; animation: none; } /* 카운터 승무원: 책상(ap-desk) 뒤 */
 .ap-desk { position: absolute; left: 3.497%; top: 58.333%; width: 17.932%; height: 21.528%; z-index: 3; pointer-events: none; }
-.ap-crew.in.pl { bottom: 17%; z-index: 2; } /* 기장: 출입구 곁 조금 안쪽 */
+.ap-crew.in.pl { bottom: 17%; z-index: 2; animation: none; }
+.ap-crew.in.wk { bottom: 6%; z-index: 4; animation: none; } .ap-crew.in.wk.go { animation: apStep .36s ease-in-out infinite; } @keyframes apStep { 50% { translate: 0 -3px; } }
+.ap-cnt-t { position: absolute; left: 6.8%; width: 11.4%; top: 38.4%; height: 9.6%; display: flex; align-items: center; justify-content: center; z-index: 1; font-family: var(--head); font-weight: 900; color: #FFE9B8; text-shadow: 0 2px 0 #5A2E0E, 0 0 4px #5A2E0E; pointer-events: none; white-space: nowrap; } /* 기장: 출입구 곁 조금 안쪽 */
 @keyframes apBob { 50% { translate: 0 -3px; } }
 .ap-counter { position: absolute; left: 1%; width: 22%; top: 18%; height: 56%; z-index: 1; border: 0; background: none; cursor: pointer; border-radius: 18px; }
 .ap-counter:active { background: rgba(255,255,255,.18); }
 .ap-board { position: absolute; left: 50%; top: 4%; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 1px; min-width: 120px; padding: 5px 12px 6px; border-radius: 12px; background: rgba(28, 36, 62, .9); border: 2px solid #E6B85C; color: #FFE7A3; font-family: var(--head); box-shadow: 0 3px 0 rgba(0,0,0,.25); pointer-events: none; }
 .ap-board span { font-size: 10px; color: #CFE0FF; } .ap-board b { font-size: 15px; } .ap-board small { font-size: 11px; color: #fff; font-variant-numeric: tabular-nums; }
-.ap-out { bottom: 20%; }
+.ap-out { bottom: auto; top: 47.5%; transform: translateX(-50%); z-index: 1; padding: 4px 8px; font-size: 11px; border-width: 2px; box-shadow: 0 2px 0 #8B5A2B; opacity: .95; } /* 출입문 위에 작게 */
 .ap-flight { font: 800 12px/1 var(--head); color: #2F6FA8; background: #E3F1FF; border: 2px solid #9CC6EE; border-radius: 10px; padding: 4px 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .ap .fm-top > b { color: #2F6FA8; }
 .ap-cnt { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
