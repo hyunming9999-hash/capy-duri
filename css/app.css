@@ -3136,13 +3136,13 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .ap-term { position: absolute; bottom: 31%; z-index: 2; padding: 0; border: 0; background: none; cursor: pointer; aspect-ratio: 900 / 682; container-type: inline-size; }
 .ap-term img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 6px 6px rgba(0,0,0,.18)); }
 .ap-term:active { transform: scale(.98); }
-.ap-term-t { position: absolute; left: 19%; right: 28%; top: 3%; height: 16%; display: flex; align-items: center; justify-content: center; font: 900 12.5cqw/1 var(--head); color: #FFF6E0; letter-spacing: -.5px; text-shadow: 0 2px 0 #7A4A1E, 2px 0 #7A4A1E, -2px 0 #7A4A1E, 0 -2px #7A4A1E; }
+.ap-term-t { position: absolute; left: 19%; right: 25%; top: 11%; height: 17%; display: flex; align-items: center; justify-content: center; font: 900 9cqw/1 var(--head); color: #fff; letter-spacing: 1px; text-shadow: 0 0 6px rgba(120, 200, 255, .9), 0 2px 0 #0D2A5C; } /* 현대식 남색 간판 가운데 */
 .ap-crew { position: absolute; bottom: 9%; height: 31%; transform: translateX(-50%); z-index: 3; pointer-events: none; animation: apBob 2.6s ease-in-out infinite; }
 .ap-crew + .ap-crew { animation-delay: -1.3s; }
 .ap-crew.in { bottom: 10%; height: 30%; }
 .ap-world.in .ap-crew:first-of-type { z-index: 2; } /* 카운터 승무원: 책상(ap-desk) 뒤 */
-.ap-desk { position: absolute; left: 3.497%; top: 51.389%; width: 17.932%; height: 28.472%; z-index: 3; pointer-events: none; }
-.ap-crew.in.pl { bottom: 23%; z-index: 2; } /* 기장: 출입구 곁 조금 안쪽 */
+.ap-desk { position: absolute; left: 3.497%; top: 58.333%; width: 17.932%; height: 21.528%; z-index: 3; pointer-events: none; }
+.ap-crew.in.pl { bottom: 17%; z-index: 2; } /* 기장: 출입구 곁 조금 안쪽 */
 @keyframes apBob { 50% { translate: 0 -3px; } }
 .ap-counter { position: absolute; left: 1%; width: 22%; top: 18%; height: 56%; z-index: 1; border: 0; background: none; cursor: pointer; border-radius: 18px; }
 .ap-counter:active { background: rgba(255,255,255,.18); }
@@ -3154,7 +3154,7 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .ap-cnt { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
 .ap-cnt img { height: 110px; } .ap-cnt p { margin: 0; line-height: 1.5; } .ap-cnt-s { font-weight: 800; color: #2F6FA8; } .ap-cnt-n { font-size: 13px; color: #8a6a3a; }
 /* 놀이터: 농장 팻말 아래 '카피공항으로' 팻말(대각선 아래) */
-.so-airsign { position: absolute; bottom: 6%; z-index: 400; padding: 0; border: 0; background: none; cursor: pointer; aspect-ratio: 323 / 360; }
+.so-airsign { position: absolute; bottom: 6%; z-index: 20; padding: 0; border: 0; background: none; cursor: pointer; aspect-ratio: 323 / 360; }
 .so-airsign img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 2px 2px rgba(0,0,0,.2)); }
 .so-airsign b { position: absolute; left: 14%; right: 6%; top: 25%; height: 24%; display: flex; align-items: center; justify-content: center; transform: rotate(-21deg); font: 900 clamp(11px, 3.6vw, 15px)/1 var(--head); letter-spacing: -.5px; color: #2F6FA8; white-space: nowrap; text-shadow: 1.5px 0 #FFF3D6, -1.5px 0 #FFF3D6, 0 1.5px #FFF3D6, 0 -1.5px #FFF3D6; }
 .so-airsign:active { transform: scale(.96); }
@@ -3173,3 +3173,9 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .ap-lr { display: flex; align-items: flex-end; gap: 6px; }
 .ap-ud { display: flex; flex-direction: column; gap: 4px; } .ap-ud[hidden] { display: none; }
 .fm-dp.ap-v { width: 46px; height: 40px; min-width: 0; font-size: 16px; padding: 0; }
+
+.ap-pad { align-items: center; justify-content: flex-start; gap: 18px; }
+.ap-dpad { width: 132px; height: 132px; gap: 0; display: grid; grid-template: "a U b" 1fr "L c R" 1fr "d D e" 1fr / 1fr 1fr 1fr; background: url(../img/fl/ui/dpad.webp) center / contain no-repeat; filter: drop-shadow(0 4px 3px rgba(110, 60, 20, .35)); opacity: 1; flex: none; }
+.ap-dpad .ap-dp { width: auto; height: auto; background: none; border: 0; box-shadow: none; border-radius: 12px; font-size: 0; padding: 0; }
+.ap-dpad .ap-U { grid-area: U; } .ap-dpad .ap-L { grid-area: L; } .ap-dpad .ap-R { grid-area: R; } .ap-dpad .ap-D { grid-area: D; }
+.ap-dpad .ap-dp.held { background: rgba(70, 35, 10, .28); }

@@ -40,7 +40,7 @@ export function openAirport(o) {
   const outWorld = h('div', { class: 'fm-world ap-world', style: { width: W + 'px', height: H + 'px', backgroundImage: 'url(img/air/out.webp)' } }, h('div', { class: 'ap-runway' }, outPlane), ...parked, front, term, exitSign);
   // 안쪽
   const counter = h('button', { class: 'ap-counter', 'aria-label': '공항 카운터', onClick: () => walkTo(W * 0.13, openTicket) });
-  const inAtt = h('img', { class: 'ap-crew in tap', src: 'img/air/att.webp', alt: '카피승무원', style: { left: W * 0.115 + 'px' }, onClick: () => walkTo(W * 0.13, openTicket) }), inPilot = h('img', { class: 'ap-crew in pl', src: 'img/air/pilot.webp', alt: '카피기장', style: { left: W * 0.445 + 'px' } }); // 기장: 카운터 옆 출입구(탑승구) 곁
+  const inAtt = h('img', { class: 'ap-crew in tap', src: 'img/air/att.webp', alt: '카피승무원', style: { left: W * 0.115 + 'px' }, onClick: () => walkTo(W * 0.13, openTicket) }), inPilot = h('img', { class: 'ap-crew in pl', src: 'img/air/pilot.webp', alt: '카피기장', style: { left: W * 0.392 + 'px' } }); // 기장: 카운터 옆 출입구(탑승구) 바로 곁
   const inPlane = h('img', { class: 'ap-plane in', src: 'img/air/plane.webp', alt: '' });
   const boardEl = h('div', { class: 'ap-board' }), boardRows = h('div', { class: 'ap-brows' }); boardEl.append(h('span', null, `🛫 출발 안내 · ${DEST}행`), boardRows);
   const outBtn = h('button', { class: 'fm-exit ap-out', style: { left: W * 0.27 + 'px' }, onClick: () => goOut() }, '← 밖으로');
@@ -48,8 +48,9 @@ export function openAirport(o) {
   const scroller = h('div', { class: 'fm-scroll' }, outWorld, inWorld);
   const keys = new Set(), padBtn = (k, t) => { const b = h('button', { class: 'dp fm-dp' + (k === 'U' || k === 'D' ? ' ap-v' : ''), 'aria-label': { L: '왼쪽', R: '오른쪽', U: '위', D: '아래' }[k] }, t); holdBtn(b, () => keys.add(k), () => keys.delete(k)); return b; };
   const enterBtn = h('button', { class: 'fm-enter', hidden: true, onClick: () => (!inside ? goIn() : atGate() ? board() : openTicket()) });
-  const ud = h('div', { class: 'ap-ud', hidden: true }, padBtn('U', '▲'), padBtn('D', '▼')); // 실내에서는 위아래로도 걷는다
-  const scene = h('div', { class: 'fm-scene' }, scroller, h('div', { class: 'fm-pad' }, h('div', { class: 'ap-lr' }, padBtn('L', '◀'), ud), enterBtn, padBtn('R', '▶')));
+  const ud = { hidden: true }; // (예전 위아래 버튼 자리)
+  const dpad = h('div', { class: 'dpad ap-dpad' }, [['U', '▲'], ['L', '◀'], ['D', '▼'], ['R', '▶']].map(([k, t]) => { const b = h('button', { class: 'dp ap-dp ap-' + k, 'aria-label': { L: '왼쪽', R: '오른쪽', U: '위', D: '아래' }[k] }, t); holdBtn(b, () => { keys.add(k); b.classList.add('held'); }, () => { keys.delete(k); b.classList.remove('held'); }); return b; })); // 동물친목회와 같은 십자 방향키
+  const scene = h('div', { class: 'fm-scene' }, scroller, h('div', { class: 'fm-pad ap-pad' }, dpad, enterBtn));
   const title = h('b', null, '✈️ 카피공항'), flightEl = h('span', { class: 'ap-flight' });
   const wrap = h('div', { class: 'fm ap' }, h('div', { class: 'fm-top' }, title, flightEl, h('button', { class: 'top-x', 'aria-label': '닫기', onClick: () => close() }, '✕')), scene);
   document.body.append(wrap);
@@ -64,7 +65,7 @@ export function openAirport(o) {
   function goOut() { if (!inside) return; inside = false; sfx('pop'); inWorld.hidden = true; outWorld.hidden = false; me.x = me.tx = doorX; me.y = 0; me.then = null; place(); ud.hidden = true; title.textContent = '✈️ 카피공항'; scroller.scrollLeft = Math.max(0, me.x - scroller.clientWidth / 2); }
   const canBoard = f => f.phase === 'stay'; // 비행기가 출입구 앞에 다 서고 나서 10초 안에만 탈 수 있다
   const atGate = () => inside && me.x > W * 0.27 && me.x < W * 0.56; // 카운터 옆 출입구 앞
-  function fitCrew() { const hh = 84; inPilot.style.height = Math.round(hh * 0.9) + 'px'; inAtt.style.height = hh + 'px'; inAtt.style.bottom = Math.round(0.417 * H - 0.18 * hh) + 'px'; } // 카피바라(밍땅꾸리·두두)와 같은 키 + 모자. 카운터 승무원은 허리까지 책상 뒤에 · 기장은 조금 안쪽(작게)
+  function fitCrew() { const hh = 84; inPilot.style.height = hh + 'px'; inAtt.style.height = hh + 'px'; inAtt.style.bottom = Math.round(0.415 * H - 0.42 * hh) + 'px'; } // 카피바라(밍땅꾸리·두두)와 같은 키 + 모자. 카운터 승무원은 허리까지 책상 뒤에 · 기장은 조금 안쪽(작게)
   function openTicket() { const f = flightNow(now()), dep = depAt(now());
     const row = (k, name, desc) => h('button', { class: 'ap-tk', onClick: () => buy(k, name) }, h('b', null, `🎫 ${DEST} ${name}`), h('small', null, desc), h('em', null, `${TICKET[k].toLocaleString()}코인`));
     modal({ title: `🎫 ${DEST} 탑승권`, body: [h('div', { class: 'ap-cnt' }, h('img', { src: 'img/air/att.webp', alt: '' }),
@@ -83,10 +84,13 @@ export function openAirport(o) {
   function depAt(t) { const blk = Math.floor(t / FLIGHT.every) * FLIGHT.every, d = blk + FLIGHT.land + FLIGHT.stay; return t < d ? d : d + FLIGHT.every; }
 
   let lastT = performance.now(), tick = 0;
-  // 바깥 비행기(14초마다): 4초 동안 내려앉고 → 10초 동안 왼쪽으로 천천히 굴러 터미널 뒤로 들어가 사라진다
-  function drawOut(t) { const k = t % 14000, el = outPlane; let x, y = 0, r = 0;
-    if (k < 4000) { const e = ease(k / 4000); x = 1.15 - 0.3 * e; y = -0.9 * (1 - e); r = -6 * (1 - e); } else { const e = (k - 4000) / 10000; x = 0.85 - 0.65 * (1 - Math.pow(1 - e, 1.6)); }
-    el.style.opacity = x < 0.22 ? String(Math.max(0, (x - 0.18) / 0.04)) : '1'; el.style.left = x * 100 + '%'; el.style.transform = `translate(-50%, ${(y * 100 - 100).toFixed(1)}%) rotate(${r.toFixed(1)}deg)`; }
+  // 바깥 비행기(25초마다): 4초 동안 내려앉고 → 10초 동안 왼쪽으로 천천히 굴러 터미널 뒤로 들어가고 → 3초 뒤 → 8초 동안 터미널 뒤에서 나와 오른쪽(→)으로 달려 떠오른다
+  function drawOut(t) { const k = t % 25000, el = outPlane; let x, y = 0, r = 0, flip = 0;
+    if (k < 4000) { const e = ease(k / 4000); x = 1.15 - 0.3 * e; y = -0.9 * (1 - e); r = -6 * (1 - e); }
+    else if (k < 14000) { const e = (k - 4000) / 10000; x = 0.85 - 0.65 * (1 - Math.pow(1 - e, 1.6)); }
+    else if (k < 17000) x = 0.2;
+    else { const p = (k - 17000) / 8000, e = p * p; flip = 1; x = 0.2 + 1.05 * e; y = -Math.max(0, p - 0.55) * 2; r = -Math.min(10, Math.max(0, p - 0.5) * 30); }
+    el.style.opacity = x < 0.22 ? String(Math.max(0, (x - 0.18) / 0.04)) : '1'; el.style.left = x * 100 + '%'; el.style.transform = `translate(-50%, ${(y * 100 - 100).toFixed(1)}%) rotate(${r.toFixed(1)}deg)${flip ? ' scaleX(-1)' : ''}`; }
   function drawPlane(el, f, at) { const q = planePos(f, at); if (!q.on) { el.style.opacity = '0'; return; } el.style.opacity = '1'; el.style.left = q.x * 100 + '%'; el.style.transform = `translate(-50%, ${(q.y * 100 - 100).toFixed(1)}%) rotate(${q.r.toFixed(1)}deg)${q.flip ? ' scaleX(-1)' : ''}`; }
   function drawBoard(f) { const t = now(), d0 = depAt(t), rows = [0, 1, 2].map(i => { const d = d0 + i * FLIGHT.every, st = i ? '예정' : canBoard(f) ? `탑승 마감 ${mmss(f.left)}` : f.phase === 'land' ? '도착 중 · 곧 탑승' : f.phase === 'off' ? '출발' : `${mmss(d - FLIGHT.stay - FLIGHT.land - t)} 뒤 도착`; return [hhmm(d), st, !i && canBoard(f)]; });
     const key = rows.map(r => r.join('|')).join('/'); if (key !== boardRows.dataset.k) { boardRows.dataset.k = key; boardRows.replaceChildren(...rows.map(([tm, st, on]) => h('div', { class: 'ap-brow' + (on ? ' on' : '') }, h('b', null, tm), h('span', null, DEST), h('em', null, st)))); }
@@ -95,12 +99,12 @@ export function openAirport(o) {
     const dir = (keys.has('R') ? 1 : 0) - (keys.has('L') ? 1 : 0), lo = inside ? W * 0.05 : 30, hi = W - 30;
     if (dir && !document.querySelector('.modal-wrap')) { me.x = Math.max(lo, Math.min(hi, me.x + dir * WALK_SP * (sc ? 1.8 : 1) * dt)); me.tx = me.x; me.then = null; meEl.classList.add('walk'); meEl.classList.toggle('left', dir < 0); }
     const d = me.tx - me.x; if (Math.abs(d) > 2) me.x += Math.sign(d) * Math.min(Math.abs(d), WALK_SP * (sc ? 1.8 : 1) * dt); else if (me.then) { const f = me.then; me.then = null; meEl.classList.remove('walk'); f(); } else if (!dir) meEl.classList.remove('walk');
-    const vy = inside && !document.querySelector('.modal-wrap') ? (keys.has('U') ? 1 : 0) - (keys.has('D') ? 1 : 0) : 0; if (vy) { me.y = Math.max(0, Math.min(1, me.y + vy * 0.9 * dt)); meEl.classList.add('walk'); }
-    meEl.style.left = me.x + 'px'; meEl.style.bottom = inside ? `${1 + me.y * 22}%` : ''; meEl.style.transform = inside ? `translateX(-50%) scale(${(1 - me.y * 0.14).toFixed(3)})` : ''; meEl.style.zIndex = inside ? String(6 - Math.round(me.y * 3)) : '';
+    const vy = !document.querySelector('.modal-wrap') ? (keys.has('U') ? 1 : 0) - (keys.has('D') ? 1 : 0) : 0; if (vy) { me.y = Math.max(0, Math.min(1, me.y + vy * 0.9 * dt)); meEl.classList.add('walk'); }
+    meEl.style.left = me.x + 'px'; meEl.style.bottom = `${1 + me.y * (inside ? 22 : 16)}%`; meEl.style.transform = `translateX(-50%) scale(${(1 - me.y * 0.14).toFixed(3)})`; meEl.style.zIndex = String(6 - Math.round(me.y * 3)); // 도로·실내 모두 위아래로도 걷는다
     const want = me.x - scroller.clientWidth / 2; if (Math.abs(scroller.scrollLeft - want) > 4 && (meEl.classList.contains('walk') || dir)) scroller.scrollLeft += (want - scroller.scrollLeft) * Math.min(1, dt * 6);
     const gate = atGate(), near = inside ? me.x < W * 0.24 || gate : Math.abs(me.x - doorX) < TWD * 0.55, lab = !inside ? '✈️ 공항 들어가기' : gate ? '✈️ 탑승하기' : '🎫 탑승권 사기';
     if (enterBtn.hidden === near) enterBtn.hidden = !near; if (enterBtn.textContent !== lab) enterBtn.textContent = lab;
-    const f = flightNow(now()); if (inside) drawPlane(inPlane, f, 0.2); else drawOut(now()); // 바깥: 오른쪽 하늘에서 내려앉아 야자나무 뒤를 지나 천천히 터미널 뒤로 사라지기를 되풀이
+    const f = flightNow(now()); if (inside) drawPlane(inPlane, f, 0.2); else drawOut(now()); // 바깥: 내려앉아 터미널 뒤로 들어갔다가, 3초 뒤 다시 나와 오른쪽으로 떠나기를 되풀이
     if ((tick += dt) > 0.5) { tick = 0; drawBoard(f); }
     raf = requestAnimationFrame(step); }
   raf = requestAnimationFrame(step);
