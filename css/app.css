@@ -3135,12 +3135,12 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .ap-parked { position: absolute; top: 55.5%; width: 6.6%; transform: translate(-50%, -100%); z-index: 1; pointer-events: none; }
 .ap-term { position: absolute; bottom: 31%; z-index: 2; padding: 0; border: 0; background: none; cursor: pointer; aspect-ratio: 900 / 682; container-type: inline-size; }
 .ap-term img { width: 100%; height: 100%; display: block; filter: drop-shadow(0 6px 6px rgba(0,0,0,.18)); }
-.ap-term:active { transform: scale(.98); }
+
 .ap-term-t { position: absolute; left: 19%; right: 25%; top: 11%; height: 17%; display: flex; align-items: center; justify-content: center; font: 900 9cqw/1 var(--head); color: #fff; letter-spacing: 1px; text-shadow: 0 0 6px rgba(120, 200, 255, .9), 0 2px 0 #0D2A5C; } /* 현대식 남색 간판 가운데 */
 .ap-crew { position: absolute; bottom: 9%; height: 31%; transform: translateX(-50%); z-index: 3; pointer-events: none; animation: apBob 2.6s ease-in-out infinite; }
 .ap-crew + .ap-crew { animation-delay: -1.3s; }
 .ap-crew.in { bottom: 10%; height: 30%; }
-.ap-world.in .ap-crew:first-of-type { z-index: 2; } /* 카운터 승무원: 책상(ap-desk) 뒤 */
+.ap-world.in .ap-crew:first-of-type { z-index: 2; animation: none; } /* 카운터 승무원: 책상(ap-desk) 뒤 */
 .ap-desk { position: absolute; left: 3.497%; top: 58.333%; width: 17.932%; height: 21.528%; z-index: 3; pointer-events: none; }
 .ap-crew.in.pl { bottom: 17%; z-index: 2; } /* 기장: 출입구 곁 조금 안쪽 */
 @keyframes apBob { 50% { translate: 0 -3px; } }
