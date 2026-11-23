@@ -3185,19 +3185,19 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .ap-say { position: absolute; z-index: 8; transform: translateX(-50%); background: #fffdf5; color: #5a3a1e; border: 2px solid #e0b252; border-radius: 12px; padding: 3px 8px; font: 800 11px/1.3 var(--head); white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,.2); pointer-events: none; }
 .ap-say[hidden] { display: none; } .ap-say.pop { animation: parkBub .3s ease-out; }
 .ap-say::after { content: ''; position: absolute; left: 50%; bottom: -7px; margin-left: -5px; border: 5px solid transparent; border-top: 6px solid #e0b252; border-bottom: 0; }
-.ap-ride { position: absolute; inset: 0; z-index: 50; background: #7fd0f0 url(../img/air/out.webp?v=4) 82% 50% / cover no-repeat; overflow: hidden; animation: aqIn .4s ease-out; }
-.ap-ride.fly { background: linear-gradient(#2f8fe0, #7cc8f5 55%, #cfeeff); }
-.ap-ride-rig { position: absolute; left: 0; top: 58.5%; width: min(60%, 300px); transform: translate(-50%, -100%); }
-.ap-ride-rig.go { animation: apRun 6.2s cubic-bezier(.45, 0, .9, .6) forwards; }
-@keyframes apRun { 0% { left: 18%; top: 58.5%; rotate: 0deg; } 8% { left: 18%; top: 58.5%; } 62% { left: 68%; top: 58.5%; rotate: 0deg; } 100% { left: 150%; top: 12%; rotate: -14deg; } }
-.ap-ride-rig.air { left: 50%; top: 56%; width: min(72%, 380px); animation: apAir 2.2s ease-in-out infinite; }
-@keyframes apAir { 0%, 100% { translate: 0 -14px; rotate: -3deg; } 50% { translate: 0 14px; rotate: 2deg; } }
+.ap-ride { position: absolute; left: 0; right: 0; top: 0; z-index: 50; overflow: hidden; background: #6ec3f2; animation: aqIn .3s ease-out; }
+.ap-ride-w { position: absolute; left: 0; top: 0; background: url(../img/air/out.webp?v=4) center / 100% 100% no-repeat; will-change: transform; }
+.ap-ride-w .ap-ride-rig { z-index: 1; } .ap-ride-w .ap-front { z-index: 2; }
+.ap-ride-rig { position: absolute; transform: translate(-50%, -100%); transform-origin: 50% 80%; }
+.ap-ride-rig.air { left: 50%; top: 64%; width: min(62%, 300px); z-index: 2; animation: apAir 2.2s ease-in-out infinite; }
+@keyframes apAir { 0%, 100% { translate: 0 -12px; rotate: -3deg; } 50% { translate: 0 12px; rotate: 2deg; } }
 .ap-ride-pl, .ap-ride-hull { display: block; width: 100%; transform: scaleX(-1); } .ap-ride-hull { position: absolute; left: 0; top: 0; }
 .ap-ride-me { position: absolute; left: 47.5%; top: -3%; width: 27%; transform: translateX(-50%); } .ap-ride-me svg { width: 100%; display: block; transform: scaleX(-1); }
-.ap-sky { position: absolute; inset: 0; } .ap-sky[hidden] { display: none; }
-.ap-cloud { position: absolute; left: 0; height: 26px; border-radius: 30px; background: #fff; box-shadow: 18px -10px 0 2px #fff, 44px -4px 0 -2px #fff; filter: blur(.5px); animation: apCloud 1.4s linear infinite; }
-@keyframes apCloud { from { transform: translateX(110vw); } to { transform: translateX(-260px); } }
-.ap-ride-t { position: absolute; left: 12px; right: 12px; bottom: 14px; padding: 10px 14px; border-radius: 16px; background: rgba(255, 250, 240, .94); border: 2px solid #9CC6EE; text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.ap-sky { position: absolute; inset: 0; overflow: hidden; } .ap-sky[hidden] { display: none; }
+.ap-sky-bg { position: absolute; inset: 0; background: url(../img/air/sky.webp) 0 50% / auto 100% repeat-x; animation: apSky 9s linear infinite; } @keyframes apSky { to { background-position-x: calc(-1 * var(--skyw, 2000px)); } }
+.ap-cloud { position: absolute; left: 0; height: auto; animation: apCloud 1.4s linear infinite; pointer-events: none; }
+@keyframes apCloud { from { transform: translateX(110vw); } to { transform: translateX(-60vw); } }
+.ap-ride-t { position: absolute; left: 10px; right: 10px; top: 6px; flex-direction: row !important; justify-content: center; gap: 10px !important; z-index: 5; padding: 6px 12px; border-radius: 16px; background: rgba(255, 250, 240, .94); border: 2px solid #9CC6EE; text-align: center; display: flex; flex-direction: column; gap: 6px; align-items: center; }
 .ap-ride-t b { font: 900 16px/1.2 var(--head); color: #2F6FA8; } .ap-ride-t small { font-size: 12px; color: #6a7f95; }
 
 .ap-acts { position: relative; display: flex; flex-direction: row; gap: 2px; align-items: flex-end; margin-right: 4px; }
