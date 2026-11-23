@@ -3233,8 +3233,8 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 
 /* ── 핫똑랜드(예시판) ── */
 .hd { z-index: 4600; }
-.hd-dog { position: absolute; width: auto; transform: translateX(-50%) scale(var(--s, 1)); transform-origin: 50% 100%; cursor: pointer; filter: drop-shadow(0 3px 2px rgba(60,30,10,.3)); -webkit-tap-highlight-color: transparent; }
-.hd-dog.go { animation: hdStep .36s ease-in-out infinite; } @keyframes hdStep { 50% { translate: 0 -4px; } }
+.hd-dog { position: absolute; width: auto; transform: translateX(-50%) scale(var(--s, 1)); transform-origin: 50% 100%; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.hd-dog.go { animation: hdStep .42s ease-in-out infinite; } @keyframes hdStep { 0%, 100% { translate: 0 0; rotate: -4deg; } 50% { translate: 0 -5px; rotate: 4deg; } } /* 카피랜드 동물처럼 뒤뚱뒤뚱 */
 .hd-dog.wow { animation: hdWow .42s ease-in-out 6; } @keyframes hdWow { 50% { translate: 0 -14px; } }
 .hd-card img { width: 96px; height: auto; display: block; margin: 0 auto 6px; } .hd-card img.hd-gen { width: 150px; border-radius: 14px; border: 3px solid #C9A04A; }
 .apv-stamp.hd-in { border-color: #1F5FBF; color: #1F5FBF; background: rgba(230,240,255,.45); } .apv-stamp.hd-in small { font-size: 7.5px; }
@@ -3261,3 +3261,6 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .hd-tail-b { width: 92px; height: 92px; border-radius: 50%; border: 4px solid #8B5A2B; background: #FFD98A; font-size: 38px; color: #5A3A1E; box-shadow: 0 6px 0 #8B5A2B; touch-action: none; } .hd-tail-b:active { translate: 0 4px; box-shadow: 0 2px 0 #8B5A2B; background: #FFB347; }
 .hd-wel.party img { animation: apvBook .5s cubic-bezier(.2,.9,.3,1.2) both, hdGlow 1.2s ease-in-out infinite alternate; } @keyframes hdGlow { to { box-shadow: 0 0 0 4px #1F2F6B, 0 0 38px 10px rgba(255,214,90,.75); } }
 .hd-conf { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 2; } .hd-conf i { position: absolute; top: -12px; width: 9px; height: 14px; border-radius: 2px; animation: hdConf 3s linear infinite; } @keyframes hdConf { to { translate: 20px 105vh; rotate: 720deg; } }
+.hd-sh { position: absolute; width: 62px; height: 15px; margin-bottom: -6px; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(ellipse at center, rgba(40,22,8,.38) 0, rgba(40,22,8,.2) 45%, transparent 72%); pointer-events: none; }
+.hd-tailhost { position: fixed; inset: 0; z-index: 9990; }
+.hd-boom { position: absolute; font-size: 30px; font-style: normal; z-index: 45; transform: translateX(-50%); pointer-events: none; transition: left 1.1s cubic-bezier(.2,.7,.4,1); } .hd-boom.fly { animation: hdSpin .35s linear infinite, hdArc 1.1s ease-out forwards; } @keyframes hdSpin { to { rotate: 360deg; } } @keyframes hdArc { 0% { translate: 0 0; } 50% { translate: 0 -70px; } 100% { translate: 0 10px; } }

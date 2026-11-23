@@ -94,7 +94,7 @@ function findBottle(host) { return new Promise(res => { const el = stage(host, '
   el.append(b, xBtn(done)); }); }
 
 // 꼬리땐스: 뒷모습으로 서서 ◀ ▶ 를 번갈아 빠르게. 누를 때마다 엉덩이(아래쪽 절반)가 그쪽으로 씰룩. 같은 쪽을 연달아 누르면 세지 않는다
-function tailDance(host, d) { return new Promise(res => { const el = stage(host, 'img/quest/bg-lot.webp', '🛂 1장 · 꼬리땐스 미션', `◀ ▶ 를 번갈아 빠르게! ${TAIL_SEC}초 안에 ${TAIL_N}번`), done = close(el, res);
+export function tailDance(host, d, o = {}) { return new Promise(res => { const el = stage(host, o.bg || 'img/quest/bg-lot.webp', o.title || '🛂 1장 · 꼬리땐스 미션', `◀ ▶ 를 번갈아 빠르게! ${TAIL_SEC}초 안에 ${TAIL_N}번`), done = close(el, res);
   const svg = d.meBack ? d.meBack() : d.meSvg('happy'), body = h('div', { class: 'pq-body', html: svg }), whoosh = h('i', { class: 'pq-wh' });
   const me = h('div', { class: 'pq-me pq-rear' }, body, whoosh), bar = h('u'), cnt = h('b', { class: 'pq-cnt' }), tm = h('em', { class: 'pq-tm' });
   let k = 0, last = '', t0 = 0, raf = 0, over = false, lastHit = 0;
@@ -102,8 +102,8 @@ function tailDance(host, d) { return new Promise(res => { const el = stage(host,
   const tick = now => { if (over) return; const left = TAIL_SEC - (performance.now() - t0) / 1000; tm.textContent = t0 ? Math.max(0, left).toFixed(1) + '초' : `${TAIL_SEC}.0초`; me.classList.toggle('hot', performance.now() - lastHit < 260); if (t0 && left <= 0) return end(false); raf = requestAnimationFrame(tick); };
   const hit = dir => { if (over) return; if (!t0) t0 = performance.now(); if (dir === last) return; last = dir; k++; lastHit = performance.now(); me.classList.remove('wl', 'wr'); void me.offsetWidth; me.classList.add(dir === 'l' ? 'wl' : 'wr'); sfx('tock'); draw(); if (k >= TAIL_N) end(true); };
   const end = ok => { over = true; cancelAnimationFrame(raf); window.removeEventListener('keydown', kd); me.classList.remove('hot');
-    if (ok) { sfx('bigfish'); me.classList.add('party'); el.append(h('div', { class: 'pq-msg ok' }, '🐕 폐하!!')); setTimeout(() => done(true), 1500); }
-    else { sfx('bad'); el.append(h('div', { class: 'pq-msg' }, h('p', null, '🐶 "다시! 형제는 포기하지 않아!"'), h('button', { class: 'btn primary', onClick: e => { e.stopPropagation(); el.remove(); tailDance(host, d).then(res); } }, '다시 하기'))); } };
+    if (ok) { sfx('bigfish'); me.classList.add('party'); el.append(h('div', { class: 'pq-msg ok' }, o.win || '🐕 폐하!!')); setTimeout(() => done(true), 1500); }
+    else { sfx('bad'); el.append(h('div', { class: 'pq-msg' }, h('p', null, '🐶 "다시! 형제는 포기하지 않아!"'), h('button', { class: 'btn primary', onClick: e => { e.stopPropagation(); el.remove(); tailDance(host, d, o).then(res); } }, '다시 하기'))); } };
   const kd = e => { if (e.key === 'ArrowLeft') hit('l'); else if (e.key === 'ArrowRight') hit('r'); }; window.addEventListener('keydown', kd);
   const pad = (dir, t) => h('button', { class: 'pq-pad', onPointerDown: e => { e.preventDefault(); e.stopPropagation(); hit(dir); } }, t);
   el.append(me, h('div', { class: 'pq-gauge' }, bar), h('div', { class: 'pq-row' }, cnt, tm), h('div', { class: 'pq-pads' }, pad('l', '◀'), pad('r', '▶')), xBtn(v => { over = true; window.removeEventListener('keydown', kd); done(v); }));
