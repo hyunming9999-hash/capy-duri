@@ -104,14 +104,17 @@ export function makeVoice(ctx, ui) {
 }
 
 export function mount(el, ctx) {
-  const onsen = { ms: onsenRead().ms, saved: 0 }; // ♨️ 탕 안에서 쉰 시간(10분마다 희귀 물고기 확률 조금 업, 30분까지). 나간 뒤 1시간 유지
-  const onsenSave = t => { onsen.saved = t || performance.now(); try { localStorage.setItem('capy-onsen', JSON.stringify({ ms: Math.round(onsen.ms), until: Date.now() + Math.max(1, Math.floor(onsen.ms / ONSEN_STEP)) * ONSEN_KEEP }) /* 효과는 10분당 2분씩 유지. 아직 0단계면 쌓인 시간만 잠깐 남겨 둔다 */); } catch {} };
+  const oDay = new Date().toLocaleDateString('sv'), oRaw = (() => { try { return JSON.parse(localStorage.getItem('capy-onsen') || '{}') || {}; } catch { return {}; } })();
+  const oPrev = oRaw.day === oDay ? Math.min(ONSEN_STEP * ONSEN_MAX, oRaw.ms || 0) : 0, oLock = Math.floor(oPrev / ONSEN_STEP) >= 1; // 효능은 하루 한 번: 오늘 이미 1단계 이상 받았으면 더 쌓이지 않는다. 0단계로 나갔으면 이어서 쌓인다
+  const onsen = { ms: oPrev, saved: 0 }; // ♨️ 탕 안에서 쉰 시간(10분마다 희귀 물고기 확률 조금 업, 30분까지). 나간 뒤 1시간 유지
+  const onsenSave = t => { onsen.saved = t || performance.now(); try { localStorage.setItem('capy-onsen', JSON.stringify({ day: oDay, ms: Math.round(onsen.ms), until: Date.now() + Math.max(1, Math.floor(onsen.ms / ONSEN_STEP)) * ONSEN_KEEP }) /* 효과는 10분당 2분씩 유지. 아직 0단계면 쌓인 시간만 잠깐 남겨 둔다 */); } catch {} };
   let alive = true, raf = 0, last = 0, sendT = 0, dirty = true, S = 2;
   const canvas = h('canvas', { class: 'park' }), g = canvas.getContext('2d');
   const bg = drawBath(); let bgImg = null; loadImg('img/fl/bg/bath.webp').then(i => { bgImg = i; dirty = true; }).catch(() => {}); // 보송 그림 탕(소품까지 그려져 있다). 못 받으면 도트 탕
   const ogFill = h('i', { class: 'og-fill' }), ogTxt = h('span', { class: 'og-txt' }), ogBar = h('div', { class: 'og-in' }, h('b', null, '♨️'), h('div', { class: 'og-col' }, ogTxt, h('div', { class: 'og-track' }, ogFill, h('em', { style: { left: '33.33%' } }), h('em', { style: { left: '66.66%' } })))); // 온센 안: 효능 쌓이는 게이지(10분씩 3칸)
   let ogAt = 0; const ogDraw = () => { const ms = onsen.ms, st = Math.min(ONSEN_MAX, Math.floor(ms / ONSEN_STEP)), cur = Math.round(st * ONSEN_UP * 100), full = ONSEN_STEP * ONSEN_MAX; ogFill.style.width = Math.min(100, ms / full * 100) + '%'; ogBar.classList.toggle('max', st >= ONSEN_MAX); ogBar.classList.toggle('dry', !me.wet && st < ONSEN_MAX);
     const left = Math.ceil((ONSEN_STEP - (ms % ONSEN_STEP)) / 1000), mm = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+    ogBar.classList.toggle('lock', oLock); if (oLock) { ogTxt.textContent = `오늘 효능(+${cur}%)은 이미 받았어요 · 내일 다시`; ogBar.classList.remove('dry'); return; }
     ogTxt.textContent = st >= ONSEN_MAX ? `효능 최대 +${cur}% 달성! · 나가면 ${st * ONSEN_KEEP / 60000}분 유지` : !me.wet ? `탕에 들어가야 효능이 쌓여요 · 지금 +${cur}%` : `희귀 물고기 +${cur}% → +${cur + Math.round(ONSEN_UP * 100)}%까지 ${mm}`; };
   const bub = h('span', { class: 'park-bub', hidden: true }), BUB = ['아~ 노폐물이 빠진다.', '집중력 향상!', '희귀 물고기 내꺼!']; let bubAt = 0, bubOff = 0, bubI = Math.floor(Math.random() * 3); // 탕 안에서 가끔 혼잣말
   const bubSay = (t, txt) => { bub.textContent = txt || BUB[bubI++ % BUB.length]; bub.hidden = false; bub.classList.remove('pop'); void bub.offsetWidth; bub.classList.add('pop'); bubOff = t + 3500; bubAt = t + 25000 + Math.random() * 20000; };
@@ -204,7 +207,7 @@ export function mount(el, ctx) {
       const d = Math.exp(-6 * dt); me.kx *= d; me.ky *= d; if (Math.hypot(me.kx, me.ky) < 4) me.kx = me.ky = 0; dirty = true;
     }
     { const w = inWater(me.x, me.y); if (w !== me.wet) { if (me.wet !== undefined) sfx('splash'); me.wet = w; } } // 탕에 들어가고 나올 때 첨벙
-    if (me.wet && !document.hidden && onsen.ms < ONSEN_STEP * ONSEN_MAX) { const was = Math.floor(onsen.ms / ONSEN_STEP); onsen.ms = Math.min(ONSEN_STEP * ONSEN_MAX, onsen.ms + dt * 1000); const now2 = Math.floor(onsen.ms / ONSEN_STEP);
+    if (!oLock && me.wet && !document.hidden && onsen.ms < ONSEN_STEP * ONSEN_MAX) { const was = Math.floor(onsen.ms / ONSEN_STEP); onsen.ms = Math.min(ONSEN_STEP * ONSEN_MAX, onsen.ms + dt * 1000); const now2 = Math.floor(onsen.ms / ONSEN_STEP);
       if (now2 > was) { onsenSave(); sfx('coin'); toast(`♨️ 몸이 사르르 풀렸다… 희귀 물고기 확률 +${Math.round(now2 * ONSEN_UP * 100)}%${now2 >= ONSEN_MAX ? ' (최대)' : ` · 10분 더 쉬면 +${Math.round((now2 + 1) * ONSEN_UP * 100)}%`}`, 3200); } else if (t - (onsen.saved || 0) > 5000) onsenSave(t); }
     if (t - ogAt > 250) { ogAt = t; ogDraw(); }
     if (me.wet) { if (!bubAt) bubAt = t + 6000; else if (t > bubAt) bubSay(t); } else if (bubAt && !bubOff) bubAt = 0; if (bubOff && t > bubOff) { bub.hidden = true; bubOff = 0; }
@@ -279,7 +282,7 @@ export function mount(el, ctx) {
   if (mode !== 'off') setMode(mode, true); // 지난번에 켜 둔 모드 그대로
   window.__capyVoice = voice; // 연결 상태 점검용
   return () => {
-    alive = false; if (onsen.ms > 0) onsenSave(); cancelAnimationFrame(raf); offs.forEach(f => f()); voice.destroy(); window.__capyVoice = null; ro && ro.disconnect();
+    alive = false; if (onsen.ms > 0 && !oLock) onsenSave(); cancelAnimationFrame(raf); offs.forEach(f => f()); voice.destroy(); window.__capyVoice = null; ro && ro.disconnect();
     window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); window.removeEventListener('pointerdown', wake);
     root.classList.remove('fixed-page'); root.style.removeProperty('--vvh'); root.style.removeProperty('--vvt');
     if (vv) { vv.removeEventListener('resize', fit); vv.removeEventListener('scroll', fit); } window.removeEventListener('resize', fit);

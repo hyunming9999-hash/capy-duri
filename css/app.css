@@ -3124,3 +3124,4 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .park-bub[hidden]{display:none}
 .park-bub.pop{animation:parkBub .3s ease-out}
 @keyframes parkBub{from{opacity:0;transform:translate(-50%,calc(-100% - 10px)) scale(.7)}}
+.og-in.lock .og-fill{filter:grayscale(1);opacity:.55;animation:none}
