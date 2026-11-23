@@ -120,10 +120,10 @@ export function openAirport(o) {
   function ride() { const cap = h('div', { class: 'ap-ride-me', html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) }), cpt = h('img', { class: 'ap-ride-cpt', src: 'img/air/pilot-seat.webp?v=1', alt: '' }); // 좌석 3개: 맨 앞은 기장, 나는 가운데
     const rig = h('div', { class: 'ap-ride-rig' }, h('img', { class: 'ap-ride-pl', src: 'img/air/plane.webp?v=4', alt: '' }), cpt, cap, h('img', { class: 'ap-ride-hull', src: 'img/air/plane-hull.webp?v=4', alt: '' }));
     const msg = h('b'), sub = h('small'), offBtn = h('button', { class: 'btn sm', onClick: () => { end(); if (demo && LV) setTimeout(ride, 250); } }, demo && LV ? '↻ 이륙 다시 보기' : demo ? '내리기 (예시판)' : '내리기'), box = h('div', { class: 'ap-ride-t' }, msg, sub, demo && offBtn);
-    const sky = h('div', { class: 'ap-sky', hidden: true, style: { '--skyw': Math.round(H * 2688 / 576) + 'px' } }, h('i', { class: 'ap-sky-bg' }), ...Array.from({ length: 7 }, (_, i) => h('img', { class: 'ap-cloud', src: `img/air/cloud${i % 3 + 1}.webp?v=2`, alt: '', style: { top: 4 + i * 13 + (i % 2) * 4 + '%', width: 26 + (i * 17) % 30 + '%', animationDuration: 1.6 + (i * 0.41) % 1.5 + 's', animationDelay: -(i * 0.47) + 's', opacity: 0.7 + (i % 3) * 0.12, zIndex: i % 3 === 0 ? 3 : 1 } })));
+    const sky = h('div', { class: 'ap-sky wait', style: { '--skyw': Math.round(H * 2688 / 576) + 'px' } }, h('i', { class: 'ap-sky-bg' }), ...Array.from({ length: 5 }, (_, i) => h('img', { class: 'ap-cloud', src: `img/air/cloud${i % 3 + 1}.webp?v=3`, alt: '', style: { top: 6 + i * 15 + (i % 2) * 5 + '%', width: 22 + (i * 13) % 22 + '%', animationDuration: 2.4 + (i * 0.53) % 1.6 + 's', animationDelay: -(i * 0.71) + 's', opacity: 0.85 + (i % 3) * 0.07, zIndex: i === 3 ? 3 : 1 } })));
     // 1) 바깥 풍경 그대로: 활주로를 달리며 화면이 따라간다(1.5초 뒤 돛단배 · 다시 1.5초 뒤 등대) → 등대 앞에서 떠오른다
     const layer = h('div', { class: 'ap-ride-w', style: { width: W + 'px', height: H + 'px' } }, h('img', { class: 'ap-boat', src: 'img/air/boat.webp?v=2', alt: '' }), rig, h('img', { class: 'ap-front', src: 'img/air/front.webp?v=4', alt: '' }));
-    const el = h('div', { class: 'ap-ride', style: { height: H + 'px' } }, layer, sky, box); let timer = 0, raf2 = 0, t0 = performance.now(); const FLY = 180000;
+    const el = h('div', { class: 'ap-ride', style: { height: H + 'px' } }, sky, layer, box); let timer = 0, raf2 = 0, t0 = performance.now(); const FLY = 180000;
     const end = () => { clearInterval(timer); cancelAnimationFrame(raf2); el.remove(); bgm.start('airport'); };
     msg.textContent = `✈️ ${DEST}행 출발!`; sub.textContent = '활주로를 달려요…'; scene.append(el); sfx('pop');
     const vw = el.clientWidth || 360, c0 = W * 0.52, c1 = W * 0.675, c2 = Math.min(W * 0.87, W - vw / 2), RY = H * 0.585, rw = W * 0.19; rig.style.width = rw + 'px';
@@ -135,7 +135,7 @@ export function openAirport(o) {
       layer.style.transform = `translateX(${-(Math.max(vw / 2, Math.min(W - vw / 2, cam)) - vw / 2).toFixed(1)}px)`; rig.style.left = X + 'px'; rig.style.top = py + 'px'; rig.style.rotate = rot + 'deg';
       if (t < T) raf2 = requestAnimationFrame(run); else fly(); };
     // 2) 하늘: 위아래로 흔들리며 구름이 빠르게 스친다(3분)
-    const fly = () => { layer.remove(); rig.removeAttribute('style'); rig.classList.add('air'); el.classList.add('fly'); sky.hidden = false; sky.append(rig); const f0 = Date.now(); bgm.start('flight');
+    const fly = () => { layer.remove(); rig.removeAttribute('style'); rig.classList.add('air'); el.classList.add('fly'); sky.classList.remove('wait'); sky.append(rig); const f0 = Date.now(); bgm.start('flight');
       const tick = () => { const left = FLY - (Date.now() - f0); if (left <= 0) { clearInterval(timer); msg.textContent = `🛬 ${DEST} 공항이 보여요!`; sub.textContent = `${DEST} 공항은 지금 공사 중이에요 🚧 · 곧 내릴 수 있어요`; if (!offBtn.isConnected) box.append(offBtn); offBtn.textContent = '카피공항으로 돌아가기'; return; }
         msg.textContent = `✈️ ${DEST}로 가는 중`; sub.textContent = `도착까지 ${mmss(left)}`; };
       tick(); timer = setInterval(tick, 500); };
