@@ -130,11 +130,13 @@ export function openAirport(o) {
       // 4초 동안 끊김 없이 점점 빨라지며 달리고, 등대에 닿기 전(0.78W)에 기수를 들고 ↗ 로 떠오른다
       const RUN = 4, x0 = c0 - vw * 0.12, xL = W * 0.78, v1 = (xL - x0) * 1.7 / RUN, s = t - RUN;
       const X = t < RUN ? x0 + (xL - x0) * Math.pow(t / RUN, 1.7) : xL + v1 * s * (1 + s * 0.15);
-      const cmax = W - vw / 2, kk = vw * 0.06, cam = -kk * Math.log(Math.exp(-(X + vw * 0.12) / kk) + Math.exp(-cmax / kk)); // 화면 끝에서 카메라가 부드럽게 멈춘다
-      if (s > 0) { const u = s / 1.5; py = RY - H * 0.9 * u * u; const k = Math.min(1, s / 0.9); rot = -24 * k * k * (3 - 2 * k); }
+      const cmax = W - vw / 2, kk = vw * 0.12, cam = -kk * Math.log(Math.exp(-(X + vw * 0.12) / kk) + Math.exp(-cmax / kk)); // 화면 끝에서 카메라가 부드럽게 멈춘다
+      { const LIFT = 2.4, RISE = H * 0.8, sm = v => { v = Math.max(0, Math.min(1, v)); return v * v * (3 - 2 * v); }; // 기수를 살짝 먼저 들고, 올라가는 길을 따라 완만하게 기울며 떠오른다
+        const u = Math.max(0, s) / LIFT, vy = RISE * 2.4 * Math.pow(u, 1.4) / LIFT, vx = v1 * (1 + Math.max(0, s) * 0.3);
+        py = RY - RISE * Math.pow(u, 2.4); rot = -Math.min(20, 4 * sm((s + 0.5) / 0.5) + Math.atan2(vy, vx) * 180 / Math.PI * 0.55); layer.style.opacity = String(Math.max(0, Math.min(1, (RUN + LIFT - t) / 0.35))); }
       const px = X;
       layer.style.transform = `translateX(${-(Math.max(vw / 2, Math.min(W - vw / 2, cam)) - vw / 2).toFixed(1)}px)`; rig.style.left = px + 'px'; rig.style.top = py + 'px'; rig.style.rotate = rot + 'deg';
-      if (t < 5.7) raf2 = requestAnimationFrame(run); else fly(); };
+      if (t < 6.4) raf2 = requestAnimationFrame(run); else fly(); };
     // 2) 하늘: 위아래로 흔들리며 구름이 빠르게 스친다(3분)
     const fly = () => { layer.remove(); rig.removeAttribute('style'); rig.classList.add('air'); el.classList.add('fly'); sky.hidden = false; sky.append(rig); const f0 = Date.now(); bgm.start('flight');
       const tick = () => { const left = FLY - (Date.now() - f0); if (left <= 0) { clearInterval(timer); msg.textContent = `🛬 ${DEST} 공항이 보여요!`; sub.textContent = `${DEST} 공항은 지금 공사 중이에요 🚧 · 곧 내릴 수 있어요`; if (!offBtn.isConnected) box.append(offBtn); offBtn.textContent = '카피공항으로 돌아가기'; return; }
