@@ -37,9 +37,9 @@ export function openAirport(o) {
   const outPlane = h('img', { class: 'ap-plane out', src: 'img/air/plane.webp?v=3', alt: '' });
   const parked = [0.035, 0.105].map(x => h('img', { class: 'ap-parked', src: 'img/air/plane.webp?v=3', alt: '', style: { left: W * x + 'px' } })); // 터미널 왼쪽 계류장: 두 대가 나란히
   const term = h('button', { class: 'ap-term', 'aria-label': '카피공항 들어가기', style: { left: TX + 'px', width: TWD + 'px' }, onClick: () => walkTo(doorX, goIn) }, h('img', { src: 'img/air/terminal.webp', alt: '' }), h('b', { class: 'ap-term-t' }, '카피공항'));
-  const front = h('img', { class: 'ap-front', src: 'img/air/front.webp', alt: '' }); // 활주로 앞 야자수·난간: 비행기보다 앞에 보이게
+  const front = h('img', { class: 'ap-front', src: 'img/air/front.webp?v=4', alt: '' }); // 활주로 앞 야자수·난간: 비행기보다 앞에 보이게
   const exitSign = h('button', { class: 'fm-exit', style: { left: W - Math.round(W * 0.13) + 'px' }, onClick: () => close() }, '놀이터로 →');
-  const outWorld = h('div', { class: 'fm-world ap-world', style: { width: W + 'px', height: H + 'px', backgroundImage: 'url(img/air/out.webp)' } }, h('div', { class: 'ap-runway' }, outPlane), ...parked, front, term, exitSign);
+  const outWorld = h('div', { class: 'fm-world ap-world', style: { width: W + 'px', height: H + 'px', backgroundImage: 'url(img/air/out.webp?v=4)' } }, h('div', { class: 'ap-runway' }, outPlane), h('img', { class: 'ap-boat', src: 'img/air/boat.webp?v=2', alt: '' }), ...parked, front, term, exitSign);
   // 안쪽
   const counter = h('button', { class: 'ap-counter', 'aria-label': '공항 카운터', onClick: () => walkTo(W * 0.13, openTicket) });
   const inAtt = h('img', { class: 'ap-crew in tap', src: 'img/air/att.webp', alt: '카피승무원', style: { left: W * 0.115 + 'px' }, onClick: () => walkTo(W * 0.13, openTicket) }), inPilot = h('img', { class: 'ap-crew in pl', src: 'img/air/pilot.webp', alt: '카피기장', style: { left: W * 0.392 + 'px' } }); // 기장: 카운터 옆 출입구(탑승구) 바로 곁
@@ -54,7 +54,11 @@ export function openAirport(o) {
   const enterBtn = h('button', { class: 'fm-enter', hidden: true, onClick: () => (!inside ? goIn() : atGate() ? board() : openTicket()) });
   const ud = { hidden: true }; // (예전 위아래 버튼 자리)
   const dpad = h('div', { class: 'dpad ap-dpad' }, [['U', '▲'], ['L', '◀'], ['D', '▼'], ['R', '▶']].map(([k, t]) => { const b = h('button', { class: 'dp ap-dp ap-' + k, 'aria-label': { L: '왼쪽', R: '오른쪽', U: '위', D: '아래' }[k] }, t); holdBtn(b, () => { keys.add(k); b.classList.add('held'); }, () => { keys.delete(k); b.classList.remove('held'); }); return b; })); // 동물친목회와 같은 십자 방향키
-  const scene = h('div', { class: 'fm-scene' }, scroller, h('div', { class: 'fm-pad ap-pad' }, dpad, enterBtn));
+  // 오른쪽 버튼: 놀이터와 같은 말하기·A·B. A = 지금 할 수 있는 일(입장·구매·탑승), B = 나가기
+  const aLab = h('small', null, '입장'), aBtn = h('button', { class: 'ap-ab ap-a', disabled: true, 'aria-label': 'A', onClick: () => { sfx('keyA'); enterBtn.click(); } }, aLab);
+  const bBtn = h('button', { class: 'ap-ab ap-b', 'aria-label': 'B', onClick: () => { sfx('keyB'); inside ? goOut() : close(); } }, h('small', null, '나가기'));
+  const chatBtn = h('button', { class: 'ap-chat', 'aria-label': '말하기', onClick: () => { sfx('keyC'); if (inside) { const f = flightNow(now(), F); say('cnt', f); say('pl', f); say('wk', f); } else toast('바닷바람이 시원해요 🌊', 1200); } });
+  const scene = h('div', { class: 'fm-scene' }, scroller, h('div', { class: 'fm-pad ap-pad' }, dpad, h('div', { class: 'ap-acts' }, chatBtn, bBtn, aBtn)));
   const title = h('b', null, '✈️ 카피공항'), flightEl = h('span', { class: 'ap-flight' });
   const wrap = h('div', { class: 'fm ap' }, h('div', { class: 'fm-top' }, title, flightEl, h('button', { class: 'top-x', 'aria-label': '닫기', onClick: () => close() }, '✕')), scene);
   document.body.append(wrap);
@@ -98,9 +102,17 @@ export function openAirport(o) {
     for (const k in says) { if (sayT[k] > 0 && (sayT[k] -= dt) <= 0) says[k].hidden = true; if (!says[k].hidden) { const e = npc[k]; says[k].style.left = e.style.left; says[k].style.bottom = `calc(${getComputedStyle(e).bottom} + ${e.offsetHeight * (k === 'wk' ? 1 - wk.y * 0.12 : 1) + 4}px)`; } } }
   // 탑승: 바닷가 활주로 시작점에 선 비행기에 내 카피바라가 앉아 → 쪽을 본다
   function ride() { const cap = h('div', { class: 'ap-ride-me', html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) });
-    const el = h('div', { class: 'ap-ride' }, h('div', { class: 'ap-ride-rig' }, cap, h('img', { class: 'ap-ride-pl', src: 'img/air/plane.webp?v=3', alt: '' }), h('img', { class: 'ap-ride-hull', src: 'img/air/plane-hull.webp?v=3', alt: '' })),
-      h('div', { class: 'ap-ride-t' }, h('b', null, `✈️ ${DEST}행 탑승 완료!`), h('small', null, `${DEST}는 지금 한창 공사 중이에요 🚧 · 곧 날아갈 수 있어요`), h('button', { class: 'btn primary', onClick: () => { sfx('pop'); el.remove(); } }, '내리기')));
-    wrap.append(el); }
+    const rig = h('div', { class: 'ap-ride-rig go' }, h('img', { class: 'ap-ride-pl', src: 'img/air/plane.webp?v=3', alt: '' }), cap, h('img', { class: 'ap-ride-hull', src: 'img/air/plane-hull.webp?v=3', alt: '' }));
+    const msg = h('b'), sub = h('small'), offBtn = h('button', { class: 'btn sm', onClick: () => end() }, demo ? '내리기 (예시판)' : '내리기'), box = h('div', { class: 'ap-ride-t' }, msg, sub, demo && offBtn);
+    const sky = h('div', { class: 'ap-sky', hidden: true }, ...Array.from({ length: 9 }, (_, i) => h('i', { class: 'ap-cloud', style: { top: 6 + i * 10 + (i % 3) * 3 + '%', width: 70 + (i * 37) % 90 + 'px', animationDuration: 1.1 + (i * 0.37) % 1.4 + 's', animationDelay: -(i * 0.53) + 's', opacity: 0.55 + (i % 4) * 0.12 } })));
+    const el = h('div', { class: 'ap-ride' }, sky, rig, box); let timer = 0, t0 = 0; const FLY = 180000;
+    const end = () => { clearInterval(timer); el.remove(); };
+    msg.textContent = `✈️ ${DEST}행 출발!`; sub.textContent = '활주로를 달려요…'; wrap.append(el); sfx('pop');
+    // 1) 활주로를 달리다 떠올라 화면 밖으로 → 2) 하늘: 위아래로 흔들리며 구름이 빠르게 스친다(3분)
+    setTimeout(() => { if (!el.isConnected) return; el.classList.add('fly'); sky.hidden = false; rig.classList.remove('go'); rig.classList.add('air'); t0 = Date.now();
+      const tick = () => { const left = FLY - (Date.now() - t0); if (left <= 0) { clearInterval(timer); msg.textContent = `🛬 ${DEST} 공항이 보여요!`; sub.textContent = `${DEST} 공항은 지금 공사 중이에요 🚧 · 곧 내릴 수 있어요`; if (!offBtn.isConnected) box.append(offBtn); offBtn.textContent = '카피공항으로 돌아가기'; return; }
+        msg.textContent = `✈️ ${DEST}로 가는 중`; sub.textContent = `도착까지 ${mmss(left)}`; };
+      tick(); timer = setInterval(tick, 500); }, 6200); }
   let lastT = performance.now(), tick = 0;
   // 바깥 비행기(25초마다): 4초 동안 내려앉고 → 10초 동안 왼쪽으로 천천히 굴러 터미널 뒤로 들어가고 → 3초 뒤 → 8초 동안 터미널 뒤에서 나와 오른쪽(→)으로 달려 떠오른다
   function drawOut(t) { const k = t % 25000, el = outPlane; let x, y = 0, r = 0, flip = 0;
@@ -121,7 +133,7 @@ export function openAirport(o) {
     meEl.style.left = me.x + 'px'; meEl.style.bottom = `${1 + me.y * (inside ? 22 : 16)}%`; meEl.style.transform = `translateX(-50%) scale(${(1 - me.y * 0.14).toFixed(3)})`; meEl.style.zIndex = String(6 - Math.round(me.y * 3)); // 도로·실내 모두 위아래로도 걷는다
     const want = me.x - scroller.clientWidth / 2; if (Math.abs(scroller.scrollLeft - want) > 4 && (meEl.classList.contains('walk') || dir)) scroller.scrollLeft += (want - scroller.scrollLeft) * Math.min(1, dt * 6);
     const gate = atGate(), near = inside ? me.x < W * 0.24 || gate : Math.abs(me.x - doorX) < TWD * 0.55, lab = !inside ? '✈️ 공항 들어가기' : gate ? '✈️ 탑승하기' : '🎫 탑승권 사기';
-    if (enterBtn.hidden === near) enterBtn.hidden = !near; if (enterBtn.textContent !== lab) enterBtn.textContent = lab;
+    if (enterBtn.hidden === near) enterBtn.hidden = !near; if (enterBtn.textContent !== lab) enterBtn.textContent = lab; if (aBtn.disabled === near) { aBtn.disabled = !near; aBtn.classList.toggle('ready', near); } { const t = !inside ? '입장' : gate ? '탑승' : '탑승권'; if (aLab.textContent !== t) aLab.textContent = t; }
     const f = flightNow(now(), F); if (inside) drawPlane(inPlane, f, 0.2); else drawOut(now()); // 바깥: 내려앉아 터미널 뒤로 들어갔다가, 3초 뒤 다시 나와 오른쪽으로 떠나기를 되풀이
     if (inside) { if (wk.wait > 0) { wk.wait -= dt; walker.classList.remove('go'); if (wk.wait <= 0) { wk.tx = W * (0.07 + Math.random() * 0.87); wk.ty = Math.random(); } }
       else { const dx = wk.tx - wk.x, dy = wk.ty - wk.y, d = Math.hypot(dx, dy * 60); if (d < 3) wk.wait = 1 + Math.random() * 2.5; else { wk.x += dx / d * 42 * dt; wk.y += dy * 60 / d * 42 * dt / 60; if (Math.abs(dx) > 2) wk.d = Math.sign(dx); walker.classList.add('go'); } }
