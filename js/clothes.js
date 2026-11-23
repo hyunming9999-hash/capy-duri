@@ -163,7 +163,14 @@ export const SHOES = [
 export const TOPS = build(TOP_SETS, 't');
 export const BOTTOMS = build(BOTTOM_SETS, 'b');
 export const HATS = build(HAT_SETS, 'h');
-const byId = Object.fromEntries([...TOPS, ...BOTTOMS, ...HATS, ...ZOO_HATS, ...SHOES].map(x => [x.id, x]));
+const hdSet = (ch, rows) => rows.map(([kind, name, c, a], i) => ({ id: `${ch}-hd-${i + 1}`, kind, sex: 'u', name, c, a, hd: 1 }));
+export const HD_SETS = { // 핫똑랜드 비단옷집에서만 판다
+  top: hdSet('t', [['jeogori', '색동저고리', '#FFFDF7', '#E5484D'], ['jeogori', '곤룡포', '#D9363E', '#F0C04A'], ['jeogori', '초록 당의', '#3F8F5F', '#8B4FB8'], ['jeogori', '무관 쾌자', '#2F4170', '#E5484D'], ['jeogori', '하늘 도포', '#9CCBEA', '#3A3A44'], ['jeogori', '털 배자', '#FFF8E8', '#3F9E7C']]),
+  bottom: hdSet('b', [['chima', '금박 다홍치마', '#D9363E', '#F0C04A'], ['chima', '구름무늬 남치마', '#2F4170', '#DDE3F0'], ['chima', '색동치마', '#F58FB0', '#FFE99A'], ['chima', '봉황 대란치마', '#6B3FA0', '#F0C04A'], ['baji', '흰 풍차바지', '#FFFDF7', '#3B5BA9'], ['baji', '옥색 바지', '#8FD0A8', '#E5484D']]),
+  hat: hdSet('h', [['gat', '익선관', '#2E2E36', '#F0C04A'], ['gat', '족두리', '#2E2E36', '#E5484D'], ['gat', '전립', '#D9363E', '#F0C04A'], ['gat', '정자관', '#2E2E36', '#BDEBD8'], ['gat', '삿갓', '#E8C98A', '#B58B4A'], ['gat', '화관', '#F58FB0', '#F0C04A']]),
+  shoe: hdSet('s', [['gomusin', '꽃신', '#D9363E', '#FFFDF7'], ['gomusin', '당혜', '#3B5BA9', '#FFFDF7'], ['gomusin', '태사혜', '#FFFDF7', '#2E2E36'], ['gomusin', '목화', '#2E2E36', '#FFFDF7'], ['gomusin', '짚신', '#E0B870', '#B58B4A'], ['gomusin', '나막신', '#8A5A3B', '#FFFDF7']]) };
+export const HD_WEAR = Object.values(HD_SETS).flat();
+const byId = Object.fromEntries([...TOPS, ...BOTTOMS, ...HATS, ...ZOO_HATS, ...SHOES, ...HD_WEAR].map(x => [x.id, x]));
 // 머리 위에 씌울 모자 그림(없는 id면 빈 문자열)
 export const hatSvg = id => { const x = byId[id]; return !x || x.id[0] !== 'h' ? '' : x.kind === 'zoo' ? ZOO_DRAW[x.zoo]() : HAT_DRAW[x.kind](x.c, x.a); };
 // 왼발 한 짝 신발 그림(없는 id면 빈 문자열)

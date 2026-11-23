@@ -1,6 +1,6 @@
 // 돈(🪙): 게임에서 번 점수가 돈이 되고, 옷·선물을 사는 데 쓴다. 지갑과 산 물건은 사람마다 따로다
 import { toast, h, modal } from './ui.js';
-import { TOPS, BOTTOMS, HATS, ZOO_HATS, SHOES } from './clothes.js';
+import { TOPS, BOTTOMS, HATS, ZOO_HATS, SHOES, HD_SETS } from './clothes.js';
 import { sfx } from './sound.js';
 
 const FREE_N = 10; // 종류마다 앞의 10벌은 처음부터 갖고 있다
@@ -8,6 +8,7 @@ const FREE = new Set([TOPS, BOTTOMS, HATS].flatMap(a => a.slice(0, FREE_N).map(x
 const PRICES = {}; // 물가 기준: 미니게임 2~4판 또는 낚시 15~20분이면 한 벌(상의·하의 800~1,100 · 모자 600~900 · 신발 900~1,300)
 [[TOPS, 800], [BOTTOMS, 800], [HATS, 600]].forEach(([a, p]) => a.forEach((x, i) => { PRICES[x.id] = p + (i % 4) * 100; }));
 SHOES.forEach((x, i) => { PRICES[x.id] = [1000, 1000, 1000, 1300, 1300, 1300, 1100, 900, 1100][i]; }); // 신발 9켤레: 처음부터 주는 건 없고 전부 사야 한다
+[['top', 2000], ['bottom', 2000], ['hat', 1500], ['shoe', 2500]].forEach(([k, p]) => HD_SETS[k].forEach((x, i) => { PRICES[x.id] = p + (i % 4) * 250; })); // 핫똑랜드 한복: 카피랜드 옷값의 2.5배쯤
 ZOO_HATS.forEach((x, i) => { PRICES[x.id] = 2500 + ((i * 5 + 2) % 6) * 100; }); // 친목회 전용 모자: 동물에게서만 산다
 export const priceOf = id => (FREE.has(id) ? 0 : PRICES[id] || 0);
 // 게임별 환산 규칙(게임 목록과 적립 카드에 그대로 보여 준다)

@@ -106,6 +106,8 @@ const SFX = {
   bdrop: (d, t) => [0, 3, 5, 8, 12, 15, 17, 20].forEach((s2, k) => tone(d, 'triangle', hz(96 - s2), hz(96 - s2), t + k * 0.055, 0.12, 0.13, 0.004)),
   bceil: (d, t) => { tone(d, 'sine', 140, 60, t, 0.25, 0.4); noise(d, t, 0.18, 0.25, 500, 0.6); },
   bstick: (d, t) => { tone(d, 'triangle', 660, 520, t, 0.07, 0.22); noise(d, t, 0.03, 0.1, 3500, 1); },
+  janggu: (d, t) => { tone(d, 'sine', 118, 52, t, 0.26, 0.5, 0.004); tone(d, 'triangle', 176, 70, t, 0.12, 0.2, 0.003); noise(d, t, 0.05, 0.16, 320, 0.7, 'lowpass'); },
+  janggu2: (d, t) => { tone(d, 'sine', 150, 78, t, 0.16, 0.36, 0.003); noise(d, t, 0.04, 0.2, 700, 1.2); },
   pop: (d, t) => { tone(d, 'sine', 520, 260, t, 0.09, 0.3); noise(d, t, 0.03, 0.12, 2000, 1); },
   point: (d, t) => [0, 5].forEach((s, i) => tone(d, 'triangle', hz(79 + s), hz(79 + s), t + i * 0.1, 0.18, 0.22)),
   coin: (d, t) => { tone(d, 'triangle', hz(88), hz(88), t, 0.07, 0.2); tone(d, 'triangle', hz(93), hz(93), t + 0.06, 0.16, 0.2); },
