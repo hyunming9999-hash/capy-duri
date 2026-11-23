@@ -329,7 +329,7 @@ function enter() {
     firstDress = false; if (curRoute() === 'home') render();
   });
   window.addEventListener('hashchange', render);
-  const testQ = /[?&](fishtest|passdemo)=?/.test(location.search); // 연습·예시 링크는 바로 동물친목회로
+  const testQ = /[?&](fishtest|passdemo|aqtest)=?/.test(location.search); // 연습·예시 링크는 바로 동물친목회로
   if ((!location.hash || location.hash === '#home') && testQ) location.hash = 'social'; else if (!location.hash || location.hash.startsWith('#join')) location.hash = 'home'; else render();
 }
 
