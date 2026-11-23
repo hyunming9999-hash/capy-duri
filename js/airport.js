@@ -113,12 +113,15 @@ export function openAirport(o) {
     const end = () => { clearInterval(timer); cancelAnimationFrame(raf2); el.remove(); bgm.start('airport'); };
     msg.textContent = `✈️ ${DEST}행 출발!`; sub.textContent = '활주로를 달려요…'; scene.append(el); sfx('pop');
     const vw = el.clientWidth || 360, c0 = W * 0.52, c1 = W * 0.675, c2 = Math.min(W * 0.87, W - vw / 2), RY = H * 0.585, rw = W * 0.15; rig.style.width = rw + 'px';
-    const run = now2 => { if (!el.isConnected) return; const t = (now2 - t0) / 1000; let cam, px, py = RY, rot = 0;
-      const RUN = 4, v1 = (c2 - c0) * 1.7 / RUN; // 4초 동안 끊김 없이 점점 빨라지며 달리고, 등대가 보일 즈음부터 부드럽게 떠오른다
-      if (t < RUN) { cam = c0 + (c2 - c0) * Math.pow(t / RUN, 1.7); px = cam - vw * 0.12; } else { cam = c2; px = c2 - vw * 0.12 + v1 * (t - RUN) * (1 + (t - RUN) * 0.25); }
-      { const u = Math.max(0, (t - 3.3) / 2.5), q = u * u; py = RY - H * 0.8 * q; const k = Math.min(1, u * 1.6); rot = -15 * k * k * (3 - 2 * k); }
+    const run = now2 => { if (!el.isConnected) return; const t = (now2 - t0) / 1000; let py = RY, rot = 0;
+      // 4초 동안 끊김 없이 점점 빨라지며 달리고, 등대를 막 지난 자리(0.9W)에서 기수를 들고 ↗ 로 떠오른다
+      const RUN = 4, x0 = c0 - vw * 0.12, xL = W * 0.9, v1 = (xL - x0) * 1.7 / RUN, s = t - RUN;
+      const X = t < RUN ? x0 + (xL - x0) * Math.pow(t / RUN, 1.7) : xL + v1 * s * (1 + s * 0.15);
+      const cmax = W - vw / 2, kk = vw * 0.06, cam = -kk * Math.log(Math.exp(-(X + vw * 0.12) / kk) + Math.exp(-cmax / kk)); // 화면 끝에서 카메라가 부드럽게 멈춘다
+      if (s > 0) { const u = s / 1.5; py = RY - H * 0.9 * u * u; const k = Math.min(1, s / 0.9); rot = -24 * k * k * (3 - 2 * k); }
+      const px = X;
       layer.style.transform = `translateX(${-(Math.max(vw / 2, Math.min(W - vw / 2, cam)) - vw / 2).toFixed(1)}px)`; rig.style.left = px + 'px'; rig.style.top = py + 'px'; rig.style.rotate = rot + 'deg';
-      if (t < 5.8) raf2 = requestAnimationFrame(run); else fly(); };
+      if (t < 5.7) raf2 = requestAnimationFrame(run); else fly(); };
     // 2) 하늘: 위아래로 흔들리며 구름이 빠르게 스친다(3분)
     const fly = () => { layer.remove(); rig.removeAttribute('style'); rig.classList.add('air'); el.classList.add('fly'); sky.hidden = false; sky.append(rig); const f0 = Date.now(); bgm.start('flight');
       const tick = () => { const left = FLY - (Date.now() - f0); if (left <= 0) { clearInterval(timer); msg.textContent = `🛬 ${DEST} 공항이 보여요!`; sub.textContent = `${DEST} 공항은 지금 공사 중이에요 🚧 · 곧 내릴 수 있어요`; if (!offBtn.isConnected) box.append(offBtn); offBtn.textContent = '카피공항으로 돌아가기'; return; }
