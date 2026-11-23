@@ -3,8 +3,8 @@
 import { h, toast, modal } from './ui.js';
 import { sfx } from './sound.js';
 
-const SYM = [['seven', 5, 200, '세븐'], ['gem', 8, 50, '보석'], ['melon', 12, 25, '수박'], ['bell', 15, 12, '종'], ['yuzu', 25, 6, '유자'], ['cherry', 35, 4, '체리']]; // [그림, 릴 비율, 세 개 배당, 이름]
-const TWO = { seven: 10, cherry: 2 }, BETS = [50, 100, 500], CELL = 100 / 3; // 딱 두 개만 맞아도 주는 그림
+const SYM = [['seven', 8, 200, '세븐'], ['gem', 8, 50, '보석'], ['melon', 12, 25, '수박'], ['bell', 15, 12, '종'], ['yuzu', 25, 6, '유자'], ['cherry', 32, 4, '체리']]; // [그림, 릴 비율, 세 개 배당, 이름]
+const TWO = { seven: 6, cherry: 2 }, BETS = [50, 100, 500], CELL = 100 / 3; // 딱 두 개만 맞아도 주는 그림
 const img = k => `img/slot/${k}.webp`;
 const roll = () => { let r = Math.random() * 100; for (const s of SYM) { r -= s[1]; if (r < 0) return s[0]; } return 'cherry'; };
 export const payOf = ks => { const [a, b, c] = ks; if (a === b && b === c) return SYM.find(s => s[0] === a)[2]; for (const k in TWO) if (ks.filter(x => x === k).length === 2) return TWO[k]; return 0; };
