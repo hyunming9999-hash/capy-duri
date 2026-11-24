@@ -3479,3 +3479,12 @@ body.hd-resume #app { visibility: hidden; } body.hd-resume .fm.ap:not(.hd) { vis
 .hd-rick:not(.go) .rb { animation: hdRickIdle 1.8s ease-in-out infinite; transform-origin: 25% 100%; } @keyframes hdRickIdle { 50% { scale: 1 1.02; } }
 .hd-rick:not(.go) .rf2 { animation: hdRickTap 3.4s ease-in-out infinite; } @keyframes hdRickTap { 0%, 78%, 100% { translate: 0 0; } 84% { translate: 0 -8%; } 90% { translate: 0 0; } 94% { translate: 0 -6%; } }
 .hd-rick-say { background: #FFF6D8; border-color: #C9963C; }
+
+.fs-scare { position: absolute; inset: 0; z-index: 60; pointer-events: none; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 45%, rgba(40,0,30,.75), #000 70%); animation: fsScareBg 1.9s ease-in forwards; overflow: hidden; }
+.fs-scare img { width: 92%; max-width: 420px; filter: brightness(.55) contrast(1.4) drop-shadow(0 0 28px #8E2BFF) drop-shadow(0 0 60px #C0102A); animation: fsScareFace 1.9s cubic-bezier(.2,.9,.3,1) forwards; }
+.fs-scare b { position: absolute; bottom: 22%; left: 0; right: 0; text-align: center; color: #E8D9FF; font: 900 26px/1 var(--head); letter-spacing: 8px; text-shadow: 0 0 12px #9B30FF, 0 0 4px #000; animation: fsScareTxt 1.9s ease forwards; }
+.fs-scare-bolt { position: absolute; inset: 0; background: linear-gradient(115deg, transparent 46%, rgba(255,60,90,.9) 48%, #fff 49%, rgba(170,60,255,.8) 50.5%, transparent 53%); mix-blend-mode: screen; animation: fsScareBolt 1.9s steps(1) forwards; }
+@keyframes fsScareBg { 0% { opacity: 0; } 6% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes fsScareFace { 0% { transform: scale(.25) translateY(30%); opacity: 0; } 12% { opacity: 1; } 30% { transform: scale(1.25) rotate(-3deg); } 34% { transform: scale(1.18) rotate(3deg); } 38% { transform: scale(1.25) rotate(-2deg); } 75% { transform: scale(1.3); opacity: 1; } 100% { transform: scale(1.8); opacity: 0; } }
+@keyframes fsScareTxt { 0%, 30% { opacity: 0; } 45%, 75% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes fsScareBolt { 0% { opacity: 0; } 8% { opacity: 1; } 12% { opacity: 0; } 22% { opacity: 1; transform: scaleX(-1); } 26% { opacity: 0; } 100% { opacity: 0; } }
