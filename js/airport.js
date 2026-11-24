@@ -63,7 +63,7 @@ export function openAirport(o) {
   const scene = h('div', { class: 'fm-scene' }, scroller, ud, h('div', { class: 'fm-pad ap-pad' }, dpad, h('div', { class: 'ap-acts' }, chatBtn, bBtn, aBtn)));
   const title = h('b', null, '✈️ 카피공항'), flightEl = h('span', { class: 'ap-flight' });
   const wrap = h('div', { class: 'fm ap' }, h('div', { class: 'fm-top' }, title, flightEl, h('button', { class: 'top-x', 'aria-label': '닫기', onClick: () => close() }, '✕')), scene);
-  document.body.append(wrap); bgm.start('airport'); if (o.resume && !demo) import('./hotddok.js').then(m => m.openHotddok({ ctx, demo, resume: true, onClose: () => { bgm.start('airport'); goIn(); owlNote(); } })).catch(() => {}); /* 핫똑랜드에 있다가 새로 연 경우 */ if (demo && /[?&]town(&|=|$)/.test(location.search)) import('./hotddok.js').then(m => m.openHotddok({ ctx, demo, start: 'town', onClose: () => { bgm.start('airport'); goIn(); } })).catch(() => {}); /* 예시 링크 ?airdemo&town: 비행 · 환영식 없이 바로 마을 */ else if (demo && LV) setTimeout(() => alive && ride(), 900); // ?lift=1: 열자마자 바로 이륙
+  document.body.append(wrap); bgm.start('airport'); if (o.resume && !demo) import('./hotddok.js').then(m => m.openHotddok({ ctx, demo, onMenu: () => { close(); location.hash = 'home'; }, resume: true, onClose: () => { bgm.start('airport'); goIn(); owlNote(); } })).catch(() => {}); /* 핫똑랜드에 있다가 새로 연 경우 */ if (demo && /[?&]town(&|=|$)/.test(location.search)) import('./hotddok.js').then(m => m.openHotddok({ ctx, demo, onMenu: () => { close(); location.hash = 'home'; }, start: 'town', onClose: () => { bgm.start('airport'); goIn(); } })).catch(() => {}); /* 예시 링크 ?airdemo&town: 비행 · 환영식 없이 바로 마을 */ else if (demo && LV) setTimeout(() => alive && ride(), 900); // ?lift=1: 열자마자 바로 이륙
   const onKey = e => { const k = { ArrowLeft: 'L', ArrowRight: 'R', ArrowUp: 'U', ArrowDown: 'D' }[e.key] || ''; if (!k || document.querySelector('.modal-wrap')) return; e.preventDefault(); if (e.type === 'keydown') keys.add(k); else keys.delete(k); };
   window.addEventListener('keydown', onKey); window.addEventListener('keyup', onKey);
   const world = () => (inside ? inWorld : outWorld);
@@ -147,7 +147,7 @@ export function openAirport(o) {
     // 3) 착륙: 구름이 걷히고 핫똑공항이 서서히 나타난다 → 활주로에 내려앉으면 핫똑랜드로
     let landed = false; const land = () => { if (landed || !el.isConnected) return; landed = true; clearInterval(timer); offBtn.remove(); landBtn.remove(); msg.textContent = `🛬 ${DEST} 도착!`; sub.textContent = '착륙하고 있어요…';
       const bg = h('i', { class: 'ap-landbg' }); sky.prepend(bg); sky.classList.add('landing'); void bg.offsetWidth; bg.classList.add('on'); rig.classList.add('small'); void rig.offsetWidth; setTimeout(() => rig.classList.add('go'), 500); // 처음부터 작은 크기로 나타나 활주로에 내려 멈춘다
-      setTimeout(() => { if (!el.isConnected) return; sfx('pop'); el.remove(); import('./hotddok.js').then(m => m.openHotddok({ ctx, demo, onClose: () => { bgm.start('airport'); goIn(); owlNote(); } })).catch(() => bgm.start('airport')); }, 5200); };
+      setTimeout(() => { if (!el.isConnected) return; sfx('pop'); el.remove(); import('./hotddok.js').then(m => m.openHotddok({ ctx, demo, onMenu: () => { close(); location.hash = 'home'; }, onClose: () => { bgm.start('airport'); goIn(); owlNote(); } })).catch(() => bgm.start('airport')); }, 5200); };
     const landBtn = h('button', { class: 'btn sm', onClick: () => land() }, '🛬 바로 착륙 (예시판)');
     raf2 = requestAnimationFrame(run); }
   let lastT = performance.now(), tick = 0;

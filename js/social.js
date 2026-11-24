@@ -496,7 +496,7 @@ export function mount(el, ctx) {
   let palPending = false, palMod = null; const palMark = on => { const o = actors[19]; if (o && o.e) o.e.classList.toggle('pl-call', on); };
   function palaceCall(ms) { if (trial) return; import('./palace.js').then(m => m.palaceDue(ctx).then(due => { palMod = m; palPending = due; palMark(due); if (due) setTimeout(() => { if (palPending && !document.querySelector('.pl')) { sfx('point'); toast('🦉 부엉이가 말을 걸어요! 부엉이를 찾아가세요', 4200); } }, ms); })).catch(() => {}); } /* 부엉이를 눌러야 시안 창이 뜬다 */
   function palaceOpen() { keys.clear(); sfx('pop'); palMod.openPalace({ ctx, owl: animalSvg(19), toned, onDone: () => palMod.palaceDue(ctx).then(due => { palPending = due && !palMod.PALTEST; palMark(palPending); }) }); }
-  function goAir(resume) { if (farmOpen) return; if (fishOpen || battle) return toast('하던 걸 끝내고 공항에 갈 수 있어요'); if (me.boat) return toast('배에서 내린 뒤에 공항에 갈 수 있어요'); fishOpen = true; farmOpen = true; keys.clear(); sfx('pop');
+  function goAir(resume) { if (farmOpen || document.querySelector('.fm.ap')) return; if (fishOpen || battle) return toast('하던 걸 끝내고 공항에 갈 수 있어요'); if (me.boat) return toast('배에서 내린 뒤에 공항에 갈 수 있어요'); fishOpen = true; farmOpen = true; keys.clear(); sfx('pop');
     import('./airport.js').then(m => m.openAirport({ ctx, demo: AIRDEMO, resume: resume === true, scoot: () => (scoot ? scootHtml() : null), onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); palaceCall(900); } })).catch(() => { fishOpen = false; farmOpen = false; }); }
   const fcrow = farmCrow(ctx, { goFarm: () => goFarm() });
   // 카피수족관 시험판 링크(?aqtest=1·2·3): 실제 물고기 자료로 채운 수족관을 바로 띄운다. 아무것도 저장하지 않음
