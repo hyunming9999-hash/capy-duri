@@ -212,6 +212,7 @@ export function openFishing(o) {
   // 찌가 물에 닿았다: 물이 튀고, 줄이 가라앉고, 그때부터 입질을 기다린다
   function splash(x, big) { const r = h('i', { class: 'fs-splash' + (big ? ' big' : ''), style: { left: x + '%' } }); surf.append(r); setTimeout(() => r.remove(), 700); }
   function touch() {
+    cur.sense = !!(cur.f.ghost && o.ghostSense && o.ghostSense() && Math.random() < 0.9); /* 청양이의 상징품(고추): 블랙귀신아귀를 90% 확률로 미리 알아챈다 */
     const p = cur.p; phase = 'wait'; t0 = performance.now(); biteAt = t0 + rnd(1400, 4200) * (1 - p * 0.35); nibAt = Math.random() < 0.6 ? t0 + rnd(400, Math.max(450, biteAt - t0 - 450)) : 0;
     stormAt = stormIn ? t0 + rnd(900, 2600) : 0; // 풍랑은 입질 오기 전후에 분다(챔질 전에 대부분 불어서 끝까지 못 버틴다)
     if (cur.f.pearl) { wrap.classList.add('pearl'); sfx('bigfish'); pearlTxt.hidden = false; pearlTxt.textContent = '✨ 물속에서 뭔가 반짝여요! ✨'; }
@@ -231,6 +232,11 @@ export function openFishing(o) {
     phase = 'charm'; wrap.classList.add('fight', 'reel'); fishEl.className = 'fs-fish on'; fishEl.innerHTML = shadow();
     setTimeout(() => { if (!alive) return; wrap.classList.remove('reel'); if (Math.random() < 0.9) landed(); else fail('앗… 진주가 마지막에 빠져나갔어요. (부적은 사용됐어요)'); }, 1800);
   }
+  // 청양이의 고추가 따끔: 입질 순간 물고기 실루엣을 보여 주며 블랙귀신아귀라고 알려 준다. 놓아줄지 그래도 잡을지 고른다
+  function senseGhost() { phase = 'sense'; wrap.classList.add('ghost'); sfx('bad'); say('앗… 부정스러운 기운이다. 블랙귀신아귀다, 잡지 말자!', 'warn');
+    const card = h('div', { class: 'fs-ghostcard fs-sense' }, h('img', { class: 'fs-sil', src: cur.f.img, alt: '' }), h('b', null, '🌶️ 앗… 부정스러운 기운이다!'), h('p', null, '“블랙귀신아귀다, 잡지 말자!”'), h('small', null, '청양이의 고추가 따끔거려요 · 걸린 물고기의 실루엣'),
+      h('div', { class: 'fs-sense-b' }, h('button', { class: 'btn primary', onClick: () => { card.remove(); wrap.classList.remove('ghost'); if (alive) ready('블랙귀신아귀를 놓아줬어요. 휴… (미끼 1개 사용)'); } }, '🙅 놓아주기'), h('button', { class: 'btn', onClick: () => { card.remove(); if (!alive) return; phase = 'wait'; biteEnd = Infinity; strike(); } }, '그래도 잡기')));
+    wrap.append(card); }
   function strike() {
     const now = performance.now();
     if (phase !== 'wait') return;
@@ -321,6 +327,7 @@ export function openFishing(o) {
     else if (phase === 'wait') {
       float.classList.toggle('nib', !!nibAt && now > nibAt && now < nibAt + 350);
       if (now >= biteAt && !shown) { shown = true; biteEnd = now + [0, 900, 700, 520][zone] + D_BITE[K()] + cur.p * 260 - (cur.f.pearl ? 180 : 0); float.classList.add('bite'); mark.textContent = '!'; splash(fx); sfx('bite'); }
+      if (shown && cur.sense && !cur.sensed) { cur.sensed = true; return void senseGhost(); }
       if (!shown) fishEl.style.left = fx + (1 - Math.min(1, (now - t0) / (biteAt - t0))) * 65 + (nibAt && now > nibAt && now < nibAt + 350 ? -3 : 4) + '%'; else fishEl.style.left = fx + '%';
       if (stormAt && now > stormAt) return void storm();
       if (shown && now > biteEnd) fail('놓쳤어요. 미끼만 먹고 갔어요.');

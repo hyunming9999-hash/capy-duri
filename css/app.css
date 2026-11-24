@@ -3516,3 +3516,7 @@ body.hd-resume #app { visibility: hidden; } body.hd-resume .fm.ap:not(.hd) { vis
 .fs-card.cursed .fs-pic { filter: drop-shadow(0 0 14px rgba(160, 90, 255, .8)); }
 .fs-card.cursed .btn { background: #3A2160 !important; color: #E2CCFF !important; border-color: #7A45D8 !important; box-shadow: 0 4px 0 #24123F !important; }
 .fs-card.cursed .btn.primary { background: linear-gradient(#9A5CFF, #6B2FD6) !important; color: #fff !important; border-color: #4A1C9E !important; box-shadow: 0 4px 0 #3A1580 !important; }
+
+/* 청양이의 고추: 블랙귀신아귀 미리 알아채기 */
+.fs-sense .fs-sil { filter: brightness(0) drop-shadow(0 0 12px rgba(160, 110, 255, .95)); animation: fsSil 1.6s ease-in-out infinite; } @keyframes fsSil { 50% { transform: scale(1.06); filter: brightness(0) drop-shadow(0 0 20px rgba(200, 60, 90, .95)); } }
+.fs-sense small { display: block; font-size: 11px; opacity: .7; margin-bottom: 10px; } .fs-sense-b { display: flex; gap: 8px; justify-content: center; }
