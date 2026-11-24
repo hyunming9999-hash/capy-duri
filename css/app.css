@@ -3310,3 +3310,7 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .pl-done { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 6px; } .pl-done img { width: 100%; border-radius: 14px; border: 2px solid #E6D3B8; } .pl-done b { font: 800 18px/1.3 var(--head); color: #5A3A22; } .pl-done .btn { min-width: 160px; }
 .so-an.pl-call::after { content: "❗"; position: absolute; left: 50%; bottom: 100%; translate: -50% 0; font-size: 22px; animation: plCall .7s ease-in-out infinite alternate; pointer-events: none; } @keyframes plCall { to { translate: -50% -8px; } }
 .pl-yn { display: flex; gap: 8px; width: 100%; } .pl-yn .btn { flex: 1; min-width: 0; }
+
+/* 핫똑랜드 퀘스트 대화창(카피랜드 퀘스트창 방식) · 퀘스트 캐릭터 표시 */
+.hd-vn { z-index: 85; } .hd-vn .vn-pf img { width: 100%; height: auto; display: block; } .hd-vn .vn-ch { top: 44px; }
+.hd-qm { position: absolute; translate: -50% 0; z-index: 39; font-style: normal; font-size: 22px; pointer-events: none; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); animation: vnNx .8s infinite; }
