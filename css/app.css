@@ -3490,7 +3490,7 @@ body.hd-resume #app { visibility: hidden; } body.hd-resume .fm.ap:not(.hd) { vis
 @keyframes fsScareBolt { 0% { opacity: 0; } 8% { opacity: 1; } 12% { opacity: 0; } 22% { opacity: 1; transform: scaleX(-1); } 26% { opacity: 0; } 100% { opacity: 0; } }
 .hd-ghostrow { background: linear-gradient(#2A1A3A, #1A1024) !important; color: #EDE2FF; border-color: #7A4BD6 !important; }
 .hd-ghostrow b { color: #E2CCFF; } .hd-ghostrow small { color: #FF9AB0; }
-.hd-ghostrow .hd-ic { grid-row: span 2; } .hd-ghostbtns { grid-column: 1 / -1; display: flex; justify-content: flex-end; margin-top: 4px; } .hd-ghostbtns .btn:disabled { opacity: .55; }
+.hd-ghostrow .hd-ic { grid-row: span 2; } .hd-curse-opt { text-align: left; font-size: 13px; background: rgba(255,255,255,.07); border-radius: 10px; padding: 6px 8px; margin: 4px 0; } .hd-ghostbtns { grid-column: 1 / -1; gap: 6px; display: flex; justify-content: flex-end; margin-top: 4px; } .hd-ghostbtns .btn:disabled { opacity: .55; }
 .hd-curse-img { width: 60%; max-height: 120px; object-fit: contain; filter: drop-shadow(0 0 12px rgba(150, 80, 255, .8)); display: block; margin: 0 auto 6px; }
 .hd-curse-img.rel { animation: hdRelease 2.2s ease-in forwards; } @keyframes hdRelease { 60% { opacity: 1; transform: translateY(10px) scale(.9); } 100% { opacity: .15; transform: translateY(40px) scale(.6); } }
 .hd-curse { background: #1D1428; color: #EDE6FF; border-radius: 14px; padding: 10px; } .hd-curse b { color: #FFB3C4; }
