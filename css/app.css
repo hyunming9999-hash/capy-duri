@@ -3496,3 +3496,13 @@ body.hd-resume #app { visibility: hidden; } body.hd-resume .fm.ap:not(.hd) { vis
 .hd-curse { background: #1D1428; color: #EDE6FF; border-radius: 14px; padding: 10px; } .hd-curse b { color: #FFB3C4; }
 .hd-ghostno { color: #7A4BD6; font-size: 12.5px; margin: 4px 0; }
 .hd-dexbtn { width: 100%; margin-top: 6px; }
+
+/* 블랙귀신아귀 창: 어두운 보라 */
+.modal:has(.hd-curse) { background: linear-gradient(#2B1745, #150B24); border: 3px solid #7A45D8; box-shadow: 0 0 0 4px rgba(122, 69, 216, .25), 0 14px 40px rgba(20, 0, 40, .7); color: #EDE2FF; }
+.modal:has(.hd-curse) h3 { background: #3A2160; color: #E2CCFF; border-color: #7A45D8; box-shadow: none; }
+.modal:has(.hd-curse) .modal-x { background: #3A2160; color: #E2CCFF; border-color: #7A45D8; }
+.modal:has(.hd-curse) .modal-body .hd-curse { background: rgba(0, 0, 0, .28); }
+.modal:has(.hd-curse) .btn.primary { background: linear-gradient(#9A5CFF, #6B2FD6); border-color: #4A1C9E; color: #fff; box-shadow: 0 4px 0 #3A1580; }
+.modal:has(.hd-curse) .btn:not(.primary) { background: #2E1B48; color: #D9C6FF; border-color: #6A40B8; }
+.hd-curse .ap-cnt-n { color: #B9A3E0; } .hd-curse-no { color: #FF8FA8; font-weight: 800; font-size: 13px; }
+.hd-ghostrow .btn:not(.primary) { background: #3A2160; color: #E2CCFF; border-color: #7A45D8; box-shadow: 0 3px 0 #24123F; }
