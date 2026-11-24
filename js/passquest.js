@@ -178,7 +178,8 @@ function passportFx(d) { return new Promise(res => { const app = document.getEle
 export const PP_COOK = [['mulhoe', '오이 물회'], ['maeun', '매운탕'], ['gui', '대파 생선구이']];
 export function createPassQuest(q, d) {
   const ref = 'passq/' + d.uid; let st = {}, ready = false, busy = false;
-  const off = d.store.on(ref, v => { st = v || {}; ready = true; d.changed && d.changed(); });
+  let gave = false; // 밍땅꾸리: 4장 「감동의 요리 3종」을 한 번만 완료 처리해 준다
+  const off = d.store.on(ref, v => { st = v || {}; ready = true; if (!gave && d.meName === '밍땅꾸리' && !st.ckGift && (st.s || 0) === 3 && PP_COOK.some(([k]) => !(st.ck || {})[k])) { gave = true; d.store.update(ref, { ckGift: 1, ck: Object.fromEntries(PP_COOK.map(([k]) => [k, 1])) }).catch(() => {}); } d.changed && d.changed(); });
   const save = patch => { st = { ...st, ...patch }; d.changed && d.changed(); return d.store.update(ref, patch).catch(() => {}); };
   const S = (lines, who, ch, bg, extra, buttons, deco) => q.scene(lines, who, `🛂 ${ch}`, extra, buttons, bg, deco);
   const sub = t => h('p', { class: 'vn-sub' }, t);

@@ -63,7 +63,7 @@ export function openAirport(o) {
   const scene = h('div', { class: 'fm-scene' }, scroller, ud, h('div', { class: 'fm-pad ap-pad' }, dpad, h('div', { class: 'ap-acts' }, chatBtn, bBtn, aBtn)));
   const title = h('b', null, '✈️ 카피공항'), flightEl = h('span', { class: 'ap-flight' });
   const wrap = h('div', { class: 'fm ap' }, h('div', { class: 'fm-top' }, title, flightEl, h('button', { class: 'top-x', 'aria-label': '닫기', onClick: () => close() }, '✕')), scene);
-  document.body.append(wrap); bgm.start('airport'); if (o.resume && !demo) import('./hotddok.js').then(m => m.openHotddok({ ctx, demo, resume: true, onClose: () => { bgm.start('airport'); goIn(); } })).catch(() => {}); /* 핫똑랜드에 있다가 새로 연 경우 */ if (demo && LV) setTimeout(() => alive && ride(), 900); // ?lift=1: 열자마자 바로 이륙
+  document.body.append(wrap); bgm.start('airport'); if (o.resume && !demo) import('./hotddok.js').then(m => m.openHotddok({ ctx, demo, resume: true, onClose: () => { bgm.start('airport'); goIn(); owlNote(); } })).catch(() => {}); /* 핫똑랜드에 있다가 새로 연 경우 */ if (demo && LV) setTimeout(() => alive && ride(), 900); // ?lift=1: 열자마자 바로 이륙
   const onKey = e => { const k = { ArrowLeft: 'L', ArrowRight: 'R', ArrowUp: 'U', ArrowDown: 'D' }[e.key] || ''; if (!k || document.querySelector('.modal-wrap')) return; e.preventDefault(); if (e.type === 'keydown') keys.add(k); else keys.delete(k); };
   window.addEventListener('keydown', onKey); window.addEventListener('keyup', onKey);
   const world = () => (inside ? inWorld : outWorld);
@@ -78,6 +78,8 @@ export function openAirport(o) {
   function fitCrew() { const hh = 84; inPilot.style.height = hh + 'px'; walker.style.height = Math.round(hh * 1.22) + 'px'; inAtt.style.height = hh + 'px'; inAtt.style.bottom = Math.round(0.417 * H - 0.5 * hh) + 'px'; } // 카피바라(밍땅꾸리·두두)와 같은 키 + 모자. 카운터 승무원은 허리까지 책상 뒤에 · 기장은 조금 안쪽(작게)
   // 여권 확인: 탑승권을 사기 전에 카운터에서 먼저 받는다 — 여권이 펼쳐지고 출국 도장이 쾅, 직원들이 "폐하 망극하옵니다"
   let passOK = false; const atCounter = () => (passOK ? openTicket() : passCheck());
+  // 핫똑랜드에서 돌아왔다: 다녀온 표시를 남기고, 아직 궁전 시안을 안 골랐으면 부엉이가 찾는다고 알린다
+  async function owlNote() { if (demo) return; try { await ctx.store.update(TK, { home: 1 }); const p = await ctx.store.get('palace/' + ctx.uid); if (!(p && p.pick)) setTimeout(() => alive && toast('🦉 부엉이가 폐하를 찾고 있어요! 놀이터로 돌아가 보세요', 4200), 1200); } catch { /* 알림은 없어도 된다 */ } }
   function passCheck() { if (document.querySelector('.apv')) return; if (!pp) return modal({ title: '🛂 여권이 없어요', body: [h('div', { class: 'ap-cnt' }, h('img', { src: 'img/air/att.webp', alt: '' }), h('p', null, '폐하, 송구하오나 여권이 있어야 출국하실 수 있사옵니다.'), h('p', { class: 'ap-cnt-n' }, '동물친목회의 「카피랜드 여권 발급」 이야기를 먼저 마쳐 주세요'))], actions: [{ label: '확인', primary: true }] });
     const bub = h('span', { class: 'apv-say' }, '폐하, 여권을 살펴보겠사옵니다…'), ok = h('button', { class: 'btn primary apv-ok', onClick: () => { el.remove(); openTicket(); } }, '🎫 탑승권 사러 가기');
     const page = h('div', { class: 'apv-page' }, h('div', { class: 'apv-photo', html: capy(ctx.capyOf(ctx.uid, { face: 'smile' })) }),
@@ -145,7 +147,7 @@ export function openAirport(o) {
     // 3) 착륙: 구름이 걷히고 핫똑공항이 서서히 나타난다 → 활주로에 내려앉으면 핫똑랜드로
     let landed = false; const land = () => { if (landed || !el.isConnected) return; landed = true; clearInterval(timer); offBtn.remove(); landBtn.remove(); msg.textContent = `🛬 ${DEST} 도착!`; sub.textContent = '착륙하고 있어요…';
       const bg = h('i', { class: 'ap-landbg' }); sky.prepend(bg); sky.classList.add('landing'); void bg.offsetWidth; bg.classList.add('on'); rig.classList.add('small'); void rig.offsetWidth; setTimeout(() => rig.classList.add('go'), 500); // 처음부터 작은 크기로 나타나 활주로에 내려 멈춘다
-      setTimeout(() => { if (!el.isConnected) return; sfx('pop'); el.remove(); import('./hotddok.js').then(m => m.openHotddok({ ctx, demo, onClose: () => { bgm.start('airport'); goIn(); } })).catch(() => bgm.start('airport')); }, 5200); };
+      setTimeout(() => { if (!el.isConnected) return; sfx('pop'); el.remove(); import('./hotddok.js').then(m => m.openHotddok({ ctx, demo, onClose: () => { bgm.start('airport'); goIn(); owlNote(); } })).catch(() => bgm.start('airport')); }, 5200); };
     const landBtn = h('button', { class: 'btn sm', onClick: () => land() }, '🛬 바로 착륙 (예시판)');
     raf2 = requestAnimationFrame(run); }
   let lastT = performance.now(), tick = 0;

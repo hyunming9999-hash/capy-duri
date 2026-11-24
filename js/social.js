@@ -492,8 +492,10 @@ export function mount(el, ctx) {
   let farmOpen = false;
   function goFarm() { if (farmOpen) return; if (fishOpen || battle) return toast('하던 걸 끝내고 농장에 갈 수 있어요'); if (me.boat) return toast('배에서 내린 뒤에 농장에 갈 수 있어요'); fishOpen = true; farmOpen = true; keys.clear(); sfx('pop');
     openFarm({ ctx, keeper: farmKeeper, onRowDone: (c, g) => pq && pq.onRow(c, g), scoot: () => (scoot ? scootHtml() : null), onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); } }); }
+  // 카피궁 시안: 핫똑랜드에 다녀온 뒤 아직 시안을 안 골랐으면 놀이터에 올 때마다 부엉이가 부른다
+  function palaceCall(ms) { if (trial) return; import('./palace.js').then(m => m.palaceDue(ctx).then(due => { if (!due) return; let n = 0; const go = () => { if (document.querySelector('.pl')) return; if (farmOpen || fishOpen || battle || document.querySelector('.modal-wrap,.fm')) { if (++n < 10) setTimeout(go, 2500); return; } sfx('point'); keys.clear(); m.openPalace({ ctx, owl: animalSvg(19), toned }); }; setTimeout(go, ms); })).catch(() => {}); } /* 다른 창이 떠 있으면 닫힐 때까지 조금씩 기다린다 */
   function goAir(resume) { if (farmOpen) return; if (fishOpen || battle) return toast('하던 걸 끝내고 공항에 갈 수 있어요'); if (me.boat) return toast('배에서 내린 뒤에 공항에 갈 수 있어요'); fishOpen = true; farmOpen = true; keys.clear(); sfx('pop');
-    import('./airport.js').then(m => m.openAirport({ ctx, demo: AIRDEMO, resume: resume === true, scoot: () => (scoot ? scootHtml() : null), onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); } })).catch(() => { fishOpen = false; farmOpen = false; }); }
+    import('./airport.js').then(m => m.openAirport({ ctx, demo: AIRDEMO, resume: resume === true, scoot: () => (scoot ? scootHtml() : null), onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); palaceCall(900); } })).catch(() => { fishOpen = false; farmOpen = false; }); }
   const fcrow = farmCrow(ctx, { goFarm: () => goFarm() });
   // 카피수족관 시험판 링크(?aqtest=1·2·3): 실제 물고기 자료로 채운 수족관을 바로 띄운다. 아무것도 저장하지 않음
   try { const at = +new URLSearchParams(location.search).get('aqtest'); if (at >= 1 && at <= 3) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); import('./aquarium.js').then(m => m.openAquarium({ test: true, tank: at, me: ctx.me.name, partner: ctx.nameOf(ctx.partnerId) || '두두' })); }, 1200); } catch {}
@@ -555,6 +557,7 @@ export function mount(el, ctx) {
   if (AIRDEMO) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); goAir(); }, 1600); // 예시 링크: 바로 공항으로
   // 핫똑랜드에 있다가 새로 고침 · 다시 열기: 있던 자리로 돌아간다. (두두는 이 기능이 생기기 전에 한 번 쫓겨나서, 한 번만 되돌려 보낸다)
   else if (!trial && ctx.store.get) ctx.store.get('air/' + ctx.uid).then(v => { const back = ctx.me && ctx.me.name === '두두' && !(v && v.back1); if (!((v && v.at === 'hd') || back)) return; if (back) ctx.store.update('air/' + ctx.uid, { back1: 1, at: 'hd' }).catch(() => {}); setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); goAir(true); }, 1200); }).catch(() => {});
+  if (!AIRDEMO) palaceCall(2600);
   try { if (new URLSearchParams(location.search).has('crowtest')) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); if (!farmOpen && !me.boat && !fishOpen && !battle) goFarm(); setTimeout(() => fcrow.practice(), 900); }, 1200); } catch {}
   // 까마귀 퇴치 연습(?taltest)·해적전 연습(?piratetest, =2면 별빛포): 친밀도·돈·배·포탄에는 아무 영향 없음
   try { const tq = new URLSearchParams(location.search), shut = () => document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click());
