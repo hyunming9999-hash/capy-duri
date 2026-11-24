@@ -3314,3 +3314,4 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 /* 핫똑랜드 퀘스트 대화창(카피랜드 퀘스트창 방식) · 퀘스트 캐릭터 표시 */
 .hd-vn { z-index: 85; } .hd-vn .vn-pf img { width: 100%; height: auto; display: block; } .hd-vn .vn-ch { top: 44px; }
 .hd-qm { position: absolute; translate: -50% 0; z-index: 39; font-style: normal; font-size: 22px; pointer-events: none; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); animation: vnNx .8s infinite; }
+.hd-vn.bg { background-size: cover; background-position: center top; background-color: #2B2030; }
