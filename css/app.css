@@ -3467,3 +3467,5 @@ body.hd-resume #app { visibility: hidden; } body.hd-resume .fm.ap:not(.hd) { vis
 .hd-loc-fan.flap img { animation: hdFlap .12s ease-out; } @keyframes hdFlap { 50% { rotate: -25deg; } }
 .hd-loc-fan:active { translate: 0 3px; box-shadow: 0 3px 0 #9A5A10; }
 .hd-loc-fan.wind { filter: grayscale(1) brightness(.8); }
+.fm-me.hd-ride .cf-l, .fm-me.hd-ride .cf-r { animation: none !important; }
+.fm-me.hd-ride.bump > svg { animation: hdRideBump .22s ease-in-out infinite; } @keyframes hdRideBump { 50% { translate: 0 -2px; } }
