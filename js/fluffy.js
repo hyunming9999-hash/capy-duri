@@ -58,7 +58,7 @@ export function capyWear(o, own, back) {
   const top = ok(o.top, 't'), bot = ok(o.bottom, 'b'), hat = ok(o.hat, 'h'), sh = ok(o.shoe, 's'), over = bot.startsWith('b-overalls');
   const f = sh ? (back ? 'wb/' : 'w/') + sh + '.webp' : '';
   return { shoe: f ? `<g class="cf-l">${fitG(FIT.s, crop(f, own, -20, FOOT - 14, 80, 54))}</g><g class="cf-r">${fitG(FIT.s, crop(f, own, 60, FOOT - 14, 80, 54))}</g>` : '',
-    lower: bot && !over ? worn(bot, own, back) : '', upper: hands(top, o, own, back) + (top ? worn(top, own, back) : '') + (over ? worn(bot, own, back) : ''), get body() { return hands(top, o, own, back) + this.lower + (top ? worn(top, own, back) : '') + (over ? worn(bot, own, back) : ''); }, hat: hat ? `<g transform="translate(0 ${HAT_UP})">${hat.includes('-hd-') ? `<g transform="translate(60 ${HDHAT_Y + 2}) scale(${HDHAT[hat] || 1.2}) translate(-60 ${-HDHAT_Y})">${worn(hat, own, back)}</g>` : worn(hat, own, back)}</g>` : '' };
+    lower: bot && !over ? worn(bot, own, back) : '', upper: hands(top, o, own, back) + (top ? worn(top, own, back) : '') + (over ? worn(bot, own, back) : ''), get body() { return hands(top, o, own, back) + this.lower + (top ? worn(top, own, back) : '') + (over ? worn(bot, own, back) : ''); }, hat: hat ? (hat.includes('-hd-') ? worn(hat, own, back) /* 핫똑 한복 모자는 머리에 쓴 자리 그대로 그린 그림이라 옮기지 않는다 */ : `<g transform="translate(0 ${HAT_UP})">${worn(hat, own, back)}</g>`) : '' };
 }
 const MOOD = new Set(['happy', 'love', 'sad', 'cry', 'wow', 'smug', 'think', 'shy', 'angry']);
 export const animalImg = (i, mood, own) => img(`a${i}-${mood === 'mad' ? 'angry' : MOOD.has(mood) ? mood : 'base'}.webp`, own);
@@ -69,7 +69,7 @@ export function warm(color) { if (on) ['happy', 'sad', 'smile'].forEach(f => inl
 const ICON_BOX = { e: '14 14 92 56', h: '-12 -24 144 96', t: '8 70 104 62', b: '8 76 104 62', s: '20 106 80 32' };
 // 안경: 옷처럼 같은 틀 그림을 얼굴에 겹친다(뒤에서는 안 보인다)
 export const capyEye = (id, own, back) => (typeof id === 'string' && id[0] === 'e' && !back ? wimg(id, own, back) : '');
-export const clothIcon = id => (on && typeof id === 'string' && ICON_BOX[id[0]] ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${ICON_BOX[id[0]]}">${id[0] === 'h' ? `<g transform="translate(0 ${HAT_UP})">${wimg(id)}</g>` : wimg(id)}</svg>` : '');
+export const clothIcon = id => (on && typeof id === 'string' && ICON_BOX[id[0]] ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${id[0] === 'h' && id.includes('-hd-') ? '-22 -60 164 124' : ICON_BOX[id[0]]}">${id[0] === 'h' && !id.includes('-hd-') ? `<g transform="translate(0 ${HAT_UP})">${wimg(id)}</g>` : wimg(id)}</svg>` : '');
 export const gullImg = boss => img(boss ? 'gull-boss.webp' : 'gull-crew.webp');
 // 황금 장비: 몸에 걸친 채로 그린 그림이라 그대로 겹치면 된다(몸 뒤로 가는 부분은 그림에서 이미 가려져 있다)
 // 날개·꼬리처럼 옆으로 넓은 것이 잘리지 않게 황금 장비 그림은 틀이 더 넓다(480×360, 가운데가 몸)
