@@ -8,7 +8,11 @@ const FREE = new Set([TOPS, BOTTOMS, HATS].flatMap(a => a.slice(0, FREE_N).map(x
 const PRICES = {}; // 물가 기준: 미니게임 2~4판 또는 낚시 15~20분이면 한 벌(상의·하의 800~1,100 · 모자 600~900 · 신발 900~1,300)
 [[TOPS, 800], [BOTTOMS, 800], [HATS, 600]].forEach(([a, p]) => a.forEach((x, i) => { PRICES[x.id] = p + (i % 4) * 100; }));
 SHOES.forEach((x, i) => { PRICES[x.id] = [1000, 1000, 1000, 1300, 1300, 1300, 1100, 900, 1100][i]; }); // 신발 9켤레: 처음부터 주는 건 없고 전부 사야 한다
-[['top', 3200], ['bottom', 3200], ['hat', 2400], ['shoe', 4000], ['eye', 3000]].forEach(([k, p]) => HD_SETS[k].forEach((x, i) => { PRICES[x.id] = p + (i % 4) * 400; })); // 핫똑랜드 한복: 카피랜드 옷값의 2.5배쯤
+// 핫똑랜드 한복(2026-11-24 조정): 처음 6벌은 3,500~6,200으로 조금 올리고, 새로 들인 전통 한복은 번호가 뒤로 갈수록 5,000 → 11,000으로 서서히 오른다.
+// 왕실·혼례 예복과 관(곤룡포·청룡포·흑룡포·원삼·활옷·익선관·칠보 족두리·신라 금관·면류관)은 12,000, 여성 개량한복(상의·하의·모자 27~31번, 신발 7~11번)은 15,000
+const HD_ROYAL = new Set(['t-hd-2', 't-hd-13', 't-hd-14', 't-hd-15', 't-hd-25', 'b-hd-4', 'h-hd-1', 'h-hd-21', 'h-hd-22', 'h-hd-23']);
+[['top', 4000], ['bottom', 4000], ['hat', 3500], ['shoe', 5000], ['eye', 8000]].forEach(([k, p]) => HD_SETS[k].forEach((x, i) => { const n = i + 1, gaeryang = k === 'shoe' ? n >= 7 : n >= 27;
+  PRICES[x.id] = HD_ROYAL.has(x.id) ? 12000 : gaeryang ? 15000 : k === 'eye' ? p : n <= 6 ? p + (i % 4) * 400 : Math.round((5000 + (n - 7) * 6000 / 19) / 100) * 100; }));
 ZOO_HATS.forEach((x, i) => { PRICES[x.id] = 2500 + ((i * 5 + 2) % 6) * 100; }); // 친목회 전용 모자: 동물에게서만 산다
 export const priceOf = id => (FREE.has(id) ? 0 : PRICES[id] || 0);
 // 게임별 환산 규칙(게임 목록과 적립 카드에 그대로 보여 준다)
