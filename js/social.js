@@ -558,7 +558,7 @@ export function mount(el, ctx) {
   // 까마귀 연습 링크(?crowtest): 친목회에 들어오면 바로 농장으로 데려간다
   if (AIRDEMO) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); goAir(); }, 1600); // 예시 링크: 바로 공항으로
   // 핫똑랜드에 있다가 새로 고침 · 다시 열기: 있던 자리로 돌아간다. (두두는 이 기능이 생기기 전에 한 번 쫓겨나서, 한 번만 되돌려 보낸다)
-  else if (!trial && ctx.store.get) ctx.store.get('air/' + ctx.uid).then(v => { const back = ctx.me && ctx.me.name === '두두' && !(v && v.back1); if (!((v && v.at === 'hd') || back)) return; if (back) ctx.store.update('air/' + ctx.uid, { back1: 1, at: 'hd' }).catch(() => {}); setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); goAir(true); }, 1200); }).catch(() => {});
+  else if (!trial && ctx.store.get) ctx.store.get('air/' + ctx.uid).then(v => { const back = ctx.me && ctx.me.name === '두두' && !(v && v.back1); if (!((v && v.at === 'hd') || back)) return; if (back) ctx.store.update('air/' + ctx.uid, { back1: 1, at: 'hd' }).catch(() => {}); setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); goAir(true); }, 150); }).catch(() => {});
   if (!AIRDEMO) palaceCall(2600);
   try { if (new URLSearchParams(location.search).has('crowtest')) setTimeout(() => { document.querySelectorAll('.modal-wrap .modal-x').forEach(x => x.click()); if (!farmOpen && !me.boat && !fishOpen && !battle) goFarm(); setTimeout(() => fcrow.practice(), 900); }, 1200); } catch {}
   // 까마귀 퇴치 연습(?taltest)·해적전 연습(?piratetest, =2면 별빛포): 친밀도·돈·배·포탄에는 아무 영향 없음

@@ -342,6 +342,10 @@ function enter() {
   });
   window.addEventListener('hashchange', render);
   const testQ = /[?&](fishtest|passdemo|aqtest|airdemo)=?/.test(location.search); // 연습·예시 링크는 바로 동물친목회로
+  // 핫똑랜드에 있다가 앱을 다시 열면: 카피랜드가 먼저 보이지 않게 가림막을 치고 곧장 핫똑랜드로 돌아간다
+  if (!testQ && (!location.hash || /^#(home|social)$/.test(location.hash)) && ctx.store.get) { const key = 'capyHdAt', cover = () => { if (!document.querySelector('.hd-cover')) { const c = h('div', { class: 'hd-cover' }, h('img', { src: 'img/patch-hotddok.webp', alt: '' }), h('b', null, '🏯 핫똑랜드로 돌아가는 중…')); document.body.append(c); setTimeout(() => c.remove(), 9000); } if (curRoute() !== 'social') location.hash = 'social'; };
+    try { if (localStorage.getItem(key) === ctx.uid) cover(); } catch { /* 저장소를 못 쓰면 아래 확인만 */ }
+    ctx.store.get('air/' + ctx.uid).then(v => { const at = !!(v && v.at === 'hd'); try { at ? localStorage.setItem(key, ctx.uid) : localStorage.removeItem(key); } catch { /* 무시 */ } if (at) cover(); else document.querySelectorAll('.hd-cover').forEach(e => e.remove()); }).catch(() => document.querySelectorAll('.hd-cover').forEach(e => e.remove())); }
   if ((!location.hash || location.hash === '#home') && testQ) location.hash = 'social'; else if (!location.hash || location.hash.startsWith('#join')) location.hash = 'home'; else render();
 }
 

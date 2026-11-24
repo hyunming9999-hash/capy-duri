@@ -16,16 +16,16 @@ const BG_W = 1344, BG_H = 576, TOWN_W = 6480, AIR_W = 2628, IMG = 'img/hd/', V =
 // [이름, 견종, 상징품, 한마디]
 export const DOGS = [
   ['몽실', '말티즈 · 승무원', '🎀 복주머니', '핫똑랜드에 오신 것을 환영하옵니다, 폐하!'], ['송이', '말티즈 · 승무원', '🪭 부채', '폐하, 짐은 저희가 들겠사옵니다!'], ['곱슬', '푸들 · 기장', '🧭 나침반', '폐하, 핫똑랜드 하늘길은 소인이 지키고 있사옵니다!'],
-  ['바둑이', '얼룩귀 강아지', '🦴 뼈다귀', '카피랜드에 제 사촌이 산다던데요!'], ['삽살이', '삽살개', '🥁 북', '둥둥! 귀한 손님 오셨다~'], ['풍산이', '풍산개', '🐯 호랑이 가죽', '호랑이도 제 앞에선 꼬리를 내리지요.'],
-  ['동경이', '경주개 동경이', '🏺 기와 조각', '꼬리가 짧은 건 천 년 내력이랍니다.'], ['귤돌이', '제주개', '🍊 귤 바구니', '귤 하나 드셔 보시겠어요?'], ['떡순이', '시바', '🍡 떡', '방금 찐 떡이에요, 말랑말랑!'],
+  ['바둑이', '얼룩귀 강아지', '🦴 뼈다귀', '카피랜드에 제 사촌이 산다던데요!'], ['복실이', '삽살개', '🥁 북', '둥둥! 귀한 손님 오셨다~'], ['백두', '풍산개', '🐯 호랑이 가죽', '호랑이도 제 앞에선 꼬리를 내리지요.'],
+  ['첨성이', '경주개 동경이', '🏺 기와 조각', '꼬리가 짧은 건 천 년 내력이랍니다.'], ['귤돌이', '제주개', '🍊 귤 바구니', '귤 하나 드셔 보시겠어요?'], ['떡순이', '시바', '🍡 떡', '방금 찐 떡이에요, 말랑말랑!'],
   ['엿가락', '웰시코기', '🍬 엿', '다리는 짧아도 달리기는 일등!'], ['노리', '포메라니안', '🪢 노리개', '이 노리개, 예쁘지요?'], ['솜이', '비숑', '☁️ 솜사탕', '제 머리가 솜사탕 같대요.'],
-  ['가래', '닥스훈트', '🍢 가래떡', '길~게 뽑은 가래떡 같다고들 해요.'], ['장군이', '불도그', '♟️ 장기알', '장이야! 한 판 두실래요?'], ['호떡이', '퍼그', '🥞 호떡', '호떡은 뜨거울 때 먹어야 제맛!'],
-  ['고추', '치와와', '🌶️ 고추', '작은 고추가 맵다고요!'], ['연이', '골든리트리버', '🪁 방패연', '바람 좋은 날엔 연을 날려요.'], ['윷돌이', '래브라도', '🎲 윷', '모 아니면 도! 윷놀이 하실래요?'],
+  ['가래떡', '닥스훈트', '🍢 가래떡', '길~게 뽑은 가래떡 같다고들 해요.'], ['장군이', '불도그', '♟️ 장기알', '장이야! 한 판 두실래요?'], ['호떡이', '퍼그', '🥞 호떡', '호떡은 뜨거울 때 먹어야 제맛!'],
+  ['청양이', '치와와', '🌶️ 고추', '작은 고추가 맵다고요!'], ['연이', '골든리트리버', '🪁 방패연', '바람 좋은 날엔 연을 날려요.'], ['윷돌이', '래브라도', '🎲 윷', '모 아니면 도! 윷놀이 하실래요?'],
   ['빙수', '허스키', '🍧 팥빙수', '여긴 좀 덥네요… 빙수 드실래요?'], ['눈꽃', '사모예드', '❄️ 눈꽃 부채', '웃는 얼굴이 제 자랑이에요!'], ['나팔이', '비글', '🎺 나팔', '뿌우~! 폐하 납시오~!'],
-  ['먹보', '슈나우저', '🖌️ 붓', '한 글자 써 드릴까요?'], ['댕기', '요크셔테리어', '🎗️ 댕기', '댕기 머리, 오늘 새로 맸어요.'], ['비단이', '시추', '🧶 비단 방석', '방석 위가 제일 좋아요…'],
-  ['부메랑', '보더콜리', '🪃 부메랑', '던지면 제가 제일 먼저 물어 와요!'], ['벼루', '달마시안', '⚫ 먹물 벼루', '이 점들, 먹물 튄 거 아니에요!'], ['짚신', '그레이하운드', '🩴 짚신', '짚신 신고 십 리도 한달음!'],
-  ['교관', '셰퍼드 · 훈련소 교관', '📯 호루라기', '차렷! …아, 폐하셨군요. 충성!'], ['사자', '차우차우', '🦁 사자 갈기', '사자 아니고 강아지예요.'], ['매화', '스피츠', '🌸 매화 비녀', '매화 비녀, 잘 어울리나요?']];
-const ROYAL = { ped: ['봇짐이', '누렁이 · 보부상', '🧺 봇짐', '허허, 좋은 물건 있으면 내놓아 보시오!'], king: ['진돌카이저 2세', '진돗개 호구 · 핫똑랜드의 왕', '👑 옥새', '오오, 전설의 카피랜드 황금폐하! 먼 길 오셨소. 핫똑랜드가 그대를 환영하오!'], gw: ['백구', '진돗개 백구 · 좌호위', '🗡️ 청룡도', '폐하 곁은 제가 지킵니다.'], gb: ['흑구', '진돗개 흑구 · 우호위', '🛡️ 방패', '수상한 자는 없군. 통과!'], m1: ['모란', '시츄 · 궁중 시녀', '🪭 모란 부채', '전하의 부채질은 제 몫이랍니다.'], m2: ['깃분', '시츄 · 궁중 시녀', '🪶 깃털 부채', '쉿, 궁 안에서는 사뿐사뿐 걸으셔야 해요.'] };
+  ['수라', '슈나우저', '🖌️ 붓', '한 글자 써 드릴까요?'], ['댕기', '요크셔테리어', '🎗️ 댕기', '댕기 머리, 오늘 새로 맸어요.'], ['비단이', '시추', '🧶 비단 방석', '방석 위가 제일 좋아요…'],
+  ['휘돌이', '보더콜리', '🪃 부메랑', '던지면 제가 제일 먼저 물어 와요!'], ['벼루', '달마시안', '⚫ 먹물 벼루', '이 점들, 먹물 튄 거 아니에요!'], ['짚신', '그레이하운드', '🩴 짚신', '짚신 신고 십 리도 한달음!'],
+  ['호령이', '셰퍼드 · 훈련소 교관', '📯 호루라기', '차렷! …아, 폐하셨군요. 충성!'], ['곶감이', '차우차우', '🦁 사자 갈기', '사자 아니고 강아지예요.'], ['매화', '스피츠', '🌸 매화 비녀', '매화 비녀, 잘 어울리나요?']];
+const ROYAL = { ped: ['봇짐이', '누렁이 · 보부상', '🧺 봇짐', '허허, 좋은 물건 있으면 내놓아 보시오!'], king: ['진돌카이저 2세', '진돗개 호구 · 핫똑랜드의 왕', '👑 옥새', '오오, 전설의 카피랜드 황금폐하! 먼 길 오셨소. 핫똑랜드가 그대를 환영하오!'], gw: ['설기', '진돗개 백구 · 좌호위', '🗡️ 청룡도', '폐하 곁은 제가 지킵니다.'], gb: ['먹쇠', '진돗개 흑구 · 우호위', '🛡️ 방패', '수상한 자는 없군. 통과!'], m1: ['모란', '시츄 · 궁중 시녀', '🪭 모란 부채', '전하의 부채질은 제 몫이랍니다.'], m2: ['깃분', '시츄 · 궁중 시녀', '🪶 깃털 부채', '쉿, 궁 안에서는 사뿐사뿐 걸으셔야 해요.'] };
 // 솔향찻집 차림표 7종: [그림, 이름, 값, 친밀도]
 const FISH_P = [[1200, 2000], [2400, 3600], [4500, 7000], [12000, 20000]]; // 핫똑 물고기 값(흔함 · 보통 · 희귀 · 전설): 이곳의 주 수입원
 const TEAS = [['t0', '솔잎차', 600, 2], ['t5', '식혜', 600, 2], ['t1', '유자차', 700, 2], ['t6', '수정과', 1000, 3], ['t2', '대추차', 1200, 3], ['t3', '오미자차', 1200, 3], ['t4', '쌍화차', 2000, 4]]; /* 값은 카피랜드의 2.5배쯤 */
@@ -89,7 +89,7 @@ const SPOTS = [[0.54, 37, '정자'], [0.578, 33, '의자'], [0.4945, 42.5, '다�
   // 위쪽 줄: 카피랜드와 같은 키(뒤로 · 소리 · 부르기 · 내 돈 · 가방)
   const wrap = h('div', { class: 'fm ap hd' }, h('div', { class: 'fm-top hd-top' }, h('div', { class: 'hd-keys' }, h('button', { class: 'hd-tb', 'aria-label': '뒤로', onClick: () => (demo ? leave() : counter()) }, '‹'), sndB, h('span', { class: 'so-sp', style: { flex: 1 } }), ctx.partnerId && ctx.call && h('button', { class: 'hd-tb', 'aria-label': '상대를 이 화면으로 부르기', onClick: () => ctx.call() }, '📣')),
     h('div', { class: 'hd-keys' }, h('small', { class: 'coin-chip hd-coin', 'data-coins': 1 }, won(ctx.coins ? ctx.coins() : 0)), title, demo && h('span', { class: 'ap-flight' }, '🧪 예시판'), h('span', { style: { flex: 1 } }), h('button', { class: 'hd-bagbtn', 'aria-label': '가방', onClick: () => openBag() }, '🎒'))), scene);
-  document.body.append(wrap); bgm.start('hotddok'); worlds[zone].append(meEl);
+  document.body.append(wrap); setTimeout(() => document.querySelectorAll('.hd-cover').forEach(e => e.remove()), 500); try { demo || localStorage.setItem('capyHdAt', ctx.uid); } catch (e) { /* 무시 */ } bgm.start('hotddok'); worlds[zone].append(meEl);
   const onKey = e => { const k = { ArrowLeft: 'L', ArrowRight: 'R', ArrowUp: 'U', ArrowDown: 'D' }[e.key] || ''; if (!k) return; if (tailKey && e.type === 'keydown' && (k === 'L' || k === 'R')) { e.preventDefault(); return tailKey(k); } if (document.querySelector('.modal-wrap')) return; e.preventDefault(); if (e.type === 'keydown') keys.add(k); else keys.delete(k); };
   window.addEventListener('keydown', onKey); window.addEventListener('keyup', onKey);
   requestAnimationFrame(() => { scroller.scrollLeft = me.x - scroller.clientWidth / 2; });
@@ -341,6 +341,6 @@ const SPOTS = [[0.54, 37, '정자'], [0.578, 33, '의자'], [0.4945, 42.5, '다�
   if (o.start === 'town') { passed = true; seenTown = true; go('town', 0.11, 0.9); } /* 예시 링크: 마을에서 바로 시작 */
   raf = requestAnimationFrame(step);
   if (demo || /[?&]mock=/.test(location.search)) window.__hd = { ped, trade, bag, q, rel, npcs, giveSym, qAdd, qDraw, drawSym, me, go, save, goHome, shop, clothShop, skip: () => { seenTown = passed = true; } }; /* 예시판 · 연습 모드 확인용 */
-  function leave() { if (!alive) return; save(); if (!demo) ctx.store.update('air/' + ctx.uid, { at: null }).catch(() => {}); alive = false; tailKey = null; window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKey); cancelAnimationFrame(raf); document.querySelectorAll('.modal-wrap,.apv,.hd-wel,.hd-tail,.fs,.hd-dress').forEach(m => m.remove()); wrap.remove(); o.onClose && o.onClose(); }
+  function leave() { if (!alive) return; save(); if (!demo) ctx.store.update('air/' + ctx.uid, { at: null }).catch(() => {}); try { demo || localStorage.removeItem('capyHdAt'); } catch (e) { /* 무시 */ } alive = false; tailKey = null; window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKey); cancelAnimationFrame(raf); document.querySelectorAll('.modal-wrap,.apv,.hd-wel,.hd-tail,.fs,.hd-dress').forEach(m => m.remove()); wrap.remove(); o.onClose && o.onClose(); }
   return { close: leave };
 }
