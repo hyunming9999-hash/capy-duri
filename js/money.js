@@ -8,7 +8,7 @@ const FREE = new Set([TOPS, BOTTOMS, HATS].flatMap(a => a.slice(0, FREE_N).map(x
 const PRICES = {}; // 물가 기준: 미니게임 2~4판 또는 낚시 15~20분이면 한 벌(상의·하의 800~1,100 · 모자 600~900 · 신발 900~1,300)
 [[TOPS, 800], [BOTTOMS, 800], [HATS, 600]].forEach(([a, p]) => a.forEach((x, i) => { PRICES[x.id] = p + (i % 4) * 100; }));
 SHOES.forEach((x, i) => { PRICES[x.id] = [1000, 1000, 1000, 1300, 1300, 1300, 1100, 900, 1100][i]; }); // 신발 9켤레: 처음부터 주는 건 없고 전부 사야 한다
-[['top', 3200], ['bottom', 3200], ['hat', 2400], ['shoe', 4000]].forEach(([k, p]) => HD_SETS[k].forEach((x, i) => { PRICES[x.id] = p + (i % 4) * 400; })); // 핫똑랜드 한복: 카피랜드 옷값의 2.5배쯤
+[['top', 3200], ['bottom', 3200], ['hat', 2400], ['shoe', 4000], ['eye', 3000]].forEach(([k, p]) => HD_SETS[k].forEach((x, i) => { PRICES[x.id] = p + (i % 4) * 400; })); // 핫똑랜드 한복: 카피랜드 옷값의 2.5배쯤
 ZOO_HATS.forEach((x, i) => { PRICES[x.id] = 2500 + ((i * 5 + 2) % 6) * 100; }); // 친목회 전용 모자: 동물에게서만 산다
 export const priceOf = id => (FREE.has(id) ? 0 : PRICES[id] || 0);
 // 게임별 환산 규칙(게임 목록과 적립 카드에 그대로 보여 준다)

@@ -37,8 +37,8 @@ export function capyBody(color, face, back, own) {
 // 옷: 몸에 입힌 채로 그린 그림(같은 틀)을 그대로 겹친다. 신발은 발처럼 좌우로 잘라 걸을 때 함께 움직인다
 const HAT_UP = -10;
 // 한복 모자는 머리 위에 얹힌 듯 작아서, 챙 아래쪽을 기준으로 키워 머리가 모자 안에 들어가게 한다
-const HDHAT_Y = Y + 190 * S, HDHAT = { 'h-hd-5': 1.05 }; // 모자는 마네킹보다 머리가 낮게 그려져 있어 조금 올려 씌운다(눈을 가리지 않게)
-const wimg = (id, own, back) => img((back ? 'wb/' : 'w/') + id + '.webp' + (id === 'h-hd-1' && !back ? '?v=2' : ''), own);
+const HDHAT_Y = Y + 190 * S, HDHAT = { 'h-hd-1': 1.0, 'h-hd-2': 1.08, 'h-hd-6': 1.08, 'h-hd-5': 1.05, 'h-hd-7': 1.05, 'h-hd-8': 1.1, 'h-hd-18': 1, 'h-hd-19': 1.05, 'h-hd-20': 1, 'h-hd-22': 1.1, 'h-hd-23': 1.1, 'h-hd-25': 1.05, 'h-hd-27': 1.05, 'h-hd-29': 1.05, 'h-hd-31': 1.05 }; /* 챙이 넓거나 높은 모자는 덜 키운다 */ // 모자는 마네킹보다 머리가 낮게 그려져 있어 조금 올려 씌운다(눈을 가리지 않게)
+const wimg = (id, own, back) => img((back ? 'wb/' : 'w/') + id + '.webp' + (id === 'h-hd-1' ? '?v=3' : ''), own);
 // 새 체형(머리가 크고 몸이 작다)에 맞춰 예전 옷·장비 그림을 줄여 입힌다: [기준 x, 기준 y, 가로 배율, 세로 배율, 옆으로, 아래로] (기준점은 그대로 두고 줄인 뒤 옮긴다)
 const FIT = { t: [60, 128.5, 0.8, 0.78, 0, 0], b: [60, 128.5, 0.84, 0.8, 0, 0], h: [60, 20, 1, 1, 0, 0], s: [60, 135, 0.76, 0.86, 0, 0] };
 const fitG = (f, inner) => (f && inner ? `<g transform="translate(${f[0] + f[4]} ${f[1] + f[5]}) scale(${f[2]} ${f[3]}) translate(${-f[0]} ${-f[1]})">${inner}</g>` : inner);
@@ -58,7 +58,7 @@ export function capyWear(o, own, back) {
   const top = ok(o.top, 't'), bot = ok(o.bottom, 'b'), hat = ok(o.hat, 'h'), sh = ok(o.shoe, 's'), over = bot.startsWith('b-overalls');
   const f = sh ? (back ? 'wb/' : 'w/') + sh + '.webp' : '';
   return { shoe: f ? `<g class="cf-l">${fitG(FIT.s, crop(f, own, -20, FOOT - 14, 80, 54))}</g><g class="cf-r">${fitG(FIT.s, crop(f, own, 60, FOOT - 14, 80, 54))}</g>` : '',
-    body: hands(top, o, own, back) + (bot && !over ? worn(bot, own, back) : '') + (top ? worn(top, own, back) : '') + (over ? worn(bot, own, back) : ''), hat: hat ? `<g transform="translate(0 ${HAT_UP})">${hat.includes('-hd-') ? `<g transform="translate(60 ${HDHAT_Y + 2}) scale(${HDHAT[hat] || 1.2}) translate(-60 ${-HDHAT_Y})">${worn(hat, own, back)}</g>` : worn(hat, own, back)}</g>` : '' };
+    lower: bot && !over ? worn(bot, own, back) : '', upper: hands(top, o, own, back) + (top ? worn(top, own, back) : '') + (over ? worn(bot, own, back) : ''), get body() { return hands(top, o, own, back) + this.lower + (top ? worn(top, own, back) : '') + (over ? worn(bot, own, back) : ''); }, hat: hat ? `<g transform="translate(0 ${HAT_UP})">${hat.includes('-hd-') ? `<g transform="translate(60 ${HDHAT_Y + 2}) scale(${HDHAT[hat] || 1.2}) translate(-60 ${-HDHAT_Y})">${worn(hat, own, back)}</g>` : worn(hat, own, back)}</g>` : '' };
 }
 const MOOD = new Set(['happy', 'love', 'sad', 'cry', 'wow', 'smug', 'think', 'shy', 'angry']);
 export const animalImg = (i, mood, own) => img(`a${i}-${mood === 'mad' ? 'angry' : MOOD.has(mood) ? mood : 'base'}.webp`, own);
@@ -66,7 +66,9 @@ export const animalSitImg = i => img(`a${i}-sit.webp`);
 // 처음 화면에서 자주 쓰는 그림은 미리 받아 둔다(작은 게임 캔버스용)
 export function warm(color) { if (on) ['happy', 'sad', 'smile'].forEach(f => inline(capyFile(color, f))); }
 // 옷가게·옷장 목록의 작은 그림: 옷만 크게 보여 준다(종류마다 보이는 자리가 다르다)
-const ICON_BOX = { h: '-12 -24 144 96', t: '8 70 104 62', b: '8 76 104 62', s: '20 106 80 32' };
+const ICON_BOX = { e: '14 14 92 56', h: '-12 -24 144 96', t: '8 70 104 62', b: '8 76 104 62', s: '20 106 80 32' };
+// 안경: 옷처럼 같은 틀 그림을 얼굴에 겹친다(뒤에서는 안 보인다)
+export const capyEye = (id, own, back) => (typeof id === 'string' && id[0] === 'e' && !back ? wimg(id, own, back) : '');
 export const clothIcon = id => (on && typeof id === 'string' && ICON_BOX[id[0]] ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${ICON_BOX[id[0]]}">${id[0] === 'h' ? `<g transform="translate(0 ${HAT_UP})">${wimg(id)}</g>` : wimg(id)}</svg>` : '');
 export const gullImg = boss => img(boss ? 'gull-boss.webp' : 'gull-crew.webp');
 // 황금 장비: 몸에 걸친 채로 그린 그림이라 그대로 겹치면 된다(몸 뒤로 가는 부분은 그림에서 이미 가려져 있다)
