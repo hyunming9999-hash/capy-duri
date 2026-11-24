@@ -5,10 +5,10 @@ import { sfx } from './sound.js';
 import { won } from './money.js';
 
 export const PALACES = [
-  { id: 1, name: '앙코르 황금궁', price: 800000, tag: '연못 위 황금 사원 궁전' },
-  { id: 2, name: '크렘린 별궁', price: 800000, tag: '눈 내리는 붉은 성과 양파 지붕' },
-  { id: 3, name: '히메지 금각궁', price: 780000, tag: '벚꽃 속 하얀 천수각과 금각' },
-  { id: 4, name: '카피궁', price: 750000, tag: '유자 온천이 흐르는 카피바라 궁전' }];
+  { id: 1, name: '앙코르 황금궁', price: 280000, tag: '연못 위 황금 사원 궁전' },
+  { id: 2, name: '크렘린 별궁', price: 280000, tag: '눈 내리는 붉은 성과 양파 지붕' },
+  { id: 3, name: '히메지 금각궁', price: 270000, tag: '벚꽃 속 하얀 천수각과 금각' },
+  { id: 4, name: '카피궁', price: 260000, tag: '유자 온천이 흐르는 카피바라 궁전' }];
 export const PALTEST = /[?&]palacetest/.test(location.search); // 시험 주소: 바로 부엉이가 부르고, 골라도 저장하지 않는다
 const LINES = ['핫똑랜드에서 무사히 돌아오셨구먼, 폐하. 먼 길 고생 많으셨네.', '우리 카피랜드도 이제 폐하국의 위엄을 되찾아야 하는 법이라네.', '공항 너머 언덕에 우리만의 궁전을 세우세. 시안 네 가지를 그려 왔다네.', '미리 말씀해 주시면 재료는 소신이 준비해 두겠네.'];
 
