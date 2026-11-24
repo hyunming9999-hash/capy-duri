@@ -36,6 +36,7 @@ export function capyBody(color, face, back, own) {
 }
 // 옷: 몸에 입힌 채로 그린 그림(같은 틀)을 그대로 겹친다. 신발은 발처럼 좌우로 잘라 걸을 때 함께 움직인다
 const HAT_UP = -10;
+const HAT_IN = new Set(['h-hd-5']); // 머리가 속에 들어가는 모자: 모자 속(안쪽)은 머리 뒤에 따로 그린다
 // 한복 모자는 머리 위에 얹힌 듯 작아서, 챙 아래쪽을 기준으로 키워 머리가 모자 안에 들어가게 한다
 const HDHAT_Y = Y + 190 * S, HDHAT = { 'h-hd-1': 1.0, 'h-hd-2': 1.08, 'h-hd-6': 1.08, 'h-hd-5': 1.05, 'h-hd-7': 1.05, 'h-hd-8': 1.1, 'h-hd-18': 1, 'h-hd-19': 1.05, 'h-hd-20': 1, 'h-hd-22': 1.1, 'h-hd-23': 1.1, 'h-hd-25': 1.05, 'h-hd-27': 1.05, 'h-hd-29': 1.05, 'h-hd-31': 1.05 }; /* 챙이 넓거나 높은 모자는 덜 키운다 */ // 모자는 마네킹보다 머리가 낮게 그려져 있어 조금 올려 씌운다(눈을 가리지 않게)
 const wimg = (id, own, back) => img((back ? 'wb/' : 'w/') + id + '.webp' + (id === 'h-hd-1' ? '?v=3' : ''), own);
@@ -51,14 +52,14 @@ const PAW_K = 0.5, PAW_W = 46 * S, PAW_H = 25 * S, PAW_Y = Y + 331 * S;
 // 손 하나(발 그림을 줄여 쓴다): 물건을 들 때처럼 손만 따로 그릴 때
 export function capyPaw(o, cx, cy, right, k = PAW_K) { const f = capyFile(o.color, o.face, false), px = X + (right ? 158 : 116) * S;
   return `<g transform="translate(${(cx - PAW_W * k / 2).toFixed(2)} ${(cy - PAW_H * k / 2).toFixed(2)}) scale(${k}) translate(${(-px).toFixed(2)} ${(-PAW_Y).toFixed(2)})">${crop(f, o.own, px, PAW_Y, PAW_W, PAW_H)}</g>`; }
-function hands(top, o, own, back) { const c = top && CUFF[top.includes('-hd-') ? 'jeogori' : top.slice(2, top.lastIndexOf('-'))]; /* 핫똑 한복 저고리도 소매 끝에 손을 그린다 */ if (!c) return ''; const f = capyFile(o.color, o.face, back);
+function hands(top, o, own, back) { const c = top && !top.includes('-hd-') && CUFF[top.slice(2, top.lastIndexOf('-'))]; /* 핫똑 한복은 소매 모양이 제각각이라 손을 따로 그리지 않는다(삐져나와 보임) */ if (!c) return ''; const f = capyFile(o.color, o.face, back);
   return [[X + 116 * S, c[0]], [X + 158 * S, c[1]]].map(([px, cx]) => `<g transform="translate(${(cx - PAW_W * PAW_K / 2).toFixed(2)} ${(c[2] - PAW_H * PAW_K * 0.3).toFixed(2)}) scale(${PAW_K}) translate(${(-px).toFixed(2)} ${(-PAW_Y).toFixed(2)})">${crop(f, own, px, PAW_Y, PAW_W, PAW_H)}</g>`).join(''); }
 export function capyWear(o, own, back) {
   const ok = (id, ch) => (typeof id === 'string' && id[0] === ch ? id : '');
   const top = ok(o.top, 't'), bot = ok(o.bottom, 'b'), hat = ok(o.hat, 'h'), sh = ok(o.shoe, 's'), over = bot.startsWith('b-overalls');
   const f = sh ? (back ? 'wb/' : 'w/') + sh + '.webp' : '';
   return { shoe: f ? `<g class="cf-l">${fitG(FIT.s, crop(f, own, -20, FOOT - 14, 80, 54))}</g><g class="cf-r">${fitG(FIT.s, crop(f, own, 60, FOOT - 14, 80, 54))}</g>` : '',
-    lower: bot && !over ? worn(bot, own, back) : '', upper: hands(top, o, own, back) + (top ? worn(top, own, back) : '') + (over ? worn(bot, own, back) : ''), get body() { return hands(top, o, own, back) + this.lower + (top ? worn(top, own, back) : '') + (over ? worn(bot, own, back) : ''); }, hat: hat ? (hat.includes('-hd-') ? worn(hat, own, back) /* 핫똑 한복 모자는 머리에 쓴 자리 그대로 그린 그림이라 옮기지 않는다 */ : `<g transform="translate(0 ${HAT_UP})">${worn(hat, own, back)}</g>`) : '' };
+    lower: bot && !over ? worn(bot, own, back) : '', upper: hands(top, o, own, back) + (top ? worn(top, own, back) : '') + (over ? worn(bot, own, back) : ''), get body() { return hands(top, o, own, back) + this.lower + (top ? worn(top, own, back) : '') + (over ? worn(bot, own, back) : ''); }, hatIn: HAT_IN.has(hat) && !back ? wimg(hat + '-in', own, back) : '', hat: hat ? (hat.includes('-hd-') ? worn(hat, own, back) /* 핫똑 한복 모자는 머리에 쓴 자리 그대로 그린 그림이라 옮기지 않는다 */ : `<g transform="translate(0 ${HAT_UP})">${worn(hat, own, back)}</g>`) : '' };
 }
 const MOOD = new Set(['happy', 'love', 'sad', 'cry', 'wow', 'smug', 'think', 'shy', 'angry']);
 export const animalImg = (i, mood, own) => img(`a${i}-${mood === 'mad' ? 'angry' : MOOD.has(mood) ? mood : 'base'}.webp`, own);
