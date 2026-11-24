@@ -176,6 +176,8 @@ const byId = Object.fromEntries([...TOPS, ...BOTTOMS, ...HATS, ...ZOO_HATS, ...S
 export const hatSvg = id => { const x = byId[id]; return !x || x.id[0] !== 'h' ? '' : x.kind === 'zoo' ? ZOO_DRAW[x.zoo]() : HAT_DRAW[x.kind](x.c, x.a); };
 // 왼발 한 짝 신발 그림(없는 id면 빈 문자열)
 export const shoeSvg = id => { const x = byId[id]; return !x || x.id[0] !== 's' ? '' : SHOE_DRAW[x.kind](x.c, x.a); };
+// 발까지 덮는 긴 치마(한복 치마): 신발이 치마 밑으로 가려진다
+export const longSkirt = id => (byId[id] || {}).kind === 'chima';
 export const nameOf = id => (byId[id] || {}).name || '';
 
 // 몸통과 팔 사이/위에 끼워 넣을 조각들. under: 팔 아래에 깔리는 하의, top: 상의, over: 상의 위에 올라오는 멜빵 등
