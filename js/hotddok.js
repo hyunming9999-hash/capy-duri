@@ -72,7 +72,7 @@ export function openHotddok(o) {
   const Z = { air: { bg: 'air', w: Math.round(H * AIR_W / BG_H), base: 3, span: 26, title: '🐶 핫똑공항 · 활주로' }, in: { bg: 'inn', w: W1, base: 3, span: 22, title: '🐶 핫똑공항 · 입국장' }, tea: { bg: 'tea', w: W1, base: 3, span: 22, title: '🍵 솔향찻집' }, bath: { bg: 'bath', w: W1, base: 3, span: 24, title: '♨️ 솔숲탕' }, town: { bg: 'town', w: Math.round(H * TOWN_W / BG_H), base: 2, span: 18, title: '🏯 핫똑랜드 마을' }, pal: { bg: 'pal', w: W1, base: 3, span: 22, title: '👑 진돌카이저 궁' }, rice: { bg: 'rice', w: Math.round(H * RICE_W / BG_H), base: 2, span: 15, title: '🌾 핫똑 논' } };
   const PIER = 0.764, PIER_END = 0.866, PY = [1.07, 1.16], PAV = [0.522, 0.558], SWING = 0.497;
 // 쉴 곳: [가운데 x, 발 높이(%), 이름] — 강아지들이 가끔 가서 쉰다
-const SPOTS = [[0.54, 37, '정자'], [0.578, 33, '의자'], [0.4945, 42.5, '다리 위'], [0.179, 30, '찻집 마루']]; /* 올라설 수 있는 곳만: 연못 위 · 우물 · 탕 입구는 뺐다 */ // 나루터: 길이 끝나고 바다 위로 뻗은 다리
+const SPOTS = [[0.54, 37, '정자'], [0.578, 33, '의자'], [0.179, 30, '찻집 마루']]; /* 올라설 수 있는 곳만: 연못 위 · 우물 · 탕 입구는 뺐다 · 다리 위는 그네가 바로 앞을 가려 그네에 올라선 것처럼 보여서 뺐다 */ // 나루터: 길이 끝나고 바다 위로 뻗은 다리
   const me = { x: Z.in.w * 0.34, y: 0.6 }, meEl = h('div', { class: 'fm-me ap-me', html: capy(ctx.capyOf(ctx.uid, { face: 'happy' })) });
   const npcs = { air: [], in: [], town: [], pal: [], tea: [], bath: [], rice: [] }, spots = {}, keys = new Set(), rel = {}, mem = {}; // 친밀도 · 나눈 말(예시판은 이번 방문 동안만)
   const mk = (z, key, x, y, fixed, b) => { const royal = typeof key === 'string', src = key === 'ped' ? 'pedc' : royal ? key : 'd' + key, info = royal ? ROYAL[key] : DOGS[key], W = Z[z].w;
