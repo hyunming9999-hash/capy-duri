@@ -51,7 +51,7 @@ const PAW_K = 0.5, PAW_W = 46 * S, PAW_H = 25 * S, PAW_Y = Y + 331 * S;
 // 손 하나(발 그림을 줄여 쓴다): 물건을 들 때처럼 손만 따로 그릴 때
 export function capyPaw(o, cx, cy, right, k = PAW_K) { const f = capyFile(o.color, o.face, false), px = X + (right ? 158 : 116) * S;
   return `<g transform="translate(${(cx - PAW_W * k / 2).toFixed(2)} ${(cy - PAW_H * k / 2).toFixed(2)}) scale(${k}) translate(${(-px).toFixed(2)} ${(-PAW_Y).toFixed(2)})">${crop(f, o.own, px, PAW_Y, PAW_W, PAW_H)}</g>`; }
-function hands(top, o, own, back) { const c = top && CUFF[top.slice(2, top.lastIndexOf('-'))]; if (!c) return ''; const f = capyFile(o.color, o.face, back);
+function hands(top, o, own, back) { const c = top && CUFF[top.includes('-hd-') ? 'jeogori' : top.slice(2, top.lastIndexOf('-'))]; /* 핫똑 한복 저고리도 소매 끝에 손을 그린다 */ if (!c) return ''; const f = capyFile(o.color, o.face, back);
   return [[X + 116 * S, c[0]], [X + 158 * S, c[1]]].map(([px, cx]) => `<g transform="translate(${(cx - PAW_W * PAW_K / 2).toFixed(2)} ${(c[2] - PAW_H * PAW_K * 0.3).toFixed(2)}) scale(${PAW_K}) translate(${(-px).toFixed(2)} ${(-PAW_Y).toFixed(2)})">${crop(f, own, px, PAW_Y, PAW_W, PAW_H)}</g>`).join(''); }
 export function capyWear(o, own, back) {
   const ok = (id, ch) => (typeof id === 'string' && id[0] === ch ? id : '');
