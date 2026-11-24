@@ -3520,3 +3520,6 @@ body.hd-resume #app { visibility: hidden; } body.hd-resume .fm.ap:not(.hd) { vis
 /* 청양이의 고추: 블랙귀신아귀 미리 알아채기 */
 .fs-sense .fs-sil { filter: brightness(0) drop-shadow(0 0 12px rgba(160, 110, 255, .95)); animation: fsSil 1.6s ease-in-out infinite; } @keyframes fsSil { 50% { transform: scale(1.06); filter: brightness(0) drop-shadow(0 0 20px rgba(200, 60, 90, .95)); } }
 .fs-sense small { display: block; font-size: 11px; opacity: .7; margin-bottom: 10px; } .fs-sense-b { display: flex; gap: 8px; justify-content: center; }
+
+/* 청양이: 히든능력견 특별 마크 */
+.hd-hidden { text-align: center; margin: 0 0 8px; } .hd-hidden span { display: inline-block; padding: 5px 14px; border-radius: 999px; font-weight: 800; font-size: 15px; color: #fff; background: linear-gradient(90deg, #E5484D, #F2A700, #8E5BFF, #E5484D); background-size: 300% 100%; animation: hdHid 3s linear infinite; box-shadow: 0 0 0 2px #FFE27A, 0 4px 12px rgba(229, 72, 77, .45); text-shadow: 0 1px 2px rgba(0,0,0,.35); } .hd-hidden small { display: block; margin-top: 4px; font-size: 11px; opacity: .75; } @keyframes hdHid { to { background-position: 300% 0; } }
