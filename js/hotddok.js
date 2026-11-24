@@ -324,6 +324,7 @@ const SPOTS = [[0.54, 37, '정자'], [0.578, 33, '의자'], [0.4945, 42.5, '다�
     if (!modalOn && zone !== 'in' && zone !== 'town' && (talkAt -= dt) <= 0) { talkAt = 4 + Math.random() * 4; const c = npcs[zone].filter(n => Math.abs(n.x - me.x) < 300); if (c.length) { const n = pick(c); say(n, Math.random() < 0.5 ? n.info[3] : pick(zone === 'town' ? CHAT : WOW)); } }
     act = modalOn ? null : findAct(); if (aBtn.disabled === !!act) { aBtn.disabled = !act; aBtn.classList.toggle('ready', !!act); } if (act && aLab.textContent !== act.t) aLab.textContent = act.t;
     raf = requestAnimationFrame(step); }
+  if (o.start === 'town') { passed = true; seenTown = true; go('town', 0.11, 0.9); } /* 예시 링크: 마을에서 바로 시작 */
   raf = requestAnimationFrame(step);
   if (demo || /[?&]mock=/.test(location.search)) window.__hd = { ped, trade, bag, q, rel, npcs, giveSym, qAdd, qDraw, drawSym, me, go, save, goHome, shop, clothShop, skip: () => { seenTown = passed = true; } }; /* 예시판 · 연습 모드 확인용 */
   function leave() { if (!alive) return; save(); if (!demo) ctx.store.update('air/' + ctx.uid, { at: null }).catch(() => {}); alive = false; tailKey = null; window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKey); cancelAnimationFrame(raf); document.querySelectorAll('.modal-wrap,.apv,.hd-wel,.hd-tail,.fs,.hd-dress').forEach(m => m.remove()); wrap.remove(); o.onClose && o.onClose(); }
