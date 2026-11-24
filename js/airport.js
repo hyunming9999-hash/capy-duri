@@ -11,7 +11,7 @@ export const FLIGHT_DEMO = { every: 30000, land: 10000, stay: 3000, off: 8000 };
 export function flightNow(t, F = FLIGHT) { const k = ((t % F.every) + F.every) % F.every, a = F.land, b = a + F.stay, c = b + F.off;
   if (k < a) return { phase: 'land', p: k / a, left: 0 }; if (k < b) return { phase: 'stay', p: (k - a) / F.stay, left: b - k }; if (k < c) return { phase: 'off', p: (k - b) / F.off, left: 0 };
   return { phase: 'none', p: 0, left: F.every - k }; }
-export const TICKET = { one: 7000, round: 12000 }, DEST = '핫똑랜드';
+export const TICKET = { one: 18000, round: 30000 }, DEST = '핫똑랜드';
 const hhmm = t => { const d = new Date(t); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
 const mmss = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
 const ease = x => x * x * (3 - 2 * x);
@@ -112,7 +112,7 @@ export function openAirport(o) {
   function depAt(t) { const blk = Math.floor(t / F.every) * F.every, d = blk + F.land + F.stay; return t < d ? d : d + F.every; }
 
   // 말풍선: 승무원·기장·카운터 직원이 비행기 상황에 맞춰 한마디씩 한다
-  const LINES = { cnt: { none: ['폐하, 핫똑랜드행 탑승권은 이쪽이옵니다~', '폐하, 편도 7,000 · 왕복 12,000코인이옵니다', '폐하께서 오시니 공항이 다 환해졌사옵니다!', '폐하의 왕관은 오늘도 눈이 부시옵니다 ✨', '폐하 같은 손님은 개항 이래 처음이옵니다!'], land: ['폐하, 비행기가 들어오고 있사옵니다!', '폐하를 모시러 비행기가 달려오옵니다!'], stay: ['폐하, 지금 탑승하시옵소서!', '폐하, 마감이 얼마 안 남았사옵니다!'], off: ['폐하, 방금 떠났사옵니다… 다음 편을 대령하겠나이다', '폐하 없는 비행기라니, 허전했을 것이옵니다'] },
+  const LINES = { cnt: { none: ['폐하, 핫똑랜드행 탑승권은 이쪽이옵니다~', '폐하, 편도 18,000 · 왕복 30,000코인이옵니다', '폐하께서 오시니 공항이 다 환해졌사옵니다!', '폐하의 왕관은 오늘도 눈이 부시옵니다 ✨', '폐하 같은 손님은 개항 이래 처음이옵니다!'], land: ['폐하, 비행기가 들어오고 있사옵니다!', '폐하를 모시러 비행기가 달려오옵니다!'], stay: ['폐하, 지금 탑승하시옵소서!', '폐하, 마감이 얼마 안 남았사옵니다!'], off: ['폐하, 방금 떠났사옵니다… 다음 편을 대령하겠나이다', '폐하 없는 비행기라니, 허전했을 것이옵니다'] },
     pl: { none: ['폐하, 오늘 하늘은 폐하의 덕으로 맑사옵니다', '폐하를 모시는 것이 소신 평생의 영광이옵니다', '폐하, 핫똑랜드까지 한달음에 모시겠나이다', '폐하의 위엄에 구름도 비켜 갈 것이옵니다'], land: ['폐하, 착륙 자세가 좋사옵니다!', '폐하, 비행기 들어오니 한 걸음만 물러나 주시옵소서'], stay: ['폐하, 탑승권을 확인하겠사옵니다!', '폐하, 이쪽 문으로 오르시옵소서!'], off: ['폐하, 이륙하옵니다! 만수무강하시옵소서!', '다음엔 꼭 폐하를 모시고 날겠사옵니다'] },
     wk: { none: ['폐하 납시오~!', '폐하, 걸음걸이마저 기품이 넘치시옵니다', '폐하의 캐리어라면 백 개도 끌겠사옵니다!', '폐하, 오늘따라 털결이 고우시옵니다', '바쁘다 바빠~ 앗, 폐하!'], land: ['폐하, 비행기가 왔사옵니다!', '폐하 납시니 비행기도 서둘러 오옵니다~'], stay: ['폐하, 어서 오르시옵소서~!', '폐하 먼저! 소인은 그다음이옵니다!'], off: ['아이고 폐하, 놓치셨사옵니다…', '폐하를 두고 가다니, 저 비행기 벌 받을 것이옵니다'] } };
   const says = { cnt: h('span', { class: 'ap-say', hidden: true }), pl: h('span', { class: 'ap-say', hidden: true }), wk: h('span', { class: 'ap-say', hidden: true }) }, npc = { cnt: inAtt, pl: inPilot, wk: walker }, sayT = { cnt: 0, pl: 0, wk: 0 }; inWorld.append(says.cnt, says.pl, says.wk);
