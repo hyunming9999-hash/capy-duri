@@ -284,6 +284,7 @@ const DAY = 86400000, PATCH = [
     ['🛠️', '고친 것', '배구·목욕탕 캐릭터 · 배 겹침 · 낚시할 때 배 안에 앉기'],
     ['⚖️', '밸런스', '풍랑 15번에 1번 · 해적 10번에 0~1번 · 테트리스 최대 300·450·600']] }];
 function patchNote() {
+  try { if (ctx.uid && localStorage.getItem('capyHdAt') === ctx.uid) return; } catch { /* 무시 */ } /* 핫똑랜드로 바로 돌아가는 중엔 패치 소식을 띄우지 않는다(카피랜드로 돌아오면 다시) */
   const live = PATCH.filter(p => Date.now() < Date.parse(p.at) + DAY); if (!live.length) return;
   const m = ctx.members[ctx.uid] || {};
   const pages = live.map(p => h('div', { class: 'patch patch-page' },
