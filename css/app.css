@@ -3408,3 +3408,19 @@ body.hd-resume #app { visibility: hidden; } body.hd-resume .fm.ap:not(.hd) { vis
 .hd-qty-row .btn { min-width: 40px; padding: 6px 8px; }
 .hd-qty-n { width: 56px; text-align: center; font-size: 18px; font-weight: 700; padding: 6px 2px; border: 2px solid #E8C98A; border-radius: 10px; background: #FFFDF7; }
 .hd-qty-t { color: #B5541E; font-size: 18px; }
+/* 핫똑 블랙귀신아귀: 싸우는 동안 화면이 어둡고, 빨간 칸 밖이면 게이지가 깜빡인다 */
+.fs.ghost .fs-under, .ghost .fs-under { filter: brightness(.55) saturate(.7); }
+.fs-bar.ghostwarn { animation: fsGhostWarn .25s steps(2) infinite; }
+@keyframes fsGhostWarn { 50% { box-shadow: 0 0 0 4px rgba(160, 60, 255, .85); } }
+/* 핫똑 물고기 골라 팔기 */
+.hd-sell-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; } .hd-sell-top small { color: #8a6a4a; }
+.hd-sell-row { position: relative; } .hd-sell-row.on { background: #FFF1CC; border-color: #F0B43C; }
+.hd-chk { flex: none; width: 22px; height: 22px; border-radius: 6px; border: 2px solid #D9B26A; background: #fff; display: inline-flex; align-items: center; justify-content: center; font-style: normal; font-weight: 800; color: #fff; margin-right: 4px; }
+.hd-sell-row.on .hd-chk { background: #F0A12C; border-color: #E08A10; }
+.hd-sell-sum { font-weight: 800; color: #B5541E; margin-top: 8px; }
+/* 블랙귀신아귀 첫 만남 설명 */
+.fs-ghostcard { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(88%, 340px); z-index: 50; background: #17121F; color: #EDE6FF; border: 3px solid #8E5BFF; border-radius: 18px; padding: 14px 16px; text-align: center; box-shadow: 0 0 0 6px rgba(142, 91, 255, .25), 0 10px 30px rgba(0, 0, 0, .6); animation: fsGhostIn .35s ease-out; }
+.fs-ghostcard img { width: 70%; max-height: 120px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(160, 110, 255, .8)); }
+.fs-ghostcard b { display: block; font-size: 19px; margin: 4px 0; color: #C9B2FF; } .fs-ghostcard p { margin: 2px 0 8px; font-size: 13px; opacity: .85; }
+.fs-ghostcard ul { list-style: none; padding: 0; margin: 0 0 12px; text-align: left; font-size: 13.5px; line-height: 1.55; } .fs-ghostcard .btn { width: 100%; }
+@keyframes fsGhostIn { from { transform: translate(-50%, -50%) scale(.85); opacity: 0; } }
