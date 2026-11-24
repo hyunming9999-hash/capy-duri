@@ -1360,7 +1360,8 @@ export function mount(el, ctx) {
   // 가방: 카피랜드 · 핫똑랜드 어디서 열어도 같은 가방(o.hd: 핫똑랜드에서 열 때 그 자리에서 쓰는 물건 칸 · 없으면 저장된 핫똑 가방을 읽어 보여 준다)
   function openBag(o = {}) {
     const body = h('div', { class: 'so-list' }); let cl, hdD = null;
-    if (!o.hd && !trial) ctx.store.get('hd/' + ctx.uid).then(v => { try { hdD = v && v.s ? JSON.parse(v.s) : null; } catch (e) { hdD = null; } if (hdD && alive) import('./hotddok.js').then(m => { hdLite = m.hdBagLite; draw(); }).catch(() => {}); }).catch(() => {});
+    if (!o.hd && !trial) ctx.store.get('hd/' + ctx.uid).then(v => { try { hdD = v && v.s ? JSON.parse(v.s) : null; } catch (e) { hdD = null; } if (hdD && alive) import('./hotddok.js').then(m => { hdLite = m.hdBagLite; hdPinsL = m.hdPinsLite; draw(); }).catch(() => {}); }).catch(() => {});
+    const hdPinSec = () => (o.hdPins ? o.hdPins() : hdD && hdPinsL ? hdPinsL(ctx, hdD, () => { refreshMe(); draw(); }) : []);
     const hdSec = () => (o.hd ? o.hd(() => cl()) : hdD && hdLite ? hdLite(ctx, hdD, () => { refreshMe(); draw(); }) : []);
     const draw = () => { const pins = Object.keys(bag.pins || {}).filter(k => bag.pins[k]).map(Number), worn = pinOf(ctx.uid), wares = ANIMALS.map((_, i) => i).filter(i => ctx.owns(wareOf(i).id) && priceOf(wareOf(i).id) > 0);
       body.replaceChildren(h('button', { class: 'btn so-facebtn', onClick: () => ctx.pickFace(() => { draw(); refreshMe(); }) }, '😊 내 표정 바꾸기'), bag.scooter && !o.hd ? h('div', { class: 'sc-bag' }, h('img', { src: FLUFFY ? 'img/fl/o/scooter-b.webp' : 'img/scooter-b.webp', alt: '' }), h('div', null, h('b', null, '🦁 전설의 황금사자 스쿠터'), h('small', null, scoot ? (scPas >= 0 ? `타는 중 · 뒤에 ${ANIMALS[scPas].name} 태움` : '타는 중 · 이동 속도 1.8배') : '육지·농장에서 타요 · 이동 속도 1.8배 · 부딪혀도 친밀도 그대로')),
@@ -1380,7 +1381,7 @@ export function mount(el, ctx) {
           const wearDoll = async k => { ctx.members[ctx.uid] = { ...(ctx.members[ctx.uid] || {}), doll: k }; await ctx.store.update('members/' + ctx.uid, { doll: k }).catch(() => {}); refreshMe(); draw(); };
           return h('div', null, h('b', null, `🧸 뽑은 인형 ${dl.reduce((a, [, n]) => a + n, 0)}개`), dl.length ? h('div', { class: 'so-pins' }, dl.map(([k, n]) => h('button', { class: 'so-pin so-dollpin' + (on === k ? ' on' : ''), onClick: () => wearDoll(on === k ? null : k) }, h('span', { html: dollImg(k) }), h('small', null, on === k ? '착용 중' : `${ANIMALS[k].name} ×${n}`), h('small', { class: 'dim' }, '가슴 배지 · 선물')))) : h('p', { class: 'dim center' }, '카피오락의 인형뽑기에서 뽑아요. 동물에게 선물하거나 가슴에 달 수 있어요.')); })(),
         h('b', null, `동물에게 받은 액세서리 ${pins.length} / ${ANIMALS.length}`),
-        pins.length ? h('div', { class: 'so-pins' }, pins.map(i => h('button', { class: 'so-pin' + (worn === i ? ' on' : ''), onClick: async () => { await wearPin(worn === i ? null : i); draw(); } }, h('span', null, PERSONA[i].pin), h('small', null, worn === i ? '착용 중' : ANIMALS[i].name), h('small', { class: 'dim' }, PIN_CHEST.has(PERSONA[i].pin) ? '가슴에' : '손에')))) : h('p', { class: 'dim center' }, `동물과 ${PIN_AT}점까지 친해지면 그 동물의 상징을 선물로 받아요.`),
+        pins.length ? h('div', { class: 'so-pins' }, pins.map(i => h('button', { class: 'so-pin' + (worn === i ? ' on' : ''), onClick: async () => { await wearPin(worn === i ? null : i); draw(); } }, h('span', null, PERSONA[i].pin), h('small', null, worn === i ? '착용 중' : ANIMALS[i].name), h('small', { class: 'dim' }, PIN_CHEST.has(PERSONA[i].pin) ? '가슴에' : '손에')))) : h('p', { class: 'dim center' }, `동물과 ${PIN_AT}점까지 친해지면 그 동물의 상징을 선물로 받아요.`), ...hdPinSec(),
         h('b', null, `🐟 물고기 도감 ${Object.keys(dex).length} / ${FISH.length}${dex.pearl ? ' · 진주 ' + dex.pearl.n + '개' : ''}`),
         h('p', { class: 'dim center' }, '아직 못 잡은 물고기는 그림자로 보여요. 잡으면 그 칸이 채워져요.'),
         ...[1, 2, 3].flatMap(z => { const list = FISH.filter(f => f.z === z), got = list.filter(f => dex[f.id]).length; return [h('small', { class: 'so-dexz' }, `${ZONES[z]} ${got} / ${list.length}`),
@@ -1394,7 +1395,7 @@ export function mount(el, ctx) {
         h('p', { class: 'dim center' }, '눌러서 착용하거나 빼요. 액세서리는 가슴이나 손에만 보여요(얼굴만 나오는 곳에는 안 보여요).')); };
     draw(); cl = modal({ title: '🎒 가방', body, onClose: o.onClose, actions: [{ label: '닫기', primary: true }] });
   }
-  let hdLite = null; ctx.openCapyBag = o => openBag(o); // 핫똑랜드에서도 이 가방을 연다
+  let hdLite = null, hdPinsL = null; ctx.openCapyBag = o => openBag(o); // 핫똑랜드에서도 이 가방을 연다
 
   const offs = [
     ctx.store.on('social', v => { v = v || {}; mine = v[ctx.uid] || {}; theirs = (pid() && v[pid()]) || {}; cakeFix(); lionFix(); scores(); }),
