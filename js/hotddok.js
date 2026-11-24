@@ -138,10 +138,14 @@ const SPOTS = [[0.54, 37, '정자'], [0.578, 33, '의자'], [0.4945, 42.5, '다�
       h('button', { class: 'btn primary', disabled: !sellN, onClick: () => { cl(); RICE.forEach(c => { r.grain[c[0]] = 0; }); earn(sellSum); sfx('coin'); toast(`💰 곡식 ${sellN}단을 팔았어요 · +${sellSum.toLocaleString()} 🪙${demo ? ' (예시판: 실제로는 안 받아요)' : ''}`, 2600); save(); } }, sellN ? `💰 곡식 모두 팔기 (${sellN}단 · ${sellSum.toLocaleString()}코인)` : '💰 팔 곡식이 없어요'),
       h('p', { class: 'ap-cnt-n' }, '시세 · ' + RICE.map(c => `${c[1]} ${c[4]}`).join(' · '))), actions: [{ label: '닫기' }] }); }
   /* 일꾼 바둑이: 논에 오면 묵은 논은 갈고 익은 논은 거둔다(내 키만 한 크기) */
-  const wk = { x: 0, b: 6, job: null, t: 0, at: 0 };
+  const wk = { x: 0, b: 6, job: null, t: 0, at: 0, talk: 4 }, wkSay = h('span', { class: 'ap-say', hidden: true }); worlds.rice.append(wkSay);
+  const WK_TALK = ['소작농 개는 씨앗만 사 주시면 제가 다 해유~', '밭 가는 건 저헌티 맡기셔유~', '이 논 흙이 참 찰져유~ 올해 농사 잘 되겠구먼유', '모만 심어 주시면 나머진 지가 다 해유~', '일당은 쬐끔만 떼 갈게유~ 헤헤', '허리 한 번 펴고… 다시 해 볼게유~', '벼는 주인 발소리 듣고 큰대유~', '새참은 호떡이면 딱 좋겄네유~'];
+  const wkTell = t => { wkSay.textContent = bark(null, t); wkSay.hidden = false; wkSay.classList.remove('pop'); void wkSay.offsetWidth; wkSay.classList.add('pop'); wk.sayT = 3.4; }; /* 일꾼 바둑이는 충청도 말씨로 자꾸 말을 건다 */
   function riceFx(dt) { const r = RD(), W = Z.rice.w; if ((wk.at -= dt) <= 0) { wk.at = 1; paddyDraw(); }
-    workerEl.hidden = !r.worker; if (!r.worker) return; if (!wk.x) wk.x = W * 0.19; workerEl.style.height = Math.round(meEl.offsetHeight * 1.02) + 'px';
-    if (!wk.job) { const i = r.p.findIndex((p, k) => r.own[k] && (!p.st || rRipe(p))); if (i >= 0) wk.job = { i, t: 3.2 }; }
+    workerEl.hidden = !r.worker; if (!r.worker) { wkSay.hidden = true; return; } if (!wk.x) wk.x = W * 0.19; workerEl.style.height = Math.round(meEl.offsetHeight * 1.02) + 'px';
+    if (!wk.job) { const i = r.p.findIndex((p, k) => r.own[k] && (!p.st || rRipe(p))); if (i >= 0) { wk.job = { i, t: 3.2 }; wkTell(rRipe(r.p[i]) ? `${i + 1}번 논 거둬 들일게유~!` : `${i + 1}번 논 갈러 가유~!`); wk.talk = 9; } }
+    if ((wk.talk -= dt) <= 0) { wk.talk = 9 + Math.random() * 6; const waiting = r.p.some((p, k) => r.own[k] && p.st === 1); wkTell(waiting && Math.random() < 0.5 ? '모내기는 폐하가 해 주셔야 해유~ 볍씨 골라 주셔유~' : pick(WK_TALK)); }
+    if (!wkSay.hidden) { if ((wk.sayT -= dt) <= 0) wkSay.hidden = true; else { wkSay.style.left = wk.x + 'px'; wkSay.style.bottom = `calc(6% + ${workerEl.offsetHeight + 6}px)`; wkSay.style.zIndex = '40'; } }
     if (wk.job) { const [a, b] = PADDY[wk.job.i], tx = W * (a + b) / 2, d = tx - wk.x; if (Math.abs(d) > 4) { wk.x += Math.sign(d) * Math.min(Math.abs(d), 120 * dt); workerEl.classList.add('go'); workerEl.classList.toggle('left', d < 0); }
       else { workerEl.classList.remove('go'); if ((wk.job.t -= dt) <= 0) { const p = r.p[wk.job.i]; if (!p.st) { r.p[wk.job.i] = { st: 1, wk: 1 }; sfx('pop'); toast(`🐕 바둑이가 ${wk.job.i + 1}번 논을 갈았어요 · 모내기를 해 주세요`, 2400); } else if (rRipe(p)) { p.wk = 1; harvest(wk.job.i, true); } wk.job = null; paddyDraw(); save(); } else if (Math.random() < dt * 3) dust2(wk.x); } }
     workerEl.style.left = wk.x + 'px'; }
