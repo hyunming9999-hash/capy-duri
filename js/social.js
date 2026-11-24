@@ -493,7 +493,9 @@ export function mount(el, ctx) {
   function goFarm() { if (farmOpen) return; if (fishOpen || battle) return toast('하던 걸 끝내고 농장에 갈 수 있어요'); if (me.boat) return toast('배에서 내린 뒤에 농장에 갈 수 있어요'); fishOpen = true; farmOpen = true; keys.clear(); sfx('pop');
     openFarm({ ctx, keeper: farmKeeper, onRowDone: (c, g) => pq && pq.onRow(c, g), scoot: () => (scoot ? scootHtml() : null), onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); } }); }
   // 카피궁 시안: 핫똑랜드에 다녀온 뒤 아직 시안을 안 골랐으면 놀이터에 올 때마다 부엉이가 부른다
-  function palaceCall(ms) { if (trial) return; import('./palace.js').then(m => m.palaceDue(ctx).then(due => { if (!due) return; let n = 0; const go = () => { if (document.querySelector('.pl')) return; if (farmOpen || fishOpen || battle || document.querySelector('.modal-wrap,.fm')) { if (++n < 10) setTimeout(go, 2500); return; } sfx('point'); keys.clear(); m.openPalace({ ctx, owl: animalSvg(19), toned }); }; setTimeout(go, ms); })).catch(() => {}); } /* 다른 창이 떠 있으면 닫힐 때까지 조금씩 기다린다 */
+  let palPending = false, palMod = null; const palMark = on => { const o = actors[19]; if (o && o.e) o.e.classList.toggle('pl-call', on); };
+  function palaceCall(ms) { if (trial) return; import('./palace.js').then(m => m.palaceDue(ctx).then(due => { palMod = m; palPending = due; palMark(due); if (due) setTimeout(() => { if (palPending && !document.querySelector('.pl')) { sfx('point'); toast('🦉 부엉이가 말을 걸어요! 부엉이를 찾아가세요', 4200); } }, ms); })).catch(() => {}); } /* 부엉이를 눌러야 시안 창이 뜬다 */
+  function palaceOpen() { keys.clear(); sfx('pop'); palMod.openPalace({ ctx, owl: animalSvg(19), toned, onDone: () => palMod.palaceDue(ctx).then(due => { palPending = due && !palMod.PALTEST; palMark(palPending); }) }); }
   function goAir(resume) { if (farmOpen) return; if (fishOpen || battle) return toast('하던 걸 끝내고 공항에 갈 수 있어요'); if (me.boat) return toast('배에서 내린 뒤에 공항에 갈 수 있어요'); fishOpen = true; farmOpen = true; keys.clear(); sfx('pop');
     import('./airport.js').then(m => m.openAirport({ ctx, demo: AIRDEMO, resume: resume === true, scoot: () => (scoot ? scootHtml() : null), onClose: () => { fishOpen = false; farmOpen = false; lastT = performance.now(); palaceCall(900); } })).catch(() => { fishOpen = false; farmOpen = false; }); }
   const fcrow = farmCrow(ctx, { goFarm: () => goFarm() });
@@ -1046,7 +1048,7 @@ export function mount(el, ctx) {
   }
 
   // ----- 동물과 만나기 -----
-  function openAnimal(i) {
+  function openAnimal(i) { if (i === 19 && palPending && palMod) return palaceOpen();
     const a = ANIMALS[i], p = PERSONA[i]; let busy = false, said = '', close; held = i; animalVoice(i); actors[i] && actors[i].e.classList.remove('walk');
     const faceEl = h('span', { html: crowned(i, animalSvg(i, true, moodOf(A(i)))) }); let faceMood = moodOf(A(i));
     const bubble = h('p', { class: 'so-bubble' }), meter = h('div', { class: 'so-meter' }), quick = h('div', { class: 'so-quick' }), input = h('input', { class: 'so-input', maxLength: 60, placeholder: `${a.name}에게 하고 싶은 말`, enterKeyHint: 'send' });

@@ -1,6 +1,6 @@
 // 카피궁 시안 고르기: 핫똑랜드에서 돌아온 폐하를 부엉이가 불러 궁전 시안 네 가지를 보여 준다.
 // 고른 시안은 농장처럼 사람마다 따로 palace/<uid> 에 적는다. 지금은 고르기만 하고 코인은 지을 때 낸다(시중 · 관리 뽑기는 나중).
-import { h, toast, modal } from './ui.js';
+import { h, toast } from './ui.js';
 import { sfx } from './sound.js';
 import { won } from './money.js';
 
@@ -25,9 +25,11 @@ export function openPalace({ ctx, owl, toned, onDone }) {
     body.replaceChildren(h('div', { class: 'pl-cards' }, PALACES.map(p => { const img = h('img', { src: `img/palace/ext${p.id}.webp`, alt: p.name, loading: 'lazy' }), lab = h('i', null, '외관 · 눌러서 실내 보기');
       const pic = h('button', { class: 'pl-pic', 'aria-label': `${p.name} 외관 · 실내 바꿔 보기`, onClick: () => { shown[p.id] = !shown[p.id]; img.src = `img/palace/${shown[p.id] ? 'in' : 'ext'}${p.id}.webp`; lab.textContent = shown[p.id] ? '실내 · 눌러서 외관 보기' : '외관 · 눌러서 실내 보기'; sfx('pop'); } }, img, lab);
       return h('div', { class: 'pl-card' }, pic, h('div', { class: 'pl-info' }, h('div', null, h('b', null, `${p.id}. ${p.name}`), h('small', null, p.tag)), h('em', null, won(p.price))), h('button', { class: 'btn primary', onClick: () => pick(p) }, '이 시안으로 정하기')); }))); body.scrollTop = 0; }
-  function pick(p) { modal({ title: '🏯 시안 정하기', body: h('p', { class: 'center' }, h('b', null, p.name), '(으)로 정할까요?', h('br'), h('small', null, `짓는 값 ${won(p.price)} · 코인은 지을 때 내요`)), actions: [{ label: '더 볼게요' }, { label: '정하기', primary: true, onClick: async c => { if (typeof c === 'function') c();
-    if (!PALTEST) { try { await ctx.store.update('palace/' + ctx.uid, { pick: p.id, name: p.name, price: p.price, at: ctx.store.now ? ctx.store.now() : Date.now() }); } catch { return toast('저장하지 못했어요. 잠시 뒤 다시 해 보세요'); } }
-    sfx('fanfare'); bub.textContent = `“${say(`${p.name}이라… 훌륭한 안목이시네. 재료 준비해 두겠네, 시중·관리는 그다음에 뽑으세.`)}”`;
-    body.replaceChildren(h('div', { class: 'pl-done' }, h('img', { src: `img/palace/ext${p.id}.webp`, alt: '' }), h('b', null, `🏯 ${p.name}`), PALTEST && h('small', null, '🧪 시험 주소라 저장하지 않았어요'), h('button', { class: 'btn primary', onClick: () => close() }, '확인'))); } }] }); }
+  // 확인도 이 창 안에서 한다(다른 확인 창은 이 화면 뒤에 가려진다)
+  function pick(p) { bub.textContent = `“${say(`${p.name}(으)로 정하시겠나?`)}”`; sfx('pop');
+    body.replaceChildren(h('div', { class: 'pl-done' }, h('img', { src: `img/palace/ext${p.id}.webp`, alt: '' }), h('b', null, `🏯 ${p.name}`), h('small', null, `짓는 값 ${won(p.price)} · 코인은 지을 때 내요`), h('div', { class: 'pl-yn' }, h('button', { class: 'btn', onClick: () => cards() }, '더 볼게요'), h('button', { class: 'btn primary', onClick: () => confirm(p) }, '정하기')))); body.scrollTop = 0; }
+  async function confirm(p) { if (!PALTEST) { try { await ctx.store.update('palace/' + ctx.uid, { pick: p.id, name: p.name, price: p.price, at: ctx.store.now ? ctx.store.now() : Date.now() }); } catch { return toast('저장하지 못했어요. 잠시 뒤 다시 해 보세요'); } }
+    sfx('fanfare'); bub.textContent = `“${say(`${p.name}이라… 훌륭한 안목이시네. 재료 준비해 두겠네, 시중·관리는 그다음에 뽑으세`)}”`;
+    body.replaceChildren(h('div', { class: 'pl-done' }, h('img', { src: `img/palace/ext${p.id}.webp`, alt: '' }), h('b', null, `🏯 ${p.name}`), PALTEST && h('small', null, '🧪 시험 주소라 저장하지 않았어요'), h('button', { class: 'btn primary', onClick: () => close() }, '확인'))); }
   document.body.append(el); step();
 }
