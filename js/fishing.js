@@ -82,7 +82,7 @@ const ACC = ['<path d="M-8 0L-8-9-4-4 0-11 4-4 8-9 8 0z" fill="#FFD84D" stroke="
   '<rect x="-6" y="-13" width="12" height="11" rx="1.5" fill="#3B3355"/><rect x="-6" y="-5.5" width="12" height="2.6" fill="#E94B6A"/><rect x="-9.5" y="-2.8" width="19" height="3" rx="1.5" fill="#3B3355"/>', // 모자
   '<path d="M0 0C-9-5-9-12-4.5-12-2-12 0-10 0-8 0-10 2-12 4.5-12 9-12 9-5 0 0z" fill="#FF4F6E" stroke="#B3123A" stroke-width="1.1"/><circle cx="-4" cy="-8.5" r="1.3" fill="#fff" opacity=".8"/>']; // 하트핀
 const shinyHue = f => 110 + ((f.k * 53 + f.z * 31) % 140);
-export function fishSvg(f, big, shiny) { if (f.img) return `<img src="${f.img}" alt="" style="width:100%;height:100%;object-fit:contain">`; const sv = fishSvg0(f, big); if (!shiny) return sv;
+export function fishSvg(f, big, shiny) { if (f.img) return `<img src="${shiny && f.imgS ? f.imgS : f.img}" alt="" style="width:100%;height:100%;object-fit:contain">`; const sv = fishSvg0(f, big); if (!shiny) return sv;
   const id = 'shy-' + f.id, i = sv.indexOf('>') + 1, j = sv.lastIndexOf('</svg>'), [x, y] = SH_AT[f.id] || [30, 16], n = [...SHINY_IDS].indexOf(f.id);
   const acc = n < 0 ? '' : `<g transform="translate(${x} ${y + 3})">${ACC[n % ACC.length]}</g>`; // 정해진 이로치만 장신구를 단다(예전에 잡은 다른 이로치는 색만)
   return sv.slice(0, i) + `<defs><filter id="${id}" color-interpolation-filters="sRGB"><feColorMatrix type="hueRotate" values="${shinyHue(f)}"/><feColorMatrix type="saturate" values="1.35"/></filter></defs><g filter="url(#${id})">` + sv.slice(i, j) + '</g>' + acc
@@ -108,7 +108,7 @@ const pick = a => a[Math.floor(Math.random() * a.length)], rnd = (a, b) => a + M
 // 무엇이 물었나: 진주 차례면 진주, 가끔 쓰레기, 아니면 그 구역 물고기(귀한 것은 드물게). 한 단계 낮은 낚싯대로는 귀한 것·대장은 안 문다
 // 다른 바다(핫똑 나루터)의 어종 목록에서 고른다: tier 1~4가 드물수록 덜 물고, 멀리 던지면 귀한 것이 조금 더 문다
 function rollPool(pool, power, aUp = 0) { const w = pool.map(f => [46, 33, 16, 5][f.tier - 1] / (f.ghost ? 1 : pool.filter(x => x.tier === f.tier && !x.ghost).length) * (f.tier >= 3 ? 1 + power * 0.8 : 1)), /* 귀신아귀(ghost)는 희귀 등급 전체와 같은 확률로 나온다 */ tot = w.reduce((a, b) => a + b, 0); let r = Math.random() * tot, f = pool[0]; for (let i = 0; i < pool.length; i++) { r -= w[i]; if (r <= 0) { f = pool[i]; break; } }
-  const g = aUp > 0 && Math.random() < aUp ? 'A' : rollGrade(power), [b0, b1] = GRADE[g].band, t = b0 + (b1 - b0) * Math.random(); return { f, cm: Math.round((f.cm[0] + (f.cm[1] - f.cm[0]) * t) * 10) / 10, g, price: Math.round((f.price[0] + (f.price[1] - f.price[0]) * Math.pow(t, 1.3)) * GRADE[g].x / 10) * 10, d: 3.5 + f.tier * 0.8 + t * 1.5, p: power }; }
+  const g = aUp > 0 && Math.random() < aUp ? 'A' : rollGrade(power), [b0, b1] = GRADE[g].band, t = b0 + (b1 - b0) * Math.random(); const sh = !!(f.imgS && Math.random() < 0.03 * (1 + power)); /* 이로치: 걸린 물고기의 3%쯤, 값 3배 */ return { f, cm: Math.round((f.cm[0] + (f.cm[1] - f.cm[0]) * t) * 10) / 10, g, price: (sh ? 3 : 1) * Math.round((f.price[0] + (f.price[1] - f.price[0]) * Math.pow(t, 1.3)) * GRADE[g].x / 10) * 10, d: 3.5 + f.tier * 0.8 + t * 1.5, p: power, shiny: sh }; }
 export function rollCatch(zone, rodT, isPearl, power, forceShiny, kingOk = true, ultraOk = true, rareUp = 0) {
   if (isPearl) return { f: PEARL, cm: 0, price: PEARL_PRICE, d: 9.5, p: power };
   if (!forceShiny && power < TRASH_FAR && Math.random() < trashP(power)) { const t = pick(TRASH), k = Math.random(), cm = Math.round((t.cm[0] + (t.cm[1] - t.cm[0]) * k) * 10) / 10; return { f: t, cm, g: 'F', price: -Math.round(50 + 200 * k), d: 1, p: power }; }

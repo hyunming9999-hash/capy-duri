@@ -3475,3 +3475,7 @@ body.hd-resume #app { visibility: hidden; } body.hd-resume .fm.ap:not(.hd) { vis
 .hd-loc-fan.wind { filter: grayscale(1) brightness(.8); }
 .fm-me.hd-ride .cf-l, .fm-me.hd-ride .cf-r { animation: none !important; }
 .fm-me.hd-ride.bump > svg { animation: hdRideBump .22s ease-in-out infinite; } @keyframes hdRideBump { 50% { translate: 0 -2px; } }
+
+.hd-rick:not(.go) .rb { animation: hdRickIdle 1.8s ease-in-out infinite; transform-origin: 25% 100%; } @keyframes hdRickIdle { 50% { scale: 1 1.02; } }
+.hd-rick:not(.go) .rf2 { animation: hdRickTap 3.4s ease-in-out infinite; } @keyframes hdRickTap { 0%, 78%, 100% { translate: 0 0; } 84% { translate: 0 -8%; } 90% { translate: 0 0; } 94% { translate: 0 -6%; } }
+.hd-rick-say { background: #FFF6D8; border-color: #C9963C; }
