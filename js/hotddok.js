@@ -311,7 +311,7 @@ const SPOTS = [[0.54, 37, '정자'], [0.578, 33, '의자'], [0.4945, 42.5, '다�
     act = modalOn ? null : findAct(); if (aBtn.disabled === !!act) { aBtn.disabled = !act; aBtn.classList.toggle('ready', !!act); } if (act && aLab.textContent !== act.t) aLab.textContent = act.t;
     raf = requestAnimationFrame(step); }
   raf = requestAnimationFrame(step);
-  if (demo || /[?&]mock=/.test(location.search)) window.__hd = { ped, trade, bag, q, rel, npcs, giveSym, qAdd, qDraw, drawSym, me, go, save, goHome, shop, skip: () => { seenTown = passed = true; } }; /* 예시판 · 연습 모드 확인용 */
+  if (demo || /[?&]mock=/.test(location.search)) window.__hd = { ped, trade, bag, q, rel, npcs, giveSym, qAdd, qDraw, drawSym, me, go, save, goHome, shop, clothShop, skip: () => { seenTown = passed = true; } }; /* 예시판 · 연습 모드 확인용 */
   function leave() { if (!alive) return; save(); if (!demo) ctx.store.update('air/' + ctx.uid, { at: null }).catch(() => {}); alive = false; tailKey = null; window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKey); cancelAnimationFrame(raf); document.querySelectorAll('.modal-wrap,.apv,.hd-wel,.hd-tail,.fs,.hd-dress').forEach(m => m.remove()); wrap.remove(); o.onClose && o.onClose(); }
   return { close: leave };
 }
