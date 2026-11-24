@@ -3379,7 +3379,7 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .hd-paddy { position: absolute; bottom: 17%; height: auto; z-index: 2; pointer-events: none; filter: drop-shadow(0 3px 3px rgba(60,40,10,.25)); transition: filter .4s; }
 .hd-plab { position: absolute; bottom: 47%; translate: -50% 0; z-index: 3; padding: 3px 10px; border-radius: 999px; background: rgba(255,250,236,.92); border: 2px solid #C9A04A; color: #5B3A1E; font: 800 11.5px/1.2 var(--head); white-space: nowrap; pointer-events: none; }
 .hd-plab.ripe { background: linear-gradient(#FFF1B0, #FFD86B); border-color: #E0A012; animation: hdNoteBob 1s ease-in-out infinite; }
-.hd-worker { position: absolute; bottom: 6%; transform: translateX(-50%); z-index: 15; pointer-events: none; filter: drop-shadow(0 3px 2px rgba(0,0,0,.2)); }
+.hd-worker { position: absolute; bottom: 6%; transform: translateX(-50%); z-index: 15; pointer-events: auto; cursor: pointer; object-fit: contain; object-position: 50% 100%; filter: drop-shadow(0 3px 2px rgba(0,0,0,.2)); }
 .hd-worker.left { transform: translateX(-50%) scaleX(-1); } .hd-worker.go { animation: hdStep .42s ease-in-out infinite; }
 .hd-dust { position: absolute; bottom: 12%; width: 46px; height: 22px; margin-left: -23px; border-radius: 50%; background: radial-gradient(rgba(150,110,60,.55), transparent 70%); z-index: 16; pointer-events: none; animation: hdDust .7s ease-out forwards; } @keyframes hdDust { to { transform: translateY(-18px) scale(1.8); opacity: 0; } }
 .ap-b.ready { box-shadow: 0 0 0 3px #FFD23F; }
