@@ -3409,7 +3409,13 @@ body.hd-resume #app { visibility: hidden; } body.hd-resume .fm.ap:not(.hd) { vis
 .hd-qty-n { width: 56px; text-align: center; font-size: 18px; font-weight: 700; padding: 6px 2px; border: 2px solid #E8C98A; border-radius: 10px; background: #FFFDF7; }
 .hd-qty-t { color: #B5541E; font-size: 18px; }
 /* 핫똑 블랙귀신아귀: 싸우는 동안 화면이 어둡고, 빨간 칸 밖이면 게이지가 깜빡인다 */
-.fs.ghost .fs-under, .ghost .fs-under { filter: brightness(.55) saturate(.7); }
+.fs.ghost .fs-under, .ghost .fs-under { filter: brightness(.32) saturate(.5) hue-rotate(-20deg); transition: filter .6s; }
+.fs.ghost.fight::before { content: ''; position: fixed; inset: 0; z-index: 40; pointer-events: none; background: radial-gradient(ellipse at 50% 55%, rgba(20,6,40,0) 25%, rgba(18,4,34,.6) 62%, rgba(6,0,12,.92) 100%); animation: fsGhostBreath 2.4s ease-in-out infinite; }
+@keyframes fsGhostBreath { 50% { opacity: .75; } }
+.fs.ghost.fight.geye::after { content: ''; position: fixed; left: 50%; top: 46%; width: 260px; height: 90px; transform: translate(-50%, -50%); z-index: 41; pointer-events: none; background: radial-gradient(ellipse 4px 14px at 25% 50%, #1A0026 98%, transparent), radial-gradient(ellipse 4px 14px at 75% 50%, #1A0026 98%, transparent), radial-gradient(ellipse 22px 15px at 25% 50%, #F3E2FF 40%, #B46CFF 70%, rgba(130,40,255,.5) 85%, transparent), radial-gradient(ellipse 22px 15px at 75% 50%, #F3E2FF 40%, #B46CFF 70%, rgba(130,40,255,.5) 85%, transparent); filter: drop-shadow(0 0 14px #9B4DFF); animation: fsGhostEye .18s steps(2) 4, fsGhostStare 1.7s ease-out forwards; }
+@keyframes fsGhostEye { 50% { opacity: .15; } } @keyframes fsGhostStare { 0% { transform: translate(-50%, -50%) scale(.6); } 15% { transform: translate(-50%, -50%) scale(1.15); } 100% { transform: translate(-50%, -50%) scale(1); } }
+.fs.ghost.fight.geye { animation: fsGhostShake .12s linear 6; } .fs.ghost.fight.geye .fs-under { filter: brightness(.22) saturate(.4) hue-rotate(-40deg); }
+@keyframes fsGhostShake { 25% { transform: translate(3px, -2px); } 75% { transform: translate(-3px, 2px); } }
 .fs-bar.ghostwarn { animation: fsGhostWarn .25s steps(2) infinite; }
 @keyframes fsGhostWarn { 50% { box-shadow: 0 0 0 4px rgba(160, 60, 255, .85); } }
 /* 핫똑 물고기 골라 팔기 */
