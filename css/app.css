@@ -3142,7 +3142,7 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .ap-crew.in { bottom: 10%; height: 30%; }
 .ap-world.in .ap-crew:first-of-type { z-index: 2; animation: none; } /* 카운터 승무원: 책상(ap-desk) 뒤 */
 .ap-desk { position: absolute; left: 3.497%; top: 58.333%; width: 17.932%; height: 21.528%; z-index: 3; pointer-events: none; }
-.ap-crew.in.pl { bottom: 17%; z-index: 2; animation: none; }
+.ap-crew.in.plt { bottom: 17%; z-index: 2; animation: none; }
 .ap-crew.in.wk { bottom: 6%; z-index: 4; animation: none; } .ap-crew.in.wk.go { animation: apStep .36s ease-in-out infinite; } @keyframes apStep { 50% { translate: 0 -3px; } }
 .ap-cnt-t { position: absolute; left: 6.8%; width: 11.4%; top: 38.4%; height: 9.6%; display: flex; align-items: center; justify-content: center; z-index: 1; font-family: var(--head); font-weight: 900; color: #FFE9B8; text-shadow: 0 2px 0 #5A2E0E, 0 0 4px #5A2E0E; pointer-events: none; white-space: nowrap; } /* 기장: 출입구 곁 조금 안쪽 */
 @keyframes apBob { 50% { translate: 0 -3px; } }
