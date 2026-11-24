@@ -3334,3 +3334,6 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .so-nmg::before { content: '👑'; font-size: 10.5px; line-height: 1; text-shadow: none; }
 .so-nmg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.75) 50%, transparent 60%) no-repeat -120% 0 / 220% 100%; animation: hdNmShine 3.2s ease-in-out infinite; }
 .so-nmg.sm { font-size: 10.5px; padding: 2px 8px 2px 5px; } .so-nmg.sm::before { font-size: 9.5px; }
+/* 안드로이드 깜빡임: 반짝이는 이름표와 내 캐릭터가 한 겹으로 묶여 매 프레임 다시 그려지다 한 번씩 비던 문제 → 각자 따로 된 겹으로 */
+.hd .fm-me, .so-me, .so-nmg, .hd-nm, .hd-dog, .hd-qm { will-change: transform; backface-visibility: hidden; }
+.so-nmg::after, .hd-nm.k::after { will-change: background-position; }
