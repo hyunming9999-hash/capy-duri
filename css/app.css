@@ -3403,3 +3403,8 @@ img.kb-sic { width: 30px; height: 30px; object-fit: contain; display: block; mar
 .hd-whbtn { background: #EAF4FF !important; border-color: #8EB8E6 !important; color: #2E5E95 !important; font-weight: 900; }
 .hd-wh .hd-whh { margin: 10px 0 2px; font: 900 12.5px/1.3 var(--head); color: #6B4526; text-align: left; } .hd-whl { display: flex; justify-content: space-between; padding: 5px 10px; border-radius: 10px; background: #FFF8EA; border: 1.5px solid #EADBC0; font-size: 12.5px; } .hd-whl b { color: #8A5A1E; }
 body.hd-resume #app { visibility: hidden; } body.hd-resume .fm.ap:not(.hd) { visibility: hidden; }
+/* 핫똑 소모품 수량 고르기 */
+.hd-qty-row { display: flex; gap: 6px; justify-content: center; align-items: center; margin: 10px 0; }
+.hd-qty-row .btn { min-width: 40px; padding: 6px 8px; }
+.hd-qty-n { width: 56px; text-align: center; font-size: 18px; font-weight: 700; padding: 6px 2px; border: 2px solid #E8C98A; border-radius: 10px; background: #FFFDF7; }
+.hd-qty-t { color: #B5541E; font-size: 18px; }
