@@ -111,6 +111,7 @@ const SFX = {
   pop: (d, t) => { tone(d, 'sine', 520, 260, t, 0.09, 0.3); noise(d, t, 0.03, 0.12, 2000, 1); },
   point: (d, t) => [0, 5].forEach((s, i) => tone(d, 'triangle', hz(79 + s), hz(79 + s), t + i * 0.1, 0.18, 0.22)),
   coin: (d, t) => { tone(d, 'triangle', hz(88), hz(88), t, 0.07, 0.2); tone(d, 'triangle', hz(93), hz(93), t + 0.06, 0.16, 0.2); },
+  alarm: (d, t) => [0, 0.32, 0.64].forEach(k => { tone(d, 'square', 880, 660, t + k, 0.14, 0.16); tone(d, 'square', 660, 880, t + k + 0.15, 0.14, 0.16); }), /* 황충 경보 */
   bad: (d, t) => { tone(d, 'sawtooth', 220, 90, t, 0.25, 0.16); noise(d, t, 0.1, 0.2, 500, 0.8); },
   splash: (d, t) => { noise(d, t, 0.35, 0.3, 1500, 0.5); noise(d, t + 0.06, 0.3, 0.18, 4000, 0.8); tone(d, 'sine', 500, 180, t, 0.2, 0.1); },
   hang: (d, t) => { tone(d, 'triangle', 330, 330, t, 0.12, 0.2); tone(d, 'triangle', 495, 495, t + 0.09, 0.2, 0.18); },

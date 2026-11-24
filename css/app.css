@@ -3424,3 +3424,37 @@ body.hd-resume #app { visibility: hidden; } body.hd-resume .fm.ap:not(.hd) { vis
 .fs-ghostcard b { display: block; font-size: 19px; margin: 4px 0; color: #C9B2FF; } .fs-ghostcard p { margin: 2px 0 8px; font-size: 13px; opacity: .85; }
 .fs-ghostcard ul { list-style: none; padding: 0; margin: 0 0 12px; text-align: left; font-size: 13.5px; line-height: 1.55; } .fs-ghostcard .btn { width: 100%; }
 @keyframes fsGhostIn { from { transform: translate(-50%, -50%) scale(.85); opacity: 0; } }
+/* 인력거꾼 파트라슈 */
+.hd-rick { position: absolute; height: 132px; width: auto; transform-origin: 50% 100%; pointer-events: none; filter: drop-shadow(0 3px 2px rgba(60,40,10,.2)); }
+.hd-rick.go { animation: hdRickBob .32s ease-in-out infinite; } @keyframes hdRickBob { 50% { translate: 0 -3px; } }
+.hd-rick-sh { width: 150px !important; }
+.hd-meter { position: absolute; transform: translateX(-50%); z-index: 30; background: #2B1D12; color: #FFE08A; font-size: 13px; font-weight: 800; padding: 3px 9px; border-radius: 10px; border: 2px solid #C9963C; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,.3); }
+/* 황충 재난 */
+.hd-locwarn { position: absolute; left: 10px; right: 10px; top: 96px; z-index: 60; background: rgba(200, 30, 30, .94); color: #fff; border-radius: 14px; padding: 8px 12px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,.3); animation: hdLocWarn 1s ease-in-out infinite; pointer-events: none; }
+.hd-locwarn b { display: block; font-size: 16px; } .hd-locwarn small { font-size: 12px; opacity: .95; }
+@keyframes hdLocWarn { 50% { background: rgba(150, 10, 10, .94); } }
+.hd-locswarm { position: absolute; bottom: 24%; width: 300px; transform: translateX(-50%); z-index: 8; pointer-events: none; animation: hdSwarm 1.2s ease-in-out infinite alternate; }
+@keyframes hdSwarm { to { translate: 14px -8px; } }
+.hd-loc { position: absolute; inset: 0; z-index: 70; background: rgba(28, 20, 14, .82); display: flex; flex-direction: column; align-items: center; padding: 14px 16px; color: #FFF3DC; }
+.hd-loc-top { width: 100%; display: flex; justify-content: space-between; font-size: 17px; } .hd-loc-time { color: #fff; }
+.hd-loc-cells { width: 100%; display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin: 10px 0 4px; }
+.hd-loc-cells i { height: 26px; border-radius: 7px; background: linear-gradient(90deg, #F6A12A calc(var(--f, 0) * 100%), #463428 0); border: 2px solid #7A5B3E; }
+.hd-loc-cells i.on { border-color: #FFDCA0; }
+.hd-loc.low .hd-loc-cells i { border-color: #FF5A4D; }
+.hd-loc > small { font-size: 12.5px; min-height: 18px; text-align: center; }
+.hd-loc-stage { position: relative; flex: 1; width: 100%; min-height: 150px; }
+.hd-loc-pot { position: absolute; left: 50%; bottom: 0; width: 110px; transform: translateX(-50%); }
+.hd-loc-smoke { position: absolute; left: 50%; bottom: 70px; width: 220px; height: 150px; margin-left: -110px; transform-origin: 50% 100%; transition: opacity .15s, transform .15s; }
+.hd-loc-smoke img { position: absolute; width: 130px; animation: hdSmoke 2.4s ease-in-out infinite alternate; } .hd-loc-smoke img:nth-child(1) { left: 0; bottom: 10px; } .hd-loc-smoke img:nth-child(2) { right: 0; bottom: 40px; animation-delay: -1s; } .hd-loc-smoke img:nth-child(3) { left: 95px; bottom: 0; width: 40px; }
+@keyframes hdSmoke { to { translate: 0 -10px; scale: 1.06; } }
+.hd-loc-bug { position: absolute; width: 52px; transition: transform .5s, opacity .5s; animation: hdBug .5s ease-in-out infinite alternate; }
+.hd-loc-bug.b0 { left: 8%; top: 10%; } .hd-loc-bug.b1 { right: 8%; top: 18%; } .hd-loc-bug.b2 { left: 18%; top: 45%; } .hd-loc-bug.b3 { right: 16%; top: 50%; } .hd-loc-bug.b4 { left: 40%; top: 4%; } .hd-loc-bug.b5 { right: 38%; top: 30%; }
+.hd-loc-bug.away { opacity: 0; transform: translate(0, -60px) scale(.6); }
+@keyframes hdBug { to { translate: 4px -5px; } }
+.hd-loc.gust .hd-loc-smoke { transform: translateX(40px) scale(.7) !important; opacity: .3 !important; }
+.hd-loc-help { color: #BDEBB0; }
+.hd-loc-fan { margin-top: 8px; width: 132px; height: 132px; border-radius: 50%; border: 5px solid #C77A18; background: radial-gradient(#FFE29A, #F4B23C); display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 800; color: #6B3A10; touch-action: manipulation; user-select: none; -webkit-user-select: none; box-shadow: 0 6px 0 #9A5A10; }
+.hd-loc-fan img { width: 72px; pointer-events: none; } .hd-loc-fan span { font-size: 14px; pointer-events: none; }
+.hd-loc-fan.flap img { animation: hdFlap .12s ease-out; } @keyframes hdFlap { 50% { rotate: -25deg; } }
+.hd-loc-fan:active { translate: 0 3px; box-shadow: 0 3px 0 #9A5A10; }
+.hd-loc-fan.wind { filter: grayscale(1) brightness(.8); }
