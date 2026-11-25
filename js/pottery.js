@@ -63,8 +63,18 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
       h('small', { class: 'pt-dim' }, '재료는 부메랑상회에서 사요 · 도자기 하나에 흙 1 · 유약 1 · 안료 1'),
       h('button', { class: 'btn primary pt-go', disabled: left <= 0, onClick: pick }, left > 0 ? `🏺 도자기 빚기 (오늘 ${left}번 남음)` : '오늘은 다 빚었어요 · 내일 다시 와요'),
       postBox,
-      h('details', { class: 'pt-rule' }, h('summary', null, '📜 값 매기는 법'), h('p', null, '판매가 = 흙값 × 빚기 배율(수5 · 우4 · 미3 · 양2.5 · 가2 · 현1.5 · 황1.2) + 소성(하 2,000 · 중 3,000 · 상 5,000) + 무늬(하급 5,000 · 중급 7,000 · 최상급 15,000) + 인건비 3,000'), h('p', null, '최종 등급 = 빚기 60% · 소성 25% · 무늬 15% 점수로 S~F. F급은 재료값의 1.45배.'), h('p', null, '게시하면 5분 안에 팔릴 확률: S 100% · A 90% · B 80% · C 70% · D 60% · E 50% · F 40%. 안 팔리면 한 등급 아래 값(×0.8)으로 처분되고, F는 재료값만 돌려받아요.')));
+      h('details', { class: 'pt-rule' }, h('summary', null, '📜 도자기 정보 · 값 매기는 법 · 최종 판매가표'), priceTable(), h('p', null, '판매가 = 흙값 × 빚기 배율(수5 · 우4 · 미3 · 양2.5 · 가2 · 현1.5 · 황1.2) + 소성(하 2,000 · 중 3,000 · 상 5,000) + 무늬(하급 5,000 · 중급 7,000 · 최상급 15,000) + 인건비 3,000'), h('p', null, '최종 등급 = 빚기 60% · 소성 25% · 무늬 15% 점수로 S~F. F급은 재료값의 1.45배.'), h('p', null, '게시하면 5분 안에 팔릴 확률: S 100% · A 90% · B 80% · C 70% · D 60% · E 50% · F 40%. 안 팔리면 한 등급 아래 값(×0.8)으로 처분되고, F는 재료값만 돌려받아요.')));
     if (!P.met) { P.met = 1; save(); } }
+
+  // 최종 판매가표: 빚기(0~100%) · 소성 · 무늬의 모든 조합을 계산해 등급마다 나올 수 있는 값의 범위
+  function priceTable() { const tb = {}; ORDER.forEach(k => { const K = KINDS[k], c = POT_MAT[K.clay][1], cost = c + 3000, pats = [...new Set(K.pats.map(p => p[2]))], R = {};
+      for (let pct = 0; pct <= 100; pct++) { const m = SHAPE_G.find(s => pct >= s[0])[2]; FIRE.forEach(f => pats.forEach(pi => { const sc = Math.round(pct * 0.6 + f[2] * 0.25 + PAT_PT[pi] * 0.15), g = FINAL.find(x => sc >= x[0])[1], pr = g === 'F' ? Math.round(cost * 1.45) : Math.round(c * m + f[1] + PAT_BONUS[pi] + LABOR), o = R[g] || (R[g] = [1e9, 0]); o[0] = Math.min(o[0], pr); o[1] = Math.max(o[1], pr); })); }
+      tb[k] = { R, cost }; });
+    const k1 = n => n.toLocaleString(), cell = (r) => !r ? '-' : r[0] === r[1] ? k1(r[0]) : `${k1(r[0])}~${k1(r[1])}`;
+    return h('div', { class: 'pt-ptab' }, h('b', null, '💰 최종 판매가 (5분 안에 팔렸을 때)'), h('table', null, h('tr', null, h('th', null, '등급'), ...ORDER.map(k => h('th', null, KINDS[k].name)), h('th', null, '팔릴 확률')),
+      ...FINAL.map(g => h('tr', { class: 'g' + g[1] }, h('td', null, h('b', null, g[1])), ...ORDER.map(k => h('td', null, cell(tb[k].R[g[1]]))), h('td', null, `${Math.round(g[2] * 100)}%`))),
+      h('tr', { class: 'cost' }, h('td', null, '재료값'), ...ORDER.map(k => h('td', null, k1(tb[k].cost))), h('td', null, ''))),
+      h('small', null, `최고가(빚기 수 · 소성 상 · 최상급 무늬): ${ORDER.map(k => `${KINDS[k].name} ${won(tb[k].R.S[1])}`).join(' · ')} · 안 팔리면 S~E급은 ×0.8, F급은 재료값만 돌려받아요`)); }
 
   function pick() { scr = 'pick';
     body.replaceChildren(say('무엇을 빚겠소? 흙에 따라 도자기가 달라지오.'), h('div', { class: 'pt-kinds' }, ...ORDER.map(k => { const K = KINDS[k], ok = has(K.clay) && has('glaze') && has('pigment');
