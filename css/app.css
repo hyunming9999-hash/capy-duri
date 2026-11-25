@@ -3525,3 +3525,8 @@ body.hd-resume #app { visibility: hidden; } body.hd-resume .fm.ap:not(.hd) { vis
 .hd-hidden { text-align: center; margin: 0 0 8px; } .hd-hidden span { display: inline-block; padding: 5px 14px; border-radius: 999px; font-weight: 800; font-size: 15px; color: #fff; background: linear-gradient(90deg, #E5484D, #F2A700, #8E5BFF, #E5484D); background-size: 300% 100%; animation: hdHid 3s linear infinite; box-shadow: 0 0 0 2px #FFE27A, 0 4px 12px rgba(229, 72, 77, .45); text-shadow: 0 1px 2px rgba(0,0,0,.35); } .hd-hidden small { display: block; margin-top: 4px; font-size: 11px; opacity: .75; } @keyframes hdHid { to { background-position: 300% 0; } }
 
 .so-pin.hd-pin img { width: 30px; height: 30px; object-fit: contain; }
+
+.hd-goodsh { display: block; margin-top: 8px; } .hd-good { opacity: 1 !important; }
+.hd-fishgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; } .hd-fishc { background: #fff; border: 2px solid #E8DCC8; border-radius: 12px; padding: 4px 2px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+.hd-fishc img { width: 100%; height: 38px; object-fit: contain; } .hd-fishc small { font-size: 10.5px; line-height: 1.2; word-break: keep-all; } .hd-goodsn { font-size: 12px; margin: 4px 0 0; }
+.hd-grow { grid-template-columns: 38px 1fr; } .hd-gstep { grid-column: 1 / -1; display: flex; align-items: center; justify-content: flex-end; gap: 4px; } .hd-gstep b { min-width: 46px; text-align: center; }
