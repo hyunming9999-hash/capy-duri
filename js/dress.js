@@ -7,12 +7,12 @@ import { priceOf, won } from './money.js';
 import { eqBoard, eqInv, wearGold, rareList, rareOf, goldBlocks, goldIn, rareName } from './social.js';
 const SETS = { top: TOPS, bottom: BOTTOMS, hat: HATS, shoe: SHOES };
 
-export function mount(el, ctx, opt = {}) { const S = opt.sets || SETS, ALL = { top: [...TOPS, ...HD_SETS.top], bottom: [...BOTTOMS, ...HD_SETS.bottom], hat: [...HATS, ...HD_SETS.hat], shoe: [...SHOES, ...HD_SETS.shoe], eye: HD_SETS.eye || [] }; // opt.sets: 핫똑랜드 비단옷집처럼 다른 옷 목록으로 여는 가게
+export function mount(el, ctx, opt = {}) { let land = 'cap'; const S = new Proxy({}, { get: (_, k) => (opt.sets || (land === 'hd' ? HD_SETS : SETS))[k] }), /* 카피클로에서도 핫똑랜드 한복 칸을 본다(산 것만 입기 · 2026-11-25) */ ALL = { top: [...TOPS, ...HD_SETS.top], bottom: [...BOTTOMS, ...HD_SETS.bottom], hat: [...HATS, ...HD_SETS.hat], shoe: [...SHOES, ...HD_SETS.shoe], eye: HD_SETS.eye || [] }; // opt.sets: 핫똑랜드 비단옷집처럼 다른 옷 목록으로 여는 가게
   let who = ctx.uid, tab = 'top', sex = 'all', sel = { top: '', bottom: '', hat: '', shoe: '', eye: '', ...(ctx.dress[ctx.uid] || {}) }, saved = ctx.dress;
   let goldOwned = [], invTab = 'gold'; const inv = h('div', { class: 'dress-inv' });
   const stage = h('div', { class: 'dress-stage' }), grid = h('div', { class: 'dress-grid' }), ctl = h('div', { class: 'dress-ctl' });
   // 친목회 전용 모자는 상점에서 팔지 않고, 동물에게 사서 가진 것만 맨 앞에 보인다
-  const list = () => [...(tab === 'hat' && !opt.sets ? ZOO_HATS.filter(x => ctx.owns(x.id)) : []), ...S[tab].filter(x => sex === 'all' || x.sex === sex || x.sex === 'u')];
+  const list = () => [...(tab === 'hat' && !opt.sets && land === 'cap' ? ZOO_HATS.filter(x => ctx.owns(x.id)) : []), ...S[tab].filter(x => sex === 'all' || x.sex === sex || x.sex === 'u')];
   const pickWho = u => { who = u; const s = saved[u] || {}; sel = { top: s.top || '', bottom: s.bottom || '', hat: s.hat || '', shoe: s.shoe || '', eye: s.eye || '' }; draw(); };
   const need = () => ['top', 'bottom', 'hat', 'shoe', 'eye'].filter(k => sel[k] && !ctx.owns(sel[k]) && (saved[who] || {})[k] !== sel[k]).map(k => sel[k]), // 그 카피바라가 이미 입고 있는 옷은 다시 살 필요가 없다(하나만 벗기려 해도 옷값을 내라고 하던 문제)
     bare = () => !sel.top && !sel.bottom && !sel.hat && !sel.shoe && !sel.eye, cost = () => need().reduce((a, id) => a + priceOf(id), 0);
@@ -61,12 +61,13 @@ export function mount(el, ctx, opt = {}) { const S = opt.sets || SETS, ALL = { t
       h('button', { class: 'btn primary', disabled: same, onClick: save }, same ? (bare() ? '벗고 있어요' : '입고 있어요') : bare() ? (who === ctx.uid ? '옷 벗기' : '옷 벗기기') : cost() ? `${won(cost())} 사서 ${who === ctx.uid ? '입기' : '입혀 주기'}` : who === ctx.uid ? '이 옷 입기' : '이 옷 입혀 주기'),
       h('small', { class: 'dress-wallet' }, '내 돈 ', h('b', { 'data-coins': 1 }, won(ctx.coins()))));
     const items = list();
-    grid.replaceChildren(...items.map(it => h('button', { class: 'dress-item' + (sel[tab] === it.id ? ' on' : '') + (ctx.owns(it.id) ? '' : ' lock'), 'data-price': ctx.owns(it.id) ? '' : won(priceOf(it.id)), title: it.name, 'aria-label': it.name, onClick: () => { if (who !== ctx.uid) return toast('상대 카피바라의 옷은 바꿀 수 없어요'); pickCloth(tab, sel[tab] === it.id ? '' : it.id); } },
+    grid.replaceChildren(...items.map(it => h('button', { class: 'dress-item' + (sel[tab] === it.id ? ' on' : '') + (ctx.owns(it.id) ? '' : ' lock'), 'data-price': ctx.owns(it.id) ? '' : !opt.sets && land === 'hd' ? '핫똑 전용' : won(priceOf(it.id)), title: it.name, 'aria-label': it.name, onClick: () => { if (who !== ctx.uid) return toast('상대 카피바라의 옷은 바꿀 수 없어요'); if (!opt.sets && land === 'hd' && !ctx.owns(it.id)) return toast('🐶 이 한복은 핫똑랜드 비단옷집에서 살 수 있어요', 2000); pickCloth(tab, sel[tab] === it.id ? '' : it.id); } },
       sel[tab] === it.id && !ctx.owns(it.id) && who === ctx.uid && h('b', { class: 'dress-buy', onClick: e => { e.stopPropagation(); buyOne(it.id); } }, '구매하기'),
       h('span', { html: clothIcon(it.id) || (tab === 'hat' ? capy({ color: m.color, hat: it.id, head: true }).replace('viewBox="0 -22 120 112"', 'viewBox="0 -24 120 76"') : tab === 'shoe' ? capy({ color: m.color, shoe: it.id }).replace('viewBox="0 -22 120 158"', 'viewBox="24 108 72 30"') : capy({ color: m.color, [tab]: it.id }).replace('viewBox="0 -22 120 158"', 'viewBox="16 80 88 56"')) }), h('small', null, it.name))));
     tabs.replaceChildren(
+      !opt.sets && h('div', { class: 'tabs dress-land' }, [['cap', '🏝️ 카피랜드 옷'], ['hd', '🐶 핫똑랜드 한복']].map(([k, t]) => h('button', { class: 'tab' + (land === k ? ' on' : ''), onClick: () => { land = k; if (k === 'cap' && tab === 'eye') tab = 'top'; sex = 'all'; draw(); } }, t))),
       h('div', { class: 'tabs' }, [['top', `상의 ${S.top.length}`], ['bottom', `하의 ${S.bottom.length}`], ['hat', `모자 ${S.hat.length}`], ['shoe', `신발 ${S.shoe.length}`], ...(S.eye ? [['eye', `안경 ${S.eye.length}`]] : [])].map(([k, t]) => h('button', { class: 'tab' + (tab === k ? ' on' : ''), onClick: () => { tab = k; draw(); } }, t))),
-      h('div', { class: 'chips' }, (opt.sets ? [] : [['all', '전체'], ['m', '남자 옷'], ['f', '여자 옷']]).map(([k, t]) => h('button', { class: 'chip' + (sex === k ? ' on' : ''), onClick: () => { sex = k; draw(); } }, t)), h('small', { class: 'dim' }, ` ${items.length}${tab === 'hat' || tab === 'eye' ? '개' : tab === 'shoe' ? '켤레' : '벌'}`)));
+      h('div', { class: 'chips' }, (opt.sets || land === 'hd' ? [] : [['all', '전체'], ['m', '남자 옷'], ['f', '여자 옷']]).map(([k, t]) => h('button', { class: 'chip' + (sex === k ? ' on' : ''), onClick: () => { sex = k; draw(); } }, t)), h('small', { class: 'dim' }, ` ${items.length}${tab === 'hat' || tab === 'eye' ? '개' : tab === 'shoe' ? '켤레' : '벌'}`)));
   }
   const tabs = h('div');
   el.append(stage, ctl, inv, tabs, grid);

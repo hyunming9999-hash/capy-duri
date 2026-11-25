@@ -94,13 +94,13 @@ export function openAirport(o) {
     if (r.over) { sfx('bad'); return modal({ title: '🧳 수하물 검사 · 출국 거부', body: [h('div', { class: 'ap-cnt' }, h('img', { src: 'img/air/att.webp', alt: '' }), h('p', null, '“폐하, 송구하오나 짐이 기준을 넘어 출국하실 수 없사옵니다…”'), h('div', { class: 'apv-bag no' }, h('b', null, '⛔ 기준 초과'), h('small', null, RULE), h('small', null, mineTxt(r))), h('p', null, h('b', null, `다음 비행기(${hhmm(depAt(now()))}) 전까지 카피수퍼 창고에 짐을 맡기고 오세요.`)), h('p', { class: 'ap-cnt-n' }, '창고에 맡긴 농산물·물고기는 검사에 안 걸려요 · 가방은 카피랜드와 핫똑랜드가 같이 써요'))], actions: [{ label: '창고에 맡기고 올게요', primary: true }] }); }
     passView(r); }
   function passView(r) { if (document.querySelector('.apv')) return; if (!pp) return modal({ title: '🛂 여권이 없어요', body: [h('div', { class: 'ap-cnt' }, h('img', { src: 'img/air/att.webp', alt: '' }), h('p', null, '폐하, 송구하오나 여권이 있어야 출국하실 수 있사옵니다.'), h('p', { class: 'ap-cnt-n' }, '동물친목회의 「카피랜드 여권 발급」 이야기를 먼저 마쳐 주세요'))], actions: [{ label: '확인', primary: true }] });
-    const bagBox = h('div', { class: 'apv-bag ok' }, h('b', null, '🧳 수하물 검사 · ✅ 통과'), h('small', null, RULE), h('small', null, mineTxt(r))); /* 여권을 낼 때 수하물도 함께 본다 */
+    const bagBox = h('div', { class: 'apv-bag apv-tag ok' }, h('b', null, '🧳 수하물 검사 · ✅ 통과'), h('small', null, RULE), h('small', null, mineTxt(r))); /* 여권을 낼 때 수하물도 함께 본다 */
     const bub = h('span', { class: 'apv-say' }, '폐하, 여권을 살펴보겠사옵니다…'), ok = h('button', { class: 'btn primary apv-ok', onClick: () => { el.remove(); openTicket(); } }, '🎫 탑승권 사러 가기');
     const page = h('div', { class: 'apv-page' }, h('div', { class: 'apv-photo', html: capy(ctx.capyOf(ctx.uid, { face: 'smile' })) }),
       h('dl', null, h('dt', null, '국적'), h('dd', null, '카피랜드'), h('dt', null, '직위'), h('dd', null, '카피황금폐하'), h('dt', null, '행선지'), h('dd', null, DEST)),
       h('div', { class: 'apv-stamp' }, h('b', null, '출국'), h('small', null, 'CAPY AIRPORT')));
-    const el = h('div', { class: 'apv' }, h('p', { class: 'apv-t' }, '🛂 여권 확인'), h('div', { class: 'apv-book' }, page, h('img', { class: 'apv-cover', src: 'img/quest/passport.webp', alt: '' })),
-      h('div', { class: 'apv-crew' }, h('img', { src: 'img/air/att.webp', alt: '' }), h('img', { src: 'img/air/pilot.webp', alt: '' }), h('img', { src: 'img/air/att-walk.webp', alt: '' }), bub), bagBox, ok);
+    const el = h('div', { class: 'apv' }, h('p', { class: 'apv-t' }, '🛂 여권 확인'), h('div', { class: 'apv-set' }, h('div', { class: 'apv-book' }, page, h('img', { class: 'apv-cover', src: 'img/quest/passport.webp', alt: '' })), bagBox),
+      h('div', { class: 'apv-crew' }, h('img', { src: 'img/air/att.webp', alt: '' }), h('img', { src: 'img/air/pilot.webp', alt: '' }), h('img', { src: 'img/air/att-walk.webp', alt: '' }), bub), ok); /* 여권+수하물 태그 한 묶음 */
     document.body.append(el); sfx('pop'); setTimeout(() => el.isConnected && sfx('keyB'), 800);
     setTimeout(() => { if (!el.isConnected) return; sfx('boom'); passOK = true; }, 1950);
     setTimeout(() => { if (!el.isConnected) return; bub.textContent = '폐하, 망극하옵니다!!'; bub.classList.add('bow'); el.classList.add('done'); sfx('fanfare'); for (const k in says) sayText(k, '폐하, 망극하옵니다!'); }, 2350); }
