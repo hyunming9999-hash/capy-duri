@@ -10,7 +10,7 @@ const PRICES = {}; // 물가 기준: 미니게임 2~4판 또는 낚시 15~20분�
 SHOES.forEach((x, i) => { PRICES[x.id] = [1000, 1000, 1000, 1300, 1300, 1300, 1100, 900, 1100][i]; }); // 신발 9켤레: 처음부터 주는 건 없고 전부 사야 한다
 // 핫똑랜드 한복(2026-11-25 2차 물가 조정): 카피랜드 옷값의 2.5배의 2.5배(약 6배 · 상의·하의 5,000~6,900 · 모자 3,750~5,600 · 신발 5,600~8,100 · 안경 5,600). 개량한복 · 왕실 예복은 그 칸 최고값
 const HD_ROYAL = new Set(['t-hd-2', 't-hd-13', 't-hd-14', 't-hd-15', 't-hd-25', 'b-hd-4', 'h-hd-1', 'h-hd-21', 'h-hd-22', 'h-hd-23']);
-[['top', 5000, 6900], ['bottom', 5000, 6900], ['hat', 3750, 5600], ['shoe', 5600, 8100], ['eye', 5600, 5600]].forEach(([k, lo, hi]) => HD_SETS[k].forEach((x, i, arr) => { const n = i + 1, gaeryang = k === 'shoe' ? n >= 7 : n >= 27;
+[['top', 9000, 12400], ['bottom', 9000, 12400], ['hat', 6750, 10100], ['shoe', 10100, 14600], ['eye', 10100, 10100]] /* 핫똑 물가 ×1.8(2026-11-26) */.forEach(([k, lo, hi]) => HD_SETS[k].forEach((x, i, arr) => { const n = i + 1, gaeryang = k === 'shoe' ? n >= 7 : n >= 27;
   PRICES[x.id] = HD_ROYAL.has(x.id) || gaeryang ? hi : Math.round((lo + (hi - lo) * i / Math.max(1, arr.length - 1)) / 50) * 50; }));
 ZOO_HATS.forEach((x, i) => { PRICES[x.id] = 2500 + ((i * 5 + 2) % 6) * 100; }); // 친목회 전용 모자: 동물에게서만 산다
 [TOPS, BOTTOMS, HATS, SHOES, ZOO_HATS].forEach(a => a.forEach(x => { if (PRICES[x.id]) PRICES[x.id] = Math.round(PRICES[x.id] * 5 / 100) * 100; })); /* 2026-11-26: 2배 → 한 번 더 2.5배(처음의 5배) */ /* 카피클로 옷 · 동물 모자 2배(2026-11-26) */

@@ -19,6 +19,8 @@ const ORDER = ['b', 'c', 'w'];
 const SHAPE_G = [[90, '수', 5], [80, '우', 4], [70, '미', 3], [60, '양', 2.5], [50, '가', 2], [40, '현', 1.5], [0, '황', 1.2]];
 const FIRE = [['하', 2000, 30], ['중', 3000, 65], ['상', 5000, 100]];
 const PAT_BONUS = [5000, 7000, 15000], PAT_PT = [30, 65, 100], PAT_NAME = ['하급', '중급', '최상급'];
+/* 안 팔리면 두 단계 내려 처분: S~D급은 판매가 ×0.64(두 단계 아래 값) · E급은 재료값 −10% · F급은 재료값 −20% */
+const unsoldPay = (grade, price, cost) => grade === 'F' ? Math.round(cost * 0.8) : grade === 'E' ? Math.round(cost * 0.9) : Math.round(price * 0.64);
 const FINAL = [[90, 'S', 1], [80, 'A', 0.7], [70, 'B', 0.6], [60, 'C', 0.5], [50, 'D', 0.4], [40, 'E', 0.3], [0, 'F', 0.2]]; /* 팔릴 확률(2026-11-25 조정) */
 const won = n => `${Math.round(n).toLocaleString()}코인`;
 const dayNo = t => Math.floor((t + 9 * 3600e3) / 86400e3);
@@ -34,7 +36,7 @@ export async function potWarp(k, pat, rr) { const im = await loadImg(`${PI}${pat
 export function potImg(k, pat, rr, cls) { const el = h('img', { class: cls, src: `${PI}${pat}.webp?v=2`, alt: '' }); if (rr) potWarp(k, pat, rr).then(c => { if (c && el.isConnected) { c.className = cls; el.replaceWith(c); } else if (c) { el.src = c.toDataURL(); } }); return el; }
 
 // 에픽 퀘스트 「작은아빠의 가마」(복실이): bag.potq 0 받기 전 · 1 받음(공방 가기) · 2 도전 중(분청사기 D급 이상 → 3분 안에 팔기, 기회 3번) · 3 성공(복실이에게 갚기) · 4 끝
-const QBONUS = 60000, QTRIES = 3;
+const QBONUS = 10000, QTRIES = 3;
 const qPending = bag => (bag.pot && bag.pot.posts || []).filter(p => p.q && !p.done).length;
 function qExhaust(bag) { if (bag.potq === 2 && (bag.potqT || 0) >= QTRIES && !qPending(bag)) { bag.potq = 1; bag.potqT = 0; setTimeout(() => toast('🏺 기회 세 번을 다 썼어요… 해피도자기의 도암 스승에게 다시 도전해요', 3200), 1200); } }
 
@@ -48,7 +50,7 @@ function nextShow() { const p = showQ.shift(); if (!p) { showing = false; return
     sold ? h('b', { class: 'pts-stamp' }, 'SOLD!') : h('b', { class: 'pts-stamp gray' }, '처분'), pot,
     sold ? h('p', { class: 'pts-who' }, `🐶 ${buyer}가 구매했어요!`) : h('p', { class: 'pts-who' }, '결국 판매되지 않았어요…'),
     h('p', { class: 'pts-nm' }, `${p.nm} · ${p.grade}급`),
-    sold ? h('p', { class: 'pts-pay' }, `+${won(p.pay)}`) : h('p', { class: 'pts-pay gray' }, p.grade === 'F' ? `재료값만 받고 처분할게요 · +${won(p.pay)}` : `한 단계 내려서(${p.dGrade}급 값) 처분할게요 · +${won(p.pay)}`),
+    sold ? h('p', { class: 'pts-pay' }, `+${won(p.pay)}`) : h('p', { class: 'pts-pay gray' }, p.grade === 'F' || p.grade === 'E' ? `두 단계 내려서 재료값 −${p.grade === 'F' ? 20 : 10}%만 받고 처분할게요 · +${won(p.pay)}` : `두 단계 내려서(${p.dGrade}급 값) 처분할게요 · +${won(p.pay)}`),
     h('small', null, '눌러서 닫기')));
   if (sold) { const C = ['#FFD54F', '#FF7043', '#4FC3F7', '#81C784', '#F06292', '#FFFFFF']; for (let i = 0; i < 60; i++) fx.append(h('i', { class: i % 3 ? 'pts-cf' : 'pts-coin', style: { left: Math.random() * 100 + '%', background: i % 3 ? C[i % C.length] : null, animationDelay: Math.random() * 1.6 + 's', animationDuration: 1.8 + Math.random() * 1.6 + 's', '--r': (Math.random() * 720 - 360) + 'deg' } }, i % 3 ? null : '🪙')); sfx('fanfare'); setTimeout(() => sfx('coin'), 500); if (navigator.vibrate) navigator.vibrate([40, 60, 80]); } else sfx('bad');
   const close = () => { el.classList.add('out'); setTimeout(() => { el.remove(); nextShow(); }, 300); }; el.onclick = close; setTimeout(() => el.isConnected && close(), sold ? 6500 : 5000); document.body.append(el); }
@@ -56,7 +58,7 @@ function nextShow() { const p = showQ.shift(); if (!p) { showing = false; return
 // 게시한 도자기 정산(3분이 지났으면 팔렸는지 굴려 본다) · 앱을 꺼도 시간은 흐른다
 export function potSettle(bag, earn, save, quiet) { const P = bag.pot; if (!P || !P.posts || !P.posts.length) return; const now = Date.now(); let ch = 0;
   P.posts.forEach(p => { if (p.done || now < p.end) return; const gi = FINAL.findIndex(g => g[1] === p.grade), sold = Math.random() < (FINAL[gi] || FINAL[6])[2];
-    p.done = 1; p.sold = sold ? 1 : 0; p.pay = sold ? p.price : p.grade === 'F' ? p.cost : Math.round(p.price * 0.8); p.dGrade = sold ? p.grade : (FINAL[gi + 1] || FINAL[6])[1]; ch = 1;
+    p.done = 1; p.sold = sold ? 1 : 0; p.pay = sold ? p.price : unsoldPay(p.grade, p.price, p.cost); p.dGrade = sold ? p.grade : (FINAL[gi + 2] || FINAL[6])[1]; ch = 1;
     earn(p.pay); if (p.q && bag.potq === 2) { if (sold) { bag.potq = 3; earn(QBONUS); setTimeout(() => { sfx('fanfare'); toast(`🎉 퀘스트 성공! 성공 수당 ${won(QBONUS)}을 받았어요 · 복실이에게 가서 40,000코인을 갚아요`, 4200); }, 1500); } else { bag.potqT = (bag.potqT || 0) + 1; } } potShow(p); });
   if (ch) { qExhaust(bag); P.posts = P.posts.filter(p => !p.done || now - p.end < 6 * 3600e3).slice(-12); save(); } }
 
@@ -74,7 +76,7 @@ export function openPottery({ bag, save, earn, spend, demo, onClose }) {
 
   let postBox = null;
   const postsEl = () => { const now = Date.now(); return P.posts.length ? [h('b', null, '🪧 게시한 도자기'), ...P.posts.slice().reverse().map(p => { const s = Math.max(0, Math.ceil((p.end - now) / 1000));
-        return h('div', { class: 'pt-post' + (p.done ? (p.sold ? ' sold' : ' cut') : '') }, potImg(p.k, p.img, p.r, 'pt-pimg'), h('div', null, h('b', null, `${p.nm} · ${p.grade}급`), h('small', null, p.done ? (p.sold ? `✅ 팔렸어요 · +${won(p.pay)}` : `처분(${p.dGrade}급 값) · +${won(p.pay)}`) : `⏳ ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')} · 팔리면 ${won(p.price)} · 팔릴 확률 ${Math.round(FINAL.find(g => g[1] === p.grade)[2] * 100)}%`))); })] : []; };
+        return h('div', { class: 'pt-post' + (p.done ? (p.sold ? ' sold' : ' cut') : '') }, potImg(p.k, p.img, p.r, 'pt-pimg'), h('div', null, h('b', null, `${p.nm} · ${p.grade}급`), h('small', null, p.done ? (p.sold ? `✅ 팔렸어요 · +${won(p.pay)}` : `처분(${p.grade === 'E' || p.grade === 'F' ? `재료값 −${p.grade === 'F' ? 20 : 10}%` : `${p.dGrade}급 값`}) · +${won(p.pay)}`) : `⏳ ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')} · 팔리면 ${won(p.price)} · 팔릴 확률 ${Math.round(FINAL.find(g => g[1] === p.grade)[2] * 100)}%`))); })] : []; };
   function home() { scr = 'home'; const now = Date.now(), left = DAY_MAX - P.n; postBox = h('div', { class: 'pt-posts' }, ...postsEl());
     body.replaceChildren(
       h('div', { class: 'pt-keeper' }, h('img', { src: `${IMG}k-pottery.webp?v=2`, alt: '' }), h('i', null, '도암')),
@@ -87,7 +89,7 @@ export function openPottery({ bag, save, earn, spend, demo, onClose }) {
       h('small', { class: 'pt-dim' }, '재료는 부메랑상회에서 사요 · 도자기 하나에 흙 1 · 유약 1 · 안료 1 · 땔감 1번'),
       h('button', { class: 'btn primary pt-go', disabled: left <= 0, onClick: pick }, left > 0 ? `🏺 도자기 빚기 (오늘 ${left}번 남음)` : '오늘은 다 빚었어요 · 내일 다시 와요'),
       postBox,
-      h('details', { class: 'pt-rule' }, h('summary', null, '📜 도자기 정보 · 값 매기는 법 · 최종 판매가표'), priceTable(), h('p', null, '👀 틀 보며 빚기: 채점이 더 엄격하고(어려움) 빚기 배율은 미(×3)까지, 최종 등급은 B 80점 · C 70 · D 60 · E 50 · F 그 미만이에요. ✋ 틀 없이 빚기만 S급까지 받아요.'), h('p', null, '🔥 소성: 초벌(천천히)과 중벌(빠르게) 두 번 꺼내요. 빨간 줄 100점 · 노란 칸 안 40~88점(가운데서 조금만 벗어나도 크게 깎여요) · 칸 밖 30점 이하. 두 점수 평균 90점↑ 상급 · 65점↑ 중급 · 그 아래 하급이고, 평균 점수가 그대로 최종 점수의 30%가 돼요.'), h('p', null, '빚기 점수: 위아래 96줄마다 본보기와의 폭 차이를 재요. 큰 실수일수록 더 크게 깎이고(제곱 평균), 너무 파낸 곳은 1.5배로 감점. 평균 오차 2.5%면 90%(수), 5%면 80%(우), 25%면 0%.'), h('p', null, '판매가 = 흙값 × 빚기 배율(수5 · 우4 · 미3 · 양2.5 · 가2 · 현1.5 · 황1.2) + 소성(하 2,000 · 중 3,000 · 상 5,000) + 무늬(하급 5,000 · 중급 7,000 · 최상급 15,000) + 인건비 3,000'), h('p', null, '최종 등급 = 틀 없이 빚기는 빚기 50% · 소성 30% · 무늬 20%, 틀 보며 빚기는 빚기 30% · 소성 30% · 무늬 40% 점수로 S~F. F급은 재료값의 1.45배.'), h('p', null, '게시하면 3분 안에 팔릴 확률: S 100% · A 70% · B 60% · C 50% · D 40% · E 30% · F 20%. 안 팔리면 한 등급 아래 값(×0.8)으로 처분되고, F는 재료값만 돌려받아요.')));
+      h('details', { class: 'pt-rule' }, h('summary', null, '📜 도자기 정보 · 값 매기는 법 · 최종 판매가표'), priceTable(), h('p', null, '👀 틀 보며 빚기: 채점이 더 엄격하고(어려움) 빚기 배율은 미(×3)까지, 최종 등급은 B 80점 · C 70 · D 60 · E 50 · F 그 미만이에요. ✋ 틀 없이 빚기만 S급까지 받아요.'), h('p', null, '🔥 소성: 초벌(천천히)과 중벌(빠르게) 두 번 꺼내요. 빨간 줄 100점 · 노란 칸 안 40~88점(가운데서 조금만 벗어나도 크게 깎여요) · 칸 밖 30점 이하. 두 점수 평균 90점↑ 상급 · 65점↑ 중급 · 그 아래 하급이고, 평균 점수가 그대로 최종 점수의 30%가 돼요.'), h('p', null, '빚기 점수: 위아래 96줄마다 본보기와의 폭 차이를 재요. 큰 실수일수록 더 크게 깎이고(제곱 평균), 너무 파낸 곳은 1.5배로 감점. 평균 오차 2.5%면 90%(수), 5%면 80%(우), 25%면 0%.'), h('p', null, '판매가 = 흙값 × 빚기 배율(수5 · 우4 · 미3 · 양2.5 · 가2 · 현1.5 · 황1.2) + 소성(하 2,000 · 중 3,000 · 상 5,000) + 무늬(하급 5,000 · 중급 7,000 · 최상급 15,000) + 인건비 3,000'), h('p', null, '최종 등급 = 틀 없이 빚기는 빚기 50% · 소성 30% · 무늬 20%, 틀 보며 빚기는 빚기 30% · 소성 30% · 무늬 40% 점수로 S~F. F급은 재료값의 1.45배.'), h('p', null, '게시하면 3분 안에 팔릴 확률: S 100% · A 70% · B 60% · C 50% · D 40% · E 30% · F 20%. 안 팔리면 두 등급 아래 값(×0.64)으로 처분되고, E급은 재료값 −10%, F급은 재료값 −20%만 돌려받아요.')));
     if (!P.met) { P.met = 1; save(); } }
 
   // 최종 판매가표: 빚기(0~100%) · 소성 · 무늬의 모든 조합을 계산해 등급마다 나올 수 있는 값의 범위
@@ -102,7 +104,7 @@ export function openPottery({ bag, save, earn, spend, demo, onClose }) {
     return h('div', { class: 'pt-ptab' }, ...table('💰 ✋ 틀 없이 빚기 · 최종 판매가 (3분 안에 팔렸을 때)', A, ['S', 'A', 'B', 'C', 'D', 'E', 'F']),
       h('small', null, `최고가(빚기 수 · 소성 상 · 최상급 무늬): ${ORDER.map(k => `${KINDS[k].name} ${won(A[k].R.S[1])}`).join(' · ')}`),
       ...table('💰 👀 틀 보며 빚기 · 최종 판매가 (최고 B급 · 빚기 ×3까지)', G, ['B', 'C', 'D', 'E', 'F']),
-      h('small', null, `최고가(빚기 미 · 소성 상 · 최상급 무늬): ${ORDER.map(k => `${KINDS[k].name} ${won(G[k].R.B[1])}`).join(' · ')} · 안 팔리면 S~E급은 ×0.8, F급은 재료값만 돌려받아요`)); }
+      h('small', null, `최고가(빚기 미 · 소성 상 · 최상급 무늬): ${ORDER.map(k => `${KINDS[k].name} ${won(G[k].R.B[1])}`).join(' · ')} · 안 팔리면 두 단계 하락 · S~D급 ×0.64, E급 재료값 −10%, F급 재료값 −20%`)); }
 
   function questBox() { const q = bag.potq || 0;
     if (q === 1) return [say('복실이가 보냈구려… 허허, 그 녀석. 손이 뭉뚝해서 흙만 보면 도망가더니. 좋소, 폐하께 내 기술을 전하겠소. 먼저 분청사기를 D급 이상으로 빚어 3분 안에 팔아 보시오. 기회는 세 번이오! 분청토 1개, 유약 1개, 안료 1개를 가져오시오.'), matBox('b'), h('button', { class: 'btn primary pt-go', onClick: () => { bag.potq = 2; bag.potqT = 0; save(); sfx('coin'); toast('🏺 도전을 받았어요 · 분청사기 D급 이상!', 2200); home(); } }, '🏺 도전 받기')];
@@ -236,7 +238,7 @@ export function openPottery({ bag, save, earn, spend, demo, onClose }) {
     const rows = [['🏺 빚기', `${job.pct}% · ${sg[1]} (흙값 ${won(job.clay)} ×${sg[2]})`, won(job.clay * sg[2])], ['🔥 소성', `${FIRE[fi][0]}급${job.fs != null ? ` (${job.fs}점)` : ''}`, `+${won(FIRE[fi][1])}`], ['🎨 무늬', `${pat[1]} (${PAT_NAME[pat[2]]})`, `+${won(PAT_BONUS[pat[2]])}`], ['🤲 인건비', '', `+${won(LABOR)}`]];
     body.append(h('div', { class: 'pt-card g' + fg[1] }, h('div', { class: 'pt-grade' }, h('b', null, fg[1]), h('small', null, `${score}점`)), h('b', { class: 'pt-nm' }, nm), job.guide && h('small', { class: 'pt-dim' }, fg[1] === 'B' ? '👀 틀 보며 빚기 · 현재 등급 B급이 최고 등급입니다' : '👀 틀 보며 빚기 · 최고 B급 · 빚기 배율 최고 ×3'),
       h('table', null, ...rows.map(r => h('tr', null, h('td', null, r[0]), h('td', null, r[1]), h('td', null, r[2])))),
-      h('p', { class: 'pt-price' }, fg[1] === 'F' ? `F급 · 재료값 ${won(job.cost)} × 1.45 = ` : '판매가 ', h('b', null, won(price))), h('small', { class: 'pt-dim' }, `재료값 ${won(job.cost)} · 3분 안에 팔릴 확률 ${Math.round(fg[2] * 100)}% · 안 팔리면 ${fg[1] === 'F' ? `재료값 ${won(job.cost)}` : `한 등급 아래 값 ${won(price * 0.8)}`}`),
+      h('p', { class: 'pt-price' }, fg[1] === 'F' ? `F급 · 재료값 ${won(job.cost)} × 1.45 = ` : '판매가 ', h('b', null, won(price))), h('small', { class: 'pt-dim' }, `재료값 ${won(job.cost)} · 3분 안에 팔릴 확률 ${Math.round(fg[2] * 100)}% · 안 팔리면 두 단계 하락 · ${won(unsoldPay(fg[1], price, job.cost))}`),
       h('button', { class: 'btn primary pt-go', onClick: e => { e.target.disabled = true; const qq = bag.potq === 2 && job.k === 'b' && (bag.potqT || 0) + qPending(bag) < QTRIES, qOk = qq && FINAL.findIndex(g => g[1] === fg[1]) <= 4 /* 퀘스트: D급 이상 */; if (qq && !qOk) { bag.potqT = (bag.potqT || 0) + 1; setTimeout(() => toast(`🏺 D급에 못 미쳤어요(${fg[1]}급) · 퀘스트 기회 1번을 썼어요`, 2600), 900); qExhaust(bag); } if (qOk) setTimeout(() => toast('⚔️ 퀘스트 도자기예요! 3분 안에 팔리면 성공', 2400), 900); P.posts.push({ q: qOk ? 1 : 0, id: Date.now(), k: job.k, img: pat[0], r: job.rr, nm, grade: fg[1], price, cost: job.cost, end: Date.now() + (fast ? 20000 : 180000) }); busy = false; save(); sfx('coin'); toast(`🪧 ${nm}(${fg[1]}급)을 게시했어요! 3분 안에 팔리면 ${won(price)}`, 2600); home(); } }, '🪧 게시하기')));
     setTimeout(() => body.lastChild && body.lastChild.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200); }
 

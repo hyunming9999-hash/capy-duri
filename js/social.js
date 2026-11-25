@@ -1405,8 +1405,8 @@ export function mount(el, ctx) {
     draw(); cl = modal({ title: '🎒 가방', body, onClose: o.onClose, actions: [{ label: '닫기', primary: true }] });
   }
   /* ───── 벼 도매상 복돈이 아저씨 ───── 카피랜드엔 벼가 없어서 핫똑 곡식을 비싸게 사 간다. 하루 세 번(그날 정해진 무작위 시각) 카피백반 앞에 5분 동안 온다.
-     한 단 값 = 핫똑랜드 값의 1.5배 · 30단마다 수수료 3,300코인을 떼고, 비행기 운임 33,000코인을 얹어 준다(30단보다 적으면 그만큼만) */
-  const RB_MS = 300000, RB_X = 1.5, RB_FEE = 3300, RB_AIR = 33000, RB_FULL = 30, RB_TEST = /[?&]ricebuyer\b/.test(location.search);
+     한 단 값 = 핫똑랜드 값의 1.5배 · 30단마다 수수료 3,300코인을 떼고, 비행기 운임 10,000코인을 얹어 준다(30단보다 적으면 그만큼만) */
+  const RB_MS = 300000, RB_X = 1.5, RB_FEE = 3300, RB_AIR = 10000, RB_FULL = 30, RB_TEST = /[?&]ricebuyer\b/.test(location.search);
   const rbSlots = d => { let x = (d * 2654435761) >>> 0; const r = () => { x = (x * 1664525 + 1013904223) >>> 0; return x / 4294967296; }; return [0, 1, 2].map(k => d * 86400000 - 9 * 3600000 + (9 + k * 5 + r() * 4.5) * 3600000); }; /* 하루를 셋으로 나눠 9~13.5시 · 14~18.5시 · 19~23.5시 사이 한 번씩 */
   const rbNow = t => { if (RB_TEST) return { from: rbNow.t0 || (rbNow.t0 = t), to: (rbNow.t0 || t) + RB_MS }; const d = Math.floor((t + 9 * 3600000) / 86400000); for (const st of rbSlots(d)) if (t >= st && t < st + RB_MS) return { from: st, to: st + RB_MS }; return null; };
   let rbEl = null, rbSay = null, rbOn = null, rbIv = 0;
