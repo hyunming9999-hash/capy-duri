@@ -83,6 +83,13 @@ const left = ms => { const m = Math.ceil(ms / 60000); return m >= 60 ? `${Math.f
 // ===== 서리 뒤처리(농장을 열 때·친목회에 들어올 때 한 번씩) =====
 // 우편함 farm/{주인}/inbox/{키} = { t: 'steal'|'fine'|'sale', by, n(받을 코인), k, i, c, name, at } — 주인이 접속했을 때 돈을 받고 알림을 본다
 // 담보 farm/{나}/pawn/{장비 번호} = { at, owner, name } — 하루가 지나면 팔리고, 판 값의 절반이 밭 주인에게 간다(나머지는 관리인)
+// 원격 수확(핫똑랜드에서 물병 서신으로 부탁): 카피랜드 철물점 주인이 다 익은 이랑을 거둬 헛간에 담는다. 결과 [[작물, 등급, 개수, 불량]]
+export async function remoteHarvest(ctx) { const ref = 'farm/' + ctx.uid, data = (await ctx.store.get(ref)) || {}, t = ctx.store.now(), patch = {}, add = {}, got = [];
+  for (let k = 0; k < PLOTS; k++) { const p = (data.plots || {})[k]; if (!p) continue; const rows = p.c ? [p, null, null] : [0, 1, 2].map(i => (p.rows || {})[i] || null); linkSprk(rows, sprkOf(data, k)); let ch = false;
+    rows.forEach((r, i) => { if (!(r && r.c) || !ripe(r, t)) return; ch = true; if (r.lost) { rows[i] = null; return; } const g = r.g || gradeOf(r, t), left = YIELD_ROW - (r.got || 0), take = g === 'F' ? 0 : left, bad = Math.max(0, (r.bad != null ? r.bad : BAD[2][0] + Math.floor(Math.random() * (BAD[2][1] - BAD[2][0] + 1))) - (r.badGot || 0)), good = Math.max(0, take - Math.min(take, bad)); got.push([r.c, g, good, take - good]); if (good) { const key = `${r.c}|${g}`; add[key] = (add[key] || 0) + good; } rows[i] = null; });
+    if (ch) patch[`plots/${k}`] = rows.some(Boolean) ? { rows: Object.fromEntries(rows.map((r, i) => [i, r]).filter(([, r]) => r)) } : null; }
+  Object.entries(add).forEach(([key, n]) => { patch[`barn/${key}`] = ((data.barn || {})[key] || 0) + n; });
+  if (Object.keys(patch).length) await ctx.store.update(ref, patch); return got; }
 export const STEAL_FINE = 1000, PAWN_MS = 86400000, BAN_MS = 600000;
 export const mailTo = (ctx, owner, m) => ctx.store.set(`farm/${owner}/inbox/${ctx.store.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`, { ...m, by: ctx.uid, at: ctx.store.now() }).catch(() => {});
 let mailBusy = false;
