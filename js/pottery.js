@@ -1,6 +1,6 @@
 // 해피도자기: 핫똑랜드 마을의 도자기 공방(주인 · 스승 삽살개 도암)
 // 재료(흙 · 유약 · 안료)는 부메랑상회에서 산다. 하루 3번 빚는다.
-// 흙 빚기(1분 물레) → 유약 → 가마(꺼내는 때) → 안료(무늬는 운) → 최종 등급 → 게시(5분 안에 팔릴 확률)
+// 흙 빚기(1분 물레) → 유약 → 가마(꺼내는 때) → 안료(무늬는 운) → 최종 등급 → 게시(3분 안에 팔릴 확률)
 import { h, toast, modal } from './ui.js';
 import { sfx } from './sound.js';
 
@@ -33,7 +33,7 @@ export async function potWarp(k, pat, rr) { const im = await loadImg(`${PI}${pat
   return c; }
 export function potImg(k, pat, rr, cls) { const el = h('img', { class: cls, src: `${PI}${pat}.webp?v=1`, alt: '' }); if (rr) potWarp(k, pat, rr).then(c => { if (c && el.isConnected) { c.className = cls; el.replaceWith(c); } else if (c) { el.src = c.toDataURL(); } }); return el; }
 
-// 에픽 퀘스트 「작은아빠의 가마」(복실이): bag.potq 0 받기 전 · 1 받음(공방 가기) · 2 도전 중(분청사기 C급 이상 → 5분 안에 팔기, 기회 3번) · 3 성공(복실이에게 갚기) · 4 끝
+// 에픽 퀘스트 「작은아빠의 가마」(복실이): bag.potq 0 받기 전 · 1 받음(공방 가기) · 2 도전 중(분청사기 C급 이상 → 3분 안에 팔기, 기회 3번) · 3 성공(복실이에게 갚기) · 4 끝
 const QBONUS = 60000, QTRIES = 3;
 const qPending = bag => (bag.pot && bag.pot.posts || []).filter(p => p.q && !p.done).length;
 function qExhaust(bag) { if (bag.potq === 2 && (bag.potqT || 0) >= QTRIES && !qPending(bag)) { bag.potq = 1; bag.potqT = 0; setTimeout(() => toast('🏺 기회 세 번을 다 썼어요… 해피도자기의 도암 스승에게 다시 도전해요', 3200), 1200); } }
@@ -53,7 +53,7 @@ function nextShow() { const p = showQ.shift(); if (!p) { showing = false; return
   if (sold) { const C = ['#FFD54F', '#FF7043', '#4FC3F7', '#81C784', '#F06292', '#FFFFFF']; for (let i = 0; i < 60; i++) fx.append(h('i', { class: i % 3 ? 'pts-cf' : 'pts-coin', style: { left: Math.random() * 100 + '%', background: i % 3 ? C[i % C.length] : null, animationDelay: Math.random() * 1.6 + 's', animationDuration: 1.8 + Math.random() * 1.6 + 's', '--r': (Math.random() * 720 - 360) + 'deg' } }, i % 3 ? null : '🪙')); sfx('fanfare'); setTimeout(() => sfx('coin'), 500); if (navigator.vibrate) navigator.vibrate([40, 60, 80]); } else sfx('bad');
   const close = () => { el.classList.add('out'); setTimeout(() => { el.remove(); nextShow(); }, 300); }; el.onclick = close; setTimeout(() => el.isConnected && close(), sold ? 6500 : 5000); document.body.append(el); }
 
-// 게시한 도자기 정산(5분이 지났으면 팔렸는지 굴려 본다) · 앱을 꺼도 시간은 흐른다
+// 게시한 도자기 정산(3분이 지났으면 팔렸는지 굴려 본다) · 앱을 꺼도 시간은 흐른다
 export function potSettle(bag, earn, save, quiet) { const P = bag.pot; if (!P || !P.posts || !P.posts.length) return; const now = Date.now(); let ch = 0;
   P.posts.forEach(p => { if (p.done || now < p.end) return; const gi = FINAL.findIndex(g => g[1] === p.grade), sold = Math.random() < (FINAL[gi] || FINAL[6])[2];
     p.done = 1; p.sold = sold ? 1 : 0; p.pay = sold ? p.price : p.grade === 'F' ? p.cost : Math.round(p.price * 0.8); p.dGrade = sold ? p.grade : (FINAL[gi + 1] || FINAL[6])[1]; ch = 1;
@@ -84,7 +84,7 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
       h('small', { class: 'pt-dim' }, '재료는 부메랑상회에서 사요 · 도자기 하나에 흙 1 · 유약 1 · 안료 1'),
       h('button', { class: 'btn primary pt-go', disabled: left <= 0, onClick: pick }, left > 0 ? `🏺 도자기 빚기 (오늘 ${left}번 남음)` : '오늘은 다 빚었어요 · 내일 다시 와요'),
       postBox,
-      h('details', { class: 'pt-rule' }, h('summary', null, '📜 도자기 정보 · 값 매기는 법 · 최종 판매가표'), priceTable(), h('p', null, '빚기 점수: 위아래 96줄마다 본보기와의 폭 차이를 재요. 큰 실수일수록 더 크게 깎이고(제곱 평균), 너무 파낸 곳은 1.5배로 감점. 평균 오차 2.5%면 90%(수), 5%면 80%(우), 25%면 0%.'), h('p', null, '판매가 = 흙값 × 빚기 배율(수5 · 우4 · 미3 · 양2.5 · 가2 · 현1.5 · 황1.2) + 소성(하 2,000 · 중 3,000 · 상 5,000) + 무늬(하급 5,000 · 중급 7,000 · 최상급 15,000) + 인건비 3,000'), h('p', null, '최종 등급 = 빚기 60% · 소성 25% · 무늬 15% 점수로 S~F. F급은 재료값의 1.45배.'), h('p', null, '게시하면 5분 안에 팔릴 확률: S 100% · A 80% · B 70% · C 60% · D 50% · E 40% · F 30%. 안 팔리면 한 등급 아래 값(×0.8)으로 처분되고, F는 재료값만 돌려받아요.')));
+      h('details', { class: 'pt-rule' }, h('summary', null, '📜 도자기 정보 · 값 매기는 법 · 최종 판매가표'), priceTable(), h('p', null, '👀 틀 보며 빚기: 채점이 더 엄격하고(어려움) 빚기 배율은 미(×3)까지, 최종 등급은 B 80점 · C 70 · D 60 · E 50 · F 그 미만이에요. ✋ 틀 없이 빚기만 S급까지 받아요.'), h('p', null, '빚기 점수: 위아래 96줄마다 본보기와의 폭 차이를 재요. 큰 실수일수록 더 크게 깎이고(제곱 평균), 너무 파낸 곳은 1.5배로 감점. 평균 오차 2.5%면 90%(수), 5%면 80%(우), 25%면 0%.'), h('p', null, '판매가 = 흙값 × 빚기 배율(수5 · 우4 · 미3 · 양2.5 · 가2 · 현1.5 · 황1.2) + 소성(하 2,000 · 중 3,000 · 상 5,000) + 무늬(하급 5,000 · 중급 7,000 · 최상급 15,000) + 인건비 3,000'), h('p', null, '최종 등급 = 빚기 60% · 소성 25% · 무늬 15% 점수로 S~F. F급은 재료값의 1.45배.'), h('p', null, '게시하면 3분 안에 팔릴 확률: S 100% · A 80% · B 70% · C 60% · D 50% · E 40% · F 30%. 안 팔리면 한 등급 아래 값(×0.8)으로 처분되고, F는 재료값만 돌려받아요.')));
     if (!P.met) { P.met = 1; save(); } }
 
   // 최종 판매가표: 빚기(0~100%) · 소성 · 무늬의 모든 조합을 계산해 등급마다 나올 수 있는 값의 범위
@@ -92,14 +92,14 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
       for (let pct = 0; pct <= 100; pct++) { const m = SHAPE_G.find(s => pct >= s[0])[2]; FIRE.forEach(f => pats.forEach(pi => { const sc = Math.round(pct * 0.6 + f[2] * 0.25 + PAT_PT[pi] * 0.15), g = FINAL.find(x => sc >= x[0])[1], pr = g === 'F' ? Math.round(cost * 1.45) : Math.round(c * m + f[1] + PAT_BONUS[pi] + LABOR), o = R[g] || (R[g] = [1e9, 0]); o[0] = Math.min(o[0], pr); o[1] = Math.max(o[1], pr); })); }
       tb[k] = { R, cost }; });
     const k1 = n => n.toLocaleString(), cell = (r) => !r ? '-' : r[0] === r[1] ? k1(r[0]) : `${k1(r[0])}~${k1(r[1])}`;
-    return h('div', { class: 'pt-ptab' }, h('b', null, '💰 최종 판매가 (5분 안에 팔렸을 때)'), h('table', null, h('tr', null, h('th', null, '등급'), ...ORDER.map(k => h('th', null, KINDS[k].name)), h('th', null, '팔릴 확률')),
+    return h('div', { class: 'pt-ptab' }, h('b', null, '💰 최종 판매가 (3분 안에 팔렸을 때)'), h('table', null, h('tr', null, h('th', null, '등급'), ...ORDER.map(k => h('th', null, KINDS[k].name)), h('th', null, '팔릴 확률')),
       ...FINAL.map(g => h('tr', { class: 'g' + g[1] }, h('td', null, h('b', null, g[1])), ...ORDER.map(k => h('td', null, cell(tb[k].R[g[1]]))), h('td', null, `${Math.round(g[2] * 100)}%`))),
       h('tr', { class: 'cost' }, h('td', null, '재료값'), ...ORDER.map(k => h('td', null, k1(tb[k].cost))), h('td', null, ''))),
       h('small', null, `최고가(빚기 수 · 소성 상 · 최상급 무늬): ${ORDER.map(k => `${KINDS[k].name} ${won(tb[k].R.S[1])}`).join(' · ')} · 안 팔리면 S~E급은 ×0.8, F급은 재료값만 돌려받아요`)); }
 
   function questBox() { const q = bag.potq || 0;
-    if (q === 1) return [say('복실이가 보냈구려… 허허, 그 녀석. 손이 뭉뚝해서 흙만 보면 도망가더니. 좋소, 폐하께 내 기술을 전하겠소. 먼저 분청사기를 C급 이상으로 빚어 5분 안에 팔아 보시오. 기회는 세 번이오! 분청토 1개, 유약 1개, 안료 1개를 가져오시오.'), matBox('b'), h('button', { class: 'btn primary pt-go', onClick: () => { bag.potq = 2; bag.potqT = 0; save(); sfx('coin'); toast('🏺 도전을 받았어요 · 분청사기 C급 이상!', 2200); home(); } }, '🏺 도전 받기')];
-    if (q === 2) { const left = QTRIES - (bag.potqT || 0) - qPending(bag); return [h('div', { class: 'pt-quest' }, h('b', null, '⚔️ 작은아빠의 가마'), h('span', null, `분청사기 C급 이상을 만들어 5분 안에 팔기 · 남은 기회 ${Math.max(0, left)} / ${QTRIES}${qPending(bag) ? ` (판매 기다리는 중 ${qPending(bag)})` : ''}`), h('small', null, `성공하면 판매가 + 성공 수당 ${won(QBONUS)}`)), say('분청사기를 빚으려면 분청토 1개, 유약 1개, 안료 1개를 가져오시오.'), matBox('b')]; }
+    if (q === 1) return [say('복실이가 보냈구려… 허허, 그 녀석. 손이 뭉뚝해서 흙만 보면 도망가더니. 좋소, 폐하께 내 기술을 전하겠소. 먼저 분청사기를 C급 이상으로 빚어 3분 안에 팔아 보시오. 기회는 세 번이오! 분청토 1개, 유약 1개, 안료 1개를 가져오시오.'), matBox('b'), h('button', { class: 'btn primary pt-go', onClick: () => { bag.potq = 2; bag.potqT = 0; save(); sfx('coin'); toast('🏺 도전을 받았어요 · 분청사기 C급 이상!', 2200); home(); } }, '🏺 도전 받기')];
+    if (q === 2) { const left = QTRIES - (bag.potqT || 0) - qPending(bag); return [h('div', { class: 'pt-quest' }, h('b', null, '⚔️ 작은아빠의 가마'), h('span', null, `분청사기 C급 이상을 만들어 3분 안에 팔기 · 남은 기회 ${Math.max(0, left)} / ${QTRIES}${qPending(bag) ? ` (판매 기다리는 중 ${qPending(bag)})` : ''}`), h('small', null, `성공하면 판매가 + 성공 수당 ${won(QBONUS)}`)), say('분청사기를 빚으려면 분청토 1개, 유약 1개, 안료 1개를 가져오시오.'), matBox('b')]; }
     if (q === 3) return [h('div', { class: 'pt-quest ok' }, h('b', null, '⚔️ 작은아빠의 가마 · 성공!'), h('span', null, '👉 복실이에게 가서 40,000코인을 갚으면 퀘스트가 끝나요'))];
     return []; }
 
@@ -152,9 +152,9 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
       if (phase === 2) { g.save(); g.setLineDash([6, 5]); g.strokeStyle = '#E8473B'; g.lineWidth = 2; g.stroke(path(T, CW / 2)); g.restore(); }
       chips = chips.filter(c => (c.x += c.vx, c.y += c.vy, c.vy += 0.25, c.a -= 0.03) > 0); chips.forEach(c => { g.globalAlpha = c.a; g.fillStyle = K.c0; g.fillRect(c.x, c.y, 3, 3); }); g.globalAlpha = 1;
       if (down && phase === 1) { g.fillStyle = 'rgba(255,255,255,.65)'; g.beginPath(); g.arc(down[0], down[1], tip, 0, Math.PI * 2); g.fill(); } };
-    const LVQ = (location.search.match(/[?&]potlv=(\w+)/) || [])[1], LVS = { hard: [1.5, 0.25, 2], mid: [1.25, 0.33, 2], easy: [1, 0.4, 1] }, [OVER, ZERO, PW] = LVS[LVQ] || LVS.easy; /* 기본은 보통(2026-11-25) */ /* 시험 링크 &potlv=hard(어려움·기본) · mid(보통 이상) · easy(보통) */
+    const LVQ = (location.search.match(/[?&]potlv=(\w+)/) || [])[1], LVS = { hard: [1.5, 0.25, 2], mid: [1.25, 0.33, 2], easy: [1, 0.4, 1] }, [OVER, ZERO, PW] = job.guide ? LVS.hard : LVS[LVQ] || LVS.easy; /* 틀 보며 빚기는 어려움 채점 */ /* 기본은 보통(2026-11-25) */ /* 시험 링크 &potlv=hard(어려움·기본) · mid(보통 이상) · easy(보통) */
     const score = () => { let e = 0, w = 0; for (let i = 0; i < N; i++) { const wi = i < 2 || i > N - 3 ? 0.7 : 1, d = (r[i] - T[i]) / maxR, dd = d < 0 ? -d * OVER : d; e += Math.pow(dd, PW) * wi; w += wi; } return Math.max(0, Math.min(100, Math.round(100 * (1 - Math.pow(e / w, 1 / PW) / ZERO)))); }; /* 냉정하게(2026-11-25): 줄마다 오차를 제곱해 평균(큰 실수일수록 크게 감점) · 너무 깎은 곳은 1.5배 · 오차 25%면 0점 */
-    const finish = () => { if (phase === 2) return; phase = 2; done.disabled = true; const pct = score(), sg = SHAPE_G.find(s => pct >= s[0]); job.pct = pct; job.sg = sg; job.r = r.map(v => v / maxR); job.ar = pr.ar; sfx(pct >= 80 ? 'fanfare' : pct >= 50 ? 'coin' : 'bad');
+    const finish = () => { if (phase === 2) return; phase = 2; done.disabled = true; const pct = score(), sg = job.guide ? SHAPE_G[Math.max(2, SHAPE_G.findIndex(s => pct >= s[0]))] : SHAPE_G.find(s => pct >= s[0]); /* 틀 보며 빚기: 빚기 배율은 미(×3)까지 */ job.pct = pct; job.sg = sg; job.r = r.map(v => v / maxR); job.ar = pr.ar; sfx(pct >= 80 ? 'fanfare' : pct >= 50 ? 'coin' : 'bad');
       note.textContent = `일치율 ${pct}% · 빚기 「${sg[1]}」 (흙값 ×${sg[2]})`; time.textContent = sg[1]; time.className = 'pt-time g'; setTimeout(() => { cancelAnimationFrame(raf); draw(performance.now()); body.append(say(pct >= 90 ? '허허! 내 평생 이런 손은 처음 보오!' : pct >= 70 ? '제법이오. 흙이 폐하를 따르는구려.' : pct >= 50 ? '나쁘지 않소. 손이 조금 급했소이다.' : '흙이 울고 있소… 다음엔 천천히 깎아 보시오.'), h('button', { class: 'btn primary', onClick: () => glaze(job) }, '다음: 유약 칠하기 →')); }, 400); };
     done.onclick = finish;
     const loop = now => { if (!root.isConnected) return; if (phase === 0 && now >= startAt) { phase = 1; t0 = now; done.disabled = false; note.textContent = '물레가 돌아요! 손끝으로 흙을 깎아 본보기처럼 다듬어요 · 살짝만 닿아도 깎여요'; sfx('pop'); }
@@ -214,13 +214,13 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
         odds.querySelectorAll('span').forEach((e, i) => e.classList.toggle('on', K.pats[i] === pat)); btn.remove(); setTimeout(() => result(job), 900); }; }; }
 
   // ───── 5. 최종 등급 · 게시 ─────
-  function result(job) { const K = KINDS[job.k], sg = job.sg, fi = job.fi, pat = job.pat, score = Math.round(job.pct * 0.6 + FIRE[fi][2] * 0.25 + PAT_PT[pat[2]] * 0.15), fg0 = FINAL.find(g => score >= g[0]), fgi = job.guide ? Math.max(FINAL.indexOf(fg0), 2) : FINAL.indexOf(fg0), fg = FINAL[fgi];
+  function result(job) { const K = KINDS[job.k], sg = job.sg, fi = job.fi, pat = job.pat, score = Math.round(job.pct * 0.6 + FIRE[fi][2] * 0.25 + PAT_PT[pat[2]] * 0.15), fg0 = FINAL.find(g => score >= g[0]), fg = job.guide ? FINAL[score >= 80 ? 2 : score >= 70 ? 3 : score >= 60 ? 4 : score >= 50 ? 5 : 6] : fg0; /* 틀 보며 빚기: B 80 · C 70 · D 60 · E 50 · F 그 미만 */
     const calc = Math.round(job.clay * sg[2] + FIRE[fi][1] + PAT_BONUS[pat[2]] + LABOR), price = fg[1] === 'F' ? Math.round(job.cost * 1.45) : calc, nm = `${K.name}${pat[2] ? ` · ${pat[1]}` : ''}`;
     const rows = [['🏺 빚기', `${job.pct}% · ${sg[1]} (흙값 ${won(job.clay)} ×${sg[2]})`, won(job.clay * sg[2])], ['🔥 소성', `${FIRE[fi][0]}급`, `+${won(FIRE[fi][1])}`], ['🎨 무늬', `${pat[1]} (${PAT_NAME[pat[2]]})`, `+${won(PAT_BONUS[pat[2]])}`], ['🤲 인건비', '', `+${won(LABOR)}`]];
-    body.append(h('div', { class: 'pt-card g' + fg[1] }, h('div', { class: 'pt-grade' }, h('b', null, fg[1]), h('small', null, `${score}점`)), h('b', { class: 'pt-nm' }, nm), job.guide && h('small', { class: 'pt-dim' }, `👀 틀 보며 빚기 · 최고 B급${fg0 !== fg ? ` (점수로는 ${fg0[1]}급)` : ''}`),
+    body.append(h('div', { class: 'pt-card g' + fg[1] }, h('div', { class: 'pt-grade' }, h('b', null, fg[1]), h('small', null, `${score}점`)), h('b', { class: 'pt-nm' }, nm), job.guide && h('small', { class: 'pt-dim' }, `👀 틀 보며 빚기 · 최고 B급 · 빚기 배율 최고 ×3`),
       h('table', null, ...rows.map(r => h('tr', null, h('td', null, r[0]), h('td', null, r[1]), h('td', null, r[2])))),
-      h('p', { class: 'pt-price' }, fg[1] === 'F' ? `F급 · 재료값 ${won(job.cost)} × 1.45 = ` : '판매가 ', h('b', null, won(price))), h('small', { class: 'pt-dim' }, `재료값 ${won(job.cost)} · 5분 안에 팔릴 확률 ${Math.round(fg[2] * 100)}% · 안 팔리면 ${fg[1] === 'F' ? `재료값 ${won(job.cost)}` : `한 등급 아래 값 ${won(price * 0.8)}`}`),
-      h('button', { class: 'btn primary pt-go', onClick: e => { e.target.disabled = true; const qq = bag.potq === 2 && job.k === 'b' && (bag.potqT || 0) + qPending(bag) < QTRIES, qOk = qq && FINAL.findIndex(g => g[1] === fg[1]) <= 3; if (qq && !qOk) { bag.potqT = (bag.potqT || 0) + 1; setTimeout(() => toast(`🏺 C급에 못 미쳤어요(${fg[1]}급) · 퀘스트 기회 1번을 썼어요`, 2600), 900); qExhaust(bag); } if (qOk) setTimeout(() => toast('⚔️ 퀘스트 도자기예요! 5분 안에 팔리면 성공', 2400), 900); P.posts.push({ q: qOk ? 1 : 0, id: Date.now(), k: job.k, img: pat[0], r: job.rr, nm, grade: fg[1], price, cost: job.cost, end: Date.now() + (fast ? 20000 : 300000) }); busy = false; save(); sfx('coin'); toast(`🪧 ${nm}(${fg[1]}급)을 게시했어요! 5분 안에 팔리면 ${won(price)}`, 2600); home(); } }, '🪧 게시하기')));
+      h('p', { class: 'pt-price' }, fg[1] === 'F' ? `F급 · 재료값 ${won(job.cost)} × 1.45 = ` : '판매가 ', h('b', null, won(price))), h('small', { class: 'pt-dim' }, `재료값 ${won(job.cost)} · 3분 안에 팔릴 확률 ${Math.round(fg[2] * 100)}% · 안 팔리면 ${fg[1] === 'F' ? `재료값 ${won(job.cost)}` : `한 등급 아래 값 ${won(price * 0.8)}`}`),
+      h('button', { class: 'btn primary pt-go', onClick: e => { e.target.disabled = true; const qq = bag.potq === 2 && job.k === 'b' && (bag.potqT || 0) + qPending(bag) < QTRIES, qOk = qq && FINAL.findIndex(g => g[1] === fg[1]) <= 3; if (qq && !qOk) { bag.potqT = (bag.potqT || 0) + 1; setTimeout(() => toast(`🏺 C급에 못 미쳤어요(${fg[1]}급) · 퀘스트 기회 1번을 썼어요`, 2600), 900); qExhaust(bag); } if (qOk) setTimeout(() => toast('⚔️ 퀘스트 도자기예요! 3분 안에 팔리면 성공', 2400), 900); P.posts.push({ q: qOk ? 1 : 0, id: Date.now(), k: job.k, img: pat[0], r: job.rr, nm, grade: fg[1], price, cost: job.cost, end: Date.now() + (fast ? 20000 : 180000) }); busy = false; save(); sfx('coin'); toast(`🪧 ${nm}(${fg[1]}급)을 게시했어요! 3분 안에 팔리면 ${won(price)}`, 2600); home(); } }, '🪧 게시하기')));
     setTimeout(() => body.lastChild && body.lastChild.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200); }
 
   home();
