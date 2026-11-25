@@ -237,5 +237,6 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
       h('button', { class: 'btn primary pt-go', onClick: e => { e.target.disabled = true; const qq = bag.potq === 2 && job.k === 'b' && (bag.potqT || 0) + qPending(bag) < QTRIES, qOk = qq && FINAL.findIndex(g => g[1] === fg[1]) <= 4 /* 퀘스트: D급 이상 */; if (qq && !qOk) { bag.potqT = (bag.potqT || 0) + 1; setTimeout(() => toast(`🏺 D급에 못 미쳤어요(${fg[1]}급) · 퀘스트 기회 1번을 썼어요`, 2600), 900); qExhaust(bag); } if (qOk) setTimeout(() => toast('⚔️ 퀘스트 도자기예요! 3분 안에 팔리면 성공', 2400), 900); P.posts.push({ q: qOk ? 1 : 0, id: Date.now(), k: job.k, img: pat[0], r: job.rr, nm, grade: fg[1], price, cost: job.cost, end: Date.now() + (fast ? 20000 : 180000) }); busy = false; save(); sfx('coin'); toast(`🪧 ${nm}(${fg[1]}급)을 게시했어요! 3분 안에 팔리면 ${won(price)}`, 2600); home(); } }, '🪧 게시하기')));
     setTimeout(() => body.lastChild && body.lastChild.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200); }
 
+  if ((bag.potq === 1 || bag.potq === 2) && !bag.potqWood) { bag.potqWood = 1; bag.wood = (bag.wood || 0) + 4; save(); setTimeout(() => { sfx('coin'); toast('🪵 도암 스승이 퀘스트용 가마 땔감 4번 분량을 땔감 창고에 넣어 주었어요', 3200); }, 600); } /* 도자기 퀘스트: 땔감 4번 지급(한 번만) */
   home();
   return close; }
