@@ -60,7 +60,7 @@ export function potSettle(bag, earn, save, quiet) { const P = bag.pot; if (!P ||
     earn(p.pay); if (p.q && bag.potq === 2) { if (sold) { bag.potq = 3; earn(QBONUS); setTimeout(() => { sfx('fanfare'); toast(`🎉 퀘스트 성공! 성공 수당 ${won(QBONUS)}을 받았어요 · 복실이에게 가서 40,000코인을 갚아요`, 4200); }, 1500); } else { bag.potqT = (bag.potqT || 0) + 1; } } potShow(p); });
   if (ch) { qExhaust(bag); P.posts = P.posts.filter(p => !p.done || now - p.end < 6 * 3600e3).slice(-12); save(); } }
 
-export function openPottery({ bag, save, earn, demo, onClose }) {
+export function openPottery({ bag, save, earn, spend, demo, onClose }) {
   const P = bag.pot || (bag.pot = { day: 0, n: 0, posts: [] }); P.posts = P.posts || [];
   const today = dayNo(Date.now()); if (P.day !== today) { P.day = today; P.n = 0; }
   const fast = demo && /[?&]potfast\b/.test(location.search);
@@ -70,7 +70,7 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
   root.append(head, body); document.body.append(root); let busy = false;
   const tk = setInterval(() => { potSettle(bag, earn, save); if (scr === 'home' && postBox) postBox.replaceChildren(...postsEl()); }, 1000); let scr = '';
   const say = t => h('div', { class: 'pt-say' }, h('b', null, '도암 스승'), h('span', null, t));
-  const has = k => (bag[k] || 0) > 0;
+  const has = k => (bag[k] || 0) > 0, RENT = 3000, rentDue = () => P.rentDay !== dayNo(Date.now()); /* 공방 월세: 하루 3,000코인(그날 처음 빚을 때 낸다) */
 
   let postBox = null;
   const postsEl = () => { const now = Date.now(); return P.posts.length ? [h('b', null, '🪧 게시한 도자기'), ...P.posts.slice().reverse().map(p => { const s = Math.max(0, Math.ceil((p.end - now) / 1000));
@@ -83,6 +83,7 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
       h('div', { class: 'pt-wood' + (has('wood') ? '' : ' no') }, h('img', { src: `${IMG}i-wood.webp?v=2`, alt: '' }), h('div', null, h('b', null, '🪵 공방 땔감 창고'), h('small', null, has('wood') ? `가마 ${bag.wood}번 더 땔 수 있어요` : (bag.woodB ? '가방에 땔감이 있어요 · 「땔감 넣기」를 눌러요' : '땔감이 없어요 · 부메랑상회에서 한 짐(100,000코인 · 가마 6번)을 사 오세요'))), h('em', null, `${bag.wood || 0}번`)),
       (bag.woodB || 0) <= 0 ? '' : h('button', { class: 'btn primary pt-woodin', onClick: () => { const n = bag.woodB || 0; if (!n) return; bag.woodB = 0; bag.wood = (bag.wood || 0) + n * 6; save(); sfx('coin'); toast(`🪵 가방의 땔감 ${n}짐을 공방에 넣었어요 · 가마 ${n * 6}번 추가`, 2600); home(); } }, `🪵 땔감 넣기 (가방에 ${bag.woodB}짐 · 가마 ${bag.woodB * 6}번)`),
       ...questBox(),
+      h('small', { class: 'pt-dim pt-rent' + (rentDue() ? '' : ' ok') }, rentDue() ? '🏠 공방 월세 하루 3,000코인 · 오늘 처음 빚을 때 내요' : '🏠 오늘 월세 냈어요 ✓'),
       h('small', { class: 'pt-dim' }, '재료는 부메랑상회에서 사요 · 도자기 하나에 흙 1 · 유약 1 · 안료 1 · 땔감 1번'),
       h('button', { class: 'btn primary pt-go', disabled: left <= 0, onClick: pick }, left > 0 ? `🏺 도자기 빚기 (오늘 ${left}번 남음)` : '오늘은 다 빚었어요 · 내일 다시 와요'),
       postBox,
@@ -119,7 +120,8 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
     modal({ title: `🏺 ${K.name} 빚기`, body: h('div', { class: 'pt-mi' }, h('img', { class: 'pt-miimg', src: `${PI}${k}0.webp?v=2`, alt: '' }), say(`${K.name}를 빚으려면 ${POT_MAT[K.clay][0]} 1개, 유약 1개, 안료 1개를 가져오고, 가마 땔감도 한 번 치 있어야 하오.`), matBox(k), ok && h('p', { class: 'pt-modeinfo' }, h('b', null, '👀 틀 보며 빚기는 B급이 최상입니다.'), h('br'), '✋ 틀 없이 빚어야 S급까지 받을 수 있어요.')),
       actions: ok && bag.potq === 2 && k === 'b' ? [{ label: '다음에' }, { label: '👀 틀 보며 빚기 (퀘스트)', primary: true, onClick: c => { if (typeof c === 'function') c(); start(k, true); } }] : ok ? [{ label: '👀 틀 보며 빚기 · 최고 B급', onClick: c => { if (typeof c === 'function') c(); start(k, true); } }, { label: '✋ 틀 없이 빚기 · 최고 S급', primary: true, onClick: c => { if (typeof c === 'function') c(); start(k, false); } }] : [{ label: '알겠어요', primary: true }] }); }
 
-  function pick() { scr = 'pick';
+  async function payRent(then) { modal({ title: '🏠 해피도자기 월세', body: h('div', { class: 'pt-mi' }, say('공방도 땅세를 내야 하오. 하루 3,000코인이오. 오늘 몫을 내면 오늘은 마음껏 빚으시오.'), h('p', { class: 'center' }, h('b', null, `오늘 월세 ${won(RENT)}`))), actions: [{ label: '다음에' }, { label: `🏠 ${won(RENT)} 내기`, primary: true, onClick: async c => { if (typeof c === 'function') c(); if (!demo && !(await spend(RENT))) return toast('코인이 모자라요 · 월세 3,000코인이 필요해요', 2200); P.rentDay = dayNo(Date.now()); save(); sfx('coin'); toast('🏠 오늘 월세를 냈어요', 1600); then && then(); } }] }); }
+  function pick() { if (rentDue()) return payRent(pick); scr = 'pick';
     body.replaceChildren(say('무엇을 빚겠소? 눌러 보면 필요한 재료를 알려 주겠소.'), h('div', { class: 'pt-kinds' }, ...ORDER.map(k => { const K = KINDS[k], ok = canMake(k);
       return h('button', { class: 'pt-kind' + (ok ? '' : ' off'), onClick: () => matInfo(k) }, h('img', { src: `${PI}${k}0.webp?v=2`, alt: '' }), h('b', null, K.name), h('small', null, `${POT_MAT[K.clay][0]} ${bag[K.clay] || 0} · 유약 ${bag.glaze || 0} · 안료 ${bag.pigment || 0}`), h('em', { class: ok ? 'ok' : '' }, ok ? '만들 수 있음' : '만들 수 없음')); })), h('button', { class: 'btn', onClick: home }, '← 돌아가기')); }
 

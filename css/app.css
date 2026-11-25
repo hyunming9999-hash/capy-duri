@@ -3705,3 +3705,4 @@ body:has(.pt) .modal-actions { flex-wrap: wrap; } body:has(.pt) .modal-actions >
 .hd-btl-card img { width: 100%; height: 100%; object-fit: cover; transform-origin: 78% 40%; animation: hdBtlPan 3.6s ease-in-out forwards; } @keyframes hdBtlPan { from { transform: scale(1.12) translate(4%, 3%); } to { transform: scale(1.32) translate(-6%, -2%); } }
 .hd-btl-shine { position: absolute; inset: 0; background: radial-gradient(circle at 78% 40%, rgba(255,240,200,.0), rgba(255,240,200,0) 30%), linear-gradient(transparent 60%, rgba(0,0,0,.45)); pointer-events: none; }
 .hd-btl-card b { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; color: #fff; font: 800 14px/1.3 var(--head); text-shadow: 0 2px 4px rgba(0,0,0,.7); padding: 0 10px; }
+.pt-rent { font-weight: 800; color: #A0522D; } .pt-rent.ok { color: #1E8F4C; }
