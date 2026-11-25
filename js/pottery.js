@@ -191,7 +191,7 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
     const glow = h('div', { class: 'pt-kilnglow' }), temp = h('b', { class: 'pt-temp' }), tag = h('b', { class: 'pt-ktag' }), steps = h('div', { class: 'pt-ksteps' }), btn = h('button', { class: 'btn primary pt-go pt-out', disabled: true }, '🧤 꺼내기!'), tip = say(''), res = h('div', { class: 'pt-kres' });
     body.replaceChildren(tip, h('div', { class: 'pt-kiln' }, h('img', { src: `${PI}kiln.webp?v=1`, alt: '' }), glow, temp, tag), steps, gauge, h('small', { class: 'pt-dim' }, '게이지가 오르는 동안 한 번만 누를 수 있어요 · 노란 칸 안, 빨간 줄에 가까울수록 높은 점수'), btn, res);
     const drawSteps = k => steps.replaceChildren(...ROUNDS.map((R, n) => h('span', { class: n < k ? 'done' : n === k ? 'on' : '' }, `${n + 1}. ${R.nm}${got[n] != null ? ` · ${got[n]}점` : ''}`)));
-    const run = k => { const R = ROUNDS[k], z0 = Z0 + R.sh, z1 = Z1 + R.sh, mid = (z0 + z1) / 2, half = (z1 - z0) / 2, sweet = 1;
+    const run = k => { const R = ROUNDS[k], z0 = Z0 + R.sh, z1 = Z1 + R.sh, mid = (z0 + z1) / 2, half = (z1 - z0) / 2, sweet = job.guide && k === 1 ? 1 : 1.6; /* 빨간 칸: 기본 ±1.6 · 틀 보며 빚기의 중벌만 ±1 */
       zone.style.left = z0 + '%'; zone.style.width = z1 - z0 + '%'; sweetEl.style.left = ((mid - sweet - z0) / (z1 - z0)) * 100 + '%'; sweetEl.style.width = ((sweet * 2) / (z1 - z0)) * 100 + '%'; needle.classList.remove('stop'); fill.style.width = needle.style.left = '0%'; glow.style.opacity = '.2';
       tip.lastChild.textContent = k === 0 ? `먼저 초벌이오. ${R.sub}이니 서두르지 말고 노란 칸 한가운데 빨간 줄에서 꺼내시오.` : `이제 중벌이오! ${R.sub}이니 눈 깜짝할 새 지나가오. 정신 바짝 차리시오!`; tag.textContent = `${R.nm} · ${R.sub}`; temp.textContent = `${R.t0}℃`; drawSteps(k);
       let v = 0, t0 = 0, raf = 0, end = false;
