@@ -5,7 +5,7 @@ import { h, toast, modal } from './ui.js';
 import { sfx } from './sound.js';
 
 const IMG = 'img/hd/', PI = `${IMG}pot/`;
-export const POT_MAT = { clayW: ['백자토', 10000], clayC: ['청자토', 8500], clayB: ['분청토', 6000], glaze: ['유약', 1000], pigment: ['안료', 2000] };
+export const POT_MAT = { clayW: ['백자토', 10000], clayC: ['청자토', 8500], clayB: ['분청토', 6000], glaze: ['유약', 1000], pigment: ['안료', 2000], wood: ['땔감(가마 1번)', 16667] }; /* 땔감은 부메랑상회에서 한 짐 100,000코인 = 가마 6번 */
 const LABOR = 3000, DAY_MAX = 3, SHAPE_SEC = 60;
 // 목표 모양: 그림(무늬 없는 도자기)의 윤곽에서 뽑은 반지름(위 → 아래, 최대 1) · ar = 높이 / 최대 너비
 const PROF = {"c":{"r":[0.292,0.292,0.277,0.331,0.546,0.677,0.754,0.823,0.877,0.915,0.946,0.969,0.985,0.992,1.0,1.0,0.992,0.977,0.965,0.946,0.923,0.896,0.869,0.838,0.808,0.769,0.738,0.708,0.669,0.638,0.615,0.585,0.562,0.538,0.523,0.508,0.496,0.485,0.477,0.477,0.477,0.477,0.485,0.492,0.512,0.531,0.538,0.412],"ar":1.615},"w":{"r":[0.312,0.336,0.28,0.248,0.232,0.224,0.216,0.216,0.216,0.216,0.224,0.232,0.24,0.248,0.264,0.28,0.304,0.336,0.368,0.424,0.48,0.552,0.608,0.672,0.732,0.784,0.828,0.872,0.904,0.936,0.96,0.976,0.992,1.0,1.0,0.992,0.984,0.968,0.944,0.92,0.88,0.832,0.784,0.712,0.624,0.528,0.516,0.384],"ar":1.68},"b":{"r":[0.442,0.592,0.624,0.618,0.611,0.621,0.661,0.712,0.762,0.799,0.831,0.868,0.893,0.918,0.937,0.95,0.969,0.975,0.987,0.994,1.0,1.0,1.0,1.0,0.994,0.987,0.981,0.969,0.956,0.937,0.925,0.906,0.887,0.868,0.843,0.818,0.787,0.755,0.724,0.687,0.643,0.605,0.555,0.498,0.467,0.455,0.429,0.304],"ar":0.959}};
@@ -79,9 +79,10 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
     body.replaceChildren(
       h('div', { class: 'pt-keeper' }, h('img', { src: `${IMG}k-pottery.webp?v=2`, alt: '' }), h('i', null, '도암')),
       say(P.met ? ['흙은 손을 기억하오. 오늘도 정성껏 빚어 보시오.', '서두르면 흙이 먼저 알아차리지요. 허허.', '가마는 거짓말을 하지 않소이다.'][now % 3] : '오호… 그 손끝, 보통 섬세한 손이 아니시구려. 손이 섬세한 황제폐하라면 최고의 제자가 될 수 있겠소. 오늘부터 내 수제자로 들이겠소이다!'),
-      h('div', { class: 'pt-mats' }, ...Object.entries(POT_MAT).map(([k, [n]]) => h('span', { class: has(k) ? '' : 'no' }, h('img', { src: `${IMG}i-${k}.webp?v=2`, alt: '' }), `${n} ${bag[k] || 0}`))),
+      h('div', { class: 'pt-mats' }, ...Object.entries(POT_MAT).filter(([k]) => k !== 'wood').map(([k, [n]]) => h('span', { class: has(k) ? '' : 'no' }, h('img', { src: `${IMG}i-${k}.webp?v=2`, alt: '' }), `${n} ${bag[k] || 0}`))),
+      h('div', { class: 'pt-wood' + (has('wood') ? '' : ' no') }, h('img', { src: `${IMG}i-wood.webp?v=2`, alt: '' }), h('div', null, h('b', null, '🪵 땔감 창고'), h('small', null, has('wood') ? `가마 ${bag.wood}번 더 땔 수 있어요` : '땔감이 없어요 · 부메랑상회에서 한 짐(100,000코인 · 가마 6번)을 사 오세요')), h('em', null, `${bag.wood || 0}번`)),
       ...questBox(),
-      h('small', { class: 'pt-dim' }, '재료는 부메랑상회에서 사요 · 도자기 하나에 흙 1 · 유약 1 · 안료 1'),
+      h('small', { class: 'pt-dim' }, '재료는 부메랑상회에서 사요 · 도자기 하나에 흙 1 · 유약 1 · 안료 1 · 땔감 1번'),
       h('button', { class: 'btn primary pt-go', disabled: left <= 0, onClick: pick }, left > 0 ? `🏺 도자기 빚기 (오늘 ${left}번 남음)` : '오늘은 다 빚었어요 · 내일 다시 와요'),
       postBox,
       h('details', { class: 'pt-rule' }, h('summary', null, '📜 도자기 정보 · 값 매기는 법 · 최종 판매가표'), priceTable(), h('p', null, '👀 틀 보며 빚기: 채점이 더 엄격하고(어려움) 빚기 배율은 미(×3)까지, 최종 등급은 B 80점 · C 70 · D 60 · E 50 · F 그 미만이에요. ✋ 틀 없이 빚기만 S급까지 받아요.'), h('p', null, '🔥 소성: 초벌(천천히)과 중벌(빠르게) 두 번 꺼내요. 빨간 줄 100점 · 노란 칸 안 40~88점(가운데서 조금만 벗어나도 크게 깎여요) · 칸 밖 30점 이하. 두 점수 평균 90점↑ 상급 · 65점↑ 중급 · 그 아래 하급이고, 평균 점수가 그대로 최종 점수의 30%가 돼요.'), h('p', null, '빚기 점수: 위아래 96줄마다 본보기와의 폭 차이를 재요. 큰 실수일수록 더 크게 깎이고(제곱 평균), 너무 파낸 곳은 1.5배로 감점. 평균 오차 2.5%면 90%(수), 5%면 80%(우), 25%면 0%.'), h('p', null, '판매가 = 흙값 × 빚기 배율(수5 · 우4 · 미3 · 양2.5 · 가2 · 현1.5 · 황1.2) + 소성(하 2,000 · 중 3,000 · 상 5,000) + 무늬(하급 5,000 · 중급 7,000 · 최상급 15,000) + 인건비 3,000'), h('p', null, '최종 등급 = 틀 없이 빚기는 빚기 50% · 소성 30% · 무늬 20%, 틀 보며 빚기는 빚기 30% · 소성 30% · 무늬 40% 점수로 S~F. F급은 재료값의 1.45배.'), h('p', null, '게시하면 3분 안에 팔릴 확률: S 100% · A 70% · B 60% · C 50% · D 40% · E 30% · F 20%. 안 팔리면 한 등급 아래 값(×0.8)으로 처분되고, F는 재료값만 돌려받아요.')));
@@ -108,21 +109,21 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
     return []; }
 
   // 재료 현황: 무엇이 몇 개 필요하고 지금 몇 개 있는지, 만들 수 있는지 한눈에
-  const needOf = k => [[KINDS[k].clay, 1], ['glaze', 1], ['pigment', 1]], canMake = k => needOf(k).every(([m, n]) => (bag[m] || 0) >= n) && P.n < DAY_MAX;
+  const needOf = k => [[KINDS[k].clay, 1], ['glaze', 1], ['pigment', 1], ['wood', 1]], canMake = k => needOf(k).every(([m, n]) => (bag[m] || 0) >= n) && P.n < DAY_MAX;
   function matBox(k) { const ok = canMake(k);
     return h('div', { class: 'pt-need' + (ok ? ' ok' : ' no') }, h('div', { class: 'pt-needh' }, h('b', null, `${KINDS[k].name} 재료`), h('em', null, ok ? '✅ 만들 수 있음' : '⛔ 만들 수 없음')),
       ...needOf(k).map(([m, n]) => { const have = bag[m] || 0, g = have >= n; return h('div', { class: 'pt-needr' + (g ? ' g' : '') }, h('img', { src: `${IMG}i-${m}.webp?v=2`, alt: '' }), h('span', null, POT_MAT[m][0]), h('b', null, `${have} / ${n}`), h('i', null, g ? '✔' : `부족 · ${POT_MAT[m][1].toLocaleString()}코인`)); }),
       !ok && h('small', null, P.n >= DAY_MAX ? '오늘은 3번 다 빚었어요 · 내일 다시 와요' : '모자란 재료는 부메랑상회에서 사 오세요')); }
   function matInfo(k) { const K = KINDS[k], ok = canMake(k); sfx(ok ? 'pop' : 'bad');
-    modal({ title: `🏺 ${K.name} 빚기`, body: h('div', { class: 'pt-mi' }, h('img', { class: 'pt-miimg', src: `${PI}${k}0.webp?v=2`, alt: '' }), say(`${K.name}를 빚으려면 ${POT_MAT[K.clay][0]} 1개, 유약 1개, 안료 1개를 가져오시오.`), matBox(k), ok && h('p', { class: 'pt-modeinfo' }, h('b', null, '👀 틀 보며 빚기는 B급이 최상입니다.'), h('br'), '✋ 틀 없이 빚어야 S급까지 받을 수 있어요.')),
+    modal({ title: `🏺 ${K.name} 빚기`, body: h('div', { class: 'pt-mi' }, h('img', { class: 'pt-miimg', src: `${PI}${k}0.webp?v=2`, alt: '' }), say(`${K.name}를 빚으려면 ${POT_MAT[K.clay][0]} 1개, 유약 1개, 안료 1개를 가져오고, 가마 땔감도 한 번 치 있어야 하오.`), matBox(k), ok && h('p', { class: 'pt-modeinfo' }, h('b', null, '👀 틀 보며 빚기는 B급이 최상입니다.'), h('br'), '✋ 틀 없이 빚어야 S급까지 받을 수 있어요.')),
       actions: ok && bag.potq === 2 && k === 'b' ? [{ label: '다음에' }, { label: '👀 틀 보며 빚기 (퀘스트)', primary: true, onClick: c => { if (typeof c === 'function') c(); start(k, true); } }] : ok ? [{ label: '👀 틀 보며 빚기 · 최고 B급', onClick: c => { if (typeof c === 'function') c(); start(k, true); } }, { label: '✋ 틀 없이 빚기 · 최고 S급', primary: true, onClick: c => { if (typeof c === 'function') c(); start(k, false); } }] : [{ label: '알겠어요', primary: true }] }); }
 
   function pick() { scr = 'pick';
     body.replaceChildren(say('무엇을 빚겠소? 눌러 보면 필요한 재료를 알려 주겠소.'), h('div', { class: 'pt-kinds' }, ...ORDER.map(k => { const K = KINDS[k], ok = canMake(k);
       return h('button', { class: 'pt-kind' + (ok ? '' : ' off'), onClick: () => matInfo(k) }, h('img', { src: `${PI}${k}0.webp?v=2`, alt: '' }), h('b', null, K.name), h('small', null, `${POT_MAT[K.clay][0]} ${bag[K.clay] || 0} · 유약 ${bag.glaze || 0} · 안료 ${bag.pigment || 0}`), h('em', { class: ok ? 'ok' : '' }, ok ? '만들 수 있음' : '만들 수 없음')); })), h('button', { class: 'btn', onClick: home }, '← 돌아가기')); }
 
-  function start(k, guide) { if (guide || (bag.potq === 2 && k === 'b')) toast('👀 틀 보며 빚기는 B급이 최상입니다', 2600); const K = KINDS[k]; if (!(has(K.clay) && has('glaze') && has('pigment'))) return toast('재료가 모자라요 · 부메랑상회에서 사요', 2000); if (P.n >= DAY_MAX) return toast('오늘은 3번 다 빚었어요', 1800);
-    bag[K.clay]--; bag.glaze--; bag.pigment--; P.n++; save(); busy = true;
+  function start(k, guide) { if (guide || (bag.potq === 2 && k === 'b')) toast('👀 틀 보며 빚기는 B급이 최상입니다', 2600); const K = KINDS[k]; if (!(has(K.clay) && has('glaze') && has('pigment') && has('wood'))) return toast('재료가 모자라요 · 부메랑상회에서 사요', 2000); if (P.n >= DAY_MAX) return toast('오늘은 3번 다 빚었어요', 1800);
+    bag[K.clay]--; bag.glaze--; bag.pigment--; bag.wood = Math.max(0, (bag.wood || 0) - 1); P.n++; save(); busy = true;
     const job = { guide: !!guide || (bag.potq === 2 && k === 'b'), k, /* 퀘스트 중 분청사기는 틀 보며 빚기로 고정 */ cost: POT_MAT[K.clay][1] + POT_MAT.glaze[1] + POT_MAT.pigment[1], clay: POT_MAT[K.clay][1] }; shape(job); }
 
   // ───── 1. 흙 빚기: 1분 동안 빠르게 도는 흙덩이를 손끝으로 깎아 위쪽 본보기 모양에 맞춘다 ─────
