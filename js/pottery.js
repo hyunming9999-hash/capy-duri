@@ -98,14 +98,24 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
       h('small', null, `최고가(빚기 수 · 소성 상 · 최상급 무늬): ${ORDER.map(k => `${KINDS[k].name} ${won(tb[k].R.S[1])}`).join(' · ')} · 안 팔리면 S~E급은 ×0.8, F급은 재료값만 돌려받아요`)); }
 
   function questBox() { const q = bag.potq || 0;
-    if (q === 1) return [say('복실이가 보냈구려… 허허, 그 녀석. 손이 뭉뚝해서 흙만 보면 도망가더니. 좋소, 폐하께 내 기술을 전하겠소. 먼저 분청사기를 C급 이상으로 빚어 5분 안에 팔아 보시오. 기회는 세 번이오!'), h('button', { class: 'btn primary pt-go', onClick: () => { bag.potq = 2; bag.potqT = 0; save(); sfx('coin'); toast('🏺 도전을 받았어요 · 분청사기 C급 이상!', 2200); home(); } }, '🏺 도전 받기')];
-    if (q === 2) { const left = QTRIES - (bag.potqT || 0) - qPending(bag); return [h('div', { class: 'pt-quest' }, h('b', null, '⚔️ 작은아빠의 가마'), h('span', null, `분청사기 C급 이상을 만들어 5분 안에 팔기 · 남은 기회 ${Math.max(0, left)} / ${QTRIES}${qPending(bag) ? ` (판매 기다리는 중 ${qPending(bag)})` : ''}`), h('small', null, `성공하면 판매가 + 성공 수당 ${won(QBONUS)}`))]; }
+    if (q === 1) return [say('복실이가 보냈구려… 허허, 그 녀석. 손이 뭉뚝해서 흙만 보면 도망가더니. 좋소, 폐하께 내 기술을 전하겠소. 먼저 분청사기를 C급 이상으로 빚어 5분 안에 팔아 보시오. 기회는 세 번이오! 분청토 1개, 유약 1개, 안료 1개를 가져오시오.'), matBox('b'), h('button', { class: 'btn primary pt-go', onClick: () => { bag.potq = 2; bag.potqT = 0; save(); sfx('coin'); toast('🏺 도전을 받았어요 · 분청사기 C급 이상!', 2200); home(); } }, '🏺 도전 받기')];
+    if (q === 2) { const left = QTRIES - (bag.potqT || 0) - qPending(bag); return [h('div', { class: 'pt-quest' }, h('b', null, '⚔️ 작은아빠의 가마'), h('span', null, `분청사기 C급 이상을 만들어 5분 안에 팔기 · 남은 기회 ${Math.max(0, left)} / ${QTRIES}${qPending(bag) ? ` (판매 기다리는 중 ${qPending(bag)})` : ''}`), h('small', null, `성공하면 판매가 + 성공 수당 ${won(QBONUS)}`)), say('분청사기를 빚으려면 분청토 1개, 유약 1개, 안료 1개를 가져오시오.'), matBox('b')]; }
     if (q === 3) return [h('div', { class: 'pt-quest ok' }, h('b', null, '⚔️ 작은아빠의 가마 · 성공!'), h('span', null, '👉 복실이에게 가서 40,000코인을 갚으면 퀘스트가 끝나요'))];
     return []; }
 
+  // 재료 현황: 무엇이 몇 개 필요하고 지금 몇 개 있는지, 만들 수 있는지 한눈에
+  const needOf = k => [[KINDS[k].clay, 1], ['glaze', 1], ['pigment', 1]], canMake = k => needOf(k).every(([m, n]) => (bag[m] || 0) >= n) && P.n < DAY_MAX;
+  function matBox(k) { const ok = canMake(k);
+    return h('div', { class: 'pt-need' + (ok ? ' ok' : ' no') }, h('div', { class: 'pt-needh' }, h('b', null, `${KINDS[k].name} 재료`), h('em', null, ok ? '✅ 만들 수 있음' : '⛔ 만들 수 없음')),
+      ...needOf(k).map(([m, n]) => { const have = bag[m] || 0, g = have >= n; return h('div', { class: 'pt-needr' + (g ? ' g' : '') }, h('img', { src: `${IMG}i-${m}.webp?v=1`, alt: '' }), h('span', null, POT_MAT[m][0]), h('b', null, `${have} / ${n}`), h('i', null, g ? '✔' : `부족 · ${POT_MAT[m][1].toLocaleString()}코인`)); }),
+      !ok && h('small', null, P.n >= DAY_MAX ? '오늘은 3번 다 빚었어요 · 내일 다시 와요' : '모자란 재료는 부메랑상회에서 사 오세요')); }
+  function matInfo(k) { const K = KINDS[k], ok = canMake(k); sfx(ok ? 'pop' : 'bad');
+    modal({ title: `🏺 ${K.name} 빚기`, body: h('div', { class: 'pt-mi' }, h('img', { class: 'pt-miimg', src: `${PI}${k}0.webp?v=1`, alt: '' }), say(`${K.name}를 빚으려면 ${POT_MAT[K.clay][0]} 1개, 유약 1개, 안료 1개를 가져오시오.`), matBox(k)),
+      actions: ok ? [{ label: '다음에' }, { label: '🏺 빚기 시작', primary: true, onClick: c => { if (typeof c === 'function') c(); start(k); } }] : [{ label: '알겠어요', primary: true }] }); }
+
   function pick() { scr = 'pick';
-    body.replaceChildren(say('무엇을 빚겠소? 흙에 따라 도자기가 달라지오.'), h('div', { class: 'pt-kinds' }, ...ORDER.map(k => { const K = KINDS[k], ok = has(K.clay) && has('glaze') && has('pigment');
-      return h('button', { class: 'pt-kind', disabled: !ok, onClick: () => start(k) }, h('img', { src: `${PI}${k}0.webp?v=1`, alt: '' }), h('b', null, K.name), h('small', null, `${POT_MAT[K.clay][0]} ${bag[K.clay] || 0} · 유약 ${bag.glaze || 0} · 안료 ${bag.pigment || 0}`), !ok && h('em', null, '재료 부족')); })), h('button', { class: 'btn', onClick: home }, '← 돌아가기')); }
+    body.replaceChildren(say('무엇을 빚겠소? 눌러 보면 필요한 재료를 알려 주겠소.'), h('div', { class: 'pt-kinds' }, ...ORDER.map(k => { const K = KINDS[k], ok = canMake(k);
+      return h('button', { class: 'pt-kind' + (ok ? '' : ' off'), onClick: () => matInfo(k) }, h('img', { src: `${PI}${k}0.webp?v=1`, alt: '' }), h('b', null, K.name), h('small', null, `${POT_MAT[K.clay][0]} ${bag[K.clay] || 0} · 유약 ${bag.glaze || 0} · 안료 ${bag.pigment || 0}`), h('em', { class: ok ? 'ok' : '' }, ok ? '만들 수 있음' : '만들 수 없음')); })), h('button', { class: 'btn', onClick: home }, '← 돌아가기')); }
 
   function start(k) { const K = KINDS[k]; if (!(has(K.clay) && has('glaze') && has('pigment'))) return toast('재료가 모자라요 · 부메랑상회에서 사요', 2000); if (P.n >= DAY_MAX) return toast('오늘은 3번 다 빚었어요', 1800);
     bag[K.clay]--; bag.glaze--; bag.pigment--; P.n++; save(); busy = true;
