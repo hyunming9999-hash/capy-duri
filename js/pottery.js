@@ -38,11 +38,26 @@ const QBONUS = 60000, QTRIES = 3;
 const qPending = bag => (bag.pot && bag.pot.posts || []).filter(p => p.q && !p.done).length;
 function qExhaust(bag) { if (bag.potq === 2 && (bag.potqT || 0) >= QTRIES && !qPending(bag)) { bag.potq = 1; bag.potqT = 0; setTimeout(() => toast('🏺 기회 세 번을 다 썼어요… 해피도자기의 도암 스승에게 다시 도전해요', 3200), 1200); } }
 
+// 팔렸을 때 · 안 팔렸을 때 알림(화려하게) · 여러 개면 차례로 보여 준다
+const BUYER = ['몽실이', '송이', '곱슬이', '바둑이', '복실이', '백두', '첨성이', '귤돌이', '떡순이', '엿가락', '노리', '솜이', '가래떡', '장군이', '찐빵이', '청양이', '연이', '윷돌이', '빙수', '눈꽃이', '나팔이', '수라', '댕기', '비단이', '휘돌이', '벼루', '짚신이', '호령이', '곶감이', '매화'], KIN = ['고모', '이모부', '이모', '고모부', '삼촌', '외삼촌', '큰아버지', '작은엄마', '할머니', '할아버지', '사촌 누나', '사돈 어른'];
+const pickA = a => a[Math.floor(Math.random() * a.length)]; let showQ = [], showing = false;
+function potShow(p) { showQ.push(p); if (!showing) nextShow(); }
+function nextShow() { const p = showQ.shift(); if (!p) { showing = false; return; } showing = true; const sold = p.sold, buyer = `${pickA(BUYER)} ${pickA(KIN)}`;
+  const pot = h('div', { class: 'pts-pot' }); potWarp(p.k, p.img, p.r || PROF[p.k].r).then(c => { if (c) pot.append(c); });
+  const fx = h('div', { class: 'pts-fx' }), el = h('div', { class: 'pts' + (sold ? ' win' : ' lose') }, h('i', { class: 'pts-rays' }), fx, h('div', { class: 'pts-card' },
+    sold ? h('b', { class: 'pts-stamp' }, 'SOLD!') : h('b', { class: 'pts-stamp gray' }, '처분'), pot,
+    sold ? h('p', { class: 'pts-who' }, `🐶 ${buyer}가 구매했어요!`) : h('p', { class: 'pts-who' }, '결국 판매되지 않았어요…'),
+    h('p', { class: 'pts-nm' }, `${p.nm} · ${p.grade}급`),
+    sold ? h('p', { class: 'pts-pay' }, `+${won(p.pay)}`) : h('p', { class: 'pts-pay gray' }, p.grade === 'F' ? `재료값만 받고 처분할게요 · +${won(p.pay)}` : `한 단계 내려서(${p.dGrade}급 값) 처분할게요 · +${won(p.pay)}`),
+    h('small', null, '눌러서 닫기')));
+  if (sold) { const C = ['#FFD54F', '#FF7043', '#4FC3F7', '#81C784', '#F06292', '#FFFFFF']; for (let i = 0; i < 60; i++) fx.append(h('i', { class: i % 3 ? 'pts-cf' : 'pts-coin', style: { left: Math.random() * 100 + '%', background: i % 3 ? C[i % C.length] : null, animationDelay: Math.random() * 1.6 + 's', animationDuration: 1.8 + Math.random() * 1.6 + 's', '--r': (Math.random() * 720 - 360) + 'deg' } }, i % 3 ? null : '🪙')); sfx('fanfare'); setTimeout(() => sfx('coin'), 500); if (navigator.vibrate) navigator.vibrate([40, 60, 80]); } else sfx('bad');
+  const close = () => { el.classList.add('out'); setTimeout(() => { el.remove(); nextShow(); }, 300); }; el.onclick = close; setTimeout(() => el.isConnected && close(), sold ? 6500 : 5000); document.body.append(el); }
+
 // 게시한 도자기 정산(5분이 지났으면 팔렸는지 굴려 본다) · 앱을 꺼도 시간은 흐른다
 export function potSettle(bag, earn, save, quiet) { const P = bag.pot; if (!P || !P.posts || !P.posts.length) return; const now = Date.now(); let ch = 0;
   P.posts.forEach(p => { if (p.done || now < p.end) return; const gi = FINAL.findIndex(g => g[1] === p.grade), sold = Math.random() < (FINAL[gi] || FINAL[6])[2];
     p.done = 1; p.sold = sold ? 1 : 0; p.pay = sold ? p.price : p.grade === 'F' ? p.cost : Math.round(p.price * 0.8); p.dGrade = sold ? p.grade : (FINAL[gi + 1] || FINAL[6])[1]; ch = 1;
-    earn(p.pay); if (p.q && bag.potq === 2) { if (sold) { bag.potq = 3; earn(QBONUS); setTimeout(() => { sfx('fanfare'); toast(`🎉 퀘스트 성공! 성공 수당 ${won(QBONUS)}을 받았어요 · 복실이에게 가서 40,000코인을 갚아요`, 4200); }, 1500); } else { bag.potqT = (bag.potqT || 0) + 1; } } if (!quiet) { sfx(sold ? 'coin' : 'bad'); toast(sold ? `🏺 ${p.nm}(${p.grade}급)이 팔렸어요! +${won(p.pay)}` : `🏺 ${p.nm}(${p.grade}급)이 안 팔려 ${p.grade === 'F' ? '재료값에' : `${p.dGrade}급 값으로`} 처분됐어요 · +${won(p.pay)}`, 3200); } });
+    earn(p.pay); if (p.q && bag.potq === 2) { if (sold) { bag.potq = 3; earn(QBONUS); setTimeout(() => { sfx('fanfare'); toast(`🎉 퀘스트 성공! 성공 수당 ${won(QBONUS)}을 받았어요 · 복실이에게 가서 40,000코인을 갚아요`, 4200); }, 1500); } else { bag.potqT = (bag.potqT || 0) + 1; } } potShow(p); });
   if (ch) { qExhaust(bag); P.posts = P.posts.filter(p => !p.done || now - p.end < 6 * 3600e3).slice(-12); save(); } }
 
 export function openPottery({ bag, save, earn, demo, onClose }) {
@@ -142,9 +157,16 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
     return `<svg viewBox="0 0 ${W} ${Hh}" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="pg" x1="0" x2="1"><stop offset="0" stop-color="${fill[0]}"/><stop offset=".35" stop-color="${gloss ? '#ffffff' : fill[1]}"/><stop offset=".5" stop-color="${fill[1]}"/><stop offset="1" stop-color="${fill[0]}"/></linearGradient></defs><path d="M${(W / 2 - job.r[0] * m).toFixed(1)},${top} ${L}${Rr}L${(W / 2 + job.r[0] * m).toFixed(1)},${top}Z" fill="url(#pg)" stroke="#5a3a22" stroke-width="1.2"/></svg>`; };
 
   // ───── 2. 유약: 한 번에 끝 ─────
-  function glaze(job) { scr = 'glaze'; const K = KINDS[job.k], pot = h('div', { class: 'pt-pot', html: shapeSvg(job, [K.c0, K.c1]) }), btn = h('button', { class: 'btn primary pt-go' }, '🫙 유약 칠하기');
-    body.replaceChildren(say('유약은 도자기의 옷이오. 고루 입혀 주시오.'), pot, btn);
-    btn.onclick = () => { btn.disabled = true; sfx('splash'); pot.classList.add('glazing'); setTimeout(() => { pot.innerHTML = shapeSvg(job, [K.c0, K.c1], true); pot.classList.add('glossy'); sfx('point'); btn.replaceWith(h('button', { class: 'btn primary pt-go', onClick: () => kiln(job) }, '🔥 가마에 넣기 →')); }, 900); }; }
+  function glaze(job) { scr = 'glaze'; const K = KINDS[job.k], pot = h('div', { class: 'pt-pot', html: shapeSvg(job, [K.c0, K.c1]) }), btn = h('button', { class: 'btn primary pt-go pt-pour' }, '🫙 유약 붓기');
+    const jar = h('img', { class: 'pt-dish pt-jar', src: `${IMG}i-glaze.webp?v=1`, alt: '' }), stream = h('i', { class: 'pt-stream' }), shine = h('i', { class: 'pt-shine' }), fx = h('div', { class: 'pt-pfx' }), ribbon = h('div', { class: 'pt-ribbon' }), hint = h('p', { class: 'pt-phint' }, '유약을 부으면 흙이 유리옷을 입어요');
+    const stage = h('div', { class: 'pt-pstage s' + job.k }, h('i', { class: 'pt-rays' }), h('i', { class: 'pt-spot' }), h('i', { class: 'pt-stand' }), h('div', { class: 'pt-potw' }, pot, shine), stream, jar, fx, ribbon);
+    body.replaceChildren(say('유약은 도자기의 옷이오. 고루 입혀 주시오.'), stage, hint, btn);
+    const twinkle = n => { for (let i = 0; i < n; i++) { const t = h('i', { class: 'pt-twk', style: { left: 22 + Math.random() * 56 + '%', top: 18 + Math.random() * 62 + '%', animationDelay: Math.random() * 0.8 + 's', '--s': 0.6 + Math.random() * 0.9 } }, '✦'); fx.append(t); setTimeout(() => t.remove(), 2600); } };
+    btn.onclick = () => { btn.disabled = true; stage.classList.add('pour', 'glz'); hint.textContent = '주르륵… 유약이 고루 스며들어요'; sfx('splash'); pot.classList.add('glazing'); const ti = setInterval(() => twinkle(3), 220);
+      setTimeout(() => { pot.innerHTML = shapeSvg(job, [K.c0, K.c1], true); pot.classList.add('glossy'); }, 900);
+      setTimeout(() => { clearInterval(ti); stage.classList.remove('pour'); stage.classList.add('reveal', 'shiny'); twinkle(18); sfx('point'); setTimeout(() => sfx('coin'), 250);
+        ribbon.replaceChildren(h('small', null, '✨ 반짝반짝 ✨'), h('b', null, '유약 입히기 완료!'), h('em', null, '이제 가마로 가요')); hint.textContent = '유리처럼 반짝이는구려. 이제 불에게 맡기시오.';
+        btn.replaceWith(h('button', { class: 'btn primary pt-go', onClick: () => kiln(job) }, '🔥 가마에 넣기 →')); }, 1900); }; }
 
   // ───── 3. 가마: 온도 게이지가 오르는 동안 알맞은 칸에서 꺼낸다 ─────
   function kiln(job) { scr = 'kiln'; const K = KINDS[job.k], [z0, z1] = K.zone, mid = (z0 + z1) / 2, sweet = 1.6;
