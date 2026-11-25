@@ -48,7 +48,7 @@ for (const z of [1, 2, 3]) { const list = FISH.filter(f => f.z === z && !f.fixT)
 // 2026-11-26 밤: 한 번 더 1.5배 · 초희귀는 3배(PRICE_V 4)
 export const PRICE_V = 4, priceUp = (f, pv = 1) => (pv < 2 ? (f && f.name === '고래킹' ? 2.5 : 2) : 1) * (pv < 3 ? 2 : 1) * (pv < 4 ? (f && f.tier === 4 ? 3 : 1.5) : 1);
 FISH.forEach(f => { const m = priceUp(f); f.price = [Math.round(f.price[0] * m), Math.round(f.price[1] * m)]; });
-const GRADE_TOP = 2; /* S등급 배율(아래 GRADE.S.x) */ const KING_MAX = { 고래킹: 100000, 상어킹: 83000 }; FISH.forEach(f => { const mx = KING_MAX[f.name]; if (mx) { const top = mx / GRADE_TOP; f.price = [Math.round(top * 0.9), Math.round(top)]; } }); /* 왕 물고기: S등급으로 잡아도 최대 고래킹 100,000 · 상어킹 83,000(2026-11-26) */ FISH.forEach(f => { if (f.name === '고래킹') f.price = [72000, 80000]; if (f.name === '상어킹') f.price = [65700, 73000]; }); /* 왕 물고기 최대값 고정(2026-11-26) */
+const GRADE_TOP = 2; /* S등급 배율(아래 GRADE.S.x) */ const KING_MAX = { 고래킹: 100000, 상어킹: 83000 }; FISH.forEach(f => { const mx = KING_MAX[f.name]; if (mx) { const top = mx / GRADE_TOP; f.price = [Math.round(top * 0.9), Math.round(top)]; } }); /* 왕 물고기: S등급으로 잡아도 최대 고래킹 100,000 · 상어킹 83,000(2026-11-26) */
 // 바다 쓰레기(F등급): 어느 바다에서나 10~20% 확률. 클수록 처리 비용이 커진다(50~250코인)
 export const TRASH = [['스티로폼 박스', '📦', 30, 90], ['페트병', '🧴', 12, 35], ['헌 옷', '👕', 40, 110], ['타이어', '🛞', 50, 120], ['축구공', '⚽', 18, 30]].map(([name, icon, c0, c1], k) => ({ id: 't' + k, name, icon, img: `img/fish/trash${k}.webp`, cm: [c0, c1] }));
 const PEARL = { id: 'pearl', name: '바다 진주', pearl: true };
