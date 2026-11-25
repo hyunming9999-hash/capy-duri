@@ -13,7 +13,7 @@ export const RODS = [null, { t: 1, name: '초급 낚싯대', price: 1000, dur: 5
 export const BAIT2 = 60, BAIT3 = 120, BAIT_KEY = ['', 'bait', 'bait2', 'bait3'], BAIT_NAME = ['', '미끼', '중급 미끼', '고급 미끼'];
 const BAIT_COL = [null, ['#F28BA8', '#B4466A'], ['#5EB8FF', '#1E5E92'], ['#FFD24A', '#B07A00']];
 export const baitIc = t => { const [f, d] = BAIT_COL[t] || BAIT_COL[1]; return `<svg viewBox="0 0 48 48"><path d="M10 34 C4 26 12 18 20 22 C28 26 32 14 40 18 C46 21 44 30 38 30" fill="none" stroke="${d}" stroke-width="11" stroke-linecap="round"/><path d="M10 34 C4 26 12 18 20 22 C28 26 32 14 40 18 C46 21 44 30 38 30" fill="none" stroke="${f}" stroke-width="7.5" stroke-linecap="round"/><path d="M15 22 v6 M22 22.5 v6 M29 19 v6 M35 16.5 v6" stroke="${d}" stroke-width="1.6" stroke-linecap="round" opacity=".6"/><circle cx="38.5" cy="29" r="1.6" fill="#3A2210"/>${t === 3 ? '<path d="M41 8 l1.4 3 3 1.4 -3 1.4 -1.4 3 -1.4 -3 -3 -1.4 3 -1.4z" fill="#FFF3B0"/>' : ''}</svg>`; };
-export const BAIT = 20, BALL = 100, CANNON = 3000, CANNON2 = 7000, WBOAT = 6000, PEARL_PRICE = 100000, PEARL_P = 0.002; // 진주: 고급 바다에서 던질 때마다 0.2% · 진주부적(3장)을 쓰면 10번 안에 한 번 걸리고 90%로 낚는다
+export const BAIT = 20, BALL = 100, CANNON = 3000, CANNON2 = 7000, WBOAT = 6000, PEARL_PRICE = 200000, PEARL_P = 0.002; // 진주: 고급 바다에서 던질 때마다 0.2% · 진주부적(3장)을 쓰면 10번 안에 한 번 걸리고 90%로 낚는다
 
 // 물고기 80종: [이름, 최소cm, 최대cm, 최소값, 최대값, 표시(r=귀한 것, k=대장)]
 // 값은 가게 시세에 맞췄다(옷 한 벌 200~310, 게임 한 판 50쯤, 한 번 던지는 데 미끼·낚싯대 값 13쯤): 초급 평균 85, 중급 165, 고급 300쯤
@@ -47,7 +47,8 @@ for (const z of [1, 2, 3]) { const list = FISH.filter(f => f.z === z && !f.fixT)
 // 2026-11-26: 물고기 값 한 번 더 전부 2배(PRICE_V 3). 예전에 잡아 둔 물고기는 팔 때 모자란 배수만큼 쳐 준다
 // 2026-11-26 밤: 한 번 더 1.5배 · 초희귀는 3배(PRICE_V 4)
 export const PRICE_V = 4, priceUp = (f, pv = 1) => (pv < 2 ? (f && f.name === '고래킹' ? 2.5 : 2) : 1) * (pv < 3 ? 2 : 1) * (pv < 4 ? (f && f.tier === 4 ? 3 : 1.5) : 1);
-FISH.forEach(f => { const m = priceUp(f); f.price = [Math.round(f.price[0] * m), Math.round(f.price[1] * m)]; }); FISH.forEach(f => { if (f.name === '고래킹') f.price = [72000, 80000]; if (f.name === '상어킹') f.price = [65700, 73000]; }); /* 왕 물고기 최대값 고정(2026-11-26) */
+FISH.forEach(f => { const m = priceUp(f); f.price = [Math.round(f.price[0] * m), Math.round(f.price[1] * m)]; });
+const GRADE_TOP = 2; /* S등급 배율(아래 GRADE.S.x) */ const KING_MAX = { 고래킹: 100000, 상어킹: 83000 }; FISH.forEach(f => { const mx = KING_MAX[f.name]; if (mx) { const top = mx / GRADE_TOP; f.price = [Math.round(top * 0.9), Math.round(top)]; } }); /* 왕 물고기: S등급으로 잡아도 최대 고래킹 100,000 · 상어킹 83,000(2026-11-26) */ FISH.forEach(f => { if (f.name === '고래킹') f.price = [72000, 80000]; if (f.name === '상어킹') f.price = [65700, 73000]; }); /* 왕 물고기 최대값 고정(2026-11-26) */
 // 바다 쓰레기(F등급): 어느 바다에서나 10~20% 확률. 클수록 처리 비용이 커진다(50~250코인)
 export const TRASH = [['스티로폼 박스', '📦', 30, 90], ['페트병', '🧴', 12, 35], ['헌 옷', '👕', 40, 110], ['타이어', '🛞', 50, 120], ['축구공', '⚽', 18, 30]].map(([name, icon, c0, c1], k) => ({ id: 't' + k, name, icon, img: `img/fish/trash${k}.webp`, cm: [c0, c1] }));
 const PEARL = { id: 'pearl', name: '바다 진주', pearl: true };
