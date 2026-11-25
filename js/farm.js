@@ -118,7 +118,7 @@ export function openFarm(o) {
   for (let x = 0, k = 0; x < WIDTH; x += TW, k++) world.append(h('i', { class: 'fm-bg' + (k % 2 ? ' flip' : ''), style: { left: x + 'px', width: TW + 1 + 'px' } }));
   const plotEls = Array.from({ length: PLOTS }, (_, k) => { const e = h('button', { class: 'fm-plot', style: { left: plotX(k) + 'px', width: PW + 'px', height: PH + 'px' }, onClick: () => goPlot(k) }); world.append(e); return e; });
   const shop = h('button', { class: 'fm-shop', style: { left: HX + 'px', width: HW * 1.46 + 'px' }, onClick: () => { walkTo(HX + HW * 0.7, openShop); } }, h('img', { src: FLUFFY ? 'img/fl/bg/hardware.webp' : 'img/farm/hardware.webp', alt: '카피철물' }), h('b', { class: 'fm-shop-t' }, '카피철물'));
-  const exitSign = h('button', { class: 'fm-exit', style: { left: WIDTH - Math.round(TW * 0.11) + 'px' }, onClick: () => close() }, '놀이터로 →');
+  const exitSign = h('button', { class: 'fm-exit', style: { left: WIDTH - Math.round(TW * 0.11) + 'px' }, onClick: () => { toast('🚶 오른쪽 길로 걸어서 놀이터로 가요', 1400); walkTo(WIDTH - 30, () => close()); } }, '놀이터로 →');
   const sc = o.scoot ? o.scoot() : null, meSvg = (back = false) => capy(ctx.capyOf(ctx.uid, back ? { view: 'back' } : { face: 'happy' })), meEl = h('div', { class: 'fm-me' + (sc ? ' scoot' : ''), html: sc || meSvg() }); // 스쿠터를 타고 왔으면 농장에서도 탄 채로, 1.8배 빠르게
   // 손에 든 농기구: 캐릭터 그림(svg) 안에 직접 그려 넣고 오른손(앞발)으로 감싸 쥔다 → 걷고 뒤집혀도 손에서 안 떨어진다
   let heldK = 'hoe', heldBack = false, heldUse = 0, heldT = 0; const drawHeld = () => { if (sc) return; const t = tool(), id = heldK + (heldBack ? 'b' : ''); if (t === heldT && meEl.dataset.k === id) return; heldT = t; meEl.dataset.k = id; meEl.innerHTML = holdSvg(meSvg(heldBack), heldK, t); meEl.classList.toggle('turned', heldBack); }; // 물 주기·잡초 베기는 밭 쪽으로 돌아서서(뒷모습) 한다
@@ -153,7 +153,7 @@ export function openFarm(o) {
   window.addEventListener('keydown', onKey); window.addEventListener('keyup', onKey);
   const title = h('b'), coinsEl = h('span', { class: 'fm-coins' }), visitBtn = h('button', { class: 'btn sm' }), barnBtn = h('button', { class: 'btn sm', onClick: () => openBarn() }, '🧺 헛간');
   const sheet = h('div', { class: 'fm-sheet' });
-  const wrap = h('div', { class: 'fm' + (UI ? ' fm-ui' + UI : '') }, h('div', { class: 'fm-top' }, title, coinsEl, barnBtn, visitBtn, h('button', { class: 'top-x', 'aria-label': '닫기', onClick: () => close() }, '✕')), scene, sheet);
+  const wrap = h('div', { class: 'fm' + (UI ? ' fm-ui' + UI : '') }, h('div', { class: 'fm-top' }, title, coinsEl, barnBtn, visitBtn, h('button', { class: 'top-x ap-bag', 'aria-label': '가방', onClick: () => { sfx('pop'); if (ctx.openCapyBag) ctx.openCapyBag(); else toast('가방은 놀이터에서 열 수 있어요', 1400); } }, '🎒') /* 순간이동 닫기(✕) 대신 가방 · 놀이터로는 오른쪽 끝 표지판까지 걸어서 */), scene, sheet);
   document.body.append(wrap);
 
   // ===== 농장 관리인(카피철물 관리인) — 지금은 시험판(o.keeper)에서만 나온다 =====
@@ -473,9 +473,10 @@ export function openFarm(o) {
 
   // 화면: 내 카피바라가 걸어가고, 1초마다 밭 시간 표시를 고친다
   let lastT = performance.now(), tick = 0;
+  let edgeT = 0;
   function step(t) { if (!alive) return; const dt = Math.min(0.05, (t - lastT) / 1000); lastT = t;
     const dir = (keys.has('R') ? 1 : 0) - (keys.has('L') ? 1 : 0);
-    if (dir && !document.querySelector('.modal-wrap')) { me.x = Math.max(30, Math.min(WIDTH - 30, me.x + dir * WALK_SP * (sc ? 1.8 : 1) * dt)); me.tx = me.x; me.then = null; meEl.classList.add('walk'); meEl.classList.toggle('left', dir < 0); me.keyed = true; }
+    if (dir && !document.querySelector('.modal-wrap')) { if (dir > 0 && me.x >= WIDTH - 31) { edgeT += dt; if (edgeT > 0.35) { edgeT = 0; return void close(); } } else edgeT = 0; /* 오른쪽 끝에서 계속 걸으면 놀이터로 */ me.x = Math.max(30, Math.min(WIDTH - 30, me.x + dir * WALK_SP * (sc ? 1.8 : 1) * dt)); me.tx = me.x; me.then = null; meEl.classList.add('walk'); meEl.classList.toggle('left', dir < 0); me.keyed = true; }
     else if (me.keyed) { me.keyed = false; meEl.classList.remove('walk'); const k = plotEls.findIndex((_, i) => Math.abs(me.x - (plotX(i) + PW / 2)) < PW / 2); if (k >= 0 && k !== sel && !(UI && isOpen(k))) { sel = k; pickRow = -1; drawPlots(); } }
     const atShop = me.x < HX + SW + GAP; if (enterBtn.hidden === atShop) enterBtn.hidden = !atShop; if (t - quickAt > 250) { quickAt = t; quickEl.hidden = atShop; if (!atShop) drawQuick(); }
     const d = me.tx - me.x; if (Math.abs(d) > 2) me.x += Math.sign(d) * Math.min(Math.abs(d), WALK_SP * (sc ? 1.8 : 1) * dt); else if (me.then) { const f = me.then; me.then = null; meEl.classList.remove('walk'); f(); } else if (!dir) meEl.classList.remove('walk'); // 방향키로 걷는 중엔 걸음 모션을 끊지 않는다(매 프레임 지웠다 붙이면 뒤뚱거림이 안 보인다)

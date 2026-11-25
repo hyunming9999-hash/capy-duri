@@ -292,7 +292,7 @@ export function mount(el, ctx) {
     world.append(h('button', { class: 'so-farmsign', 'aria-label': '농장 가는 길', style: { left: Math.round(TILE * 0.012) + 'px', height: Math.round(H * 0.34) + 'px' }, onClick: () => goFarm() }, h('img', { src: 'img/farm/sign.webp', alt: '' }), h('b', null, '농장 가는 길'), h('i', { class: 'so-fclick' }, '👆 클릭!')));
     // 카피백반: 놀이터 맨 오른쪽(카피수퍼 바로 옆) 가게 자리에 카피백반 건물
     { const cx0 = (TILES - 1) * TILE + 985 / 1213 * TILE, cw = 205 / 1213 * TILE;
-      world.append(h('button', { class: 'so-cook', 'aria-label': '카피백반 들어가기', style: { left: cx0 + 'px', width: cw + 'px', bottom: (1 - 324 / 520) * 100 + '%' }, onClick: () => goCook() }, h('img', { src: (FLUFFY ? 'img/fl/bg/house-cook.webp' : 'img/cook/house.webp'), alt: '' }), h('b', null, '카피백반'))); { const rx = cx0 + cw * 0.5; const wd = world; setTimeout(() => riceBuyerAt(rx, wd), 0); } }
+      world.append(h('button', { class: 'so-cook', 'aria-label': '카피백반 들어가기', style: { left: cx0 + 'px', width: cw + 'px', bottom: (1 - 324 / 520) * 100 + '%' }, onClick: () => goCook() }, h('img', { src: (FLUFFY ? 'img/fl/bg/house-cook.webp' : 'img/cook/house.webp'), alt: '' }), h('b', null, '카피백반'))); { const rx = cx0 - Math.round(TILE * 0.03); const wd = world; /* 카피백반 바로 왼쪽 옆 */ setTimeout(() => riceBuyerAt(rx, wd), 0); } }
     // 카피클로(옷 가게): 두 번째·세 번째 칸이 만나는 자리(나무 두 그루 사이). 누르면 옷입히기 놀이로 간다
     if (FLUFFY) { const kw = 214 / 1213 * TILE;
       world.append(h('button', { class: 'so-aqua so-clo', 'aria-label': '카피클로 들어가기', style: { left: 2 * TILE - kw / 2 + 'px', width: kw + 'px', bottom: (1 - 326 / 520) * 100 + '%' }, onClick: () => goClo() }, h('img', { src: 'img/fl/bg/house-clo.webp', alt: '' }), h('b', null, '카피클로'))); }
