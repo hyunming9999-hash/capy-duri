@@ -19,7 +19,7 @@ const ORDER = ['b', 'c', 'w'];
 const SHAPE_G = [[90, '수', 5], [80, '우', 4], [70, '미', 3], [60, '양', 2.5], [50, '가', 2], [40, '현', 1.5], [0, '황', 1.2]];
 const FIRE = [['하', 2000, 30], ['중', 3000, 65], ['상', 5000, 100]];
 const PAT_BONUS = [5000, 7000, 15000], PAT_PT = [30, 65, 100], PAT_NAME = ['하급', '중급', '최상급'];
-const FINAL = [[90, 'S', 1], [80, 'A', 0.9], [70, 'B', 0.8], [60, 'C', 0.7], [50, 'D', 0.6], [40, 'E', 0.5], [0, 'F', 0.4]];
+const FINAL = [[90, 'S', 1], [80, 'A', 0.8], [70, 'B', 0.7], [60, 'C', 0.6], [50, 'D', 0.5], [40, 'E', 0.4], [0, 'F', 0.3]]; /* 팔릴 확률(2026-11-25 조정) */
 const won = n => `${Math.round(n).toLocaleString()}코인`;
 const dayNo = t => Math.floor((t + 9 * 3600e3) / 86400e3);
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -84,7 +84,7 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
       h('small', { class: 'pt-dim' }, '재료는 부메랑상회에서 사요 · 도자기 하나에 흙 1 · 유약 1 · 안료 1'),
       h('button', { class: 'btn primary pt-go', disabled: left <= 0, onClick: pick }, left > 0 ? `🏺 도자기 빚기 (오늘 ${left}번 남음)` : '오늘은 다 빚었어요 · 내일 다시 와요'),
       postBox,
-      h('details', { class: 'pt-rule' }, h('summary', null, '📜 도자기 정보 · 값 매기는 법 · 최종 판매가표'), priceTable(), h('p', null, '빚기 점수: 위아래 96줄마다 본보기와의 폭 차이를 재요. 큰 실수일수록 더 크게 깎이고(제곱 평균), 너무 파낸 곳은 1.5배로 감점. 평균 오차 2.5%면 90%(수), 5%면 80%(우), 25%면 0%.'), h('p', null, '판매가 = 흙값 × 빚기 배율(수5 · 우4 · 미3 · 양2.5 · 가2 · 현1.5 · 황1.2) + 소성(하 2,000 · 중 3,000 · 상 5,000) + 무늬(하급 5,000 · 중급 7,000 · 최상급 15,000) + 인건비 3,000'), h('p', null, '최종 등급 = 빚기 60% · 소성 25% · 무늬 15% 점수로 S~F. F급은 재료값의 1.45배.'), h('p', null, '게시하면 5분 안에 팔릴 확률: S 100% · A 90% · B 80% · C 70% · D 60% · E 50% · F 40%. 안 팔리면 한 등급 아래 값(×0.8)으로 처분되고, F는 재료값만 돌려받아요.')));
+      h('details', { class: 'pt-rule' }, h('summary', null, '📜 도자기 정보 · 값 매기는 법 · 최종 판매가표'), priceTable(), h('p', null, '빚기 점수: 위아래 96줄마다 본보기와의 폭 차이를 재요. 큰 실수일수록 더 크게 깎이고(제곱 평균), 너무 파낸 곳은 1.5배로 감점. 평균 오차 2.5%면 90%(수), 5%면 80%(우), 25%면 0%.'), h('p', null, '판매가 = 흙값 × 빚기 배율(수5 · 우4 · 미3 · 양2.5 · 가2 · 현1.5 · 황1.2) + 소성(하 2,000 · 중 3,000 · 상 5,000) + 무늬(하급 5,000 · 중급 7,000 · 최상급 15,000) + 인건비 3,000'), h('p', null, '최종 등급 = 빚기 60% · 소성 25% · 무늬 15% 점수로 S~F. F급은 재료값의 1.45배.'), h('p', null, '게시하면 5분 안에 팔릴 확률: S 100% · A 80% · B 70% · C 60% · D 50% · E 40% · F 30%. 안 팔리면 한 등급 아래 값(×0.8)으로 처분되고, F는 재료값만 돌려받아요.')));
     if (!P.met) { P.met = 1; save(); } }
 
   // 최종 판매가표: 빚기(0~100%) · 소성 · 무늬의 모든 조합을 계산해 등급마다 나올 수 있는 값의 범위
@@ -151,7 +151,7 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
       if (phase === 2) { g.save(); g.setLineDash([6, 5]); g.strokeStyle = '#E8473B'; g.lineWidth = 2; g.stroke(path(T, CW / 2)); g.restore(); }
       chips = chips.filter(c => (c.x += c.vx, c.y += c.vy, c.vy += 0.25, c.a -= 0.03) > 0); chips.forEach(c => { g.globalAlpha = c.a; g.fillStyle = K.c0; g.fillRect(c.x, c.y, 3, 3); }); g.globalAlpha = 1;
       if (down && phase === 1) { g.fillStyle = 'rgba(255,255,255,.65)'; g.beginPath(); g.arc(down[0], down[1], tip, 0, Math.PI * 2); g.fill(); } };
-    const LVQ = (location.search.match(/[?&]potlv=(\w+)/) || [])[1], LVS = { hard: [1.5, 0.25, 2], mid: [1.25, 0.33, 2], easy: [1, 0.4, 1] }, [OVER, ZERO, PW] = LVS[LVQ] || LVS.hard; /* 시험 링크 &potlv=hard(어려움·기본) · mid(보통 이상) · easy(보통) */
+    const LVQ = (location.search.match(/[?&]potlv=(\w+)/) || [])[1], LVS = { hard: [1.5, 0.25, 2], mid: [1.25, 0.33, 2], easy: [1, 0.4, 1] }, [OVER, ZERO, PW] = LVS[LVQ] || LVS.easy; /* 기본은 보통(2026-11-25) */ /* 시험 링크 &potlv=hard(어려움·기본) · mid(보통 이상) · easy(보통) */
     const score = () => { let e = 0, w = 0; for (let i = 0; i < N; i++) { const wi = i < 2 || i > N - 3 ? 0.7 : 1, d = (r[i] - T[i]) / maxR, dd = d < 0 ? -d * OVER : d; e += Math.pow(dd, PW) * wi; w += wi; } return Math.max(0, Math.min(100, Math.round(100 * (1 - Math.pow(e / w, 1 / PW) / ZERO)))); }; /* 냉정하게(2026-11-25): 줄마다 오차를 제곱해 평균(큰 실수일수록 크게 감점) · 너무 깎은 곳은 1.5배 · 오차 25%면 0점 */
     const finish = () => { if (phase === 2) return; phase = 2; done.disabled = true; const pct = score(), sg = SHAPE_G.find(s => pct >= s[0]); job.pct = pct; job.sg = sg; job.r = r.map(v => v / maxR); job.ar = pr.ar; sfx(pct >= 80 ? 'fanfare' : pct >= 50 ? 'coin' : 'bad');
       note.textContent = `일치율 ${pct}% · 빚기 「${sg[1]}」 (흙값 ×${sg[2]})`; time.textContent = sg[1]; time.className = 'pt-time g'; setTimeout(() => { cancelAnimationFrame(raf); draw(performance.now()); body.append(say(pct >= 90 ? '허허! 내 평생 이런 손은 처음 보오!' : pct >= 70 ? '제법이오. 흙이 폐하를 따르는구려.' : pct >= 50 ? '나쁘지 않소. 손이 조금 급했소이다.' : '흙이 울고 있소… 다음엔 천천히 깎아 보시오.'), h('button', { class: 'btn primary', onClick: () => glaze(job) }, '다음: 유약 칠하기 →')); }, 400); };
@@ -165,12 +165,13 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
   // 빚은 모양 그림(유약 · 가마 · 결과에 쓴다)
   const shapeSvg = (job, fill, gloss) => { const N = job.r.length, W = 120, Hh = Math.round(W * job.ar * 0.5) * 2, top = 2, rowH = (Hh - 4) / N, m = W / 2 - 2; let L = '', Rr = '';
     for (let i = 0; i < N; i++) { const y = (top + (i + 0.5) * rowH).toFixed(1); L += `L${(W / 2 - job.r[i] * m).toFixed(1)},${y} `; Rr = `L${(W / 2 + job.r[i] * m).toFixed(1)},${y} ` + Rr; }
-    return `<svg viewBox="0 0 ${W} ${Hh}" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="pg" x1="0" x2="1"><stop offset="0" stop-color="${fill[0]}"/><stop offset=".35" stop-color="${gloss ? '#ffffff' : fill[1]}"/><stop offset=".5" stop-color="${fill[1]}"/><stop offset="1" stop-color="${fill[0]}"/></linearGradient></defs><path d="M${(W / 2 - job.r[0] * m).toFixed(1)},${top} ${L}${Rr}L${(W / 2 + job.r[0] * m).toFixed(1)},${top}Z" fill="url(#pg)" stroke="#5a3a22" stroke-width="1.2"/></svg>`; };
+    const d = `M${(W / 2 - job.r[0] * m).toFixed(1)},${top} ${L}${Rr}L${(W / 2 + job.r[0] * m).toFixed(1)},${top}Z`;
+    return `<svg viewBox="0 0 ${W} ${Hh}" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="pg" x1="0" x2="1"><stop offset="0" stop-color="${fill[0]}"/><stop offset=".35" stop-color="${gloss ? '#ffffff' : fill[1]}"/><stop offset=".5" stop-color="${fill[1]}"/><stop offset="1" stop-color="${fill[0]}"/></linearGradient></defs><path d="${d}" fill="url(#pg)" stroke="#5a3a22" stroke-width="1.2"/>${gloss ? `<defs><linearGradient id="psh" x1="0" x2=".45" y1="0" y2=".25"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".85"/><stop offset="1" stop-color="#fff" stop-opacity="0"/><animateTransform attributeName="gradientTransform" type="translate" values="-1 0;1.6 0" dur="1.5s" repeatCount="2" fill="freeze"/></linearGradient></defs><path d="${d}" fill="url(#psh)"/>` : ""}</svg>`; };
 
   // ───── 2. 유약: 한 번에 끝 ─────
   function glaze(job) { scr = 'glaze'; const K = KINDS[job.k], pot = h('div', { class: 'pt-pot', html: shapeSvg(job, [K.c0, K.c1]) }), btn = h('button', { class: 'btn primary pt-go pt-pour' }, '🫙 유약 붓기');
-    const jar = h('img', { class: 'pt-dish pt-jar', src: `${IMG}i-glaze.webp?v=1`, alt: '' }), stream = h('i', { class: 'pt-stream' }), shine = h('i', { class: 'pt-shine' }), fx = h('div', { class: 'pt-pfx' }), ribbon = h('div', { class: 'pt-ribbon' }), hint = h('p', { class: 'pt-phint' }, '유약을 부으면 흙이 유리옷을 입어요');
-    const stage = h('div', { class: 'pt-pstage s' + job.k }, h('i', { class: 'pt-rays' }), h('i', { class: 'pt-spot' }), h('i', { class: 'pt-stand' }), h('div', { class: 'pt-potw' }, pot, shine), stream, jar, fx, ribbon);
+    const jar = h('img', { class: 'pt-dish pt-jar', src: `${IMG}i-glaze.webp?v=1`, alt: '' }), stream = h('i', { class: 'pt-stream' }), fx = h('div', { class: 'pt-pfx' }), ribbon = h('div', { class: 'pt-ribbon' }), hint = h('p', { class: 'pt-phint' }, '유약을 부으면 흙이 유리옷을 입어요');
+    const stage = h('div', { class: 'pt-pstage s' + job.k }, h('i', { class: 'pt-rays' }), h('i', { class: 'pt-spot' }), h('i', { class: 'pt-stand' }), h('div', { class: 'pt-potw' }, pot), stream, jar, fx, ribbon);
     body.replaceChildren(say('유약은 도자기의 옷이오. 고루 입혀 주시오.'), stage, hint, btn);
     const twinkle = n => { for (let i = 0; i < n; i++) { const t = h('i', { class: 'pt-twk', style: { left: 22 + Math.random() * 56 + '%', top: 18 + Math.random() * 62 + '%', animationDelay: Math.random() * 0.8 + 's', '--s': 0.6 + Math.random() * 0.9 } }, '✦'); fx.append(t); setTimeout(() => t.remove(), 2600); } };
     btn.onclick = () => { btn.disabled = true; stage.classList.add('pour', 'glz'); hint.textContent = '주르륵… 유약이 고루 스며들어요'; sfx('splash'); pot.classList.add('glazing'); const ti = setInterval(() => twinkle(3), 220);
