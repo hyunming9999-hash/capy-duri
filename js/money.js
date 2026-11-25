@@ -13,6 +13,7 @@ const HD_ROYAL = new Set(['t-hd-2', 't-hd-13', 't-hd-14', 't-hd-15', 't-hd-25', 
 [['top', 5000, 6900], ['bottom', 5000, 6900], ['hat', 3750, 5600], ['shoe', 5600, 8100], ['eye', 5600, 5600]].forEach(([k, lo, hi]) => HD_SETS[k].forEach((x, i, arr) => { const n = i + 1, gaeryang = k === 'shoe' ? n >= 7 : n >= 27;
   PRICES[x.id] = HD_ROYAL.has(x.id) || gaeryang ? hi : Math.round((lo + (hi - lo) * i / Math.max(1, arr.length - 1)) / 50) * 50; }));
 ZOO_HATS.forEach((x, i) => { PRICES[x.id] = 2500 + ((i * 5 + 2) % 6) * 100; }); // 친목회 전용 모자: 동물에게서만 산다
+[TOPS, BOTTOMS, HATS, SHOES, ZOO_HATS].forEach(a => a.forEach(x => { if (PRICES[x.id]) PRICES[x.id] *= 2; })); /* 카피클로 옷 · 동물 모자 2배(2026-11-26) */
 export const priceOf = id => (FREE.has(id) ? 0 : PRICES[id] || 0);
 // 게임별 환산 규칙(게임 목록과 적립 카드에 그대로 보여 준다)
 // 물가 반영(2026-11): 옷값이 약 3.5~4배 오른 만큼 게임 보상도 4배
@@ -25,7 +26,7 @@ const BUBBLE_PAY = { e: { base: 40, per: 5, max: 800 }, m: { base: 60, per: 3.5,
 // 게임 결과 → 돈
 export const PAY = { burger: s => Math.floor(Math.max(0, s) / 2), bubble: (s, d) => { const t = BUBBLE_PAY[d] || BUBBLE_PAY.e; return Math.min(t.max, t.base + Math.floor(Math.max(0, s) / (t.per * 2))); }, bubbleStage: n => Math.round((120 + n * 20) * (n >= 15 ? 1.5 : 1)), tetris: (s, d) => { const t = TETRIS_PAY[d] || TETRIS_PAY.e; return Math.min(t.max, t.base + Math.floor(Math.max(0, s) / t.per)); }, yuzu: s => Math.min(400, Math.max(0, s) * 8), /* 끝없이 하는 판이라 한 판 최대 400 */ board: r => ({ win: 200, draw: 100, lose: 60, solo: 40 })[r] || 0, volley: w => (w ? 200 : 60), mahjong: s => Math.floor(Math.max(0, s) * 4 / 3) };
 
-export const ENTRY = 50; // 게임 참가비: 시작할 때 50코인을 동전으로 넣는다(바로 빠진다). 이기거나 비기면 그대로 한 판 더, 지면 다시 넣는다
+export const ENTRY = 100; // 게임 참가비: 시작할 때 50코인을 동전으로 넣는다(바로 빠진다). 이기거나 비기면 그대로 한 판 더, 지면 다시 넣는다
 export const STREAK_X = [1, 1.5, 1.8, 2.3]; // 연승 배율(4연승까지)
 export function setupMoney(ctx, onChange) {
   ctx.money = {}; ctx.owned = {};

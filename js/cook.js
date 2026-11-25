@@ -30,7 +30,7 @@ export function filletEl(f, v, big) { return h('div', { class: 'ck-fil' + (big ?
 
 
 // 양념·소스: 카피수퍼에서 3번 쓸 만큼씩 판다
-export const SAUCES = { salt: ['🧂', '소금', 45], soy: ['🫙', '간장', 90], doenjang: ['🫘', '된장', 90], ssamjang: ['🥬', '쌈장', 90], gochu: ['🌶️', '고춧가루', 135], pepper: ['⚫', '후추', 135], chojang: ['🥫', '초고추장', 135], herb: ['🌿', '허브', 180], butter: ['🧈', '버터', 225], tartar: ['🥚', '타르타르', 225], honey: ['🍯', '조청', 180] }; // 양념 한 통(3번 쓰기) 값: 물가에 맞춰 3배
+export const SAUCES = { salt: ['🧂', '소금', 90], soy: ['🫙', '간장', 180], doenjang: ['🫘', '된장', 180], ssamjang: ['🥬', '쌈장', 180], gochu: ['🌶️', '고춧가루', 270], pepper: ['⚫', '후추', 270], chojang: ['🥫', '초고추장', 270], herb: ['🌿', '허브', 360], butter: ['🧈', '버터', 450], tartar: ['🥚', '타르타르', 450], honey: ['🍯', '조청', 360] }; // 양념 한 통(3번 쓰기) 값: 물가에 맞춰 3배
 export const SAUCE_PACK = 3;
 // 그림이 있는 양념은 그림으로, 없으면 이모지로
 export const RICE_IMG = 'img/cook/rice.webp';
@@ -54,7 +54,7 @@ export const RECIPES = [
 // 메뉴 값 = 기본 600 + (생선 시세 + 작물 시세 + 양념 1번 값 + 인건비 + 조리 시간 값) × 1.6. 생선 시세는 그 바다 흔한 물고기 평균값, 작물은 B급 값(기본값 ×1.2)
 const LABOR = { board: 40, pot: 70, pan: 60, fry: 70 }, TIME = { board: 20, pot: 50, pan: 40, fry: 40 }, MARGIN = 1.9, BASE_FEE = 800;
 const fishAvg = z => { const L = FISH.filter(f => f.z === z && !f.king && !f.pearl && !f.icon && (f.tier || 1) <= 2); return L.length ? Math.round(L.reduce((t, f) => t + (f.price[0] + f.price[1]) / 2, 0) / L.length / 3) : 0; }; /* 물고기 값이 2배가 되어도 음식 원가 계산은 예전 기준(음식값은 아래 배율로 따로 올린다) */
-RECIPES.forEach(r => { const fish = r.fz ? fishAvg(r.fz) : 0, crop = Math.round(r.crops.reduce((t, id) => t + ((cropOf(id) || {}).base || 0) * 1.2, 0)), sauce = Math.round(SAUCES[r.sauce][2] / SAUCE_PACK), labor = LABOR[r.st], time = TIME[r.st];
+RECIPES.forEach(r => { const fish = r.fz ? fishAvg(r.fz) : 0, crop = Math.round(r.crops.reduce((t, id) => t + ((cropOf(id) || {}).base || 0) * 1.2, 0)), sauce = Math.round(SAUCES[r.sauce][2] / 2 / SAUCE_PACK) /* 양념값 2배여도 음식 원가는 예전 기준 */, labor = LABOR[r.st], time = TIME[r.st];
   r.cost = { fish, crop, sauce, labor, time, sum: fish + crop + sauce + labor + time }; r.base = Math.round((BASE_FEE + Math.round(r.cost.sum * MARGIN / 10) * 10) * 5 / 10) * 10; }); /* 음식값 5배(2026-11-26: 2.5배 → 한 번 더 2배) */
 // 요청을 다 맞췄을 때 받을 값(재료 등급 C 기준): 익힘 ×1.2 · 양념 ×1.1 · 불 조절 ×1.1. 도마(날것) 요리는 양념만
 export const bestPrice = r => Math.round(r.base * (r.st === 'board' ? 1.1 : 1.2 * 1.1 * 1.1) / 10) * 10;
