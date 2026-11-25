@@ -38,6 +38,7 @@ export function farmCrow(ctx, { goFarm }) {
   function tick(now, where) {
     if (dead || !ready) return;
     const dt = last ? Math.min(1000, now - last) : 0; last = now; const c = plan(), t = ctx.store.now();
+    if (document.querySelector('.fm.ap.hd')) { if (c.until && !c.arrived && !c.res) { data = { ...data, crow: { ...c, res: 'away' } }; put({ res: 'away' }); hideBanner(); } return; } /* 핫똑랜드에 있는 동안엔 카피랜드 밭에 까마귀가 오지 않는다(오던 까마귀도 돌아간다) */
     if (c.res) return hideBanner();
     if (game) return;
     if (c.until) { // 나타난 상태
