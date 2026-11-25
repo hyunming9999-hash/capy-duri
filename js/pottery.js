@@ -84,7 +84,7 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
       h('small', { class: 'pt-dim' }, '재료는 부메랑상회에서 사요 · 도자기 하나에 흙 1 · 유약 1 · 안료 1'),
       h('button', { class: 'btn primary pt-go', disabled: left <= 0, onClick: pick }, left > 0 ? `🏺 도자기 빚기 (오늘 ${left}번 남음)` : '오늘은 다 빚었어요 · 내일 다시 와요'),
       postBox,
-      h('details', { class: 'pt-rule' }, h('summary', null, '📜 도자기 정보 · 값 매기는 법 · 최종 판매가표'), priceTable(), h('p', null, '판매가 = 흙값 × 빚기 배율(수5 · 우4 · 미3 · 양2.5 · 가2 · 현1.5 · 황1.2) + 소성(하 2,000 · 중 3,000 · 상 5,000) + 무늬(하급 5,000 · 중급 7,000 · 최상급 15,000) + 인건비 3,000'), h('p', null, '최종 등급 = 빚기 60% · 소성 25% · 무늬 15% 점수로 S~F. F급은 재료값의 1.45배.'), h('p', null, '게시하면 5분 안에 팔릴 확률: S 100% · A 90% · B 80% · C 70% · D 60% · E 50% · F 40%. 안 팔리면 한 등급 아래 값(×0.8)으로 처분되고, F는 재료값만 돌려받아요.')));
+      h('details', { class: 'pt-rule' }, h('summary', null, '📜 도자기 정보 · 값 매기는 법 · 최종 판매가표'), priceTable(), h('p', null, '빚기 점수: 위아래 96줄마다 본보기와의 폭 차이를 재요. 큰 실수일수록 더 크게 깎이고(제곱 평균), 너무 파낸 곳은 1.5배로 감점. 평균 오차 2.5%면 90%(수), 5%면 80%(우), 25%면 0%.'), h('p', null, '판매가 = 흙값 × 빚기 배율(수5 · 우4 · 미3 · 양2.5 · 가2 · 현1.5 · 황1.2) + 소성(하 2,000 · 중 3,000 · 상 5,000) + 무늬(하급 5,000 · 중급 7,000 · 최상급 15,000) + 인건비 3,000'), h('p', null, '최종 등급 = 빚기 60% · 소성 25% · 무늬 15% 점수로 S~F. F급은 재료값의 1.45배.'), h('p', null, '게시하면 5분 안에 팔릴 확률: S 100% · A 90% · B 80% · C 70% · D 60% · E 50% · F 40%. 안 팔리면 한 등급 아래 값(×0.8)으로 처분되고, F는 재료값만 돌려받아요.')));
     if (!P.met) { P.met = 1; save(); } }
 
   // 최종 판매가표: 빚기(0~100%) · 소성 · 무늬의 모든 조합을 계산해 등급마다 나올 수 있는 값의 범위
@@ -151,7 +151,7 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
       if (phase === 2) { g.save(); g.setLineDash([6, 5]); g.strokeStyle = '#E8473B'; g.lineWidth = 2; g.stroke(path(T, CW / 2)); g.restore(); }
       chips = chips.filter(c => (c.x += c.vx, c.y += c.vy, c.vy += 0.25, c.a -= 0.03) > 0); chips.forEach(c => { g.globalAlpha = c.a; g.fillStyle = K.c0; g.fillRect(c.x, c.y, 3, 3); }); g.globalAlpha = 1;
       if (down && phase === 1) { g.fillStyle = 'rgba(255,255,255,.65)'; g.beginPath(); g.arc(down[0], down[1], tip, 0, Math.PI * 2); g.fill(); } };
-    const score = () => { let e = 0, w = 0; for (let i = 0; i < N; i++) { const wi = i < 4 || i > N - 4 ? 0.5 : 1; e += (Math.abs(r[i] - T[i]) / maxR) * wi; w += wi; } return Math.max(0, Math.min(100, Math.round(100 * (1 - e / w / 0.4)))); };
+    const score = () => { let e = 0, w = 0; for (let i = 0; i < N; i++) { const wi = i < 2 || i > N - 3 ? 0.7 : 1, d = (r[i] - T[i]) / maxR, dd = d < 0 ? -d * 1.5 : d; e += dd * dd * wi; w += wi; } return Math.max(0, Math.min(100, Math.round(100 * (1 - Math.sqrt(e / w) / 0.25)))); }; /* 냉정하게(2026-11-25): 줄마다 오차를 제곱해 평균(큰 실수일수록 크게 감점) · 너무 깎은 곳은 1.5배 · 오차 25%면 0점 */
     const finish = () => { if (phase === 2) return; phase = 2; done.disabled = true; const pct = score(), sg = SHAPE_G.find(s => pct >= s[0]); job.pct = pct; job.sg = sg; job.r = r.map(v => v / maxR); job.ar = pr.ar; sfx(pct >= 80 ? 'fanfare' : pct >= 50 ? 'coin' : 'bad');
       note.textContent = `일치율 ${pct}% · 빚기 「${sg[1]}」 (흙값 ×${sg[2]})`; time.textContent = sg[1]; time.className = 'pt-time g'; setTimeout(() => { cancelAnimationFrame(raf); draw(performance.now()); body.append(say(pct >= 90 ? '허허! 내 평생 이런 손은 처음 보오!' : pct >= 70 ? '제법이오. 흙이 폐하를 따르는구려.' : pct >= 50 ? '나쁘지 않소. 손이 조금 급했소이다.' : '흙이 울고 있소… 다음엔 천천히 깎아 보시오.'), h('button', { class: 'btn primary', onClick: () => glaze(job) }, '다음: 유약 칠하기 →')); }, 400); };
     done.onclick = finish;
