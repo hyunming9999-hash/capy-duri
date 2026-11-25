@@ -27,11 +27,11 @@ const resample = (arr, n) => Array.from({ length: n }, (_, i) => { const f = (i 
 
 // 깎은 모양 그대로: 무늬 그림을 줄마다 가로로 늘이거나 줄여 내가 빚은 윤곽에 맞춘다(rr: 위→아래 반지름, 본보기 최대 = 1)
 const imgC = {}, loadImg = src => imgC[src] || (imgC[src] = new Promise(ok => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null); im.src = src; }));
-export async function potWarp(k, pat, rr) { const im = await loadImg(`${PI}${pat}.webp?v=1`); if (!im) return null; const iw = im.naturalWidth, ih = im.naturalHeight, t = PROF[k].r, n = t.length, m = rr.length, cw = Math.ceil(iw * 1.2), c = document.createElement('canvas'); c.width = cw; c.height = ih; const g = c.getContext('2d'), half = iw / 2, cx = cw / 2;
+export async function potWarp(k, pat, rr) { const im = await loadImg(`${PI}${pat}.webp?v=2`); if (!im) return null; const iw = im.naturalWidth, ih = im.naturalHeight, t = PROF[k].r, n = t.length, m = rr.length, cw = Math.ceil(iw * 1.2), c = document.createElement('canvas'); c.width = cw; c.height = ih; const g = c.getContext('2d'), half = iw / 2, cx = cw / 2;
   const at = (a, f) => { const x = f * (a.length - 1), i = Math.floor(x), j = Math.min(a.length - 1, i + 1); return a[i] + (a[j] - a[i]) * (x - i); };
   for (let y = 0; y < ih; y++) { const f = (y + 0.5) / ih, tr = at(t, f), pr = at(rr, f); if (tr < 0.02 || pr < 0.01) continue; g.drawImage(im, half - tr * half, y, tr * half * 2, 1, cx - pr * half, y, pr * half * 2, 1); }
   return c; }
-export function potImg(k, pat, rr, cls) { const el = h('img', { class: cls, src: `${PI}${pat}.webp?v=1`, alt: '' }); if (rr) potWarp(k, pat, rr).then(c => { if (c && el.isConnected) { c.className = cls; el.replaceWith(c); } else if (c) { el.src = c.toDataURL(); } }); return el; }
+export function potImg(k, pat, rr, cls) { const el = h('img', { class: cls, src: `${PI}${pat}.webp?v=2`, alt: '' }); if (rr) potWarp(k, pat, rr).then(c => { if (c && el.isConnected) { c.className = cls; el.replaceWith(c); } else if (c) { el.src = c.toDataURL(); } }); return el; }
 
 // 에픽 퀘스트 「작은아빠의 가마」(복실이): bag.potq 0 받기 전 · 1 받음(공방 가기) · 2 도전 중(분청사기 D급 이상 → 3분 안에 팔기, 기회 3번) · 3 성공(복실이에게 갚기) · 4 끝
 const QBONUS = 60000, QTRIES = 3;
@@ -77,9 +77,9 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
         return h('div', { class: 'pt-post' + (p.done ? (p.sold ? ' sold' : ' cut') : '') }, potImg(p.k, p.img, p.r, 'pt-pimg'), h('div', null, h('b', null, `${p.nm} · ${p.grade}급`), h('small', null, p.done ? (p.sold ? `✅ 팔렸어요 · +${won(p.pay)}` : `처분(${p.dGrade}급 값) · +${won(p.pay)}`) : `⏳ ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')} · 팔리면 ${won(p.price)} · 팔릴 확률 ${Math.round(FINAL.find(g => g[1] === p.grade)[2] * 100)}%`))); })] : []; };
   function home() { scr = 'home'; const now = Date.now(), left = DAY_MAX - P.n; postBox = h('div', { class: 'pt-posts' }, ...postsEl());
     body.replaceChildren(
-      h('div', { class: 'pt-keeper' }, h('img', { src: `${IMG}k-pottery.webp?v=1`, alt: '' }), h('i', null, '도암')),
+      h('div', { class: 'pt-keeper' }, h('img', { src: `${IMG}k-pottery.webp?v=2`, alt: '' }), h('i', null, '도암')),
       say(P.met ? ['흙은 손을 기억하오. 오늘도 정성껏 빚어 보시오.', '서두르면 흙이 먼저 알아차리지요. 허허.', '가마는 거짓말을 하지 않소이다.'][now % 3] : '오호… 그 손끝, 보통 섬세한 손이 아니시구려. 손이 섬세한 황제폐하라면 최고의 제자가 될 수 있겠소. 오늘부터 내 수제자로 들이겠소이다!'),
-      h('div', { class: 'pt-mats' }, ...Object.entries(POT_MAT).map(([k, [n]]) => h('span', { class: has(k) ? '' : 'no' }, h('img', { src: `${IMG}i-${k}.webp?v=1`, alt: '' }), `${n} ${bag[k] || 0}`))),
+      h('div', { class: 'pt-mats' }, ...Object.entries(POT_MAT).map(([k, [n]]) => h('span', { class: has(k) ? '' : 'no' }, h('img', { src: `${IMG}i-${k}.webp?v=2`, alt: '' }), `${n} ${bag[k] || 0}`))),
       ...questBox(),
       h('small', { class: 'pt-dim' }, '재료는 부메랑상회에서 사요 · 도자기 하나에 흙 1 · 유약 1 · 안료 1'),
       h('button', { class: 'btn primary pt-go', disabled: left <= 0, onClick: pick }, left > 0 ? `🏺 도자기 빚기 (오늘 ${left}번 남음)` : '오늘은 다 빚었어요 · 내일 다시 와요'),
@@ -111,15 +111,15 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
   const needOf = k => [[KINDS[k].clay, 1], ['glaze', 1], ['pigment', 1]], canMake = k => needOf(k).every(([m, n]) => (bag[m] || 0) >= n) && P.n < DAY_MAX;
   function matBox(k) { const ok = canMake(k);
     return h('div', { class: 'pt-need' + (ok ? ' ok' : ' no') }, h('div', { class: 'pt-needh' }, h('b', null, `${KINDS[k].name} 재료`), h('em', null, ok ? '✅ 만들 수 있음' : '⛔ 만들 수 없음')),
-      ...needOf(k).map(([m, n]) => { const have = bag[m] || 0, g = have >= n; return h('div', { class: 'pt-needr' + (g ? ' g' : '') }, h('img', { src: `${IMG}i-${m}.webp?v=1`, alt: '' }), h('span', null, POT_MAT[m][0]), h('b', null, `${have} / ${n}`), h('i', null, g ? '✔' : `부족 · ${POT_MAT[m][1].toLocaleString()}코인`)); }),
+      ...needOf(k).map(([m, n]) => { const have = bag[m] || 0, g = have >= n; return h('div', { class: 'pt-needr' + (g ? ' g' : '') }, h('img', { src: `${IMG}i-${m}.webp?v=2`, alt: '' }), h('span', null, POT_MAT[m][0]), h('b', null, `${have} / ${n}`), h('i', null, g ? '✔' : `부족 · ${POT_MAT[m][1].toLocaleString()}코인`)); }),
       !ok && h('small', null, P.n >= DAY_MAX ? '오늘은 3번 다 빚었어요 · 내일 다시 와요' : '모자란 재료는 부메랑상회에서 사 오세요')); }
   function matInfo(k) { const K = KINDS[k], ok = canMake(k); sfx(ok ? 'pop' : 'bad');
-    modal({ title: `🏺 ${K.name} 빚기`, body: h('div', { class: 'pt-mi' }, h('img', { class: 'pt-miimg', src: `${PI}${k}0.webp?v=1`, alt: '' }), say(`${K.name}를 빚으려면 ${POT_MAT[K.clay][0]} 1개, 유약 1개, 안료 1개를 가져오시오.`), matBox(k), ok && h('p', { class: 'pt-modeinfo' }, h('b', null, '👀 틀 보며 빚기는 B급이 최상입니다.'), h('br'), '✋ 틀 없이 빚어야 S급까지 받을 수 있어요.')),
+    modal({ title: `🏺 ${K.name} 빚기`, body: h('div', { class: 'pt-mi' }, h('img', { class: 'pt-miimg', src: `${PI}${k}0.webp?v=2`, alt: '' }), say(`${K.name}를 빚으려면 ${POT_MAT[K.clay][0]} 1개, 유약 1개, 안료 1개를 가져오시오.`), matBox(k), ok && h('p', { class: 'pt-modeinfo' }, h('b', null, '👀 틀 보며 빚기는 B급이 최상입니다.'), h('br'), '✋ 틀 없이 빚어야 S급까지 받을 수 있어요.')),
       actions: ok && bag.potq === 2 && k === 'b' ? [{ label: '다음에' }, { label: '👀 틀 보며 빚기 (퀘스트)', primary: true, onClick: c => { if (typeof c === 'function') c(); start(k, true); } }] : ok ? [{ label: '👀 틀 보며 빚기 · 최고 B급', onClick: c => { if (typeof c === 'function') c(); start(k, true); } }, { label: '✋ 틀 없이 빚기 · 최고 S급', primary: true, onClick: c => { if (typeof c === 'function') c(); start(k, false); } }] : [{ label: '알겠어요', primary: true }] }); }
 
   function pick() { scr = 'pick';
     body.replaceChildren(say('무엇을 빚겠소? 눌러 보면 필요한 재료를 알려 주겠소.'), h('div', { class: 'pt-kinds' }, ...ORDER.map(k => { const K = KINDS[k], ok = canMake(k);
-      return h('button', { class: 'pt-kind' + (ok ? '' : ' off'), onClick: () => matInfo(k) }, h('img', { src: `${PI}${k}0.webp?v=1`, alt: '' }), h('b', null, K.name), h('small', null, `${POT_MAT[K.clay][0]} ${bag[K.clay] || 0} · 유약 ${bag.glaze || 0} · 안료 ${bag.pigment || 0}`), h('em', { class: ok ? 'ok' : '' }, ok ? '만들 수 있음' : '만들 수 없음')); })), h('button', { class: 'btn', onClick: home }, '← 돌아가기')); }
+      return h('button', { class: 'pt-kind' + (ok ? '' : ' off'), onClick: () => matInfo(k) }, h('img', { src: `${PI}${k}0.webp?v=2`, alt: '' }), h('b', null, K.name), h('small', null, `${POT_MAT[K.clay][0]} ${bag[K.clay] || 0} · 유약 ${bag.glaze || 0} · 안료 ${bag.pigment || 0}`), h('em', { class: ok ? 'ok' : '' }, ok ? '만들 수 있음' : '만들 수 없음')); })), h('button', { class: 'btn', onClick: home }, '← 돌아가기')); }
 
   function start(k, guide) { if (guide || (bag.potq === 2 && k === 'b')) toast('👀 틀 보며 빚기는 B급이 최상입니다', 2600); const K = KINDS[k]; if (!(has(K.clay) && has('glaze') && has('pigment'))) return toast('재료가 모자라요 · 부메랑상회에서 사요', 2000); if (P.n >= DAY_MAX) return toast('오늘은 3번 다 빚었어요', 1800);
     bag[K.clay]--; bag.glaze--; bag.pigment--; P.n++; save(); busy = true;
@@ -128,7 +128,7 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
   // ───── 1. 흙 빚기: 1분 동안 빠르게 도는 흙덩이를 손끝으로 깎아 위쪽 본보기 모양에 맞춘다 ─────
   function shape(job) { scr = 'shape'; const K = KINDS[job.k], pr = PROF[job.k], N = 96, tgt = resample(pr.r, N);
     const cv = h('canvas', { class: 'pt-cv' }), time = h('b', { class: 'pt-time' }, `${SHAPE_SEC}`), note = h('small', { class: 'pt-note' }, '본보기 모양을 잘 봐 두세요…'), done = h('button', { class: 'btn primary', disabled: true }, '✋ 다 빚었어요');
-    body.replaceChildren(h('div', { class: 'pt-shapetop' }, h('div', { class: 'pt-ex' }, h('img', { src: `${PI}${job.k}0.webp?v=1`, alt: '' }), h('small', null, '본보기')), h('div', null, h('b', null, `${K.name} 빚기 · ${job.guide ? '👀 틀 보며(최고 B급)' : '✋ 틀 없이(최고 S급)'}`), note), time), cv, done);
+    body.replaceChildren(h('div', { class: 'pt-shapetop' }, h('div', { class: 'pt-ex' }, h('img', { src: `${PI}${job.k}0.webp?v=2`, alt: '' }), h('small', null, '본보기')), h('div', null, h('b', null, `${K.name} 빚기 · ${job.guide ? '👀 틀 보며(최고 B급)' : '✋ 틀 없이(최고 S급)'}`), note), time), cv, done);
     const dpr = Math.min(2, window.devicePixelRatio || 1), CW = Math.min(380, body.clientWidth - 8), CH = Math.round(Math.min(window.innerHeight * 0.56, 470)); cv.width = CW * dpr; cv.height = CH * dpr; cv.style.width = CW + 'px'; cv.style.height = CH + 'px'; const g = cv.getContext('2d'); g.scale(dpr, dpr);
     const top = 26, bot = CH - 58, Hc = bot - top, maxR = Math.min(CW * 0.42, Hc / (2 * pr.ar)), rowH = Hc / N, R0 = maxR * 1.14, minR = 4, tip = 5.5;
     const r = Array.from({ length: N }, (_, i) => R0 * (i < 2 ? 0.97 : 1)), T = tgt.map(v => v * maxR);
@@ -175,7 +175,7 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
 
   // ───── 2. 유약: 한 번에 끝 ─────
   function glaze(job) { scr = 'glaze'; const K = KINDS[job.k], pot = h('div', { class: 'pt-pot', html: shapeSvg(job, [K.c0, K.c1]) }), btn = h('button', { class: 'btn primary pt-go pt-pour' }, '🫙 유약 붓기');
-    const jar = h('img', { class: 'pt-dish pt-jar', src: `${IMG}i-glaze.webp?v=1`, alt: '' }), stream = h('i', { class: 'pt-stream' }), fx = h('div', { class: 'pt-pfx' }), ribbon = h('div', { class: 'pt-ribbon' }), hint = h('p', { class: 'pt-phint' }, '유약을 부으면 흙이 유리옷을 입어요');
+    const jar = h('img', { class: 'pt-dish pt-jar', src: `${IMG}i-glaze.webp?v=2`, alt: '' }), stream = h('i', { class: 'pt-stream' }), fx = h('div', { class: 'pt-pfx' }), ribbon = h('div', { class: 'pt-ribbon' }), hint = h('p', { class: 'pt-phint' }, '유약을 부으면 흙이 유리옷을 입어요');
     const stage = h('div', { class: 'pt-pstage s' + job.k }, h('i', { class: 'pt-rays' }), h('i', { class: 'pt-spot' }), h('i', { class: 'pt-stand' }), h('div', { class: 'pt-potw' }, pot), stream, jar, fx, ribbon);
     body.replaceChildren(say('유약은 도자기의 옷이오. 고루 입혀 주시오.'), stage, hint, btn);
     const twinkle = n => { for (let i = 0; i < n; i++) { const t = h('i', { class: 'pt-twk', style: { left: 22 + Math.random() * 56 + '%', top: 18 + Math.random() * 62 + '%', animationDelay: Math.random() * 0.8 + 's', '--s': 0.6 + Math.random() * 0.9 } }, '✦'); fx.append(t); setTimeout(() => t.remove(), 2600); } };
@@ -189,7 +189,7 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
   function kiln(job) { scr = 'kiln'; const K = KINDS[job.k], [Z0, Z1] = K.zone, ROUNDS = [{ nm: '초벌', sub: '천천히 오르는 불', dur: 3000, sh: -18, t0: 600, tk: 4 }, { nm: '중벌', sub: '빠르게 치솟는 불', dur: 2400, sh: 0, t0: 900, tk: 4.5 }], got = [];
     const fill = h('i', { class: 'pt-gfill' }), needle = h('i', { class: 'pt-gneedle' }), sweetEl = h('i', { class: 'pt-gsweet' }), zone = h('i', { class: 'pt-gzone' }, sweetEl), gauge = h('div', { class: 'pt-gauge' }, zone, fill, needle);
     const glow = h('div', { class: 'pt-kilnglow' }), temp = h('b', { class: 'pt-temp' }), tag = h('b', { class: 'pt-ktag' }), steps = h('div', { class: 'pt-ksteps' }), btn = h('button', { class: 'btn primary pt-go pt-out', disabled: true }, '🧤 꺼내기!'), tip = say(''), res = h('div', { class: 'pt-kres' });
-    body.replaceChildren(tip, h('div', { class: 'pt-kiln' }, h('img', { src: `${PI}kiln.webp?v=1`, alt: '' }), glow, temp, tag), steps, gauge, h('small', { class: 'pt-dim' }, '게이지가 오르는 동안 한 번만 누를 수 있어요 · 노란 칸 안, 빨간 줄에 가까울수록 높은 점수'), btn, res);
+    body.replaceChildren(tip, h('div', { class: 'pt-kiln' }, h('img', { src: `${PI}kiln.webp?v=2`, alt: '' }), glow, temp, tag), steps, gauge, h('small', { class: 'pt-dim' }, '게이지가 오르는 동안 한 번만 누를 수 있어요 · 노란 칸 안, 빨간 줄에 가까울수록 높은 점수'), btn, res);
     const drawSteps = k => steps.replaceChildren(...ROUNDS.map((R, n) => h('span', { class: n < k ? 'done' : n === k ? 'on' : '' }, `${n + 1}. ${R.nm}${got[n] != null ? ` · ${got[n]}점` : ''}`)));
     const run = k => { const R = ROUNDS[k], z0 = Z0 + R.sh, z1 = Z1 + R.sh, mid = (z0 + z1) / 2, half = (z1 - z0) / 2, sweet = job.guide && k === 1 ? 1 : 1.6; /* 빨간 칸: 기본 ±1.6 · 틀 보며 빚기의 중벌만 ±1 */
       zone.style.left = z0 + '%'; zone.style.width = z1 - z0 + '%'; sweetEl.style.left = ((mid - sweet - z0) / (z1 - z0)) * 100 + '%'; sweetEl.style.width = ((sweet * 2) / (z1 - z0)) * 100 + '%'; needle.classList.remove('stop'); fill.style.width = needle.style.left = '0%'; glow.style.opacity = '.2';
@@ -206,12 +206,12 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
 
   // ───── 4. 안료: 무늬는 순전히 운 ─────
   function paint(job) { scr = 'paint'; const K = KINDS[job.k], rr = resample(job.r, 48).map(v => Math.round(v * 100) / 100); job.rr = rr;
-    const urls = {}, img = h('img', { class: 'pt-final', src: `${PI}${job.k}0.webp?v=1`, alt: '' });
+    const urls = {}, img = h('img', { class: 'pt-final', src: `${PI}${job.k}0.webp?v=2`, alt: '' });
     K.pats.forEach(p => potWarp(job.k, p[0], rr).then(c => { if (c) { urls[p[0]] = c.toDataURL(); if (p[0] === job.k + '0' && !job.pat) img.src = urls[p[0]]; } })); /* 내가 깎은 모양 그대로 */
-    const show = id => { img.src = urls[id] || `${PI}${id}.webp?v=1`; };
-    const fx = h('div', { class: 'pt-pfx' }), rays = h('i', { class: 'pt-rays' }), dish = h('img', { class: 'pt-dish', src: `${IMG}i-pigment.webp?v=1`, alt: '' }), ribbon = h('div', { class: 'pt-ribbon' }), hint = h('p', { class: 'pt-phint' }, '어떤 무늬가 나올까요? 붓는 순간 하늘이 정해요');
+    const show = id => { img.src = urls[id] || `${PI}${id}.webp?v=2`; };
+    const fx = h('div', { class: 'pt-pfx' }), rays = h('i', { class: 'pt-rays' }), dish = h('img', { class: 'pt-dish', src: `${IMG}i-pigment.webp?v=2`, alt: '' }), ribbon = h('div', { class: 'pt-ribbon' }), hint = h('p', { class: 'pt-phint' }, '어떤 무늬가 나올까요? 붓는 순간 하늘이 정해요');
     const stage = h('div', { class: 'pt-pstage s' + job.k }, rays, h('i', { class: 'pt-spot' }), h('i', { class: 'pt-stand' }), h('div', { class: 'pt-potw' }, img), dish, fx, ribbon);
-    const odds = h('div', { class: 'pt-odds' }, ...K.pats.map(p => h('span', { class: 't' + p[2] }, h('img', { src: `${PI}${p[0]}.webp?v=1`, alt: '' }), h('b', null, PAT_NAME[p[2]]), h('small', null, `${Math.round(p[3] * 100)}% · +${(PAT_BONUS[p[2]] / 1000).toLocaleString()}천`))));
+    const odds = h('div', { class: 'pt-odds' }, ...K.pats.map(p => h('span', { class: 't' + p[2] }, h('img', { src: `${PI}${p[0]}.webp?v=2`, alt: '' }), h('b', null, PAT_NAME[p[2]]), h('small', null, `${Math.round(p[3] * 100)}% · +${(PAT_BONUS[p[2]] / 1000).toLocaleString()}천`))));
     const btn = h('button', { class: 'btn primary pt-go pt-pour' }, '🎨 안료 붓기');
     body.replaceChildren(say('안료는 붓는 순간 하늘이 정하오. 마음을 비우시오.'), stage, hint, odds, btn);
     const COLS = ['#2F5DC8', '#8B4A22', '#C8323C', '#2E9E7A', '#E8B83A'];
