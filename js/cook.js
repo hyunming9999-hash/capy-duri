@@ -55,7 +55,7 @@ export const RECIPES = [
 const LABOR = { board: 40, pot: 70, pan: 60, fry: 70 }, TIME = { board: 20, pot: 50, pan: 40, fry: 40 }, MARGIN = 1.9, BASE_FEE = 800;
 const fishAvg = z => { const L = FISH.filter(f => f.z === z && !f.king && !f.pearl && !f.icon && (f.tier || 1) <= 2); return L.length ? Math.round(L.reduce((t, f) => t + (f.price[0] + f.price[1]) / 2, 0) / L.length / 3) : 0; }; /* 물고기 값이 2배가 되어도 음식 원가 계산은 예전 기준(음식값은 아래 배율로 따로 올린다) */
 RECIPES.forEach(r => { const fish = r.fz ? fishAvg(r.fz) : 0, crop = Math.round(r.crops.reduce((t, id) => t + ((cropOf(id) || {}).base || 0) * 1.2, 0)), sauce = Math.round(SAUCES[r.sauce][2] / 5 / SAUCE_PACK) /* 양념값 2배여도 음식 원가는 예전 기준 */, labor = LABOR[r.st], time = TIME[r.st];
-  r.cost = { fish, crop, sauce, labor, time, sum: fish + crop + sauce + labor + time }; r.base = Math.round((BASE_FEE + Math.round(r.cost.sum * MARGIN / 10) * 10) * 5 / 10) * 10; }); /* 음식값 5배(2026-11-26: 2.5배 → 한 번 더 2배) */
+  r.cost = { fish, crop, sauce, labor, time, sum: fish + crop + sauce + labor + time }; r.base = Math.round((BASE_FEE + Math.round(r.cost.sum * MARGIN / 10) * 10) * 5 * (r.fz ? 1.5 : 1) / 10) * 10; }); /* 생선 요리는 ×1.5 더(2026-11-26 물고기값 인상에 맞춤 · 등급 배율은 그대로 곱해짐) */ /* 음식값 5배(2026-11-26: 2.5배 → 한 번 더 2배) */
 // 요청을 다 맞췄을 때 받을 값(재료 등급 C 기준): 익힘 ×1.2 · 양념 ×1.1 · 불 조절 ×1.1. 도마(날것) 요리는 양념만
 export const bestPrice = r => Math.round(r.base * (r.st === 'board' ? 1.1 : 1.2 * 1.1 * 1.1) / 10) * 10;
 export const recOf = id => RECIPES.find(r => r.id === id);
