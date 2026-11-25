@@ -1362,6 +1362,7 @@ export function mount(el, ctx) {
   function openBag(o = {}) {
     const body = h('div', { class: 'so-list' }); let cl, hdD = null;
     if (!o.hd && !trial) ctx.store.get('hd/' + ctx.uid).then(v => { try { hdD = v && v.s ? JSON.parse(v.s) : null; } catch (e) { hdD = null; } if (hdD && alive) import('./hotddok.js').then(m => { hdLite = m.hdBagLite; hdPinsL = m.hdPinsLite; draw(); }).catch(() => {}); }).catch(() => {});
+    import('./hotddok.js').then(m => { hdDexL = m.hdDexGrid; if (alive) draw(); }).catch(() => {}); /* 핫똑 도감 탭 */
     const hdPinSec = () => (o.hdPins ? o.hdPins() : hdD && hdPinsL ? hdPinsL(ctx, hdD, () => { refreshMe(); draw(); }) : []);
     const hdSec = () => (o.hd ? o.hd(() => cl()) : hdD && hdLite ? hdLite(ctx, hdD, () => { refreshMe(); draw(); }) : []);
     const draw = () => { const pins = Object.keys(bag.pins || {}).filter(k => bag.pins[k]).map(Number), worn = pinOf(ctx.uid), wares = ANIMALS.map((_, i) => i).filter(i => ctx.owns(wareOf(i).id) && priceOf(wareOf(i).id) > 0);
@@ -1383,14 +1384,17 @@ export function mount(el, ctx) {
           return h('div', null, h('b', null, `🧸 뽑은 인형 ${dl.reduce((a, [, n]) => a + n, 0)}개`), dl.length ? h('div', { class: 'so-pins' }, dl.map(([k, n]) => h('button', { class: 'so-pin so-dollpin' + (on === k ? ' on' : ''), onClick: () => wearDoll(on === k ? null : k) }, h('span', { html: dollImg(k) }), h('small', null, on === k ? '착용 중' : `${ANIMALS[k].name} ×${n}`), h('small', { class: 'dim' }, '가슴 배지 · 선물')))) : h('p', { class: 'dim center' }, '카피오락의 인형뽑기에서 뽑아요. 동물에게 선물하거나 가슴에 달 수 있어요.')); })(),
         h('b', null, `동물에게 받은 액세서리 ${pins.length} / ${ANIMALS.length}`),
         pins.length ? h('div', { class: 'so-pins' }, pins.map(i => h('button', { class: 'so-pin' + (worn === i ? ' on' : ''), onClick: async () => { await wearPin(worn === i ? null : i); draw(); } }, h('span', null, PERSONA[i].pin), h('small', null, worn === i ? '착용 중' : ANIMALS[i].name), h('small', { class: 'dim' }, PIN_CHEST.has(PERSONA[i].pin) ? '가슴에' : '손에')))) : h('p', { class: 'dim center' }, `동물과 ${PIN_AT}점까지 친해지면 그 동물의 상징을 선물로 받아요.`), ...hdPinSec(),
-        h('b', null, `🐟 물고기 도감 ${Object.keys(dex).length} / ${FISH.length}${dex.pearl ? ' · 진주 ' + dex.pearl.n + '개' : ''}`),
-        h('p', { class: 'dim center' }, '아직 못 잡은 물고기는 그림자로 보여요. 잡으면 그 칸이 채워져요.'),
+        /* 물고기 도감: 카피랜드 · 핫똑랜드 두 탭을 펼치고 접는다(어느 랜드에서 가방을 열어도 같다) */
+        h('button', { class: 'so-dextab' + (dexOpen.cap ? ' on' : ''), onClick: () => { dexOpen.cap = !dexOpen.cap; draw(); } }, h('b', null, `🐟 카피랜드 물고기 도감 ${Object.keys(dex).filter(k => k !== 'pearl').length} / ${FISH.length}${dex.pearl ? ' · 진주 ' + dex.pearl.n + '개' : ''}`), h('i', null, dexOpen.cap ? '접기 ▲' : '펼치기 ▼')),
+        ...(dexOpen.cap ? [        h('p', { class: 'dim center' }, '아직 못 잡은 물고기는 그림자로 보여요. 잡으면 그 칸이 채워져요.'),
         ...[1, 2, 3].flatMap(z => { const list = FISH.filter(f => f.z === z), got = list.filter(f => dex[f.id]).length; return [h('small', { class: 'so-dexz' }, `${ZONES[z]} ${got} / ${list.length}`),
           h('div', { class: 'so-dex' }, list.map(f => dex[f.id] ? h('div', { class: 'so-dexi' + (f.king ? ' king' : f.rare ? ' rare' : '') }, h('span', { html: fishSvg(f) }), h('b', null, f.name), h('small', { class: 'so-dext t' + (f.tier || 1) }, TIERS[f.tier || 1].s), h('small', null, `${dex[f.id].n}마리 · 최대 ${dex[f.id].best}cm`))
             : h('div', { class: 'so-dexi shadow' }, h('span', { html: fishSvg(f) }), h('b', null, '???'), h('small', null, TIERS[f.tier || 1].n)))),
           ...(L => [h('small', { class: 'so-dexz shy' }, `✨ ${ZONES[z]} 이로치 ${L.filter(f => (dex[f.id] || {}).s).length} / ${L.length}`),
             h('div', { class: 'so-dex' }, L.map(f => (dex[f.id] || {}).s ? h('div', { class: 'so-dexi shy' }, h('span', { html: fishSvg(f, false, true) }), h('b', null, f.name), h('small', { class: 'so-dext shy' }, '이로치'), h('small', null, `${dex[f.id].s}마리`))
-              : h('div', { class: 'so-dexi shadow' }, h('span', { html: fishSvg(f, false, true) }), h('b', null, '???'), h('small', null, '이로치'))))])(SHINY_LIST[z].map(id => FISH.find(f => f.id === id)))]; }),
+              : h('div', { class: 'so-dexi shadow' }, h('span', { html: fishSvg(f, false, true) }), h('b', null, '???'), h('small', null, '이로치'))))])(SHINY_LIST[z].map(id => FISH.find(f => f.id === id)))]; })] : []),
+        (() => { const hb = o.hdBag || (hdD && hdD.bag), g = hb && hdDexL ? hdDexL(hb) : null; return h('button', { class: 'so-dextab hd' + (dexOpen.hd ? ' on' : ''), onClick: () => { dexOpen.hd = !dexOpen.hd; draw(); } }, h('b', null, `🐶 핫똑랜드 물고기 도감 ${g ? `${g.got} / ${g.total}` : ''}`), h('i', null, dexOpen.hd ? '접기 ▲' : '펼치기 ▼')); })(),
+        ...(dexOpen.hd ? [(() => { const hb = o.hdBag || (hdD && hdD.bag), g = hb && hdDexL ? hdDexL(hb) : null; return g ? g.el : h('p', { class: 'dim center' }, hdDexL ? '핫똑랜드에 다녀오면 여기에 핫똑 물고기가 채워져요.' : '도감을 불러오는 중…'); })()] : []),
         h('b', null, `동물에게 산 전용 모자 ${wares.length} / ${ANIMALS.length}`),
         wares.length ? h('div', { class: 'so-list' }, wares.map(i => { const w = wareOf(i), on = wearing(w.id); return h('button', { class: 'so-row big' + (on ? ' on' : ''), onClick: async () => { await wearCloth(w.id, !on); draw(); } }, tryOn(w.id), h('b', null, w.name), h('small', null, `${ANIMALS[i].name}에게 삼 · ${on ? '입는 중 (누르면 벗기)' : '누르면 입기'}`)); })) : h('p', { class: 'dim center' }, '동물과 거래하면 그 동물만 파는 전용 모자를 살 수 있어요.'),
         h('p', { class: 'dim center' }, '눌러서 착용하거나 빼요. 액세서리는 가슴이나 손에만 보여요(얼굴만 나오는 곳에는 안 보여요).')); };
@@ -1422,7 +1426,7 @@ export function mount(el, ctx) {
       if (!trial && !RB_TEST) { let ok = false; await ctx.store.tx('hd/' + ctx.uid, v => { if (v === null) return null; /* 아직 서버 값을 못 받았을 때: 다시 받아서 돈다 */ const d = v && v.s ? JSON.parse(v.s) : null, gg = d && d.bag && d.bag.rice && d.bag.rice.grain; if (!gg || list.some(([k]) => (gg[k] || 0) < pick[k])) return; /* 그만 둔다 */ list.forEach(([k]) => { gg[k] -= pick[k]; if (gg[k] <= 0) delete gg[k]; }); ok = true; return { ...v, s: JSON.stringify(d) }; }).catch(() => {}); if (!ok) return toast('가방 곡식이 바뀌었어요 · 다시 열어 주세요', 2000); await addCoins(c.net); }
       sfx('coin'); cl(); rbTalk('허허, 좋은 벼구먼! 또 와요~'); modal({ title: '🌾 벼를 팔았어요', body: h('div', { class: 'ap-cnt so-rbm' }, h('img', { src: 'img/fl/rice-pig.webp?v=2', alt: '', class: 'so-rbimg' }), h('p', null, `${c.n}단 · 곡식값 ${won(c.base)} + 운임 ${won(c.air)} − 수수료 ${won(c.fee)}`), h('p', null, h('b', null, `+${won(c.net)} 🪙`)), (trial || RB_TEST) && h('p', { class: 'ap-cnt-n' }, '🧪 시험판이라 코인은 들어오지 않아요')), actions: [{ label: '확인', primary: true }] }); };
     draw(); cl = modal({ title: `🌾 벼 도매상 복돈이 · ${Math.max(1, Math.ceil((rbOn.to - Date.now()) / 60000))}분 남음`, body: h('div', null, body, foot), actions: [{ label: '닫기' }, { label: '고른 벼 팔기', primary: true, onClick: () => { sell(); return false; } }] }); }
-  let hdLite = null, hdPinsL = null; ctx.openCapyBag = o => openBag(o); // 핫똑랜드에서도 이 가방을 연다
+  let hdLite = null, hdPinsL = null, hdDexL = null; const dexOpen = { cap: false, hd: false }; ctx.openCapyBag = o => openBag(o); // 핫똑랜드에서도 이 가방을 연다
 
   const offs = [
     ctx.store.on('social', v => { v = v || {}; mine = v[ctx.uid] || {}; theirs = (pid() && v[pid()]) || {}; cakeFix(); lionFix(); scores(); }),

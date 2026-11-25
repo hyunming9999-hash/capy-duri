@@ -3586,3 +3586,9 @@ body.hd-resume #app { visibility: hidden; } body.hd-resume .fm.ap:not(.hd) { vis
 .hd-dbrow { display: grid; grid-template-columns: 44px 1fr 52px; gap: 4px; align-items: center; color: #F2F2F2; font-size: 11px; padding: 2px 0; }
 .hd-dbrow b { color: #FFB13B; } .hd-dbrow span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 10px; } .hd-dbrow em { font-style: normal; text-align: right; color: #9AA3B5; font-weight: 800; }
 .hd-dbrow.on em { color: #2EE06F; animation: hdDbBlink .8s steps(2) infinite; } @keyframes hdDbBlink { 50% { opacity: .25; } }
+/* 가방 물고기 도감 탭(펼치기 · 접기) */
+.so-dextab { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 8px; padding: 10px 12px; border-radius: 14px; border: 2px solid #9CC8E8; background: linear-gradient(#F2FAFF, #DDEFFC); color: #1F4E79; cursor: pointer; text-align: left; }
+.so-dextab.hd { border-color: #E3B36A; background: linear-gradient(#FFF8EA, #FBE9C8); color: #6A4210; }
+.so-dextab b { font-size: 13.5px; } .so-dextab i { font-style: normal; font-size: 12px; font-weight: 800; white-space: nowrap; opacity: .85; }
+.so-dextab.on { border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; }
+.so-list .hd-dex { grid-template-columns: repeat(3, 1fr); gap: 6px; } .so-list .hd-dex .hd-dexc img { height: 44px; }
