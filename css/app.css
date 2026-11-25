@@ -3530,3 +3530,7 @@ body.hd-resume #app { visibility: hidden; } body.hd-resume .fm.ap:not(.hd) { vis
 .hd-fishgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; } .hd-fishc { background: #fff; border: 2px solid #E8DCC8; border-radius: 12px; padding: 4px 2px; text-align: center; display: flex; flex-direction: column; align-items: center; }
 .hd-fishc img { width: 100%; height: 38px; object-fit: contain; } .hd-fishc small { font-size: 10.5px; line-height: 1.2; word-break: keep-all; } .hd-goodsn { font-size: 12px; margin: 4px 0 0; }
 .hd-grow { grid-template-columns: 38px 1fr; } .hd-gstep { grid-column: 1 / -1; display: flex; align-items: center; justify-content: flex-end; gap: 4px; } .hd-gstep b { min-width: 46px; text-align: center; }
+.hd-visitbtn { position: absolute; top: 8px; right: 8px; z-index: 30; background: #FFF6D8; border: 2px solid #C9963C; border-radius: 14px; padding: 6px 10px; font: 800 13px/1.2 var(--head, inherit); color: #5A3A10; box-shadow: 0 3px 0 #B5833A; }
+.hd-visit .hd-paddy { filter: saturate(.92) brightness(1.02); } .hd-visit .hd-worker, .hd-visit .hd-nm.wk { display: none; }
+.hd-guard { position: absolute; bottom: 16%; height: 84px; transform: translateX(-50%); z-index: 12; pointer-events: none; animation: hdGuard 1.6s ease-in-out infinite; } @keyframes hdGuard { 50% { translate: 0 -3px; } }
+.hd-guardsay { bottom: calc(16% + 92px); transform: translateX(-50%); }
