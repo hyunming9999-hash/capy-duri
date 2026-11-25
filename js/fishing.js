@@ -6,14 +6,14 @@ import { sfx } from './sound.js';
 import { gullSvg } from './animals.js';
 import { FLUFFY, shipImg } from './fluffy.js';
 
-export const PIRATE_EVERY = 10, PIRATE_LOOT = 600, FLEE_FEE = 250, BOAT_FIX = 1500, CBOAT_FIX = 300, CBOAT_HIT = 10, PIRATE_HIT = 10; // 흰 배 수리 1500 · 카피보트 수리 300 · 풍랑 한 번에 타고 있는 배 내구도 -10 · 해적선 포탄에 맞을 때마다 -10
+export const PIRATE_EVERY = 10, PIRATE_LOOT = 600, FLEE_FEE = 250, BOAT_FIX = 3750, CBOAT_FIX = 750, CBOAT_HIT = 10, PIRATE_HIT = 10; // 흰 배 수리 1500 · 카피보트 수리 300 · 풍랑 한 번에 타고 있는 배 내구도 -10 · 해적선 포탄에 맞을 때마다 -10
 export const ZONES = ['', '초급 낚시터', '중급 낚시터', '고급 낚시터'];
-export const RODS = [null, { t: 1, name: '초급 낚싯대', price: 1000, dur: 50, fix: 300 }, { t: 2, name: '중급 낚싯대', price: 3000, dur: 100, fix: 900 }, { t: 3, name: '고급 낚싯대', price: 8000, dur: 200, fix: 2000 }] /* 2026-11-26 상점 물가 2배 */;
+export const RODS = [null, { t: 1, name: '초급 낚싯대', price: 2500, dur: 50, fix: 750 }, { t: 2, name: '중급 낚싯대', price: 7500, dur: 100, fix: 2250 }, { t: 3, name: '고급 낚싯대', price: 20000, dur: 200, fix: 5000 }] /* 2026-11-26 상점 물가 2배 → 한 번 더 2.5배 */;
 // 미끼: 바다마다 따로(초급 1개 10코인 · 중급 10개 300코인 · 고급 10개 600코인). 색으로 구분(분홍·파랑·금색)
-export const BAIT2 = 60, BAIT3 = 120, BAIT_KEY = ['', 'bait', 'bait2', 'bait3'], BAIT_NAME = ['', '미끼', '중급 미끼', '고급 미끼'];
+export const BAIT2 = 150, BAIT3 = 300, BAIT_KEY = ['', 'bait', 'bait2', 'bait3'], BAIT_NAME = ['', '미끼', '중급 미끼', '고급 미끼'];
 const BAIT_COL = [null, ['#F28BA8', '#B4466A'], ['#5EB8FF', '#1E5E92'], ['#FFD24A', '#B07A00']];
 export const baitIc = t => { const [f, d] = BAIT_COL[t] || BAIT_COL[1]; return `<svg viewBox="0 0 48 48"><path d="M10 34 C4 26 12 18 20 22 C28 26 32 14 40 18 C46 21 44 30 38 30" fill="none" stroke="${d}" stroke-width="11" stroke-linecap="round"/><path d="M10 34 C4 26 12 18 20 22 C28 26 32 14 40 18 C46 21 44 30 38 30" fill="none" stroke="${f}" stroke-width="7.5" stroke-linecap="round"/><path d="M15 22 v6 M22 22.5 v6 M29 19 v6 M35 16.5 v6" stroke="${d}" stroke-width="1.6" stroke-linecap="round" opacity=".6"/><circle cx="38.5" cy="29" r="1.6" fill="#3A2210"/>${t === 3 ? '<path d="M41 8 l1.4 3 3 1.4 -3 1.4 -1.4 3 -1.4 -3 -3 -1.4 3 -1.4z" fill="#FFF3B0"/>' : ''}</svg>`; };
-export const BAIT = 20, BALL = 100, CANNON = 3000, CANNON2 = 7000, WBOAT = 6000, PEARL_PRICE = 200000, PEARL_P = 0.002; // 진주: 고급 바다에서 던질 때마다 0.2% · 진주부적(3장)을 쓰면 10번 안에 한 번 걸리고 90%로 낚는다
+export const BAIT = 50, BALL = 250, CANNON = 7500, CANNON2 = 17500, WBOAT = 15000, /* 2026-11-26 2.5배 */ PEARL_PRICE = 200000, PEARL_P = 0.002; // 진주: 고급 바다에서 던질 때마다 0.2% · 진주부적(3장)을 쓰면 10번 안에 한 번 걸리고 90%로 낚는다
 
 // 물고기 80종: [이름, 최소cm, 최대cm, 최소값, 최대값, 표시(r=귀한 것, k=대장)]
 // 값은 가게 시세에 맞췄다(옷 한 벌 200~310, 게임 한 판 50쯤, 한 번 던지는 데 미끼·낚싯대 값 13쯤): 초급 평균 85, 중급 165, 고급 300쯤
