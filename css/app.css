@@ -3688,3 +3688,5 @@ body.hd-resume #app { visibility: hidden; } body.hd-resume .fm.ap:not(.hd) { vis
 .pt-mi { display: flex; flex-direction: column; align-items: center; gap: 8px; } .pt-miimg { height: 110px; object-fit: contain; }
 body:has(.pt) .modal-wrap { z-index: 9990; } /* 해피도자기 위에 뜨는 창 */
 body:has(.pt) .modal-actions { flex-wrap: wrap; } body:has(.pt) .modal-actions > * { flex: 1 1 100%; } /* 해피도자기 빚기 방식 버튼 두 줄 */
+.pt-modeinfo { margin: 0; width: 100%; text-align: center; font-size: 12.5px; color: #6A4A28; background: #FFF6DE; border: 1px dashed #D8B676; border-radius: 10px; padding: 6px; } .pt-modeinfo b { color: #C0392B; }
+.pt-body > * { flex-shrink: 0; } /* 결과 카드가 붙어도 무대가 찌그러지지 않게 */
