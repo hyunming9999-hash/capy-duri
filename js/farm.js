@@ -84,7 +84,7 @@ const left = ms => { const m = Math.ceil(ms / 60000); return m >= 60 ? `${Math.f
 // 우편함 farm/{주인}/inbox/{키} = { t: 'steal'|'fine'|'sale', by, n(받을 코인), k, i, c, name, at } — 주인이 접속했을 때 돈을 받고 알림을 본다
 // 담보 farm/{나}/pawn/{장비 번호} = { at, owner, name } — 하루가 지나면 팔리고, 판 값의 절반이 밭 주인에게 간다(나머지는 관리인)
 export const STEAL_FINE = 1000, PAWN_MS = 86400000, BAN_MS = 600000;
-const mailTo = (ctx, owner, m) => ctx.store.set(`farm/${owner}/inbox/${ctx.store.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`, { ...m, by: ctx.uid, at: ctx.store.now() }).catch(() => {});
+export const mailTo = (ctx, owner, m) => ctx.store.set(`farm/${owner}/inbox/${ctx.store.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`, { ...m, by: ctx.uid, at: ctx.store.now() }).catch(() => {});
 let mailBusy = false;
 export async function farmMail(ctx, K) { if (mailBusy || !ctx.store.get) return; mailBusy = true;
   try { const f = (await ctx.store.get('farm/' + ctx.uid)) || {}, t = ctx.store.now();
@@ -95,8 +95,10 @@ export async function farmMail(ctx, K) { if (mailBusy || !ctx.store.get) return;
     // 2) 내 밭에서 생긴 일: 서리당함 · 합의금 · 담보 매각 대금
     const box = Object.entries(f.inbox || {}).filter(([, m]) => m).sort((a, b) => (a[1].at || 0) - (b[1].at || 0)); if (!box.length) return;
     const patch = {}; box.forEach(([k]) => { patch['inbox/' + k] = null; }); await ctx.store.update('farm/' + ctx.uid, patch).catch(() => {});
-    const sum = box.reduce((a, [, m]) => a + (m.n > 0 && m.t !== 'steal' ? m.n : 0), 0); if (sum > 0 && K && K.credit) await K.credit(sum);
+    const sum = box.reduce((a, [, m]) => a + (m.n > 0 && m.t !== 'steal' && m.t !== 'hdsteal' ? m.n : 0), 0); if (sum > 0 && K && K.credit) await K.credit(sum);
     const won = n => n.toLocaleString('ko-KR'), line = m => { const who = ctx.nameOf(m.by), c = m.c ? cropOf(m.c) : null;
+      if (m.t === 'hdsteal') return h('p', null, `🥷 ${who}가 핫똑 ${m.k + 1}번 논에서 ${m.name || '벼'} ${m.n}단을 서리해 갔어요`);
+      if (m.t === 'hdfine') return h('p', null, `🚨 핫똑철물 무쇠가 내 논을 서리하던 ${who}를 잡았어요! 합의금 +${won(m.n)}코인`);
       return m.t === 'steal' ? h('p', null, `🥷 ${who}가 ${m.k + 1}번 밭 ${m.i + 1}번 이랑을 서리해 갔어요${c ? ` (${c.name} ${m.n}개)` : ''}`)
         : m.t === 'fine' ? h('p', null, `🚨 관리인이 서리하던 ${who}를 잡았어요! 합의금 +${won(m.n)}코인`) : h('p', null, `💰 ${who}가 담보(「${m.name}」)를 못 찾아가서 팔렸어요. +${won(m.n)}코인`); };
     modal({ title: '📬 내 농장 소식', body: [h('div', { class: 'fm-mail' }, h('img', { src: 'img/farm/kp-front.webp', alt: '' }), h('div', null, ...box.slice(-8).map(([, m]) => line(m)), sum > 0 && h('p', { class: 'fm-mailsum' }, `모두 +${won(sum)}코인을 받았어요`)))], actions: [{ label: '확인', primary: true }] });

@@ -531,6 +531,7 @@ export function mount(el, ctx) {
     give: async it => { bag = { ...bag, rares: { ...(bag.rares || {}), [it.id]: true } }; await ctx.store.update('bag/' + ctx.uid + '/rares', { [it.id]: true }).catch(() => {}); },
     value: i => Math.max(1, Math.round(RARE_BASE(i) / 2)), credit: n => addCoins(n),
     tang: () => bag.tang || 0, useTang: async () => { const n = Math.max(0, (bag.tang || 0) - 1); bag = { ...bag, tang: n }; await ctx.store.update('bag/' + ctx.uid, { tang: n }).catch(() => {}); } };
+  ctx.farmKeeper = farmKeeper; /* 핫똑 논 서리에 걸렸을 때도 같은 합의금 · 담보 규칙을 쓴다 */
   if (!trial) setTimeout(() => farmMail(ctx, farmKeeper), 4000); // 친목회에 들어오면 내 농장 소식(서리당함·합의금·담보 매각)을 받는다
   function farmTest(guard) { if (farmOpen || fishOpen || battle) return; farmOpen = true; fishOpen = true; keys.clear();
     const root = {}, subs = [], seg = k => k.split('/').filter(Boolean);

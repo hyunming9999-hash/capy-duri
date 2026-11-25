@@ -3534,3 +3534,9 @@ body.hd-resume #app { visibility: hidden; } body.hd-resume .fm.ap:not(.hd) { vis
 .hd-visit .hd-paddy { filter: saturate(.92) brightness(1.02); } .hd-visit .hd-worker, .hd-visit .hd-nm.wk { display: none; }
 .hd-guard { position: absolute; bottom: 16%; height: 84px; transform: translateX(-50%); z-index: 12; pointer-events: none; animation: hdGuard 1.6s ease-in-out infinite; } @keyframes hdGuard { 50% { translate: 0 -3px; } }
 .hd-guardsay { bottom: calc(16% + 92px); transform: translateX(-50%); }
+.hd-kp { position: absolute; z-index: 6; transform: translateX(-50%); pointer-events: none; height: 92px; }
+.hd-kp img { height: 100%; width: auto; display: block; filter: drop-shadow(0 3px 2px rgba(60,40,10,.25)); }
+.hd-kp.walk img { animation: hdKpWalk .5s ease-in-out infinite; } @keyframes hdKpWalk { 50% { translate: 0 -3px; rotate: 2deg; } }
+.hd-kp.snap img { animation: hdKpSnap .3s ease-out; } @keyframes hdKpSnap { 0% { scale: 1.15 .9; } 100% { scale: 1; } }
+.hd-kp.watch::after { content: '👀'; position: absolute; left: 50%; top: -18px; transform: translateX(-50%); font-size: 18px; }
+.hd-kpb { position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%); white-space: nowrap; background: #fff; border: 2px solid #8A6A40; border-radius: 12px; padding: 3px 8px; font-size: 12.5px; color: #4A3218; margin-bottom: 6px; }
