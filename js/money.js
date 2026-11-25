@@ -100,6 +100,9 @@ export function setupMoney(ctx, onChange) {
   let granting = false; const grantOnce = () => { const me = ctx.members[ctx.uid] || {}; if (!(ctx.ours && ctx.ours()) || granting || me.name !== '밍땅꾸리' || (ctx.money[ctx.uid] || {}).g1120) return; granting = true;
     ctx.store.tx('money/' + ctx.uid, c => ((c && c.g1120) ? undefined : { ...(c || {}), c: ((c && c.c) || 0) + 10000, g1120: true })).catch(() => { granting = false; }); };
   // 한 번만 주는 지급 ⑦: 밍땅꾸리에게 60,000코인(2026-11-25 밤). 표시(g1125m)
+  // 한 번만 주는 지급 ⑧: 두두에게 물가 패치 조정 민생지원금 15,000코인(2026-11-26). 표시(g1126d)
+  let granting8 = false; const grantOnce8 = () => { const me = ctx.members[ctx.uid] || {}; if (!(ctx.ours && ctx.ours()) || granting8 || me.name !== '두두' || (ctx.money[ctx.uid] || {}).g1126d) return; granting8 = true;
+    ctx.store.tx('money/' + ctx.uid, c => ((c && c.g1126d) ? undefined : { ...(c || {}), c: ((c && c.c) || 0) + 15000, g1126d: true })).then(r => { if (r && r.committed === false) return; toast('🎁 물가 패치 조정 민생지원금 15,000코인이 들어왔어요', 3600); }).catch(() => { granting8 = false; }); };
   let granting7 = false; const grantOnce7 = () => { const me = ctx.members[ctx.uid] || {}; if (!(ctx.ours && ctx.ours()) || granting7 || me.name !== '밍땅꾸리' || (ctx.money[ctx.uid] || {}).g1125m) return; granting7 = true;
     ctx.store.tx('money/' + ctx.uid, c => ((c && c.g1125m) ? undefined : { ...(c || {}), c: ((c && c.c) || 0) + 60000, g1125m: true })).then(r => { if (r && r.committed === false) return; toast('🎁 60,000코인이 들어왔어요', 3000); }).catch(() => { granting7 = false; }); };
   // 한 번만 주는 지급 ⑥: 밍땅꾸리에게 30,000코인(2026-11-23 아침). 표시(g1123a)
@@ -118,7 +121,7 @@ export function setupMoney(ctx, onChange) {
   const offs = [
     ctx.store.on('streak/' + ctx.uid, v => { ctx.streak = v || {}; }),
     ctx.store.on('bets', v => { ctx.bets = v || {}; refundCheck(); (ctx.betWatch || []).forEach(f => f()); }),
-    ctx.store.on('money', v => { ctx.money = v || {}; grantOnce(); grantOnce2(); grantOnce3(); grantOnce4(); grantOnce5(); grantOnce6(); grantOnce7(); sorryOnce(); document.querySelectorAll('[data-coins]').forEach(e => { e.textContent = won(ctx.coins()); }); onChange && onChange(); }),
+    ctx.store.on('money', v => { ctx.money = v || {}; grantOnce(); grantOnce2(); grantOnce3(); grantOnce4(); grantOnce5(); grantOnce6(); grantOnce7(); grantOnce8(); sorryOnce(); document.querySelectorAll('[data-coins]').forEach(e => { e.textContent = won(ctx.coins()); }); onChange && onChange(); }),
     ctx.store.on('owned', v => { ctx.owned = v || {};
       const me = ctx.owned[ctx.uid] || {}; if (!me._init) { const d = ctx.dress[ctx.uid] || {}, keep = { _init: true }; [d.top, d.bottom, d.hat, d.shoe].forEach(id => { if (id) keep[id] = true; }); ctx.store.update('owned/' + ctx.uid, keep).catch(() => {}); } // 돈이 생기기 전에 입고 있던 옷은 그대로 내 것
       onChange && onChange(); }),
