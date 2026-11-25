@@ -4,6 +4,7 @@
 import { h, toast, modal, holdBtn } from './ui.js';
 import { capy } from './capy.js';
 import { FISH } from './fishing.js';
+import { bagScan } from './bagscan.js';
 import { sfx, bgm } from './sound.js';
 
 const BG_W = 1344, BG_H = 576, WALK_SP = 150;
@@ -89,11 +90,11 @@ export function openAirport(o) {
     return { kinds, overK, mid, other, over: kinds > 5 || overK > 0 || mid > 5 || other > 0 }; }
   const RULE = '✈️ 카피공항 → 핫똑랜드 기준: 농산물 5종 · 한 종에 20개 · 물고기는 중급 바다 것 5마리 (다른 바다 물고기는 못 가져가요)', mineTxt = r => `내 짐: 농산물 ${r.kinds}종${r.overK ? ` (20개 넘는 종류 ${r.overK})` : ''} · 중급 바다 물고기 ${r.mid}마리${r.other ? ` · 다른 바다 물고기 ${r.other}마리` : ''}`;
   if (PASSTEST) setTimeout(() => { if (alive) { goIn(); passCheck(); } }, 1200);
-  async function passCheck() { if (document.querySelector('.apv') || passCheck.busy) return; if (!pp) return passView(); passCheck.busy = 1; const r = await bagCheck(); passCheck.busy = 0;
-    if (r.over) { sfx('bad'); return modal({ title: '🧳 수하물 검사 · 출국 거부', body: [h('div', { class: 'ap-cnt' }, h('img', { src: 'img/air/att.webp', alt: '' }), h('p', null, '“폐하, 송구하오나 짐이 기준을 넘어 출국하실 수 없사옵니다…”'), h('div', { class: 'apv-bag' }, h('b', null, '⚠️ 기준 초과'), h('small', null, RULE), h('small', null, mineTxt(r))), h('p', null, h('b', null, `다음 비행기(${hhmm(depAt(now()))}) 전까지 카피수퍼 창고에 짐을 맡기고 오세요.`)), h('p', { class: 'ap-cnt-n' }, '창고에 맡긴 농산물·물고기는 검사에 안 걸려요 · 가방은 카피랜드와 핫똑랜드가 같이 써요'))], actions: [{ label: '창고에 맡기고 올게요', primary: true }] }); }
+  async function passCheck() { if (document.querySelector('.apv') || passCheck.busy) return; if (!pp) return passView(); passCheck.busy = 1; const r = await bagCheck(); await bagScan(!r.over, ['🥕', '🐟', '🍓', '🌽']); passCheck.busy = 0; /* 캐리어 엑스레이 검사 연출 */
+    if (r.over) { sfx('bad'); return modal({ title: '🧳 수하물 검사 · 출국 거부', body: [h('div', { class: 'ap-cnt' }, h('img', { src: 'img/air/att.webp', alt: '' }), h('p', null, '“폐하, 송구하오나 짐이 기준을 넘어 출국하실 수 없사옵니다…”'), h('div', { class: 'apv-bag no' }, h('b', null, '⛔ 기준 초과'), h('small', null, RULE), h('small', null, mineTxt(r))), h('p', null, h('b', null, `다음 비행기(${hhmm(depAt(now()))}) 전까지 카피수퍼 창고에 짐을 맡기고 오세요.`)), h('p', { class: 'ap-cnt-n' }, '창고에 맡긴 농산물·물고기는 검사에 안 걸려요 · 가방은 카피랜드와 핫똑랜드가 같이 써요'))], actions: [{ label: '창고에 맡기고 올게요', primary: true }] }); }
     passView(r); }
   function passView(r) { if (document.querySelector('.apv')) return; if (!pp) return modal({ title: '🛂 여권이 없어요', body: [h('div', { class: 'ap-cnt' }, h('img', { src: 'img/air/att.webp', alt: '' }), h('p', null, '폐하, 송구하오나 여권이 있어야 출국하실 수 있사옵니다.'), h('p', { class: 'ap-cnt-n' }, '동물친목회의 「카피랜드 여권 발급」 이야기를 먼저 마쳐 주세요'))], actions: [{ label: '확인', primary: true }] });
-    const bagBox = h('div', { class: 'apv-bag' }, h('b', null, '🧳 수하물 검사 · ✅ 통과'), h('small', null, RULE), h('small', null, mineTxt(r))); /* 여권을 낼 때 수하물도 함께 본다 */
+    const bagBox = h('div', { class: 'apv-bag ok' }, h('b', null, '🧳 수하물 검사 · ✅ 통과'), h('small', null, RULE), h('small', null, mineTxt(r))); /* 여권을 낼 때 수하물도 함께 본다 */
     const bub = h('span', { class: 'apv-say' }, '폐하, 여권을 살펴보겠사옵니다…'), ok = h('button', { class: 'btn primary apv-ok', onClick: () => { el.remove(); openTicket(); } }, '🎫 탑승권 사러 가기');
     const page = h('div', { class: 'apv-page' }, h('div', { class: 'apv-photo', html: capy(ctx.capyOf(ctx.uid, { face: 'smile' })) }),
       h('dl', null, h('dt', null, '국적'), h('dd', null, '카피랜드'), h('dt', null, '직위'), h('dd', null, '카피황금폐하'), h('dt', null, '행선지'), h('dd', null, DEST)),

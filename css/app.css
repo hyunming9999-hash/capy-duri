@@ -3555,3 +3555,34 @@ body.hd-resume #app { visibility: hidden; } body.hd-resume .fm.ap:not(.hd) { vis
 /* 여권 심사 화면의 수하물 검사 칸 */
 .apv-bag { margin: 8px auto 4px; max-width: 320px; background: rgba(255,255,255,.94); border: 2px solid #C9A04A; border-radius: 14px; padding: 7px 10px; display: flex; flex-direction: column; gap: 2px; text-align: left; }
 .apv-bag b { font-size: 13px; color: #4A3218; } .apv-bag small { font-size: 11.5px; color: #6A5030; line-height: 1.35; } .apv-bag .apv-bagw { color: #C0392B; font-weight: 700; }
+/* 수하물 검사 연출(bagscan.js) */
+.bs { position: fixed; inset: 0; z-index: 9000; background: rgba(20, 24, 40, .72); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; animation: bsIn .25s ease-out; }
+.bs.out { animation: bsOut .26s ease-in forwards; } @keyframes bsIn { from { opacity: 0; } } @keyframes bsOut { to { opacity: 0; } }
+.bs-t { color: #fff; font: 900 18px/1.2 var(--head, inherit); text-shadow: 0 2px 0 rgba(0,0,0,.4); margin: 0; }
+.bs-stage { position: relative; width: min(340px, 88vw); height: 170px; }
+.bs-belt { position: absolute; left: 0; right: 0; bottom: 10px; height: 18px; border-radius: 9px; background: repeating-linear-gradient(90deg, #3B3F4E 0 14px, #2A2D38 14px 28px); box-shadow: inset 0 3px 0 rgba(255,255,255,.12), 0 4px 0 #15171E; animation: bsBelt .5s linear infinite; } @keyframes bsBelt { to { background-position: 28px 0; } }
+.bs-bag { position: absolute; bottom: 26px; left: -30%; width: 96px; animation: bsMove 1.6s cubic-bezier(.4,.1,.5,1) forwards; } .bs-bag img { width: 100%; display: block; filter: drop-shadow(0 4px 3px rgba(0,0,0,.35)); }
+@keyframes bsMove { 0% { left: -30%; } 35% { left: calc(50% - 48px); } 70% { left: calc(50% - 48px); } 100% { left: calc(50% - 48px); } }
+.bs-arch { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); width: 138px; height: 140px; border: 10px solid #D8DDE8; border-bottom: 0; border-radius: 18px 18px 0 0; box-shadow: 0 0 0 3px #8A93A8, inset 0 0 0 3px #8A93A8; overflow: hidden; }
+.bs-xr { position: absolute; inset: 0; backdrop-filter: invert(1) hue-rotate(180deg) saturate(.6) brightness(1.1); -webkit-backdrop-filter: invert(1) hue-rotate(180deg) saturate(.6) brightness(1.1); background: rgba(60, 160, 255, .25); opacity: 0; animation: bsXr 1.6s forwards; } @keyframes bsXr { 0%, 30% { opacity: 0; } 40%, 100% { opacity: 1; } }
+.bs-xr i { position: absolute; top: 42%; font-style: normal; font-size: 22px; opacity: 0; filter: grayscale(1) brightness(1.6); animation: bsItem .4s ease-out forwards; } @keyframes bsItem { from { opacity: 0; transform: scale(.4); } to { opacity: .9; transform: scale(1); } }
+.bs-beam { position: absolute; left: 0; right: 0; top: 0; height: 8px; background: linear-gradient(transparent, rgba(120, 220, 255, .95), transparent); animation: bsBeam .7s linear infinite; } @keyframes bsBeam { from { top: -8px; } to { top: 100%; } }
+.bs-lamp { position: absolute; top: 4px; left: 50%; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: #FFD24A; box-shadow: 0 0 10px #FFD24A; z-index: 2; animation: bsLamp .3s steps(2) infinite; } @keyframes bsLamp { 50% { opacity: .3; } }
+.bs.ok .bs-lamp { background: #2ECC71; box-shadow: 0 0 22px 6px #2ECC71; animation: none; } .bs.no .bs-lamp { background: #FF3B3B; box-shadow: 0 0 22px 6px #FF3B3B; animation: bsLamp .18s steps(2) infinite; }
+.bs.ok { background: radial-gradient(circle, rgba(46, 204, 113, .45), rgba(10, 40, 20, .82)); } .bs.no { background: radial-gradient(circle, rgba(255, 50, 50, .5), rgba(50, 0, 0, .86)); animation: bsShake .4s ease-in-out 2; } @keyframes bsShake { 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+.bs-res { opacity: 0; transform: scale(.6); display: flex; flex-direction: column; align-items: center; padding: 10px 26px; border-radius: 18px; border: 4px solid #fff; color: #fff; }
+.bs-res b { font: 900 26px/1.2 var(--head, inherit); } .bs-res small { font-size: 13px; font-weight: 700; opacity: .95; }
+.bs.ok .bs-res, .bs.no .bs-res { opacity: 1; transform: scale(1); transition: transform .3s cubic-bezier(.3,1.6,.5,1), opacity .2s; }
+.bs.ok .bs-res { background: #23A55A; box-shadow: 0 0 0 6px rgba(46, 204, 113, .35), 0 8px 24px rgba(0,0,0,.35); } .bs.no .bs-res { background: #D62828; box-shadow: 0 0 0 6px rgba(255, 60, 60, .35), 0 8px 24px rgba(0,0,0,.35); }
+.bs.ok .bs-t { color: #B8FFD0; } .bs.no .bs-t { color: #FFC2C2; }
+/* 여권 화면의 수하물 칸 · 거부 창 색 */
+.apv-bag.ok { border-color: #2ECC71; background: #EFFFF4; box-shadow: 0 0 0 3px rgba(46, 204, 113, .25); } .apv-bag.ok b { color: #1E8F4C; }
+.apv-bag.no { border-color: #E53935; background: #FFF1F1; box-shadow: 0 0 0 3px rgba(229, 57, 53, .25); } .apv-bag.no b { color: #C62828; }
+
+/* 핫똑공항 전광판 */
+.hd-dboard { position: absolute; top: 9%; transform: translateX(-50%); z-index: 2; width: 220px; background: #14161C; border: 5px solid #5A4630; border-radius: 10px; box-shadow: 0 6px 0 rgba(0,0,0,.25), inset 0 0 0 2px #2B2F3A; padding: 6px 7px 7px; font-family: 'Courier New', ui-monospace, monospace; pointer-events: none; }
+.hd-dbhead { display: flex; justify-content: space-between; align-items: center; color: #FFD21F; font-weight: 900; font-size: 11px; border-bottom: 1px dashed #3A3F4C; padding-bottom: 3px; margin-bottom: 3px; }
+.hd-dbcd { color: #7CF29A; font-size: 10px; font-weight: 800; }
+.hd-dbrow { display: grid; grid-template-columns: 44px 1fr 52px; gap: 4px; align-items: center; color: #F2F2F2; font-size: 11px; padding: 2px 0; }
+.hd-dbrow b { color: #FFB13B; } .hd-dbrow span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 10px; } .hd-dbrow em { font-style: normal; text-align: right; color: #9AA3B5; font-weight: 800; }
+.hd-dbrow.on em { color: #2EE06F; animation: hdDbBlink .8s steps(2) infinite; } @keyframes hdDbBlink { 50% { opacity: .25; } }
