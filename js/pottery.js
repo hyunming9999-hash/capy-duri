@@ -19,7 +19,7 @@ const ORDER = ['b', 'c', 'w'];
 const SHAPE_G = [[90, '수', 5], [80, '우', 4], [70, '미', 3], [60, '양', 2.5], [50, '가', 2], [40, '현', 1.5], [0, '황', 1.2]];
 const FIRE = [['하', 2000, 30], ['중', 3000, 65], ['상', 5000, 100]];
 const PAT_BONUS = [5000, 7000, 15000], PAT_PT = [30, 65, 100], PAT_NAME = ['하급', '중급', '최상급'];
-const FINAL = [[90, 'S', 1], [80, 'A', 0.8], [70, 'B', 0.7], [60, 'C', 0.6], [50, 'D', 0.5], [40, 'E', 0.4], [0, 'F', 0.3]]; /* 팔릴 확률(2026-11-25 조정) */
+const FINAL = [[90, 'S', 1], [80, 'A', 0.7], [70, 'B', 0.6], [60, 'C', 0.5], [50, 'D', 0.4], [40, 'E', 0.3], [0, 'F', 0.2]]; /* 팔릴 확률(2026-11-25 조정) */
 const won = n => `${Math.round(n).toLocaleString()}코인`;
 const dayNo = t => Math.floor((t + 9 * 3600e3) / 86400e3);
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -84,12 +84,12 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
       h('small', { class: 'pt-dim' }, '재료는 부메랑상회에서 사요 · 도자기 하나에 흙 1 · 유약 1 · 안료 1'),
       h('button', { class: 'btn primary pt-go', disabled: left <= 0, onClick: pick }, left > 0 ? `🏺 도자기 빚기 (오늘 ${left}번 남음)` : '오늘은 다 빚었어요 · 내일 다시 와요'),
       postBox,
-      h('details', { class: 'pt-rule' }, h('summary', null, '📜 도자기 정보 · 값 매기는 법 · 최종 판매가표'), priceTable(), h('p', null, '👀 틀 보며 빚기: 채점이 더 엄격하고(어려움) 빚기 배율은 미(×3)까지, 최종 등급은 B 80점 · C 70 · D 60 · E 50 · F 그 미만이에요. ✋ 틀 없이 빚기만 S급까지 받아요.'), h('p', null, '🔥 소성: 초벌(천천히)과 중벌(빠르게) 두 번 꺼내요. 빨간 줄 100점 · 노란 칸 안 60~95점 · 칸 밖 45점 이하. 두 점수 평균 85점↑ 상급 · 55점↑ 중급 · 그 아래 하급이고, 평균 점수가 그대로 최종 점수의 25%가 돼요.'), h('p', null, '빚기 점수: 위아래 96줄마다 본보기와의 폭 차이를 재요. 큰 실수일수록 더 크게 깎이고(제곱 평균), 너무 파낸 곳은 1.5배로 감점. 평균 오차 2.5%면 90%(수), 5%면 80%(우), 25%면 0%.'), h('p', null, '판매가 = 흙값 × 빚기 배율(수5 · 우4 · 미3 · 양2.5 · 가2 · 현1.5 · 황1.2) + 소성(하 2,000 · 중 3,000 · 상 5,000) + 무늬(하급 5,000 · 중급 7,000 · 최상급 15,000) + 인건비 3,000'), h('p', null, '최종 등급 = 빚기 60% · 소성 25% · 무늬 15% 점수로 S~F. F급은 재료값의 1.45배.'), h('p', null, '게시하면 3분 안에 팔릴 확률: S 100% · A 80% · B 70% · C 60% · D 50% · E 40% · F 30%. 안 팔리면 한 등급 아래 값(×0.8)으로 처분되고, F는 재료값만 돌려받아요.')));
+      h('details', { class: 'pt-rule' }, h('summary', null, '📜 도자기 정보 · 값 매기는 법 · 최종 판매가표'), priceTable(), h('p', null, '👀 틀 보며 빚기: 채점이 더 엄격하고(어려움) 빚기 배율은 미(×3)까지, 최종 등급은 B 80점 · C 70 · D 60 · E 50 · F 그 미만이에요. ✋ 틀 없이 빚기만 S급까지 받아요.'), h('p', null, '🔥 소성: 초벌(천천히)과 중벌(빠르게) 두 번 꺼내요. 빨간 줄 100점 · 노란 칸 안 60~95점 · 칸 밖 45점 이하. 두 점수 평균 85점↑ 상급 · 55점↑ 중급 · 그 아래 하급이고, 평균 점수가 그대로 최종 점수의 30%가 돼요.'), h('p', null, '빚기 점수: 위아래 96줄마다 본보기와의 폭 차이를 재요. 큰 실수일수록 더 크게 깎이고(제곱 평균), 너무 파낸 곳은 1.5배로 감점. 평균 오차 2.5%면 90%(수), 5%면 80%(우), 25%면 0%.'), h('p', null, '판매가 = 흙값 × 빚기 배율(수5 · 우4 · 미3 · 양2.5 · 가2 · 현1.5 · 황1.2) + 소성(하 2,000 · 중 3,000 · 상 5,000) + 무늬(하급 5,000 · 중급 7,000 · 최상급 15,000) + 인건비 3,000'), h('p', null, '최종 등급 = 빚기 40% · 소성 30% · 무늬 30% 점수로 S~F. F급은 재료값의 1.45배.'), h('p', null, '게시하면 3분 안에 팔릴 확률: S 100% · A 70% · B 60% · C 50% · D 40% · E 30% · F 20%. 안 팔리면 한 등급 아래 값(×0.8)으로 처분되고, F는 재료값만 돌려받아요.')));
     if (!P.met) { P.met = 1; save(); } }
 
   // 최종 판매가표: 빚기(0~100%) · 소성 · 무늬의 모든 조합을 계산해 등급마다 나올 수 있는 값의 범위
   function priceTable() { const tb = {}; ORDER.forEach(k => { const K = KINDS[k], c = POT_MAT[K.clay][1], cost = c + 3000, pats = [...new Set(K.pats.map(p => p[2]))], R = {};
-      for (let pct = 0; pct <= 100; pct++) { const m = SHAPE_G.find(s => pct >= s[0])[2]; FIRE.forEach(f => pats.forEach(pi => { const sc = Math.round(pct * 0.6 + f[2] * 0.25 + PAT_PT[pi] * 0.15), g = FINAL.find(x => sc >= x[0])[1], pr = g === 'F' ? Math.round(cost * 1.45) : Math.round(c * m + f[1] + PAT_BONUS[pi] + LABOR), o = R[g] || (R[g] = [1e9, 0]); o[0] = Math.min(o[0], pr); o[1] = Math.max(o[1], pr); })); }
+      for (let pct = 0; pct <= 100; pct++) { const m = SHAPE_G.find(s => pct >= s[0])[2]; FIRE.forEach(f => pats.forEach(pi => { const sc = Math.round(pct * 0.4 + f[2] * 0.3 + PAT_PT[pi] * 0.3), g = FINAL.find(x => sc >= x[0])[1], pr = g === 'F' ? Math.round(cost * 1.45) : Math.round(c * m + f[1] + PAT_BONUS[pi] + LABOR), o = R[g] || (R[g] = [1e9, 0]); o[0] = Math.min(o[0], pr); o[1] = Math.max(o[1], pr); })); }
       tb[k] = { R, cost }; });
     const k1 = n => n.toLocaleString(), cell = (r) => !r ? '-' : r[0] === r[1] ? k1(r[0]) : `${k1(r[0])}~${k1(r[1])}`;
     return h('div', { class: 'pt-ptab' }, h('b', null, '💰 최종 판매가 (3분 안에 팔렸을 때)'), h('table', null, h('tr', null, h('th', null, '등급'), ...ORDER.map(k => h('th', null, KINDS[k].name)), h('th', null, '팔릴 확률')),
@@ -182,7 +182,7 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
         btn.replaceWith(h('button', { class: 'btn primary pt-go', onClick: () => kiln(job) }, '🔥 가마에 넣기 →')); }, 1900); }; }
 
   // ───── 3. 가마: 온도 게이지가 오르는 동안 알맞은 칸에서 꺼낸다 ─────
-  function kiln(job) { scr = 'kiln'; const K = KINDS[job.k], [Z0, Z1] = K.zone, ROUNDS = [{ nm: '초벌', sub: '천천히 오르는 불', dur: 3600, sh: -18, t0: 600, tk: 4 }, { nm: '중벌', sub: '빠르게 치솟는 불', dur: 2400, sh: 0, t0: 900, tk: 4.5 }], got = [];
+  function kiln(job) { scr = 'kiln'; const K = KINDS[job.k], [Z0, Z1] = K.zone, ROUNDS = [{ nm: '초벌', sub: '천천히 오르는 불', dur: 3000, sh: -18, t0: 600, tk: 4 }, { nm: '중벌', sub: '빠르게 치솟는 불', dur: 2400, sh: 0, t0: 900, tk: 4.5 }], got = [];
     const fill = h('i', { class: 'pt-gfill' }), needle = h('i', { class: 'pt-gneedle' }), sweetEl = h('i', { class: 'pt-gsweet' }), zone = h('i', { class: 'pt-gzone' }, sweetEl), gauge = h('div', { class: 'pt-gauge' }, zone, fill, needle);
     const glow = h('div', { class: 'pt-kilnglow' }), temp = h('b', { class: 'pt-temp' }), tag = h('b', { class: 'pt-ktag' }), steps = h('div', { class: 'pt-ksteps' }), btn = h('button', { class: 'btn primary pt-go pt-out', disabled: true }, '🧤 꺼내기!'), tip = say(''), res = h('div', { class: 'pt-kres' });
     body.replaceChildren(tip, h('div', { class: 'pt-kiln' }, h('img', { src: `${PI}kiln.webp?v=1`, alt: '' }), glow, temp, tag), steps, gauge, h('small', { class: 'pt-dim' }, '게이지가 오르는 동안 한 번만 누를 수 있어요 · 노란 칸 안, 빨간 줄에 가까울수록 높은 점수'), btn, res);
@@ -197,7 +197,7 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
         const avg = Math.round((got[0] + got[1]) / 2), fi = avg >= 85 ? 2 : avg >= 55 ? 1 : 0; job.fi = fi; job.fs = avg;
         setTimeout(() => { res.append(h('p', { class: 'pt-res big' }, h('b', null, `소성 「${FIRE[fi][0]}급」`), ` · 초벌 ${got[0]} + 중벌 ${got[1]} → 평균 ${avg}점 · +${won(FIRE[fi][1])}`), h('button', { class: 'btn primary', onClick: () => paint(job) }, '다음: 안료 붓기 →')); sfx(fi === 2 ? 'fanfare' : 'pop'); }, 500); };
       btn.onclick = stop;
-      setTimeout(() => { if (!root.isConnected) return; btn.disabled = false; t0 = performance.now(); sfx('crackle'); const loop = now => { if (end || !root.isConnected) return; const x = Math.min(1, (now - t0) / R.dur); v = 100 * (x * x * 0.45 + x * 0.55); /* 초벌 3.6초 · 중벌: 두 배 넘게 빠르게(2.4초) */ fill.style.width = v + '%'; needle.style.left = v + '%'; temp.textContent = `${Math.round(R.t0 + v * R.tk)}℃`; glow.style.opacity = (0.2 + v / 110).toFixed(2); if (x >= 1) return stop(); raf = requestAnimationFrame(loop); }; raf = requestAnimationFrame(loop); }, 1100); };
+      setTimeout(() => { if (!root.isConnected) return; btn.disabled = false; t0 = performance.now(); sfx('crackle'); const loop = now => { if (end || !root.isConnected) return; const x = Math.min(1, (now - t0) / R.dur); v = 100 * (x * x * 0.45 + x * 0.55); /* 초벌 3초 · 중벌: 두 배 넘게 빠르게(2.4초) */ fill.style.width = v + '%'; needle.style.left = v + '%'; temp.textContent = `${Math.round(R.t0 + v * R.tk)}℃`; glow.style.opacity = (0.2 + v / 110).toFixed(2); if (x >= 1) return stop(); raf = requestAnimationFrame(loop); }; raf = requestAnimationFrame(loop); }, 1100); };
     run(0); }
 
   // ───── 4. 안료: 무늬는 순전히 운 ─────
@@ -222,7 +222,7 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
         odds.querySelectorAll('span').forEach((e, i) => e.classList.toggle('on', K.pats[i] === pat)); btn.remove(); setTimeout(() => result(job), 900); }; }; }
 
   // ───── 5. 최종 등급 · 게시 ─────
-  function result(job) { const K = KINDS[job.k], sg = job.sg, fi = job.fi, pat = job.pat, score = Math.round(job.pct * 0.6 + (job.fs != null ? job.fs : FIRE[fi][2]) * 0.25 + PAT_PT[pat[2]] * 0.15), fg0 = FINAL.find(g => score >= g[0]), fg = job.guide ? FINAL[score >= 80 ? 2 : score >= 70 ? 3 : score >= 60 ? 4 : score >= 50 ? 5 : 6] : fg0; /* 틀 보며 빚기: B 80 · C 70 · D 60 · E 50 · F 그 미만 */
+  function result(job) { const K = KINDS[job.k], sg = job.sg, fi = job.fi, pat = job.pat, score = Math.round(job.pct * 0.4 + (job.fs != null ? job.fs : FIRE[fi][2]) * 0.3 + PAT_PT[pat[2]] * 0.3), fg0 = FINAL.find(g => score >= g[0]), fg = job.guide ? FINAL[score >= 80 ? 2 : score >= 70 ? 3 : score >= 60 ? 4 : score >= 50 ? 5 : 6] : fg0; /* 틀 보며 빚기: B 80 · C 70 · D 60 · E 50 · F 그 미만 */
     const calc = Math.round(job.clay * sg[2] + FIRE[fi][1] + PAT_BONUS[pat[2]] + LABOR), price = fg[1] === 'F' ? Math.round(job.cost * 1.45) : calc, nm = `${K.name}${pat[2] ? ` · ${pat[1]}` : ''}`;
     const rows = [['🏺 빚기', `${job.pct}% · ${sg[1]} (흙값 ${won(job.clay)} ×${sg[2]})`, won(job.clay * sg[2])], ['🔥 소성', `${FIRE[fi][0]}급${job.fs != null ? ` (${job.fs}점)` : ''}`, `+${won(FIRE[fi][1])}`], ['🎨 무늬', `${pat[1]} (${PAT_NAME[pat[2]]})`, `+${won(PAT_BONUS[pat[2]])}`], ['🤲 인건비', '', `+${won(LABOR)}`]];
     body.append(h('div', { class: 'pt-card g' + fg[1] }, h('div', { class: 'pt-grade' }, h('b', null, fg[1]), h('small', null, `${score}점`)), h('b', { class: 'pt-nm' }, nm), job.guide && h('small', { class: 'pt-dim' }, `👀 틀 보며 빚기 · 최고 B급 · 빚기 배율 최고 ×3`),
