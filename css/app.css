@@ -3693,3 +3693,4 @@ body:has(.pt) .modal-actions { flex-wrap: wrap; } body:has(.pt) .modal-actions >
 .pt-ktag { position: absolute; left: 10px; top: 8px; background: rgba(0,0,0,.55); color: #fff; border-radius: 10px; padding: 3px 9px; font: 800 13px/1.2 var(--head); }
 .pt-ksteps { display: flex; gap: 6px; } .pt-ksteps span { font-size: 12.5px; font-weight: 800; color: #A08A70; background: #fff; border: 2px solid #EAD7B0; border-radius: 10px; padding: 3px 10px; } .pt-ksteps span.on { color: #fff; background: #E8473B; border-color: #E8473B; animation: ptBreath 1.2s ease-in-out infinite; } .pt-ksteps span.done { color: #1E8F4C; border-color: #2ECC71; background: #EFFFF4; }
 .pt-kres { display: flex; flex-direction: column; align-items: center; gap: 4px; } .pt-res { margin: 0; } .pt-res.big { background: #FFF6DE; border: 2px solid #E0A800; border-radius: 12px; padding: 6px 10px; font-size: 13px; }
+.pt-ptab > b + table, .pt-ptab small + b { margin-top: 8px; display: block; }

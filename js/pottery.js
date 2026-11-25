@@ -33,7 +33,7 @@ export async function potWarp(k, pat, rr) { const im = await loadImg(`${PI}${pat
   return c; }
 export function potImg(k, pat, rr, cls) { const el = h('img', { class: cls, src: `${PI}${pat}.webp?v=1`, alt: '' }); if (rr) potWarp(k, pat, rr).then(c => { if (c && el.isConnected) { c.className = cls; el.replaceWith(c); } else if (c) { el.src = c.toDataURL(); } }); return el; }
 
-// 에픽 퀘스트 「작은아빠의 가마」(복실이): bag.potq 0 받기 전 · 1 받음(공방 가기) · 2 도전 중(분청사기 C급 이상 → 3분 안에 팔기, 기회 3번) · 3 성공(복실이에게 갚기) · 4 끝
+// 에픽 퀘스트 「작은아빠의 가마」(복실이): bag.potq 0 받기 전 · 1 받음(공방 가기) · 2 도전 중(분청사기 D급 이상 → 3분 안에 팔기, 기회 3번) · 3 성공(복실이에게 갚기) · 4 끝
 const QBONUS = 60000, QTRIES = 3;
 const qPending = bag => (bag.pot && bag.pot.posts || []).filter(p => p.q && !p.done).length;
 function qExhaust(bag) { if (bag.potq === 2 && (bag.potqT || 0) >= QTRIES && !qPending(bag)) { bag.potq = 1; bag.potqT = 0; setTimeout(() => toast('🏺 기회 세 번을 다 썼어요… 해피도자기의 도암 스승에게 다시 도전해요', 3200), 1200); } }
@@ -88,18 +88,22 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
     if (!P.met) { P.met = 1; save(); } }
 
   // 최종 판매가표: 빚기(0~100%) · 소성 · 무늬의 모든 조합을 계산해 등급마다 나올 수 있는 값의 범위
-  function priceTable() { const tb = {}; ORDER.forEach(k => { const K = KINDS[k], c = POT_MAT[K.clay][1], cost = c + 3000, pats = [...new Set(K.pats.map(p => p[2]))], R = {};
-      for (let pct = 0; pct <= 100; pct++) { const m = SHAPE_G.find(s => pct >= s[0])[2]; FIRE.forEach(f => pats.forEach(pi => { const sc = Math.round(pct * 0.5 + f[2] * 0.3 + PAT_PT[pi] * 0.2), g = FINAL.find(x => sc >= x[0])[1], pr = g === 'F' ? Math.round(cost * 1.45) : Math.round(c * m + f[1] + PAT_BONUS[pi] + LABOR), o = R[g] || (R[g] = [1e9, 0]); o[0] = Math.min(o[0], pr); o[1] = Math.max(o[1], pr); })); }
-      tb[k] = { R, cost }; });
-    const k1 = n => n.toLocaleString(), cell = (r) => !r ? '-' : r[0] === r[1] ? k1(r[0]) : `${k1(r[0])}~${k1(r[1])}`;
-    return h('div', { class: 'pt-ptab' }, h('b', null, '💰 최종 판매가 (3분 안에 팔렸을 때)'), h('table', null, h('tr', null, h('th', null, '등급'), ...ORDER.map(k => h('th', null, KINDS[k].name)), h('th', null, '팔릴 확률')),
-      ...FINAL.map(g => h('tr', { class: 'g' + g[1] }, h('td', null, h('b', null, g[1])), ...ORDER.map(k => h('td', null, cell(tb[k].R[g[1]]))), h('td', null, `${Math.round(g[2] * 100)}%`))),
-      h('tr', { class: 'cost' }, h('td', null, '재료값'), ...ORDER.map(k => h('td', null, k1(tb[k].cost))), h('td', null, ''))),
-      h('small', null, `최고가(빚기 수 · 소성 상 · 최상급 무늬): ${ORDER.map(k => `${KINDS[k].name} ${won(tb[k].R.S[1])}`).join(' · ')} · 안 팔리면 S~E급은 ×0.8, F급은 재료값만 돌려받아요`)); }
+  function priceTable() { const k1 = n => n.toLocaleString(), cell = r => !r ? '-' : r[0] === r[1] ? k1(r[0]) : `${k1(r[0])}~${k1(r[1])}`;
+    const build = guide => { const tb = {}; ORDER.forEach(k => { const K = KINDS[k], c = POT_MAT[K.clay][1], cost = c + 3000, pats = [...new Set(K.pats.map(p => p[2]))], R = {}, [wS, wF, wP] = guide ? [0.3, 0.3, 0.4] : [0.5, 0.3, 0.2];
+        for (let pct = 0; pct <= 100; pct++) { const si = SHAPE_G.findIndex(s => pct >= s[0]), m = SHAPE_G[guide ? Math.max(2, si) : si][2]; FIRE.forEach(f => pats.forEach(pi => { const sc = Math.round(pct * wS + f[2] * wF + PAT_PT[pi] * wP), g = guide ? FINAL[sc >= 80 ? 2 : sc >= 70 ? 3 : sc >= 60 ? 4 : sc >= 50 ? 5 : 6][1] : FINAL.find(x => sc >= x[0])[1], pr = g === 'F' ? Math.round(cost * 1.45) : Math.round(c * m + f[1] + PAT_BONUS[pi] + LABOR), o = R[g] || (R[g] = [1e9, 0]); o[0] = Math.min(o[0], pr); o[1] = Math.max(o[1], pr); })); }
+        tb[k] = { R, cost }; }); return tb; };
+    const table = (title, tb, grades) => [h('b', null, title), h('table', null, h('tr', null, h('th', null, '등급'), ...ORDER.map(k => h('th', null, KINDS[k].name)), h('th', null, '팔릴 확률')),
+      ...FINAL.filter(g => grades.includes(g[1])).map(g => h('tr', { class: 'g' + g[1] }, h('td', null, h('b', null, g[1])), ...ORDER.map(k => h('td', null, cell(tb[k].R[g[1]]))), h('td', null, `${Math.round(g[2] * 100)}%`))),
+      h('tr', { class: 'cost' }, h('td', null, '재료값'), ...ORDER.map(k => h('td', null, k1(tb[k].cost))), h('td', null, '')))];
+    const A = build(false), G = build(true);
+    return h('div', { class: 'pt-ptab' }, ...table('💰 ✋ 틀 없이 빚기 · 최종 판매가 (3분 안에 팔렸을 때)', A, ['S', 'A', 'B', 'C', 'D', 'E', 'F']),
+      h('small', null, `최고가(빚기 수 · 소성 상 · 최상급 무늬): ${ORDER.map(k => `${KINDS[k].name} ${won(A[k].R.S[1])}`).join(' · ')}`),
+      ...table('💰 👀 틀 보며 빚기 · 최종 판매가 (최고 B급 · 빚기 ×3까지)', G, ['B', 'C', 'D', 'E', 'F']),
+      h('small', null, `최고가(빚기 미 · 소성 상 · 최상급 무늬): ${ORDER.map(k => `${KINDS[k].name} ${won(G[k].R.B[1])}`).join(' · ')} · 안 팔리면 S~E급은 ×0.8, F급은 재료값만 돌려받아요`)); }
 
   function questBox() { const q = bag.potq || 0;
-    if (q === 1) return [say('복실이가 보냈구려… 허허, 그 녀석. 손이 뭉뚝해서 흙만 보면 도망가더니. 좋소, 폐하께 내 기술을 전하겠소. 먼저 분청사기를 C급 이상으로 빚어 3분 안에 팔아 보시오. 기회는 세 번이오! 분청토 1개, 유약 1개, 안료 1개를 가져오시오.'), matBox('b'), h('button', { class: 'btn primary pt-go', onClick: () => { bag.potq = 2; bag.potqT = 0; save(); sfx('coin'); toast('🏺 도전을 받았어요 · 분청사기 C급 이상!', 2200); home(); } }, '🏺 도전 받기')];
-    if (q === 2) { const left = QTRIES - (bag.potqT || 0) - qPending(bag); return [h('div', { class: 'pt-quest' }, h('b', null, '⚔️ 작은아빠의 가마'), h('span', null, `분청사기 C급 이상을 만들어 3분 안에 팔기 · 남은 기회 ${Math.max(0, left)} / ${QTRIES}${qPending(bag) ? ` (판매 기다리는 중 ${qPending(bag)})` : ''}`), h('small', null, `성공하면 판매가 + 성공 수당 ${won(QBONUS)}`)), say('분청사기를 빚으려면 분청토 1개, 유약 1개, 안료 1개를 가져오시오.'), matBox('b')]; }
+    if (q === 1) return [say('복실이가 보냈구려… 허허, 그 녀석. 손이 뭉뚝해서 흙만 보면 도망가더니. 좋소, 폐하께 내 기술을 전하겠소. 먼저 분청사기를 D급 이상으로 빚어 3분 안에 팔아 보시오. 기회는 세 번이오! 분청토 1개, 유약 1개, 안료 1개를 가져오시오.'), matBox('b'), h('button', { class: 'btn primary pt-go', onClick: () => { bag.potq = 2; bag.potqT = 0; save(); sfx('coin'); toast('🏺 도전을 받았어요 · 분청사기 D급 이상!', 2200); home(); } }, '🏺 도전 받기')];
+    if (q === 2) { const left = QTRIES - (bag.potqT || 0) - qPending(bag); return [h('div', { class: 'pt-quest' }, h('b', null, '⚔️ 작은아빠의 가마'), h('span', null, `분청사기 D급 이상을 만들어 3분 안에 팔기 · 남은 기회 ${Math.max(0, left)} / ${QTRIES}${qPending(bag) ? ` (판매 기다리는 중 ${qPending(bag)})` : ''}`), h('small', null, `성공하면 판매가 + 성공 수당 ${won(QBONUS)}`)), say('분청사기를 빚으려면 분청토 1개, 유약 1개, 안료 1개를 가져오시오.'), matBox('b')]; }
     if (q === 3) return [h('div', { class: 'pt-quest ok' }, h('b', null, '⚔️ 작은아빠의 가마 · 성공!'), h('span', null, '👉 복실이에게 가서 40,000코인을 갚으면 퀘스트가 끝나요'))];
     return []; }
 
@@ -228,7 +232,7 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
     body.append(h('div', { class: 'pt-card g' + fg[1] }, h('div', { class: 'pt-grade' }, h('b', null, fg[1]), h('small', null, `${score}점`)), h('b', { class: 'pt-nm' }, nm), job.guide && h('small', { class: 'pt-dim' }, fg[1] === 'B' ? '👀 틀 보며 빚기 · 현재 등급 B급이 최고 등급입니다' : '👀 틀 보며 빚기 · 최고 B급 · 빚기 배율 최고 ×3'),
       h('table', null, ...rows.map(r => h('tr', null, h('td', null, r[0]), h('td', null, r[1]), h('td', null, r[2])))),
       h('p', { class: 'pt-price' }, fg[1] === 'F' ? `F급 · 재료값 ${won(job.cost)} × 1.45 = ` : '판매가 ', h('b', null, won(price))), h('small', { class: 'pt-dim' }, `재료값 ${won(job.cost)} · 3분 안에 팔릴 확률 ${Math.round(fg[2] * 100)}% · 안 팔리면 ${fg[1] === 'F' ? `재료값 ${won(job.cost)}` : `한 등급 아래 값 ${won(price * 0.8)}`}`),
-      h('button', { class: 'btn primary pt-go', onClick: e => { e.target.disabled = true; const qq = bag.potq === 2 && job.k === 'b' && (bag.potqT || 0) + qPending(bag) < QTRIES, qOk = qq && FINAL.findIndex(g => g[1] === fg[1]) <= 3; if (qq && !qOk) { bag.potqT = (bag.potqT || 0) + 1; setTimeout(() => toast(`🏺 C급에 못 미쳤어요(${fg[1]}급) · 퀘스트 기회 1번을 썼어요`, 2600), 900); qExhaust(bag); } if (qOk) setTimeout(() => toast('⚔️ 퀘스트 도자기예요! 3분 안에 팔리면 성공', 2400), 900); P.posts.push({ q: qOk ? 1 : 0, id: Date.now(), k: job.k, img: pat[0], r: job.rr, nm, grade: fg[1], price, cost: job.cost, end: Date.now() + (fast ? 20000 : 180000) }); busy = false; save(); sfx('coin'); toast(`🪧 ${nm}(${fg[1]}급)을 게시했어요! 3분 안에 팔리면 ${won(price)}`, 2600); home(); } }, '🪧 게시하기')));
+      h('button', { class: 'btn primary pt-go', onClick: e => { e.target.disabled = true; const qq = bag.potq === 2 && job.k === 'b' && (bag.potqT || 0) + qPending(bag) < QTRIES, qOk = qq && FINAL.findIndex(g => g[1] === fg[1]) <= 4 /* 퀘스트: D급 이상 */; if (qq && !qOk) { bag.potqT = (bag.potqT || 0) + 1; setTimeout(() => toast(`🏺 D급에 못 미쳤어요(${fg[1]}급) · 퀘스트 기회 1번을 썼어요`, 2600), 900); qExhaust(bag); } if (qOk) setTimeout(() => toast('⚔️ 퀘스트 도자기예요! 3분 안에 팔리면 성공', 2400), 900); P.posts.push({ q: qOk ? 1 : 0, id: Date.now(), k: job.k, img: pat[0], r: job.rr, nm, grade: fg[1], price, cost: job.cost, end: Date.now() + (fast ? 20000 : 180000) }); busy = false; save(); sfx('coin'); toast(`🪧 ${nm}(${fg[1]}급)을 게시했어요! 3분 안에 팔리면 ${won(price)}`, 2600); home(); } }, '🪧 게시하기')));
     setTimeout(() => body.lastChild && body.lastChild.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200); }
 
   home();
