@@ -3687,3 +3687,4 @@ body.hd-resume #app { visibility: hidden; } body.hd-resume .fm.ap:not(.hd) { vis
 .pt-needr { display: grid; grid-template-columns: 30px 1fr auto auto; gap: 8px; align-items: center; font-size: 13px; color: #4A3218; padding: 3px 6px; border-radius: 8px; background: #FFF1F1; } .pt-needr.g { background: #EFFFF4; } .pt-needr img { width: 28px; height: 28px; object-fit: contain; } .pt-needr b { font-size: 14px; } .pt-needr i { font-style: normal; font-size: 11.5px; font-weight: 800; color: #C62828; } .pt-needr.g i { color: #1E8F4C; } .pt-need small { color: #8A6A44; text-align: center; }
 .pt-mi { display: flex; flex-direction: column; align-items: center; gap: 8px; } .pt-miimg { height: 110px; object-fit: contain; }
 body:has(.pt) .modal-wrap { z-index: 9990; } /* 해피도자기 위에 뜨는 창 */
+body:has(.pt) .modal-actions { flex-wrap: wrap; } body:has(.pt) .modal-actions > * { flex: 1 1 100%; } /* 해피도자기 빚기 방식 버튼 두 줄 */
