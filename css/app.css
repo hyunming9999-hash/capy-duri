@@ -3541,3 +3541,13 @@ body.hd-resume #app { visibility: hidden; } body.hd-resume .fm.ap:not(.hd) { vis
 .hd-kp.watch::after { content: '👀'; position: absolute; left: 50%; top: -18px; transform: translateX(-50%); font-size: 18px; }
 .hd-kpb { position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%); white-space: nowrap; background: #fff; border: 2px solid #8A6A40; border-radius: 12px; padding: 3px 8px; font-size: 12.5px; color: #4A3218; margin-bottom: 6px; }
 .hd-plab.hi { bottom: 56%; }
+
+/* 벼 도매상 복돈이(카피랜드 · 카피백반 앞) */
+.so-ricepig { position: absolute; bottom: 11%; width: 68px; margin-left: -34px; padding: 0; border: 0; background: none; display: flex; flex-direction: column; align-items: center; z-index: 3; cursor: pointer; }
+.so-ricepig img { width: 100%; height: auto; display: block; transform-origin: 50% 100%; animation: soRpIdle 2.4s ease-in-out infinite; filter: drop-shadow(0 4px 3px rgba(0,0,0,.18)); }
+@keyframes soRpIdle { 0%, 100% { transform: rotate(0) scale(1, 1); } 25% { transform: rotate(-2deg) scale(1.01, .99); } 50% { transform: rotate(0) scale(1, 1.02); } 75% { transform: rotate(2deg) scale(1.01, .99); } }
+.so-ricepig > b { margin-top: 2px; padding: 2px 8px; border-radius: 999px; background: #FFF6D8; border: 2px solid #C9963C; color: #5A3A10; font: 800 11px/1.2 var(--head, inherit); white-space: nowrap; }
+.so-rpsay { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 4px; background: #fff; border: 2px solid #8A6A40; border-radius: 12px; padding: 4px 9px; font-size: 12px; color: #4A3218; white-space: nowrap; box-shadow: 0 2px 0 rgba(0,0,0,.12); }
+.so-rbimg { width: 96px; display: block; margin: 0 auto 4px; } .so-rbic { width: 38px; height: 38px; object-fit: contain; }
+.so-rbrow { display: grid !important; grid-template-columns: 42px 1fr; column-gap: 8px; align-items: center; text-align: left; } .so-rbrow .so-rbic { grid-row: span 2; } .so-rbrow b, .so-rbrow small { grid-column: 2; } .so-rbstep { grid-column: 1 / -1; display: flex; justify-content: flex-end; align-items: center; gap: 4px; } .so-rbstep b { min-width: 46px; text-align: center; }
+.so-rbsum { text-align: center; margin-top: 8px; } .so-rbsum p { margin: 0 0 2px; font-size: 12.5px; color: #6A5030; } .so-rbsum b { font-size: 16px; color: #3A7A2A; }
