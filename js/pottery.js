@@ -158,12 +158,25 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
     setTimeout(() => { if (!root.isConnected) return; go = true; btn.disabled = false; t0 = performance.now(); sfx('crackle'); const loop = now => { if (end || !root.isConnected) return; const x = Math.min(1, (now - t0) / DUR); v = 100 * (x * x * 0.45 + x * 0.55); fill.style.width = v + '%'; needle.style.left = v + '%'; temp.textContent = `${Math.round(800 + v * 6)}℃`; glow.style.opacity = (0.25 + v / 120).toFixed(2); if (x >= 1) return stop(); raf = requestAnimationFrame(loop); }; raf = requestAnimationFrame(loop); }, 1200); }
 
   // ───── 4. 안료: 무늬는 순전히 운 ─────
-  function paint(job) { scr = 'paint'; const K = KINDS[job.k], rr = resample(job.r, 48).map(v => Math.round(v * 100) / 100), img = h('img', { class: 'pt-final', src: `${PI}${job.k}0.webp?v=1`, alt: '' }), btn = h('button', { class: 'btn primary pt-go' }, '🎨 안료 붓기'); job.rr = rr;
-    const urls = {}; K.pats.forEach(p => potWarp(job.k, p[0], rr).then(c => { if (c) { urls[p[0]] = c.toDataURL(); if (p[0] === job.k + '0') img.src = urls[p[0]]; } })); /* 내가 깎은 모양 그대로 보여 준다 */
+  function paint(job) { scr = 'paint'; const K = KINDS[job.k], rr = resample(job.r, 48).map(v => Math.round(v * 100) / 100); job.rr = rr;
+    const urls = {}, img = h('img', { class: 'pt-final', src: `${PI}${job.k}0.webp?v=1`, alt: '' });
+    K.pats.forEach(p => potWarp(job.k, p[0], rr).then(c => { if (c) { urls[p[0]] = c.toDataURL(); if (p[0] === job.k + '0' && !job.pat) img.src = urls[p[0]]; } })); /* 내가 깎은 모양 그대로 */
     const show = id => { img.src = urls[id] || `${PI}${id}.webp?v=1`; };
-    body.replaceChildren(say('안료는 붓는 순간 하늘이 정하오. 마음을 비우시오.'), img, btn);
-    btn.onclick = () => { btn.disabled = true; let x = Math.random(), pat = K.pats[K.pats.length - 1]; for (const p of K.pats) { if (x < p[3]) { pat = p; break; } x -= p[3]; } job.pat = pat; let n = 0; const iv = setInterval(() => { show(K.pats[n++ % K.pats.length][0]); sfx('tock'); }, 140);
-      setTimeout(() => { clearInterval(iv); show(pat[0]); img.classList.add('pop'); sfx(pat[2] === 2 ? 'fanfare' : 'coin'); result(job); }, 1900); }; }
+    const fx = h('div', { class: 'pt-pfx' }), rays = h('i', { class: 'pt-rays' }), dish = h('img', { class: 'pt-dish', src: `${IMG}i-pigment.webp?v=1`, alt: '' }), ribbon = h('div', { class: 'pt-ribbon' }), hint = h('p', { class: 'pt-phint' }, '어떤 무늬가 나올까요? 붓는 순간 하늘이 정해요');
+    const stage = h('div', { class: 'pt-pstage s' + job.k }, rays, h('i', { class: 'pt-spot' }), h('i', { class: 'pt-stand' }), h('div', { class: 'pt-potw' }, img), dish, fx, ribbon);
+    const odds = h('div', { class: 'pt-odds' }, ...K.pats.map(p => h('span', { class: 't' + p[2] }, h('img', { src: `${PI}${p[0]}.webp?v=1`, alt: '' }), h('b', null, PAT_NAME[p[2]]), h('small', null, `${Math.round(p[3] * 100)}% · +${(PAT_BONUS[p[2]] / 1000).toLocaleString()}천`))));
+    const btn = h('button', { class: 'btn primary pt-go pt-pour' }, '🎨 안료 붓기');
+    body.replaceChildren(say('안료는 붓는 순간 하늘이 정하오. 마음을 비우시오.'), stage, hint, odds, btn);
+    const COLS = ['#2F5DC8', '#8B4A22', '#C8323C', '#2E9E7A', '#E8B83A'];
+    const drop = (n, big) => { for (let i = 0; i < n; i++) { const d = h('i', { class: 'pt-drop' + (big ? ' big' : ''), style: { left: 50 + (Math.random() - 0.5) * (big ? 80 : 26) + '%', background: COLS[Math.floor(Math.random() * COLS.length)], animationDelay: Math.random() * 0.25 + 's', '--dx': (Math.random() - 0.5) * (big ? 160 : 30) + 'px' } }); fx.append(d); setTimeout(() => d.remove(), 1400); } };
+    btn.onclick = () => { btn.disabled = true; hint.textContent = '사르르… 안료가 스며들어요'; let x = Math.random(), pat = K.pats[K.pats.length - 1]; for (const p of K.pats) { if (x < p[3]) { pat = p; break; } x -= p[3]; } job.pat = pat;
+      stage.classList.add('pour'); sfx('splash'); const di = setInterval(() => drop(4), 160);
+      // 무늬가 빠르게 돌다가 점점 느려지며 멈춘다(룰렛)
+      let n = 0, delay = 70; const spin = () => { show(K.pats[n++ % K.pats.length][0]); sfx('tock'); stage.classList.toggle('blink'); if (delay < 420) { delay *= 1.17; setTimeout(spin, delay); } else land(); }; setTimeout(spin, 500);
+      const land = () => { clearInterval(di); show(pat[0]); stage.classList.remove('pour', 'blink'); stage.classList.add('reveal', 'g' + pat[2]); drop(pat[2] === 2 ? 40 : pat[2] === 1 ? 22 : 10, true); sfx(pat[2] === 2 ? 'fanfare' : pat[2] === 1 ? 'coin' : 'pop'); if (pat[2] === 2 && navigator.vibrate) navigator.vibrate([30, 40, 60]);
+        ribbon.replaceChildren(h('small', null, pat[2] === 2 ? '✨ 최상급 무늬 ✨' : pat[2] === 1 ? '중급 무늬' : '하급'), h('b', null, pat[1]), h('em', null, `+${won(PAT_BONUS[pat[2]])}`));
+        hint.textContent = pat[2] === 2 ? '하늘이 도왔소! 이런 무늬는 평생 몇 번 못 보오!' : pat[2] === 1 ? '곱게 앉았구려. 제법이오.' : '수수한 것도 멋이오. 허허.';
+        odds.querySelectorAll('span').forEach((e, i) => e.classList.toggle('on', K.pats[i] === pat)); btn.remove(); setTimeout(() => result(job), 900); }; }; }
 
   // ───── 5. 최종 등급 · 게시 ─────
   function result(job) { const K = KINDS[job.k], sg = job.sg, fi = job.fi, pat = job.pat, score = Math.round(job.pct * 0.6 + FIRE[fi][2] * 0.25 + PAT_PT[pat[2]] * 0.15), fg = FINAL.find(g => score >= g[0]);
