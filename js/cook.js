@@ -53,7 +53,7 @@ export const RECIPES = [
   R('croq', '생선 고로케', 'fry', 1, ['potato'], 0, 'tartar', 250), R('kkaseu', '생선까스', 'fry', 1, ['cabbage'], 0, 'tartar', 210), R('mattang', '고구마 맛탕', 'fry', 0, ['sweetpotato'], 0, 'honey', 130), R('tempura', '채소튀김', 'fry', 0, ['carrot', 'sweetpotato', 'onion'], 0, 'soy', 150)];
 // 메뉴 값 = 기본 600 + (생선 시세 + 작물 시세 + 양념 1번 값 + 인건비 + 조리 시간 값) × 1.6. 생선 시세는 그 바다 흔한 물고기 평균값, 작물은 B급 값(기본값 ×1.2)
 const LABOR = { board: 40, pot: 70, pan: 60, fry: 70 }, TIME = { board: 20, pot: 50, pan: 40, fry: 40 }, MARGIN = 1.9, BASE_FEE = 800;
-const fishAvg = z => { const L = FISH.filter(f => f.z === z && !f.king && !f.pearl && !f.icon && (f.tier || 1) <= 2); return L.length ? Math.round(L.reduce((t, f) => t + (f.price[0] + f.price[1]) / 2, 0) / L.length / 2) : 0; }; /* 물고기 값이 2배가 되어도 음식 원가 계산은 예전 기준(음식값은 아래 배율로 따로 올린다) */
+const fishAvg = z => { const L = FISH.filter(f => f.z === z && !f.king && !f.pearl && !f.icon && (f.tier || 1) <= 2); return L.length ? Math.round(L.reduce((t, f) => t + (f.price[0] + f.price[1]) / 2, 0) / L.length / 3) : 0; }; /* 물고기 값이 2배가 되어도 음식 원가 계산은 예전 기준(음식값은 아래 배율로 따로 올린다) */
 RECIPES.forEach(r => { const fish = r.fz ? fishAvg(r.fz) : 0, crop = Math.round(r.crops.reduce((t, id) => t + ((cropOf(id) || {}).base || 0) * 1.2, 0)), sauce = Math.round(SAUCES[r.sauce][2] / SAUCE_PACK), labor = LABOR[r.st], time = TIME[r.st];
   r.cost = { fish, crop, sauce, labor, time, sum: fish + crop + sauce + labor + time }; r.base = Math.round((BASE_FEE + Math.round(r.cost.sum * MARGIN / 10) * 10) * 5 / 10) * 10; }); /* 음식값 5배(2026-11-26: 2.5배 → 한 번 더 2배) */
 // 요청을 다 맞췄을 때 받을 값(재료 등급 C 기준): 익힘 ×1.2 · 양념 ×1.1 · 불 조절 ×1.1. 도마(날것) 요리는 양념만
