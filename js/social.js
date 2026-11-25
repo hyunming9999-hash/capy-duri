@@ -1157,7 +1157,7 @@ export function mount(el, ctx) {
     bag = { ...bag, fish: { ...(bag.fish || {}), [k]: v } }; ctx.store.update('bag/' + ctx.uid + '/fish', { [k]: v }).catch(() => {}); }
   const fishOf = id => (id === 'pearl' ? { name: '바다 진주', pearl: true } : FISH.find(f => f.id === id));
   // 물고기 파는 값: 값이 오르기 전에 잡은 물고기(pv 없음)도 오른 값으로 쳐 준다
-  const fishP = v => (v.id === 'pearl' ? PEARL_PRICE : (v.pv || 0) >= PRICE_V ? v.p : Math.round(v.p * priceUp(fishOf(v.id))));
+  const fishP = v => (v.id === 'pearl' ? PEARL_PRICE : (v.pv || 0) >= PRICE_V ? v.p : Math.round(v.p * priceUp(fishOf(v.id), v.pv || 1)));
   function appraise(x) { const f = fishOf(x.id), p = won(fishP(x));
     const gl = (x.g ? ` ${x.g}등급이여!${x.g === 'S' ? ' 이런 대물은 처음 보는구먼!' : x.g === 'A' ? ' 아주 귀한 크기여.' : ''}` : '') + (x.td ? ' 오늘의 어종이라 값은 두 배로 쳐 줬네!' : '');
     if (!f) return `허허, 이건 뭔지 모르겠구먼. ${p} 쳐 주지.`;

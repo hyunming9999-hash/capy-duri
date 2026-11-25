@@ -44,7 +44,8 @@ for (const z of [1, 2, 3]) { const list = FISH.filter(f => f.z === z && !f.fixT)
   [...list].sort((a, b) => (b.king - a.king) || (b.rare - a.rare) || (b.price[1] - a.price[1]) || (a.k - b.k)).forEach((f, i) => {
     f.tier = i < n4 ? 4 : i < n4 + n3 ? 3 : i < n4 + n3 + n2 ? 2 : 1; const x = TIERS[f.tier].x; f.price = [Math.round(f.price[0] * x), Math.round(f.price[1] * x)]; if (f.tier >= 3 && !f.king) f.rare = true; }); }
 // 2026-11-21: 물고기 값 전부 2배, 고래킹은 2.5배(대장 중의 대장). 예전 값으로 가방에 담긴 물고기는 팔 때 같은 배수로 쳐 준다(PRICE_V)
-export const PRICE_V = 2, priceUp = f => (f && f.name === '고래킹' ? 2.5 : 2);
+// 2026-11-26: 물고기 값 한 번 더 전부 2배(PRICE_V 3). 예전에 잡아 둔 물고기는 팔 때 모자란 배수만큼 쳐 준다
+export const PRICE_V = 3, priceUp = (f, pv = 1) => (pv < 2 ? (f && f.name === '고래킹' ? 2.5 : 2) : 1) * (pv < 3 ? 2 : 1);
 FISH.forEach(f => { const m = priceUp(f); f.price = [Math.round(f.price[0] * m), Math.round(f.price[1] * m)]; });
 // 바다 쓰레기(F등급): 어느 바다에서나 10~20% 확률. 클수록 처리 비용이 커진다(50~250코인)
 export const TRASH = [['스티로폼 박스', '📦', 30, 90], ['페트병', '🧴', 12, 35], ['헌 옷', '👕', 40, 110], ['타이어', '🛞', 50, 120], ['축구공', '⚽', 18, 30]].map(([name, icon, c0, c1], k) => ({ id: 't' + k, name, icon, img: `img/fish/trash${k}.webp`, cm: [c0, c1] }));
