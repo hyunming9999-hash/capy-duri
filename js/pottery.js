@@ -182,7 +182,7 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
         btn.replaceWith(h('button', { class: 'btn primary pt-go', onClick: () => kiln(job) }, '🔥 가마에 넣기 →')); }, 1900); }; }
 
   // ───── 3. 가마: 온도 게이지가 오르는 동안 알맞은 칸에서 꺼낸다 ─────
-  function kiln(job) { scr = 'kiln'; const K = KINDS[job.k], [Z0, Z1] = K.zone, ROUNDS = [{ nm: '초벌', sub: '천천히 오르는 불', dur: 5200, sh: -18, t0: 600, tk: 4 }, { nm: '중벌', sub: '빠르게 치솟는 불', dur: 2400, sh: 0, t0: 900, tk: 4.5 }], got = [];
+  function kiln(job) { scr = 'kiln'; const K = KINDS[job.k], [Z0, Z1] = K.zone, ROUNDS = [{ nm: '초벌', sub: '천천히 오르는 불', dur: 3600, sh: -18, t0: 600, tk: 4 }, { nm: '중벌', sub: '빠르게 치솟는 불', dur: 2400, sh: 0, t0: 900, tk: 4.5 }], got = [];
     const fill = h('i', { class: 'pt-gfill' }), needle = h('i', { class: 'pt-gneedle' }), sweetEl = h('i', { class: 'pt-gsweet' }), zone = h('i', { class: 'pt-gzone' }, sweetEl), gauge = h('div', { class: 'pt-gauge' }, zone, fill, needle);
     const glow = h('div', { class: 'pt-kilnglow' }), temp = h('b', { class: 'pt-temp' }), tag = h('b', { class: 'pt-ktag' }), steps = h('div', { class: 'pt-ksteps' }), btn = h('button', { class: 'btn primary pt-go pt-out', disabled: true }, '🧤 꺼내기!'), tip = say(''), res = h('div', { class: 'pt-kres' });
     body.replaceChildren(tip, h('div', { class: 'pt-kiln' }, h('img', { src: `${PI}kiln.webp?v=1`, alt: '' }), glow, temp, tag), steps, gauge, h('small', { class: 'pt-dim' }, '게이지가 오르는 동안 한 번만 누를 수 있어요 · 노란 칸 안, 빨간 줄에 가까울수록 높은 점수'), btn, res);
@@ -197,7 +197,7 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
         const avg = Math.round((got[0] + got[1]) / 2), fi = avg >= 85 ? 2 : avg >= 55 ? 1 : 0; job.fi = fi; job.fs = avg;
         setTimeout(() => { res.append(h('p', { class: 'pt-res big' }, h('b', null, `소성 「${FIRE[fi][0]}급」`), ` · 초벌 ${got[0]} + 중벌 ${got[1]} → 평균 ${avg}점 · +${won(FIRE[fi][1])}`), h('button', { class: 'btn primary', onClick: () => paint(job) }, '다음: 안료 붓기 →')); sfx(fi === 2 ? 'fanfare' : 'pop'); }, 500); };
       btn.onclick = stop;
-      setTimeout(() => { if (!root.isConnected) return; btn.disabled = false; t0 = performance.now(); sfx('crackle'); const loop = now => { if (end || !root.isConnected) return; const x = Math.min(1, (now - t0) / R.dur); v = 100 * (x * x * 0.45 + x * 0.55); /* 초벌: 예전 가마와 같은 속도(5.2초) · 중벌: 두 배 넘게 빠르게(2.4초) */ fill.style.width = v + '%'; needle.style.left = v + '%'; temp.textContent = `${Math.round(R.t0 + v * R.tk)}℃`; glow.style.opacity = (0.2 + v / 110).toFixed(2); if (x >= 1) return stop(); raf = requestAnimationFrame(loop); }; raf = requestAnimationFrame(loop); }, 1100); };
+      setTimeout(() => { if (!root.isConnected) return; btn.disabled = false; t0 = performance.now(); sfx('crackle'); const loop = now => { if (end || !root.isConnected) return; const x = Math.min(1, (now - t0) / R.dur); v = 100 * (x * x * 0.45 + x * 0.55); /* 초벌 3.6초 · 중벌: 두 배 넘게 빠르게(2.4초) */ fill.style.width = v + '%'; needle.style.left = v + '%'; temp.textContent = `${Math.round(R.t0 + v * R.tk)}℃`; glow.style.opacity = (0.2 + v / 110).toFixed(2); if (x >= 1) return stop(); raf = requestAnimationFrame(loop); }; raf = requestAnimationFrame(loop); }, 1100); };
     run(0); }
 
   // ───── 4. 안료: 무늬는 순전히 운 ─────
