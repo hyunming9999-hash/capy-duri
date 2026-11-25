@@ -50,7 +50,7 @@ function face(f, c) {
 // 한복을 걸친 자리의 황금 장비는 한복 밑에 가려 그리지 않는다(어깨 장식·치마 자락이 삐져나오지 않게)
 const G_SLOT = { hat: [1, 6, 10, 11, 15, 21, 23], top: [9, 20, 22, 26], bottom: [18], shoe: [12, 13], suit: [5, 8, 24] }, isHanbok = id => typeof id === 'string' && id.includes('-hd-');
 const hdCovers = (i, o) => Object.entries(G_SLOT).some(([k, a]) => a.includes(i) && (k === 'suit' ? isHanbok(o.top) : isHanbok(o[k])));
-const HD_SLOT = { chest: [75, 14, 134], head: [60, 50, 6], neck: [60, 44, 92], back: [60, 112, 124], waist: [88, 36, 122], lhand: [14, 42, 106], rhand: [106, 42, 106] }; // [가운데 x, 크기, 아래 끝 y]
+const HD_SLOT = { chest: [75, 14, 134], head: [60, 50, 6], neck: [56, 28, 105], back: [60, 112, 124], waist: [76, 30, 127], lhand: [14, 42, 106], rhand: [106, 42, 106] }; // [가운데 x, 크기, 아래 끝 y]
 // opts: {color, acc, face, view:'front'|'back', head:true(머리만), top/bottom/hat: 옷·모자 id, pin: 친목회에서 받은 상징(그림 글자), rare: 초레어 보물 {e: 그림 글자, c: 빛 색}}. 모자를 쓰면 머리 장식(acc) 대신 모자가 보인다
 let rareN = 0;
 // 가슴에 다는 상징(나머지는 손에 든다)
