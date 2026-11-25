@@ -8,11 +8,10 @@ const FREE = new Set([TOPS, BOTTOMS, HATS].flatMap(a => a.slice(0, FREE_N).map(x
 const PRICES = {}; // 물가 기준: 미니게임 2~4판 또는 낚시 15~20분이면 한 벌(상의·하의 800~1,100 · 모자 600~900 · 신발 900~1,300)
 [[TOPS, 800], [BOTTOMS, 800], [HATS, 600]].forEach(([a, p]) => a.forEach((x, i) => { PRICES[x.id] = p + (i % 4) * 100; }));
 SHOES.forEach((x, i) => { PRICES[x.id] = [1000, 1000, 1000, 1300, 1300, 1300, 1100, 900, 1100][i]; }); // 신발 9켤레: 처음부터 주는 건 없고 전부 사야 한다
-// 핫똑랜드 한복(2026-11-25 물가 조정): 카피랜드 옷값의 4~8배, 5,000~11,000코인 안에서만. 번호가 뒤로 갈수록 서서히 오른다(상의·하의 5,000~9,000 · 모자 5,000~8,500 · 신발 5,500~9,000)
-// 개화기 안경 8,000 · 여성 개량한복(상의·하의·모자 27~31번, 신발 7~11번) 10,000 · 왕실·혼례 예복과 관 11,000
+// 핫똑랜드 한복(2026-11-25 2차 물가 조정): 카피랜드 옷값의 2.5배(상의·하의 2,000~2,750 · 모자 1,500~2,250 · 신발 2,250~3,250 · 안경 2,250). 개량한복 · 왕실 예복은 그 칸 최고값
 const HD_ROYAL = new Set(['t-hd-2', 't-hd-13', 't-hd-14', 't-hd-15', 't-hd-25', 'b-hd-4', 'h-hd-1', 'h-hd-21', 'h-hd-22', 'h-hd-23']);
-[['top', 5000, 9000], ['bottom', 5000, 9000], ['hat', 5000, 8500], ['shoe', 5500, 9000], ['eye', 8000, 8000]].forEach(([k, lo, hi]) => HD_SETS[k].forEach((x, i, arr) => { const n = i + 1, gaeryang = k === 'shoe' ? n >= 7 : n >= 27;
-  PRICES[x.id] = HD_ROYAL.has(x.id) ? 11000 : gaeryang ? 10000 : Math.round((lo + (hi - lo) * i / Math.max(1, arr.length - 1)) / 100) * 100; }));
+[['top', 2000, 2750], ['bottom', 2000, 2750], ['hat', 1500, 2250], ['shoe', 2250, 3250], ['eye', 2250, 2250]].forEach(([k, lo, hi]) => HD_SETS[k].forEach((x, i, arr) => { const n = i + 1, gaeryang = k === 'shoe' ? n >= 7 : n >= 27;
+  PRICES[x.id] = HD_ROYAL.has(x.id) || gaeryang ? hi : Math.round((lo + (hi - lo) * i / Math.max(1, arr.length - 1)) / 50) * 50; }));
 ZOO_HATS.forEach((x, i) => { PRICES[x.id] = 2500 + ((i * 5 + 2) % 6) * 100; }); // 친목회 전용 모자: 동물에게서만 산다
 export const priceOf = id => (FREE.has(id) ? 0 : PRICES[id] || 0);
 // 게임별 환산 규칙(게임 목록과 적립 카드에 그대로 보여 준다)
