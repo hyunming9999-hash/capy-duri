@@ -3542,8 +3542,8 @@ body.hd-resume #app { visibility: hidden; } body.hd-resume .fm.ap:not(.hd) { vis
 .hd-kpb { position: absolute; left: 50%; bottom: 100%; transform: translateX(-50%); white-space: nowrap; background: #fff; border: 2px solid #8A6A40; border-radius: 12px; padding: 3px 8px; font-size: 12.5px; color: #4A3218; margin-bottom: 6px; }
 .hd-plab.hi { bottom: 56%; }
 
-/* 벼 도매상 복돈이(카피랜드 · 카피백반 앞) */
-.so-ricepig { position: absolute; bottom: 30%; width: 54px; margin-left: -27px; padding: 0; border: 0; background: none; display: flex; flex-direction: column; align-items: center; z-index: 15; cursor: pointer; }
+/* 벼 도매상 복돈이(카피랜드 · 카피백반 옆): 깊이는 동물 줄과 같은 규칙 — 앞줄로 지나가는 동물은 앞에, 의자에 앉은 동물은 뒤에 */
+.so-ricepig { position: absolute; bottom: 30%; width: 54px; margin-left: -27px; padding: 0; border: 0; background: none; display: flex; flex-direction: column; align-items: center; z-index: 8; cursor: pointer; }
 .so-ricepig img { width: 100%; height: auto; display: block; transform-origin: 50% 100%; animation: soRpIdle 2.4s ease-in-out infinite; filter: drop-shadow(0 4px 3px rgba(0,0,0,.18)); }
 @keyframes soRpIdle { 0%, 100% { transform: rotate(0) scale(1, 1); } 25% { transform: rotate(-2deg) scale(1.01, .99); } 50% { transform: rotate(0) scale(1, 1.02); } 75% { transform: rotate(2deg) scale(1.01, .99); } }
 .so-ricepig > b { margin-top: 2px; padding: 2px 8px; border-radius: 999px; background: #FFF6D8; border: 2px solid #C9963C; color: #5A3A10; font: 800 11px/1.2 var(--head, inherit); white-space: nowrap; }
