@@ -152,6 +152,7 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
       g.restore(); g.strokeStyle = 'rgba(70,40,20,.55)'; g.lineWidth = 1.4; g.stroke(p);
       // 시작 전: 본보기 윤곽을 잠깐 보여 준다
       if (phase === 0) { g.save(); g.setLineDash([6, 5]); g.strokeStyle = '#E8473B'; g.lineWidth = 2.2; g.stroke(path(T, CW / 2)); g.restore(); }
+      if (phase === 1 && !job.guide) { g.save(); const w = T[1], y0 = top - 14, y1 = top + rowH * 4; [-1, 1].forEach(sd => { const x = CW / 2 + sd * w; g.strokeStyle = 'rgba(255,255,255,.95)'; g.lineWidth = 5; g.beginPath(); g.moveTo(x, y0); g.lineTo(x, y1); g.stroke(); g.strokeStyle = '#E8473B'; g.lineWidth = 2.4; g.beginPath(); g.moveTo(x, y0); g.lineTo(x, y1); g.stroke(); }); g.fillStyle = '#E8473B'; g.font = '800 11px sans-serif'; g.textAlign = 'center'; g.fillText('구연부', CW / 2, y0 + 2); g.restore(); } /* 틀 없이 빚기: 구연부(입) 폭만 표시 */
       if (phase === 1 && job.guide) { g.save(); g.setLineDash([6, 5]); g.strokeStyle = 'rgba(232,71,59,.85)'; g.lineWidth = 2; g.stroke(path(T, CW / 2)); g.restore(); } /* 틀 보며 빚기: 그릇 틀이 계속 보인다(최고 B급) */
       if (phase === 2) { g.save(); g.setLineDash([6, 5]); g.strokeStyle = '#E8473B'; g.lineWidth = 2; g.stroke(path(T, CW / 2)); g.restore(); }
       chips = chips.filter(c => (c.x += c.vx, c.y += c.vy, c.vy += 0.25, c.a -= 0.03) > 0); chips.forEach(c => { g.globalAlpha = c.a; g.fillStyle = K.c0; g.fillRect(c.x, c.y, 3, 3); }); g.globalAlpha = 1;
