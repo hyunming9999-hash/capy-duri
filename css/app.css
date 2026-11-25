@@ -3551,3 +3551,7 @@ body.hd-resume #app { visibility: hidden; } body.hd-resume .fm.ap:not(.hd) { vis
 .so-rbimg { width: 96px; display: block; margin: 0 auto 4px; } .so-rbic { width: 38px; height: 38px; object-fit: contain; }
 .so-rbrow { display: grid !important; grid-template-columns: 42px 1fr; column-gap: 8px; align-items: center; text-align: left; } .so-rbrow .so-rbic { grid-row: span 2; } .so-rbrow b, .so-rbrow small { grid-column: 2; } .so-rbstep { grid-column: 1 / -1; display: flex; justify-content: flex-end; align-items: center; gap: 4px; } .so-rbstep b { min-width: 46px; text-align: center; }
 .so-rbsum { text-align: center; margin-top: 8px; } .so-rbsum p { margin: 0 0 2px; font-size: 12.5px; color: #6A5030; } .so-rbsum b { font-size: 16px; color: #3A7A2A; }
+
+/* 여권 심사 화면의 수하물 검사 칸 */
+.apv-bag { margin: 8px auto 4px; max-width: 320px; background: rgba(255,255,255,.94); border: 2px solid #C9A04A; border-radius: 14px; padding: 7px 10px; display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.apv-bag b { font-size: 13px; color: #4A3218; } .apv-bag small { font-size: 11.5px; color: #6A5030; line-height: 1.35; } .apv-bag .apv-bagw { color: #C0392B; font-weight: 700; }

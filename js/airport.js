@@ -3,6 +3,7 @@
 // 비행기: 10분마다 한 번 내려앉아 잠시 머물다 다시 떠난다(두 사람 화면이 같은 시계로 맞춰 움직인다)
 import { h, toast, modal, holdBtn } from './ui.js';
 import { capy } from './capy.js';
+import { FISH } from './fishing.js';
 import { sfx, bgm } from './sound.js';
 
 const BG_W = 1344, BG_H = 576, WALK_SP = 150;
@@ -82,12 +83,16 @@ export function openAirport(o) {
   // 핫똑랜드에서 돌아왔다: 다녀온 표시를 남기고, 아직 궁전 시안을 안 골랐으면 부엉이가 찾는다고 알린다
   async function owlNote() { if (demo) return; try { await ctx.store.update(TK, { home: 1 }); const p = await ctx.store.get('palace/' + ctx.uid); if (!(p && p.pick)) setTimeout(() => alive && toast('🦉 부엉이가 폐하를 찾고 있어요! 놀이터로 돌아가 보세요', 4200), 1200); } catch { /* 알림은 없어도 된다 */ } }
   function passCheck() { if (document.querySelector('.apv')) return; if (!pp) return modal({ title: '🛂 여권이 없어요', body: [h('div', { class: 'ap-cnt' }, h('img', { src: 'img/air/att.webp', alt: '' }), h('p', null, '폐하, 송구하오나 여권이 있어야 출국하실 수 있사옵니다.'), h('p', { class: 'ap-cnt-n' }, '동물친목회의 「카피랜드 여권 발급」 이야기를 먼저 마쳐 주세요'))], actions: [{ label: '확인', primary: true }] });
+    const bagBox = h('div', { class: 'apv-bag' }, h('b', null, '🧳 수하물 검사 중…')); /* 여권을 낼 때 수하물도 함께 본다: 카피랜드 → 핫똑랜드 기준(농산물 5종 · 한 종 20개, 물고기는 중급 바다 것 5마리) */
+    (async () => { let barn = {}, fish = {}; try { if (!demo) { barn = (await ctx.store.get('farm/' + ctx.uid + '/barn')) || {}; fish = (await ctx.store.get('bag/' + ctx.uid + '/fish')) || {}; } } catch (e) { /* 못 읽으면 빈 짐 */ }
+      const per = {}; Object.entries(barn).forEach(([k, n]) => { const id = k.split('|')[0]; if (n > 0) per[id] = (per[id] || 0) + n; }); const fz = Object.values(fish).filter(v => v && v.id).map(v => (FISH.find(f => f.id === v.id) || {}).z), mid = fz.filter(z => z === 2).length, other = fz.filter(z => z && z !== 2).length, kinds = Object.keys(per).length, overK = Object.values(per).filter(n => n > 20).length, over = kinds > 5 || overK || mid > 5 || other;
+      bagBox.replaceChildren(h('b', null, over ? '🧳 수하물 검사 · ⚠️ 기준을 넘었어요' : '🧳 수하물 검사 · ✅ 통과'), h('small', null, '✈️ 카피공항 → 핫똑랜드 기준: 농산물 5종 · 한 종에 20개 · 물고기는 중급 바다 것 5마리 (다른 바다 물고기는 못 가져가요)'), h('small', null, `내 짐: 농산물 ${kinds}종${overK ? ` (20개 넘는 종류 ${overK})` : ''} · 중급 바다 물고기 ${mid}마리${other ? ` · 다른 바다 물고기 ${other}마리` : ''}`), over && h('small', { class: 'apv-bagw' }, '넘는 짐은 카피랜드에 그대로 두고 떠나요 · 핫똑랜드 보부상에게는 기준만큼만 팔 수 있어요')); })();
     const bub = h('span', { class: 'apv-say' }, '폐하, 여권을 살펴보겠사옵니다…'), ok = h('button', { class: 'btn primary apv-ok', onClick: () => { el.remove(); openTicket(); } }, '🎫 탑승권 사러 가기');
     const page = h('div', { class: 'apv-page' }, h('div', { class: 'apv-photo', html: capy(ctx.capyOf(ctx.uid, { face: 'smile' })) }),
       h('dl', null, h('dt', null, '국적'), h('dd', null, '카피랜드'), h('dt', null, '직위'), h('dd', null, '카피황금폐하'), h('dt', null, '행선지'), h('dd', null, DEST)),
       h('div', { class: 'apv-stamp' }, h('b', null, '출국'), h('small', null, 'CAPY AIRPORT')));
     const el = h('div', { class: 'apv' }, h('p', { class: 'apv-t' }, '🛂 여권 확인'), h('div', { class: 'apv-book' }, page, h('img', { class: 'apv-cover', src: 'img/quest/passport.webp', alt: '' })),
-      h('div', { class: 'apv-crew' }, h('img', { src: 'img/air/att.webp', alt: '' }), h('img', { src: 'img/air/pilot.webp', alt: '' }), h('img', { src: 'img/air/att-walk.webp', alt: '' }), bub), ok);
+      h('div', { class: 'apv-crew' }, h('img', { src: 'img/air/att.webp', alt: '' }), h('img', { src: 'img/air/pilot.webp', alt: '' }), h('img', { src: 'img/air/att-walk.webp', alt: '' }), bub), bagBox, ok);
     document.body.append(el); sfx('pop'); setTimeout(() => el.isConnected && sfx('keyB'), 800);
     setTimeout(() => { if (!el.isConnected) return; sfx('boom'); passOK = true; }, 1950);
     setTimeout(() => { if (!el.isConnected) return; bub.textContent = '폐하, 망극하옵니다!!'; bub.classList.add('bow'); el.classList.add('done'); sfx('fanfare'); for (const k in says) sayText(k, '폐하, 망극하옵니다!'); }, 2350); }
