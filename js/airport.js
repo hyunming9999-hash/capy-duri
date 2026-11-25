@@ -58,11 +58,11 @@ export function openAirport(o) {
   const dpad = h('div', { class: 'dpad ap-dpad' }, [['U', '▲'], ['L', '◀'], ['D', '▼'], ['R', '▶']].map(([k, t]) => { const b = h('button', { class: 'dp ap-dp ap-' + k, 'aria-label': { L: '왼쪽', R: '오른쪽', U: '위', D: '아래' }[k] }, t); holdBtn(b, () => { keys.add(k); b.classList.add('held'); }, () => { keys.delete(k); b.classList.remove('held'); }); return b; })); // 동물친목회와 같은 십자 방향키
   // 오른쪽 버튼: 놀이터와 같은 말하기·A·B. A = 지금 할 수 있는 일(입장·구매·탑승), B = 나가기
   const aLab = h('small', null, '입장'), aBtn = h('button', { class: 'ap-ab ap-a', disabled: true, 'aria-label': 'A', onClick: () => { sfx('keyA'); enterBtn.click(); } }, aLab);
-  const bBtn = h('button', { class: 'ap-ab ap-b', 'aria-label': 'B', onClick: () => { sfx('keyB'); inside ? goOut() : close(); } }, h('small', null, '나가기'));
+  const bBtn = h('button', { class: 'ap-ab ap-b', 'aria-label': 'B', onClick: () => { sfx('keyB'); inside ? goOut() : leaveWalk(); } }, h('small', null, '나가기'));
   const chatBtn = h('button', { class: 'ap-chat', 'aria-label': '말하기', onClick: () => { sfx('keyC'); if (inside) { const f = flightNow(now(), F); say('cnt', f); say('pl', f); say('wk', f); } else toast('바닷바람이 시원해요 🌊', 1200); } });
   const scene = h('div', { class: 'fm-scene' }, scroller, ud, h('div', { class: 'fm-pad ap-pad' }, dpad, h('div', { class: 'ap-acts' }, chatBtn, bBtn, aBtn)));
   const title = h('b', null, '✈️ 카피공항'), flightEl = h('span', { class: 'ap-flight' });
-  const wrap = h('div', { class: 'fm ap' }, h('div', { class: 'fm-top' }, title, flightEl, h('button', { class: 'top-x', 'aria-label': '닫기', onClick: () => close() }, '✕')), scene);
+  const wrap = h('div', { class: 'fm ap' }, h('div', { class: 'fm-top' }, title, flightEl, h('button', { class: 'top-x ap-bag', 'aria-label': '가방', onClick: () => { sfx('pop'); if (ctx.openCapyBag) ctx.openCapyBag(); else toast('가방은 놀이터에서 열 수 있어요', 1400); } }, '🎒')), scene); /* 순간이동 닫기(✕) 대신 가방 · 공항 밖으로는 걸어서(또는 퀵보드로) 왼쪽 길로 나간다 */
   document.body.append(wrap); if (o.resume && !demo) wrap.style.visibility = 'hidden'; /* 핫똑랜드로 바로 돌아갈 땐 공항을 보이지 않는다 */ bgm.start('airport'); if (o.resume && !demo) import('./hotddok.js').then(m => m.openHotddok({ ctx, demo, onMenu: () => { close(); location.hash = 'home'; }, resume: true, onClose: () => { wrap.style.visibility = ''; bgm.start('airport'); goIn(); owlNote(); } })).catch(() => { wrap.style.visibility = ''; }); /* 핫똑랜드에 있다가 새로 연 경우 */ if (demo && /[?&]town(&|=|$)/.test(location.search)) import('./hotddok.js').then(m => m.openHotddok({ ctx, demo, onMenu: () => { close(); location.hash = 'home'; }, start: 'town', onClose: () => { bgm.start('airport'); goIn(); } })).catch(() => {}); /* 예시 링크 ?airdemo&town: 비행 · 환영식 없이 바로 마을 */ else if (demo && LV) setTimeout(() => alive && ride(), 900); // ?lift=1: 열자마자 바로 이륙
   const onKey = e => { const k = { ArrowLeft: 'L', ArrowRight: 'R', ArrowUp: 'U', ArrowDown: 'D' }[e.key] || ''; if (!k || document.querySelector('.modal-wrap')) return; e.preventDefault(); if (e.type === 'keydown') keys.add(k); else keys.delete(k); };
   window.addEventListener('keydown', onKey); window.addEventListener('keyup', onKey);
@@ -72,6 +72,7 @@ export function openAirport(o) {
 
   function walkTo(x, then) { me.tx = x; me.then = then; meEl.classList.add('walk'); meEl.classList.toggle('left', x < me.x); }
   function goIn() { if (inside) return; inside = true; sfx('pop'); outWorld.hidden = true; inWorld.hidden = false; me.x = me.tx = W * 0.3; me.y = 0; me.then = null; place(); ud.hidden = false; fitCrew(); title.textContent = '✈️ 카피공항 · 출국장'; scroller.scrollLeft = 0; }
+  function leaveWalk() { toast('🚶 왼쪽 길로 걸어서 마을로 돌아가요', 1400); walkTo(31, () => close()); } /* 공항 앞 길 왼쪽 끝 = 마을로 가는 길 */
   function goOut() { if (!inside) return; inside = false; sfx('pop'); inWorld.hidden = true; outWorld.hidden = false; me.x = me.tx = doorX; me.y = 0; me.then = null; place(); ud.hidden = true; title.textContent = '✈️ 카피공항'; scroller.scrollLeft = Math.max(0, me.x - scroller.clientWidth / 2); }
   const canBoard = f => f.phase === 'stay'; // 비행기가 출입구 앞에 다 서고 나서 10초 안에만 탈 수 있다
   const atGate = () => inside && me.x > W * 0.27 && me.x < W * 0.56; // 카운터 옆 출입구 앞
@@ -162,9 +163,10 @@ export function openAirport(o) {
   function drawBoard(f) { const t = now(), d0 = depAt(t), rows = [0, 1, 2].map(i => { const d = d0 + i * F.every, st = i ? '예정' : canBoard(f) ? `탑승 마감 ${mmss(f.left)}` : f.phase === 'land' ? '도착 중 · 곧 탑승' : f.phase === 'off' ? '출발' : `${mmss(d - F.stay - F.land - t)} 뒤 도착`; return [demo ? hhmm(d) + ':' + String(new Date(d).getSeconds()).padStart(2, '0') : hhmm(d), st, !i && canBoard(f)]; });
     const key = rows.map(r => r.join('|')).join('/'); if (key !== boardRows.dataset.k) { boardRows.dataset.k = key; boardRows.replaceChildren(...rows.map(([tm, st, on]) => h('div', { class: 'ap-brow' + (on ? ' on' : '') }, h('b', null, tm), h('span', null, DEST), h('em', null, st)))); }
     flightEl.textContent = canBoard(f) ? `✈️ 탑승 마감 ${mmss(f.left)}` : f.phase === 'land' ? '✈️ 도착 중' : `✈️ 다음 ${hhmm(d0)}`; }
+  let leftHold = 0; /* 길 왼쪽 끝에서 계속 왼쪽으로 걸으면 마을로 나간다 */
   function step(t) { if (!alive) return; const dt = Math.min(0.05, (t - lastT) / 1000); lastT = t;
     const dir = (keys.has('R') ? 1 : 0) - (keys.has('L') ? 1 : 0), lo = inside ? W * 0.05 : 30, hi = W - 30;
-    if (dir && !document.querySelector('.modal-wrap')) { me.x = Math.max(lo, Math.min(hi, me.x + dir * WALK_SP * (sc ? 1.8 : 1) * dt)); me.tx = me.x; me.then = null; meEl.classList.add('walk'); meEl.classList.toggle('left', dir < 0); }
+    if (dir && !document.querySelector('.modal-wrap')) { if (!inside && dir < 0 && me.x <= lo + 1) { leftHold = (leftHold || 0) + dt; if (leftHold > 0.35) { leftHold = 0; return void close(); } } else leftHold = 0; me.x = Math.max(lo, Math.min(hi, me.x + dir * WALK_SP * (sc ? 1.8 : 1) * dt)); me.tx = me.x; me.then = null; meEl.classList.add('walk'); meEl.classList.toggle('left', dir < 0); }
     const d = me.tx - me.x; if (Math.abs(d) > 2) me.x += Math.sign(d) * Math.min(Math.abs(d), WALK_SP * (sc ? 1.8 : 1) * dt); else if (me.then) { const f = me.then; me.then = null; meEl.classList.remove('walk'); f(); } else if (!dir) meEl.classList.remove('walk');
     const vy = !document.querySelector('.modal-wrap') ? (keys.has('U') ? 1 : 0) - (keys.has('D') ? 1 : 0) : 0; if (vy) { me.y = Math.max(0, Math.min(1, me.y + vy * 0.9 * dt)); meEl.classList.add('walk'); }
     meEl.style.left = me.x + 'px'; meEl.style.bottom = `${1 + me.y * (inside ? 22 : 16)}%`; meEl.style.transform = `translateX(-50%) scale(${(1 - me.y * 0.14).toFixed(3)})`; meEl.style.zIndex = String(6 - Math.round(me.y * 3)); // 도로·실내 모두 위아래로도 걷는다
