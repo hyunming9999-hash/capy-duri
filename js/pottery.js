@@ -25,6 +25,14 @@ const dayNo = t => Math.floor((t + 9 * 3600e3) / 86400e3);
 const lerp = (a, b, t) => a + (b - a) * t;
 const resample = (arr, n) => Array.from({ length: n }, (_, i) => { const f = (i / (n - 1)) * (arr.length - 1), a = Math.floor(f), b = Math.min(arr.length - 1, a + 1); return lerp(arr[a], arr[b], f - a); });
 
+// 깎은 모양 그대로: 무늬 그림을 줄마다 가로로 늘이거나 줄여 내가 빚은 윤곽에 맞춘다(rr: 위→아래 반지름, 본보기 최대 = 1)
+const imgC = {}, loadImg = src => imgC[src] || (imgC[src] = new Promise(ok => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => ok(null); im.src = src; }));
+export async function potWarp(k, pat, rr) { const im = await loadImg(`${PI}${pat}.webp?v=1`); if (!im) return null; const iw = im.naturalWidth, ih = im.naturalHeight, t = PROF[k].r, n = t.length, m = rr.length, cw = Math.ceil(iw * 1.2), c = document.createElement('canvas'); c.width = cw; c.height = ih; const g = c.getContext('2d'), half = iw / 2, cx = cw / 2;
+  const at = (a, f) => { const x = f * (a.length - 1), i = Math.floor(x), j = Math.min(a.length - 1, i + 1); return a[i] + (a[j] - a[i]) * (x - i); };
+  for (let y = 0; y < ih; y++) { const f = (y + 0.5) / ih, tr = at(t, f), pr = at(rr, f); if (tr < 0.02 || pr < 0.01) continue; g.drawImage(im, half - tr * half, y, tr * half * 2, 1, cx - pr * half, y, pr * half * 2, 1); }
+  return c; }
+export function potImg(k, pat, rr, cls) { const el = h('img', { class: cls, src: `${PI}${pat}.webp?v=1`, alt: '' }); if (rr) potWarp(k, pat, rr).then(c => { if (c && el.isConnected) { c.className = cls; el.replaceWith(c); } else if (c) { el.src = c.toDataURL(); } }); return el; }
+
 // 게시한 도자기 정산(5분이 지났으면 팔렸는지 굴려 본다) · 앱을 꺼도 시간은 흐른다
 export function potSettle(bag, earn, save, quiet) { const P = bag.pot; if (!P || !P.posts || !P.posts.length) return; const now = Date.now(); let ch = 0;
   P.posts.forEach(p => { if (p.done || now < p.end) return; const gi = FINAL.findIndex(g => g[1] === p.grade), sold = Math.random() < (FINAL[gi] || FINAL[6])[2];
@@ -46,7 +54,7 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
 
   let postBox = null;
   const postsEl = () => { const now = Date.now(); return P.posts.length ? [h('b', null, '🪧 게시한 도자기'), ...P.posts.slice().reverse().map(p => { const s = Math.max(0, Math.ceil((p.end - now) / 1000));
-        return h('div', { class: 'pt-post' + (p.done ? (p.sold ? ' sold' : ' cut') : '') }, h('img', { src: `${PI}${p.img}.webp?v=1`, alt: '' }), h('div', null, h('b', null, `${p.nm} · ${p.grade}급`), h('small', null, p.done ? (p.sold ? `✅ 팔렸어요 · +${won(p.pay)}` : `처분(${p.dGrade}급 값) · +${won(p.pay)}`) : `⏳ ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')} · 팔리면 ${won(p.price)} · 팔릴 확률 ${Math.round(FINAL.find(g => g[1] === p.grade)[2] * 100)}%`))); })] : []; };
+        return h('div', { class: 'pt-post' + (p.done ? (p.sold ? ' sold' : ' cut') : '') }, potImg(p.k, p.img, p.r, 'pt-pimg'), h('div', null, h('b', null, `${p.nm} · ${p.grade}급`), h('small', null, p.done ? (p.sold ? `✅ 팔렸어요 · +${won(p.pay)}` : `처분(${p.dGrade}급 값) · +${won(p.pay)}`) : `⏳ ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')} · 팔리면 ${won(p.price)} · 팔릴 확률 ${Math.round(FINAL.find(g => g[1] === p.grade)[2] * 100)}%`))); })] : []; };
   function home() { scr = 'home'; const now = Date.now(), left = DAY_MAX - P.n; postBox = h('div', { class: 'pt-posts' }, ...postsEl());
     body.replaceChildren(
       h('div', { class: 'pt-keeper' }, h('img', { src: `${IMG}k-pottery.webp?v=1`, alt: '' }), h('i', null, '도암')),
@@ -128,10 +136,12 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
     setTimeout(() => { if (!root.isConnected) return; go = true; btn.disabled = false; t0 = performance.now(); sfx('crackle'); const loop = now => { if (end || !root.isConnected) return; const x = Math.min(1, (now - t0) / DUR); v = 100 * (x * x * 0.45 + x * 0.55); fill.style.width = v + '%'; needle.style.left = v + '%'; temp.textContent = `${Math.round(800 + v * 6)}℃`; glow.style.opacity = (0.25 + v / 120).toFixed(2); if (x >= 1) return stop(); raf = requestAnimationFrame(loop); }; raf = requestAnimationFrame(loop); }, 1200); }
 
   // ───── 4. 안료: 무늬는 순전히 운 ─────
-  function paint(job) { scr = 'paint'; const K = KINDS[job.k], img = h('img', { class: 'pt-final', src: `${PI}${job.k}0.webp?v=1`, alt: '' }), btn = h('button', { class: 'btn primary pt-go' }, '🎨 안료 붓기');
+  function paint(job) { scr = 'paint'; const K = KINDS[job.k], rr = resample(job.r, 48).map(v => Math.round(v * 100) / 100), img = h('img', { class: 'pt-final', src: `${PI}${job.k}0.webp?v=1`, alt: '' }), btn = h('button', { class: 'btn primary pt-go' }, '🎨 안료 붓기'); job.rr = rr;
+    const urls = {}; K.pats.forEach(p => potWarp(job.k, p[0], rr).then(c => { if (c) { urls[p[0]] = c.toDataURL(); if (p[0] === job.k + '0') img.src = urls[p[0]]; } })); /* 내가 깎은 모양 그대로 보여 준다 */
+    const show = id => { img.src = urls[id] || `${PI}${id}.webp?v=1`; };
     body.replaceChildren(say('안료는 붓는 순간 하늘이 정하오. 마음을 비우시오.'), img, btn);
-    btn.onclick = () => { btn.disabled = true; let x = Math.random(), pat = K.pats[K.pats.length - 1]; for (const p of K.pats) { if (x < p[3]) { pat = p; break; } x -= p[3]; } job.pat = pat; let n = 0; const iv = setInterval(() => { img.src = `${PI}${K.pats[n++ % K.pats.length][0]}.webp?v=1`; sfx('tock'); }, 140);
-      setTimeout(() => { clearInterval(iv); img.src = `${PI}${pat[0]}.webp?v=1`; img.classList.add('pop'); sfx(pat[2] === 2 ? 'fanfare' : 'coin'); result(job); }, 1900); }; }
+    btn.onclick = () => { btn.disabled = true; let x = Math.random(), pat = K.pats[K.pats.length - 1]; for (const p of K.pats) { if (x < p[3]) { pat = p; break; } x -= p[3]; } job.pat = pat; let n = 0; const iv = setInterval(() => { show(K.pats[n++ % K.pats.length][0]); sfx('tock'); }, 140);
+      setTimeout(() => { clearInterval(iv); show(pat[0]); img.classList.add('pop'); sfx(pat[2] === 2 ? 'fanfare' : 'coin'); result(job); }, 1900); }; }
 
   // ───── 5. 최종 등급 · 게시 ─────
   function result(job) { const K = KINDS[job.k], sg = job.sg, fi = job.fi, pat = job.pat, score = Math.round(job.pct * 0.6 + FIRE[fi][2] * 0.25 + PAT_PT[pat[2]] * 0.15), fg = FINAL.find(g => score >= g[0]);
@@ -140,7 +150,7 @@ export function openPottery({ bag, save, earn, demo, onClose }) {
     body.append(h('div', { class: 'pt-card g' + fg[1] }, h('div', { class: 'pt-grade' }, h('b', null, fg[1]), h('small', null, `${score}점`)), h('b', { class: 'pt-nm' }, nm),
       h('table', null, ...rows.map(r => h('tr', null, h('td', null, r[0]), h('td', null, r[1]), h('td', null, r[2])))),
       h('p', { class: 'pt-price' }, fg[1] === 'F' ? `F급 · 재료값 ${won(job.cost)} × 1.45 = ` : '판매가 ', h('b', null, won(price))), h('small', { class: 'pt-dim' }, `재료값 ${won(job.cost)} · 5분 안에 팔릴 확률 ${Math.round(fg[2] * 100)}% · 안 팔리면 ${fg[1] === 'F' ? `재료값 ${won(job.cost)}` : `한 등급 아래 값 ${won(price * 0.8)}`}`),
-      h('button', { class: 'btn primary pt-go', onClick: e => { e.target.disabled = true; P.posts.push({ id: Date.now(), k: job.k, img: pat[0], nm, grade: fg[1], price, cost: job.cost, end: Date.now() + (fast ? 20000 : 300000) }); busy = false; save(); sfx('coin'); toast(`🪧 ${nm}(${fg[1]}급)을 게시했어요! 5분 안에 팔리면 ${won(price)}`, 2600); home(); } }, '🪧 게시하기')));
+      h('button', { class: 'btn primary pt-go', onClick: e => { e.target.disabled = true; P.posts.push({ id: Date.now(), k: job.k, img: pat[0], r: job.rr, nm, grade: fg[1], price, cost: job.cost, end: Date.now() + (fast ? 20000 : 300000) }); busy = false; save(); sfx('coin'); toast(`🪧 ${nm}(${fg[1]}급)을 게시했어요! 5분 안에 팔리면 ${won(price)}`, 2600); home(); } }, '🪧 게시하기')));
     setTimeout(() => body.lastChild && body.lastChild.scrollIntoView({ behavior: 'smooth', block: 'center' }), 200); }
 
   home();
