@@ -3554,7 +3554,7 @@ body.hd-resume #app { visibility: hidden; } body.hd-resume .fm.ap:not(.hd) { vis
 
 /* 여권 심사 화면의 수하물 검사 칸 */
 .apv-bag { margin: 8px auto 4px; max-width: 320px; background: rgba(255,255,255,.94); border: 2px solid #C9A04A; border-radius: 14px; padding: 7px 10px; display: flex; flex-direction: column; gap: 2px; text-align: left; }
-.apv-bag b { font-size: 13px; color: #4A3218; } .apv-bag small { font-size: 11.5px; color: #6A5030; line-height: 1.35; } .apv-bag .apv-bagw { color: #C0392B; font-weight: 700; }
+.apv-bag b { font-size: 13px; color: #4A3218; } .apv-bag small { font-size: 11.5px; color: #6A5030; line-height: 1.35; } .apv-bag .apv-bagw { color: #C0392B; font-weight: 700; } .apv-bag .apv-bagw.ok { color: #1E8E4E; }
 /* 수하물 검사 연출(bagscan.js) */
 .bs { position: fixed; inset: 0; z-index: 9000; background: rgba(20, 24, 40, .72); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; animation: bsIn .25s ease-out; }
 .bs.out { animation: bsOut .26s ease-in forwards; } @keyframes bsIn { from { opacity: 0; } } @keyframes bsOut { to { opacity: 0; } }
