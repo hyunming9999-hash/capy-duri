@@ -3708,3 +3708,39 @@ body:has(.pt) .modal-actions { flex-wrap: wrap; } body:has(.pt) .modal-actions >
 .pt-rent { font-weight: 800; color: #A0522D; } .pt-rent.ok { color: #1E8F4C; }
 
 .pt-tool{margin-top:10px;padding:8px 10px;border-radius:12px;background:#fff8ec;border:1px solid #ecd9b8;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}.pt-toolrow{display:flex;gap:6px}.pt-tool small{font-size:12px}
+
+/* 엿가락 사회생활 · 순신의 주문서 · 순간이동 */
+.hd-yeot { position: absolute; left: 50%; top: 64px; transform: translateX(-50%); z-index: 40; display: flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 16px; background: #fffaf0; border: 2px solid #e0b252; box-shadow: 0 4px 12px rgba(0,0,0,.2); min-width: 230px; animation: parkBub .3s ease-out; }
+.hd-yeot img { width: 38px; height: 38px; object-fit: contain; }
+.hd-yeot > div { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.hd-yeot b { font: 900 13px/1.2 var(--head); color: #6b3d16; }
+.hd-yeot span { font-size: 11px; color: #8a6a48; }
+.hd-yeot i { display: block; height: 6px; border-radius: 4px; background: #f1e2c6; overflow: hidden; }
+.hd-yeot u { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #ffcf5a, #ff9d3c); transition: width .5s linear; }
+.hd-yeotbox { margin: 8px 0; padding: 8px 10px; border-radius: 12px; background: #fff6e0; border: 1px dashed #e0b252; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.hd-yeotbox p { margin: 0; font-size: 13px; } .hd-yeotbox small { font-size: 11px; color: #8a6a48; }
+.hd-scrollgot { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; }
+.hd-scrollgot p { margin: 0; } .hd-scrollgot small { color: #8a6a48; }
+.hd-scrollimg { width: 140px; height: 140px; object-fit: contain; filter: drop-shadow(0 0 14px rgba(255,200,80,.8)); animation: wpBob 2s ease-in-out infinite; }
+.hd-scrollrow { background: linear-gradient(90deg, #fff4d6, #ffe9b8) !important; border-color: #e0b252 !important; }
+@keyframes wpBob { 50% { transform: translateY(-6px) rotate(-3deg); } }
+.wp { position: fixed; inset: 0; z-index: 100000; display: grid; grid-template: 100% / 100%; place-items: center; overflow: hidden; pointer-events: all; }
+.wp > * { grid-area: 1 / 1; }
+.wp-bg { width: 100%; height: 100%; background: radial-gradient(circle at 50% 50%, rgba(255,236,170,.95) 0%, rgba(255,170,60,.75) 22%, rgba(90,40,120,.85) 60%, rgba(20,10,40,.95) 100%); animation: wpBg 2.4s ease-in forwards; }
+@keyframes wpBg { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 1; filter: brightness(1.4); } }
+.wp-ring { width: 220px; height: 220px; border-radius: 50%; border: 6px solid rgba(255,225,120,.9); box-shadow: 0 0 30px #ffd76a, inset 0 0 30px #ffd76a; animation: wpRing 1.2s ease-out infinite; opacity: 0; }
+.wp-ring.r2 { animation-delay: .4s; border-color: rgba(255,150,220,.85); box-shadow: 0 0 30px #ff9de0; } .wp-ring.r3 { animation-delay: .8s; border-color: rgba(140,220,255,.85); box-shadow: 0 0 30px #8ad8ff; }
+@keyframes wpRing { 0% { transform: scale(.2); opacity: 0; } 20% { opacity: 1; } 100% { transform: scale(3.2); opacity: 0; } }
+.wp-rays { width: 200vmax; height: 200vmax; background: repeating-conic-gradient(rgba(255,240,180,.35) 0 6deg, transparent 6deg 18deg); border-radius: 50%; animation: wpSpin 2.6s linear forwards; mask: radial-gradient(circle, #000 0, #000 20%, transparent 60%); -webkit-mask: radial-gradient(circle, #000 0, #000 20%, transparent 60%); }
+@keyframes wpSpin { from { transform: rotate(0) scale(.3); opacity: 0; } 20% { opacity: 1; } to { transform: rotate(240deg) scale(1.2); opacity: 1; } }
+.wp-sp { width: 10px; height: 10px; border-radius: 50%; background: #fff6c0; box-shadow: 0 0 10px 3px #ffd34d; opacity: 0; animation: wpSp 1.4s ease-out infinite; animation-delay: var(--t); }
+.wp-sp:nth-child(3n) { background: #ffe0f4; box-shadow: 0 0 10px 3px #ff8fd2; } .wp-sp:nth-child(4n) { background: #e3f6ff; box-shadow: 0 0 10px 3px #6fcfff; }
+@keyframes wpSp { 0% { transform: rotate(var(--a)) translateX(10px) scale(.4); opacity: 0; } 25% { opacity: 1; } 100% { transform: rotate(var(--a)) translateX(var(--d)) scale(1.3); opacity: 0; } }
+.wp-scroll { width: 150px; height: 150px; object-fit: contain; filter: drop-shadow(0 0 24px #ffe38a) drop-shadow(0 0 50px #ffb84d); animation: wpScroll 2.4s cubic-bezier(.3,1.4,.5,1) forwards; }
+@keyframes wpScroll { 0% { transform: scale(.1) rotate(-200deg); opacity: 0; } 30% { transform: scale(1.15) rotate(10deg); opacity: 1; } 45% { transform: scale(1) rotate(0); } 75% { transform: scale(1.05) rotate(0); opacity: 1; } 100% { transform: scale(3.5) rotate(25deg); opacity: 0; } }
+.wp-txt { margin-top: 250px; display: flex; flex-direction: column; align-items: center; color: #fff; text-shadow: 0 2px 8px rgba(120,50,0,.8), 0 0 18px #ffcf5a; animation: wpTxt 2.4s ease-out forwards; }
+.wp-txt b { font: 900 28px/1.2 var(--head); } .wp-txt span { font: 800 17px/1.4 var(--head); }
+@keyframes wpTxt { 0%, 20% { opacity: 0; transform: translateY(16px) scale(.8); } 35% { opacity: 1; transform: none; } 85% { opacity: 1; } 100% { opacity: 0; transform: scale(1.2); } }
+.wp-flash { width: 100%; height: 100%; background: #fff; opacity: 0; animation: wpFlash 2.4s ease-in forwards; }
+@keyframes wpFlash { 0%, 80% { opacity: 0; } 95% { opacity: 1; } 100% { opacity: 1; } }
+.wp.out { animation: wpOut .7s ease-out forwards; } @keyframes wpOut { to { opacity: 0; } }
