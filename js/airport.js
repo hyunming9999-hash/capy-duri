@@ -35,7 +35,7 @@ export function openAirport(o) {
   const offTk = !demo && ctx.store.on ? ctx.store.on(TK, v => { tk = { one: (v && v.one) || 0, round: (v && v.round) || 0, ret: (v && v.ret) || 0 }; }) : null;
   const H = Math.max(280, Math.min(Math.round(innerHeight * 0.52), 520)), W = Math.round(H * BG_W / BG_H);
   const me = { x: W * 0.62, tx: W * 0.62, y: 0 }; // y: 실내에서 안쪽(위)으로 들어간 정도 0~1
-  const sc = o.scoot ? o.scoot() : null, meEl = h('div', { class: 'fm-me ap-me' + (sc ? ' scoot' : ''), html: sc || capy(ctx.capyOf(ctx.uid, { face: 'happy' })) });
+  let sc = o.scoot ? o.scoot() : null; const meEl = h('div', { class: 'fm-me ap-me' + (sc ? ' scoot' : ''), html: sc || capy(ctx.capyOf(ctx.uid, { face: 'happy' })) });
   // 바깥
   const TX = W * 0.14, TWD = W * 0.3, doorX = TX + TWD * 0.42;
   const outPlane = h('img', { class: 'ap-plane out', src: 'img/air/plane.webp?v=4', alt: '' });
@@ -178,6 +178,7 @@ export function openAirport(o) {
     flightEl.textContent = canBoard(f) ? `✈️ 탑승 마감 ${mmss(f.left)}` : f.phase === 'land' ? '✈️ 도착 중' : `✈️ 다음 ${hhmm(d0)}`; }
   let leftHold = 0; /* 길 왼쪽 끝에서 계속 왼쪽으로 걸으면 마을로 나간다 */
   function step(t) { if (!alive) return; const dt = Math.min(0.05, (t - lastT) / 1000); lastT = t;
+    { const cur = o.scoot ? o.scoot() : null; if ((cur || null) !== (sc || null)) { sc = cur; meEl.classList.toggle('scoot', !!sc); meEl.innerHTML = sc || capy(ctx.capyOf(ctx.uid, { face: 'happy' })); } } /* 가방에서 스쿠터를 타고 내리면 공항 안 캐릭터 그림도 바로 바꾼다 */
     const dir = (keys.has('R') ? 1 : 0) - (keys.has('L') ? 1 : 0), lo = inside ? W * 0.05 : 30, hi = W - 30;
     if (dir && !document.querySelector('.modal-wrap')) { if (!inside && dir < 0 && me.x <= lo + 1) { leftHold = (leftHold || 0) + dt; if (leftHold > 0.35) { leftHold = 0; return void close(); } } else leftHold = 0; me.x = Math.max(lo, Math.min(hi, me.x + dir * WALK_SP * (sc ? 1.8 : 1) * dt)); me.tx = me.x; me.then = null; meEl.classList.add('walk'); meEl.classList.toggle('left', dir < 0); }
     const d = me.tx - me.x; if (Math.abs(d) > 2) me.x += Math.sign(d) * Math.min(Math.abs(d), WALK_SP * (sc ? 1.8 : 1) * dt); else if (me.then) { const f = me.then; me.then = null; meEl.classList.remove('walk'); f(); } else if (!dir) meEl.classList.remove('walk');
