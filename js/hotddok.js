@@ -276,7 +276,7 @@ const SPOTS = [[0.54, 37, '정자'], [0.578, 33, '의자'], [0.179, 30, '찻집 
   const ring = (r, x, b, up, z) => { r.hidden = false; r.style.left = x + 'px'; r.style.bottom = `calc(${b}% + ${up}px)`; r.style.zIndex = z; };
   const meRing = h('i', { class: 'hd-ring me', hidden: true });
   function bathFx(dt) { const W = Z.bath.w; if (meRing.parentNode !== worlds.bath) worlds.bath.append(meRing);
-    for (const n of npcs.bath) { const p = n.pool; if (!p) continue; if (!n.rg) { n.rg = h('i', { class: 'hd-ring' }); worlds.bath.append(n.rg); }
+    for (const n of npcs.bath) { const p = n.pool; if (!p) continue; if (!n.rg) { n.rg = h('i', { class: 'hd-ring' }); worlds.bath.append(n.rg); } { const off = n.el.style.display === 'none'; n.rg.style.display = off ? 'none' : ''; if (off) continue; } /* 오늘 탕에 없는 손님은 물결 고리도 숨긴다 */
       /* 가운데 바위(뒤쪽)는 뚫고 지나가지 않는다: 바위 건너편으로 갈 땐 바위 앞쪽 물길로 돌아간다 */ const R0 = W * 0.72, R1 = W * 0.83, back = b => b > 31.2, side = x => (x < (R0 + R1) / 2 ? -1 : 1);
       if (p.w > 0) p.w -= dt; else { if (!p.via && back(n.b) && (side(n.x) !== side(p.tx) || (p.tx > R0 && p.tx < R1)) && ((n.x - R0) * (p.tx - R0) < 0 || (n.x - R1) * (p.tx - R1) < 0 || (p.tx > R0 && p.tx < R1))) p.via = { x: n.x, b: 30 };
         const gx = p.via ? p.via.x : p.tx, gb = p.via ? p.via.b : p.tb, ex = gx - n.x, eb = (gb - n.b) * 24, d = Math.hypot(ex, eb);
