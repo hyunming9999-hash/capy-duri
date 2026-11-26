@@ -52,12 +52,12 @@ const GRADE_TOP = 2; /* S등급 배율(아래 GRADE.S.x) */ const KING_MAX = { �
 // 바다 쓰레기(F등급): 어느 바다에서나 10~20% 확률. 클수록 처리 비용이 커진다(50~250코인)
 export const TRASH = [['스티로폼 박스', '📦', 30, 90], ['페트병', '🧴', 12, 35], ['헌 옷', '👕', 40, 110], ['타이어', '🛞', 50, 120], ['축구공', '⚽', 18, 30]].map(([name, icon, c0, c1], k) => ({ id: 't' + k, name, icon, img: `img/fish/trash${k}.webp`, cm: [c0, c1] }));
 const PEARL = { id: 'pearl', name: '바다 진주', pearl: true };
-// 산호 조각: 중급 바다에서만 낚이는 보물(초희귀 한 종만큼 드물게). 7개 모으면 카피수퍼에서 진주부적 1장
+// 산호 조각: 중급 바다에서만 낚이는 보물(초희귀 한 종만큼 드물게). 3개 모으면(2026-11-26 7→3) 카피수퍼에서 진주부적 1장
 // ♨️ 카피온센 휴식: 탕 안에 있던 시간 10분마다 희귀 등급 물고기만 +3% 더 잘 문다. 30분(+9%)까지. 효과는 10분당 2분씩 유지(30분 쉬면 6분, 이 기기 기준)
 export const ONSEN_STEP = 600000, ONSEN_MAX = 3, ONSEN_KEEP = 120000, ONSEN_UP = 0.03; // ONSEN_KEEP: 한 단계당 유지 시간
 export const onsenRead = () => { try { const v = JSON.parse(localStorage.getItem('capy-onsen') || '{}') || {}; return v.until > Date.now() ? { ms: Math.min(ONSEN_STEP * ONSEN_MAX, v.ms || 0), until: v.until } : { ms: 0, until: 0 }; } catch { return { ms: 0, until: 0 }; } };
 export const onsenStacks = () => Math.min(ONSEN_MAX, Math.floor(onsenRead().ms / ONSEN_STEP));
-export const CORAL = { id: 'coral', name: '산호 조각', coral: true }, CORAL_PER = 7, KING_DEX = 40, ULTRA_DEX = 42; // ULTRA_DEX: 중급 바다 초희귀(번개참치·황금비늘잉어)는 초급 도감을 이만큼 채워야 문다
+export const CORAL = { id: 'coral', name: '산호 조각', coral: true }, CORAL_PER = 3, KING_DEX = 40, ULTRA_DEX = 42; // ULTRA_DEX: 중급 바다 초희귀(번개참치·황금비늘잉어)는 초급 도감을 이만큼 채워야 문다
 // 오늘의 어종: 매일(한국 날짜) 중급 바다 물고기 3종. 그날 잡은 것만 값 2배
 export const kstDay = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
 export function todayFish(day = kstDay()) { let x = [...('fish' + day)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 11); const rnd = () => { x = (x * 1103515245 + 12345) >>> 0; return x / 4294967296; };

@@ -1254,7 +1254,7 @@ export function mount(el, ctx) {
         { ic: baitI(1), name: '미끼 10개 (초급 바다)', sub: `${won(BAIT * 10)} · 한 번 던질 때 1개 · 가진 것 ${bag.bait || 0}`, price: BAIT * 10, line: (bag.bait || 0) < 3 ? '미끼가 다 떨어져 가는구먼. 싱싱한 놈으로 담아 주지.' : '싱싱한 지렁이여. 물고기들이 환장하지.', act: () => buy(BAIT * 10, { bait: (bag.bait || 0) + 10 }), multi: { name: '미끼 10개 묶음', unit: '묶음', go: n => buy(BAIT * 10 * n, { bait: (bag.bait || 0) + 10 * n }) } },
         { ic: baitI(2), name: '중급 미끼 10개 (중급 바다)', sub: `${won(BAIT2 * 10)} · 중급 바다에서만 써요 · 가진 것 ${bag.bait2 || 0}`, price: BAIT2 * 10, line: '중급 바다 물고기는 입맛이 까다롭지. 파란 미끼여야 문다네.', act: () => buy(BAIT2 * 10, { bait2: (bag.bait2 || 0) + 10 }), multi: { name: '중급 미끼 10개 묶음', unit: '묶음', go: n => buy(BAIT2 * 10 * n, { bait2: (bag.bait2 || 0) + 10 * n }) } },
         { ic: baitI(3), name: '고급 미끼 10개 (고급 바다)', sub: `${won(BAIT3 * 10)} · 고급 바다에서만 써요 · 가진 것 ${bag.bait3 || 0}`, price: BAIT3 * 10, line: '금빛 미끼라네. 깊은 바다 녀석들도 이건 못 참지.', act: () => buy(BAIT3 * 10, { bait3: (bag.bait3 || 0) + 10 }), multi: { name: '고급 미끼 10개 묶음', unit: '묶음', go: n => buy(BAIT3 * 10 * n, { bait3: (bag.bait3 || 0) + 10 * n }) } }].filter(Boolean); }
-    // 연성: 산호 조각 7개 + 수수료 1,000코인 → 진주부적 1장
+    // 연성: 산호 조각 3개(CORAL_PER) + 수수료 1,000코인 → 진주부적 1장
     function makeItems() { const c = bag.coral || 0, ok = c >= CORAL_PER;
       return [['sec', '🔮 진주부적 연성'], h('div', { class: 'mk-make' }, h('img', { src: 'img/fish/coral.webp', alt: '' }), h('b', null, `${Math.min(c, CORAL_PER)} / ${CORAL_PER}`), h('i', null, '➜'), h('img', { src: 'img/crow/pearl-win.webp', alt: '' })), h('div', { class: 'mk-makebar' }, h('u', { style: { width: Math.min(100, c / CORAL_PER * 100) + '%' } })),
         ['note', `가진 산호 조각 ${c}개 · 진주부적 ${bag.pcharm || 0}장`],
