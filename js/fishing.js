@@ -215,6 +215,7 @@ export function openFishing(o) {
   // 찌가 물에 닿았다: 물이 튀고, 줄이 가라앉고, 그때부터 입질을 기다린다
   function splash(x, big) { const r = h('i', { class: 'fs-splash' + (big ? ' big' : ''), style: { left: x + '%' } }); surf.append(r); setTimeout(() => r.remove(), 700); }
   function touch() {
+    if (cur.f.ghost && o.ghostBit) o.ghostBit(); /* 블랙귀신아귀가 한 번 물면 하루 동안은 다시 안 문다(핫똑) */
     cur.sense = !!(cur.f.ghost && o.ghostSense && o.ghostSense() && Math.random() < 0.9); /* 청양이의 상징품(고추): 블랙귀신아귀를 90% 확률로 미리 알아챈다 */
     const p = cur.p; phase = 'wait'; t0 = performance.now(); biteAt = t0 + rnd(1400, 4200) * (1 - p * 0.35); nibAt = Math.random() < 0.6 ? t0 + rnd(400, Math.max(450, biteAt - t0 - 450)) : 0;
     stormAt = stormIn ? t0 + rnd(900, 2600) : 0; // 풍랑은 입질 오기 전후에 분다(챔질 전에 대부분 불어서 끝까지 못 버틴다)
